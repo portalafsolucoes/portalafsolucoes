@@ -1,0 +1,79 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { getSession } from '@/lib/session'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: locations, error } = await supabase
+      .from('Location')
+      .select('*')
+      .eq('companyId', session.companyId)
+      .order('name', { ascending: true })
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
+    }
+
+    return NextResponse.json({ data: locations || [] })
+  } catch (error) {
+    console.error('Get locations error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { name, address, latitude, longitude, parentId } = body
+
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Name is required' },
+        { status: 400 }
+      )
+    }
+
+    const { data: location, error: createError } = await supabase
+      .from('Location')
+      .insert({
+        name,
+        address,
+        latitude,
+        longitude,
+        parentId,
+        companyId: session.companyId
+      })
+      .select('*')
+      .single()
+
+    if (createError) {
+      console.error('Create location error:', createError)
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
+    }
+
+    return NextResponse.json(
+      { data: location, message: 'Location created successfully' },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error('Create location error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

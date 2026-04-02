@@ -1,0 +1,493 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { Button } from '@/components/ui/Button'
+import { Plus, FileText, Search, Calendar, User, Trash2, Edit, Eye, Table, Grid } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
+import { RAFFormModal } from '@/components/rafs/RAFFormModal'
+import { RAFViewModal } from '@/components/rafs/RAFViewModal'
+import { RAFEditModal } from '@/components/rafs/RAFEditModal'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
+import { useDebounce } from '@/hooks/useDebounce'
+import { ExportButton } from '@/components/ui/ExportButton'
+
+interface RAF {
+  id: string
+  rafNumber: string
+  area: string
+  equipment: string
+  occurrenceDate: string
+  occurrenceTime: string
+  panelOperator: string
+  stopExtension: boolean
+  failureBreakdown: boolean
+  productionLost: number | null
+  failureDescription: string
+  observation: string
+  immediateAction: string
+  fiveWhys: string[]
+  hypothesisTests: Array<{
+    item: number
+    description: string
+    possible: string
+    evidence: string
+  }>
+  failureType: string
+  actionPlan: Array<{
+    what: string
+    who: string
+    when: string
+  }>
+  createdAt: string
+  createdBy?: {
+    firstName: string
+    lastName: string
+  }
+}
+
+export default function RAFsPage() {
+  const router = useRouter()
+  const [rafs, setRafs] = useState<RAF[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 500)
+  const [userRole, setUserRole] = useState<string>('')
+  const [hasAccess, setHasAccess] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
+  const [filterArea, setFilterArea] = useState('Contaminar')
+  const [enableAreaFilter, setEnableAreaFilter] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [rafToDelete, setRafToDelete] = useState<string | null>(null)
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [selectedRAF, setSelectedRAF] = useState<RAF | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [rafToEdit, setRafToEdit] = useState<string | null>(null)
+
+  useEffect(() => {
+    checkAccess()
+  }, [])
+
+  const checkAccess = async () => {
+    try {
+      const meRes = await fetch('/api/auth/me')
+      const meData = await meRes.json()
+      
+      // Apenas admins podem acessar RAFs
+      if (!meData.user || (meData.user.role !== 'GESTOR' && meData.user.role !== 'SUPER_ADMIN')) {
+        router.push('/dashboard')
+        return
+      }
+      
+      setUserRole(meData.user.role)
+      setHasAccess(true)
+      loadRAFs()
+    } catch {
+      router.push('/login')
+    }
+  }
+
+  const loadRAFs = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/rafs')
+      const data = await res.json()
+      setRafs(data.data || [])
+    } catch (error) {
+      console.error('Error loading RAFs:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleView = async (id: string) => {
+    try {
+      const res = await fetch(`/api/rafs/${id}`)
+      const data = await res.json()
+      if (res.ok) {
+        setSelectedRAF(data.data)
+        setShowViewModal(true)
+      } else {
+        alert(data.error || 'Erro ao carregar RAF')
+      }
+    } catch (error) {
+      console.error('Error loading RAF:', error)
+      alert('Erro ao carregar RAF')
+    }
+  }
+
+  const handleEdit = (id: string) => {
+    setRafToEdit(id)
+    setShowEditModal(true)
+  }
+
+  const handleDelete = (id: string) => {
+    setRafToDelete(id)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!rafToDelete) return
+
+    try {
+      const res = await fetch(`/api/rafs/${rafToDelete}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        loadRAFs()
+      } else {
+        alert('Erro ao excluir RAF')
+      }
+    } catch (error) {
+      console.error('Error deleting RAF:', error)
+      alert('Erro ao excluir RAF')
+    } finally {
+      setShowDeleteModal(false)
+      setRafToDelete(null)
+    }
+  }
+
+  const filteredRAFs = rafs.filter(raf => {
+    // Filtrar por área Contaminar (apenas se habilitado)
+    const matchesArea = !enableAreaFilter || raf.area.toLowerCase().includes(filterArea.toLowerCase())
+    
+    // Filtrar por termo de busca
+    const matchesSearch = debouncedSearchTerm === '' ||
+      raf.rafNumber.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      raf.equipment.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      raf.area.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    
+    return matchesArea && matchesSearch
+  })
+
+  if (!hasAccess) {
+    return null
+  }
+
+  return (
+    <AppLayout>
+      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+        {/* Se modal de visualização está aberto, mostrar apenas ele */}
+        {showViewModal && selectedRAF ? (
+          <div 
+            className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
+            onClick={() => {
+              setShowViewModal(false)
+              setSelectedRAF(null)
+            }}
+          >
+            <div className="w-full max-w-6xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
+              <RAFViewModal
+                isOpen={true}
+                onClose={() => {
+                  setShowViewModal(false)
+                  setSelectedRAF(null)
+                }}
+                raf={selectedRAF}
+                inPage={true}
+              />
+            </div>
+          </div>
+        ) : showEditModal && rafToEdit ? (
+          <div 
+            className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
+            onClick={() => {
+              setShowEditModal(false)
+              setRafToEdit(null)
+            }}
+          >
+            <div className="w-full max-w-6xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
+              <RAFEditModal
+                isOpen={true}
+                onClose={() => {
+                  setShowEditModal(false)
+                  setRafToEdit(null)
+                }}
+                rafId={rafToEdit}
+                onSuccess={() => {
+                  setShowEditModal(false)
+                  setRafToEdit(null)
+                  loadRAFs()
+                }}
+                inPage={true}
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 md:gap-3">
+              <FileText className="w-6 h-6 md:w-8 md:h-8" />
+              <span className="text-lg md:text-2xl">Relatórios de Análise de Falha (RAF)</span>
+            </h1>
+            <p className="mt-1 text-xs md:text-sm text-muted-foreground">
+              Gerencie os relatórios de análise de falha do sistema
+            </p>
+          </div>
+          <div className="flex gap-2 md:gap-3 flex-wrap">
+            <div className="hidden md:flex gap-1 border rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
+                }`}
+                title="Visualização em Tabela"
+              >
+                <Table className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'cards' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
+                }`}
+                title="Visualização em Cartões"
+              >
+                <Grid className="w-5 h-5" />
+              </button>
+            </div>
+            <ExportButton data={filteredRAFs} entity="rafs" />
+            <Button
+              onClick={() => setShowModal(true)}
+              className="flex-1 md:flex-none"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="text-sm md:text-base">Novo RAF</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Busca e Filtros */}
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar por número, equipamento ou área..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+            />
+          </div>
+
+          <div className="flex gap-2 md:gap-4">
+            <label className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/5">
+              <input
+                type="checkbox"
+                checked={enableAreaFilter}
+                onChange={(e) => setEnableAreaFilter(e.target.checked)}
+                className="w-4 h-4 text-primary rounded"
+              />
+              <span className="text-sm font-medium whitespace-nowrap">Filtrar Área</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+          </div>
+        ) : filteredRAFs.length === 0 ? (
+          <div className="text-center py-12 bg-card rounded-lg border border-border">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-sm font-medium text-foreground">Nenhum RAF encontrado</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {searchTerm ? 'Tente ajustar sua busca' : 'Comece criando um novo RAF'}
+            </p>
+          </div>
+        ) : viewMode === 'cards' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+            {filteredRAFs.map((raf) => (
+              <div
+                key={raf.id}
+                className="bg-card rounded-lg shadow-sm border border-border p-3 hover:shadow-md transition-all"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-foreground truncate">
+                          {raf.rafNumber}
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {raf.area}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${
+                      raf.failureType === 'REPETITIVE'
+                        ? 'bg-danger-light text-gray-800'
+                        : 'bg-warning-light text-gray-800'
+                    }`}>
+                      {raf.failureType === 'REPETITIVE' ? 'Rep' : 'Alea'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-foreground line-clamp-2">
+                    {raf.equipment}
+                  </p>
+
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{formatDate(raf.occurrenceDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 truncate">
+                      <User className="w-3 h-3" />
+                      <span className="truncate">{raf.panelOperator}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-1 pt-1 border-t border-border">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleView(raf.id)}
+                      className="flex-1 text-[10px] px-2 py-1 h-7"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(raf.id)}
+                      className="flex-1 text-[10px] px-2 py-1 h-7"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(raf.id)}
+                      className="flex-1 text-[10px] px-2 py-1 h-7 text-danger hover:bg-danger-light"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-card rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      RAF
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Área
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Equipamento
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Operador
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredRAFs.map((raf) => (
+                    <tr key={raf.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-semibold text-gray-900">{raf.rafNumber}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{raf.area}</span>
+                      </td>
+                      <td className="px-6 py-4 max-w-xs">
+                        <div className="text-sm text-gray-900 truncate">{raf.equipment}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{formatDate(raf.occurrenceDate)}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{raf.panelOperator}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          raf.failureType === 'REPETITIVE'
+                            ? 'bg-danger-light text-gray-800'
+                            : 'bg-warning-light text-gray-800'
+                        }`}>
+                          {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleView(raf.id)}
+                            className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
+                            title="Visualizar"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(raf.id)}
+                            className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(raf.id)}
+                            className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+          </>
+        )}
+      </div>
+
+      {/* Modal de Criação (sempre disponível) */}
+      <RAFFormModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false)
+          loadRAFs()
+        }}
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Confirmar Exclusão"
+        message="Tem certeza que deseja excluir este RAF? Esta ação não pode ser desfeita."
+      />
+    </AppLayout>
+  )
+}

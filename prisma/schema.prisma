@@ -1,0 +1,1767 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  SUPER_ADMIN
+  GESTOR
+  PLANEJADOR
+  MECANICO
+  ELETRICISTA
+  OPERADOR
+  CONSTRUTOR_CIVIL
+}
+
+enum WorkOrderStatus {
+  PENDING
+  RELEASED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETE
+}
+
+enum WorkOrderPriority {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum WorkOrderType {
+  REACTIVE
+  PREVENTIVE
+  CORRECTIVE
+  PREDICTIVE
+}
+
+enum OsType {
+  PREVENTIVE_MANUAL
+  CORRECTIVE_PLANNED
+  CORRECTIVE_IMMEDIATE
+}
+
+enum MaintenanceFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+  CUSTOM
+}
+
+enum SystemStatus {
+  IN_SYSTEM
+  OUT_OF_SYSTEM
+}
+
+enum AssetStatus {
+  OPERATIONAL
+  DOWN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum FailureType {
+  RANDOM
+  REPETITIVE
+}
+
+enum ProcessSector {
+  ENERGIA
+  MOAGEM_1
+  MOAGEM_2
+  MOAGEM_3
+  EXPEDICAO_1
+  EXPEDICAO_2
+  ENSACADEIRA_2
+  SECADOR
+}
+
+enum VariableType {
+  ANALOG
+  DIGITAL
+  COUNTER
+  SETPOINT
+}
+
+enum VariableUnit {
+  NONE
+  CELSIUS
+  FAHRENHEIT
+  PASCAL
+  BAR
+  PSI
+  METER_SECOND
+  LITER_HOUR
+  KG_HOUR
+  TON_HOUR
+  AMPERE
+  VOLT
+  WATT
+  KILOWATT
+  KILOWATT_HOUR
+  HERTZ
+  RPM
+  PERCENT
+  BOOLEAN
+}
+
+enum AssetHistoryEventType {
+  ASSET_CREATED
+  ASSET_UPDATED
+  ASSET_STATUS_CHANGED
+  WORK_ORDER_CREATED
+  WORK_ORDER_STARTED
+  WORK_ORDER_COMPLETED
+  REQUEST_CREATED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+  FILE_UPLOADED
+  FILE_DELETED
+  PART_ADDED
+  PART_REMOVED
+  DOWNTIME_STARTED
+  DOWNTIME_ENDED
+  METER_READING
+  CHECKLIST_COMPLETED
+  MAINTENANCE_SCHEDULED
+  NOTE_ADDED
+  ATTACHMENT_ADDED
+  ATTACHMENT_REMOVED
+  TECHNICAL_INFO_ADDED
+  TIP_ADDED
+  CUSTOM
+}
+
+enum AssetAttachmentCategory {
+  MANUAL
+  TECHNICAL_DOCUMENT
+  DATASHEET
+  DRAWING
+  PHOTO
+  VIDEO
+  CERTIFICATE
+  WARRANTY
+  WORK_ORDER_DOC
+  MAINTENANCE_REPORT
+  INSPECTION_REPORT
+  TIP
+  PROCEDURE
+  SAFETY
+  OTHER
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  website   String?
+  logo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  units                  Unit[]
+  users                  User[]
+  workOrders             WorkOrder[]
+  assets                 Asset[]
+  locations              Location[]
+  parts                  Part[]
+  vendors                Vendor[]
+  customers              Customer[]
+  teams                  Team[]
+  meters                 Meter[]
+  requests               Request[]
+  purchaseOrders         PurchaseOrder[]
+  preventiveMaintenances PreventiveMaintenance[]
+  assetCategories        AssetCategory[]
+  partCategories         PartCategory[]
+  workOrderCategories    WorkOrderCategory[]
+  failureAnalysisReports FailureAnalysisReport[]
+  processVariables       ProcessVariable[]
+  processReadings        ProcessReading[]
+  processAlarms          ProcessAlarm[]
+  processAlarmTriggers   ProcessAlarmTrigger[]
+  processDataFiles       ProcessDataFile[]
+  // Cadastros Básicos (compartilhados entre unidades)
+  calendars              Calendar[]
+  costCenters            CostCenter[]
+  assetFamilies          AssetFamily[]
+  positions              Position[]
+  characteristics        Characteristic[]
+  resources              Resource[]
+  maintenanceTypes       MaintenanceType[]
+  maintenanceAreas       MaintenanceArea[]
+  serviceTypes           ServiceType[]
+  genericTasks           GenericTask[]
+  genericSteps           GenericStep[]
+  // Planos e KPIs
+  standardMaintenancePlans StandardMaintenancePlan[]
+  assetMaintenancePlans    AssetMaintenancePlan[]
+  maintenancePlanExecutions MaintenancePlanExecution[]
+  workOrderSchedules       WorkOrderSchedule[]
+  kpiIndicators            KpiIndicator[]
+  kpiVariables             KpiVariable[]
+}
+
+model Unit {
+  id           String   @id @default(cuid())
+  name         String
+  code         String?
+  protheusCode String?
+  address      String?
+  phone        String?
+  email        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  users                     User[]
+  assets                    Asset[]
+  workOrders                WorkOrder[]
+  requests                  Request[]
+  areas                     Area[]
+  workCenters               WorkCenter[]
+  rafs                      FailureAnalysisReport[]
+  maintenancePlanExecutions MaintenancePlanExecution[]
+  workOrderSchedules        WorkOrderSchedule[]
+
+  @@index([companyId])
+  @@unique([companyId, protheusCode])
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  jobTitle          String?
+  username          String   @unique
+  role              UserRole @default(MECANICO)
+  image             String?
+  rate              Float    @default(0)
+  enabled           Boolean  @default(true)
+  lastLogin         DateTime?
+  protheusMatricula String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  unitId String?
+  unit   Unit?   @relation(fields: [unitId], references: [id])
+
+  assignedWorkOrders         WorkOrder[]  @relation("WorkOrderAssignedUsers")
+  directlyAssignedWorkOrders WorkOrder[]  @relation("AssignedToUser")
+  createdWorkOrders          WorkOrder[]  @relation("CreatedBy")
+  completedWorkOrders        WorkOrder[]  @relation("CompletedBy")
+  primaryAssets              Asset[]      @relation("PrimaryUser")
+  assignedAssets             Asset[]      @relation("AssetAssignedUsers")
+  createdRequests            Request[]    @relation("CreatedBy")
+  approvedRequests           Request[]    @relation("ApprovedBy")
+  assignedRequests           Request[]    @relation("RequestAssignedTo")
+  labors                     Labor[]
+  teamMemberships            TeamMember[]
+  ledTeams                   Team[]       @relation("TeamLeader")
+  notifications              Notification[]
+  createdRAFs                FailureAnalysisReport[] @relation("RAFCreatedBy")
+  createdSchedules           WorkOrderSchedule[]     @relation("ScheduleCreatedBy")
+
+  @@index([companyId])
+  @@index([email])
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  leaderId String?
+  leader   User? @relation("TeamLeader", fields: [leaderId], references: [id])
+
+  members            TeamMember[]
+  assignedWorkOrders WorkOrder[] @relation("WorkOrderAssignedTeams")
+  assignedAssets     Asset[]     @relation("AssetAssignedTeams")
+  requests           Request[]
+
+  @@index([companyId])
+  @@index([leaderId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  teamId String
+  team   Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Location?  @relation("ChildLocations", fields: [parentId], references: [id])
+  children Location[] @relation("ChildLocations")
+
+  assets     Asset[]
+  workOrders WorkOrder[]
+  requests   Request[]
+  users      User[]
+
+  @@index([companyId])
+}
+
+// ============================================
+// CADASTROS BÁSICOS
+// ============================================
+
+model Calendar {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  type         String   @default("WORK")
+  workDays     Json?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  standardMaintenancePlans StandardMaintenancePlan[]
+  assetMaintenancePlans    AssetMaintenancePlan[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model Area {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  unitId String
+  unit   Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  workCenters WorkCenter[]
+  assets      Asset[]
+
+  @@index([unitId])
+}
+
+model CostCenter {
+  id           String   @id @default(cuid())
+  code         String
+  name         String
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  workCenters WorkCenter[]
+  assets      Asset[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model WorkCenter {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  hoursPerDay  Float    @default(8)
+  hoursPerSat  Float    @default(0)
+  hoursPerSun  Float    @default(0)
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  areaId String?
+  area   Area? @relation(fields: [areaId], references: [id])
+
+  unitId String
+  unit   Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  costCenterId String?
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  assets Asset[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+  @@index([unitId])
+}
+
+model AssetFamily {
+  id           String   @id @default(cuid())
+  code         String
+  name         String
+  protheusCode String?
+  familyType   String   @default("BEM")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  models                   AssetFamilyModel[]
+  assets                   Asset[]
+  standardMaintenancePlans StandardMaintenancePlan[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model AssetFamilyModel {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  familyId String
+  family   AssetFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  assets                   Asset[]
+  standardMaintenancePlans StandardMaintenancePlan[]
+
+  @@index([familyId])
+}
+
+model Position {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  assets Asset[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model Characteristic {
+  id           String   @id @default(cuid())
+  name         String
+  infoType     String   @default("Caractere")
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  values AssetCharacteristicValue[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model Resource {
+  id           String   @id @default(cuid())
+  name         String
+  type         String
+  unit         String?
+  unitCost     Float    @default(0)
+  availability Float    @default(100)
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  standardTaskResources StandardMaintenanceTaskResource[]
+  assetTaskResources    AssetMaintenanceTaskResource[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model MaintenanceType {
+  id             String   @id @default(cuid())
+  name           String
+  characteristic String?
+  protheusCode   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  serviceTypes          ServiceType[]
+  assetMaintenancePlans AssetMaintenancePlan[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model MaintenanceArea {
+  id           String   @id @default(cuid())
+  name         String
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  serviceTypes          ServiceType[]
+  assetMaintenancePlans AssetMaintenancePlan[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model ServiceType {
+  id            String   @id @default(cuid())
+  code          String
+  name          String
+  isLubrication Boolean  @default(false)
+  protheusCode  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  maintenanceTypeId String
+  maintenanceType   MaintenanceType @relation(fields: [maintenanceTypeId], references: [id])
+
+  maintenanceAreaId String
+  maintenanceArea   MaintenanceArea @relation(fields: [maintenanceAreaId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  standardMaintenancePlans StandardMaintenancePlan[]
+  assetMaintenancePlans    AssetMaintenancePlan[]
+  workOrders               WorkOrder[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model GenericTask {
+  id             String   @id @default(cuid())
+  code           Int
+  name           String
+  characteristic String?
+  protheusCode   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model GenericStep {
+  id                String   @id @default(cuid())
+  name              String
+  optionType        String   @default("NONE")
+  averageTime       String?
+  protheusCode      String?
+  maintenanceAreaId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  standardTaskSteps StandardMaintenanceTaskStep[]
+  assetTaskSteps    AssetMaintenanceTaskStep[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+// ============================================
+// ASSETS
+// ============================================
+
+model AssetCategory {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  assets Asset[]
+
+  @@index([companyId])
+}
+
+model Asset {
+  id              String      @id @default(cuid())
+  customId        String?
+  name            String
+  description     String?
+  barCode         String?
+  nfcId           String?
+  area            String?
+  acquisitionCost Float?
+  image           String?
+  status          AssetStatus @default(OPERATIONAL)
+  archived        Boolean     @default(false)
+  gutGravity      Int         @default(1)
+  gutUrgency      Int         @default(1)
+  gutTendency     Int         @default(1)
+
+  // Novos campos Fase 1
+  tag               String?   @db.VarChar(6)
+  protheusCode      String?
+  hasStructure      Boolean   @default(false)
+  hasCounter        Boolean   @default(false)
+  maintenanceStatus String    @default("ACTIVE")
+  assetCategoryType String    @default("BEM")
+  assetPriority     String?
+  hourlyCost        Float     @default(0)
+  manufacturer      String?
+  modelName         String?
+  serialNumber      String?
+  purchaseDate      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  categoryId String?
+  category   AssetCategory? @relation(fields: [categoryId], references: [id])
+
+  primaryUserId String?
+  primaryUser   User? @relation("PrimaryUser", fields: [primaryUserId], references: [id])
+
+  parentAssetId String?
+  parentAsset   Asset?  @relation("ChildAssets", fields: [parentAssetId], references: [id])
+  childAssets   Asset[] @relation("ChildAssets")
+
+  unitId String?
+  unit   Unit? @relation(fields: [unitId], references: [id])
+
+  areaId String?
+  assetArea Area? @relation(fields: [areaId], references: [id])
+
+  workCenterId String?
+  workCenter   WorkCenter? @relation(fields: [workCenterId], references: [id])
+
+  costCenterId String?
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
+
+  positionId String?
+  position   Position? @relation(fields: [positionId], references: [id])
+
+  familyId String?
+  family   AssetFamily? @relation(fields: [familyId], references: [id])
+
+  familyModelId String?
+  familyModel   AssetFamilyModel? @relation(fields: [familyModelId], references: [id])
+
+  assignedUsers          User[]                    @relation("AssetAssignedUsers")
+  assignedTeams          Team[]                    @relation("AssetAssignedTeams")
+  workOrders             WorkOrder[]
+  requests               Request[]
+  meters                 Meter[]
+  downtimes              AssetDowntime[]
+  parts                  AssetPart[]
+  files                  File[]
+  history                AssetHistory[]
+  attachments            AssetAttachment[]
+  characteristicValues   AssetCharacteristicValue[]
+  sparePartsList         AssetSparePart[]
+  maintenancePlans       AssetMaintenancePlan[]
+
+  @@unique([unitId, tag])
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+  @@index([locationId])
+  @@index([categoryId])
+  @@index([unitId])
+}
+
+model AssetCharacteristicValue {
+  id       String @id @default(cuid())
+  value    String
+  unit     String?
+  operator String @default("EQUAL")
+
+  assetId String
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  characteristicId String
+  characteristic   Characteristic @relation(fields: [characteristicId], references: [id])
+
+  @@unique([assetId, characteristicId])
+  @@index([assetId])
+}
+
+model AssetSparePart {
+  id           String @id @default(cuid())
+  productCode  String
+  quantity     Int    @default(0)
+  criticality  String @default("LOW")
+  warrantyTime Int    @default(0)
+  warrantyUnit String?
+
+  assetId String
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+model AssetDowntime {
+  id          String    @id @default(cuid())
+  startDate   DateTime
+  endDate     DateTime?
+  duration    Int?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  assetId String
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+// ============================================
+// PLANOS DE MANUTENÇÃO
+// ============================================
+
+model StandardMaintenancePlan {
+  id              String   @id @default(cuid())
+  sequence        Int
+  name            String
+  maintenanceTime Int
+  timeUnit        String
+  period          String
+  priority        String   @default("ZZZ")
+  stopsAsset      Boolean  @default(false)
+  toleranceDays   Int      @default(0)
+  trackingType    String   @default("TIME")
+  protheusCode    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  calendarId String?
+  calendar   Calendar? @relation(fields: [calendarId], references: [id])
+
+  familyId String
+  family   AssetFamily @relation(fields: [familyId], references: [id])
+
+  familyModelId String?
+  familyModel   AssetFamilyModel? @relation(fields: [familyModelId], references: [id])
+
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  tasks StandardMaintenanceTask[]
+
+  @@unique([familyId, familyModelId, serviceTypeId, sequence])
+  @@index([companyId])
+}
+
+model StandardMaintenanceTask {
+  id            String @id @default(cuid())
+  taskCode      Int    @default(0)
+  description   String
+  order         Int    @default(0)
+  executionTime Int?
+
+  planId String
+  plan   StandardMaintenancePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  steps     StandardMaintenanceTaskStep[]
+  resources StandardMaintenanceTaskResource[]
+}
+
+model StandardMaintenanceTaskStep {
+  id    String @id @default(cuid())
+  order Int    @default(0)
+
+  taskId String
+  task   StandardMaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  stepId String
+  step   GenericStep @relation(fields: [stepId], references: [id])
+}
+
+model StandardMaintenanceTaskResource {
+  id               String  @id @default(cuid())
+  resourceCount    Int     @default(1)
+  quantity         Float   @default(0)
+  unit             String  @default("H")
+  generatesReserve Boolean @default(true)
+
+  taskId String
+  task   StandardMaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+}
+
+model AssetMaintenancePlan {
+  id                  String    @id @default(cuid())
+  sequence            Int
+  name                String?
+  isStandard          Boolean   @default(false)
+  standardPlanId      String?
+  standardSequence    Int?
+  lastMaintenanceDate DateTime?
+  maintenanceTime     Int?
+  timeUnit            String?
+  period              String?
+  isActive            Boolean   @default(true)
+  toleranceDays       Int       @default(0)
+  considerPlanning    Boolean   @default(true)
+  protheusCode        String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  assetId String
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+
+  maintenanceAreaId String?
+  maintenanceArea   MaintenanceArea? @relation(fields: [maintenanceAreaId], references: [id])
+
+  maintenanceTypeId String?
+  maintenanceType   MaintenanceType? @relation(fields: [maintenanceTypeId], references: [id])
+
+  calendarId String?
+  calendar   Calendar? @relation(fields: [calendarId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  tasks      AssetMaintenanceTask[]
+  workOrders WorkOrder[]
+
+  @@unique([assetId, serviceTypeId, sequence])
+  @@index([companyId])
+  @@index([assetId])
+}
+
+model AssetMaintenanceTask {
+  id            String  @id @default(cuid())
+  taskCode      Int     @default(0)
+  description   String
+  order         Int     @default(0)
+  executionTime Int?
+  isActive      Boolean @default(true)
+
+  planId String
+  plan   AssetMaintenancePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  steps     AssetMaintenanceTaskStep[]
+  resources AssetMaintenanceTaskResource[]
+}
+
+model AssetMaintenanceTaskStep {
+  id    String @id @default(cuid())
+  order Int    @default(0)
+
+  taskId String
+  task   AssetMaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  stepId String
+  step   GenericStep @relation(fields: [stepId], references: [id])
+}
+
+model AssetMaintenanceTaskResource {
+  id               String  @id @default(cuid())
+  resourceCount    Int     @default(1)
+  quantity         Float   @default(0)
+  unit             String  @default("H")
+  generatesReserve Boolean @default(true)
+
+  taskId String
+  task   AssetMaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+}
+
+// ============================================
+// PLANEJAMENTO E PROGRAMAÇÃO
+// ============================================
+
+model MaintenancePlanExecution {
+  id             String   @id @default(cuid())
+  planNumber     Int      @default(autoincrement())
+  description    String
+  planDate       DateTime @default(now())
+  startDate      DateTime
+  endDate        DateTime
+  status         String   @default("OPEN")
+  isFinished     Boolean  @default(false)
+  costCenterFrom String?
+  costCenterTo   String?
+  workCenterFrom String?
+  workCenterTo   String?
+  serviceTypeFrom String?
+  serviceTypeTo  String?
+  areaFrom       String?
+  areaTo         String?
+  familyFrom     String?
+  familyTo       String?
+  protheusCode   String?
+  userId         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  unitId String
+  unit   Unit @relation(fields: [unitId], references: [id])
+
+  workOrders WorkOrder[]
+
+  @@index([companyId])
+  @@index([unitId])
+}
+
+model WorkOrderSchedule {
+  id             String   @id @default(cuid())
+  scheduleNumber Int      @default(autoincrement())
+  description    String
+  scheduleDate   DateTime @default(now())
+  startDate      DateTime
+  endDate        DateTime
+  status         String   @default("DRAFT")
+  protheusCode   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdById String
+  createdBy   User @relation("ScheduleCreatedBy", fields: [createdById], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  unitId String
+  unit   Unit @relation(fields: [unitId], references: [id])
+
+  items WorkOrderScheduleItem[]
+
+  @@index([companyId])
+  @@index([unitId])
+}
+
+model WorkOrderScheduleItem {
+  id            String   @id @default(cuid())
+  scheduledDate DateTime
+  status        String   @default("PENDING")
+
+  scheduleId String
+  schedule   WorkOrderSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@index([scheduleId])
+  @@index([workOrderId])
+}
+
+// ============================================
+// ORDENS DE SERVIÇO
+// ============================================
+
+model WorkOrderCategory {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  workOrders WorkOrder[]
+
+  @@index([companyId])
+}
+
+model WorkOrder {
+  id           String            @id @default(cuid())
+  customId     String?
+  externalId   String?
+  internalId   String?           @unique
+  systemStatus SystemStatus      @default(OUT_OF_SYSTEM)
+  type         WorkOrderType     @default(CORRECTIVE)
+  title        String
+  description  String?
+  priority     WorkOrderPriority @default(NONE)
+  status       WorkOrderStatus   @default(PENDING)
+  dueDate      DateTime?
+  completedOn  DateTime?
+  estimatedDuration Int?
+  actualDuration    Int?
+  archived     Boolean           @default(false)
+  feedback     String?
+
+  maintenanceFrequency MaintenanceFrequency?
+  frequencyValue       Int?
+  lastExecutionDate    DateTime?
+  nextExecutionDate    DateTime?
+
+  // Novos campos Fase 1
+  protheusCode            String?
+  protheusMaintenancePlan String?
+  plannedStartDate        DateTime?
+  sequenceNumber          Int?
+  osType                  OsType?
+  laborCost               Float     @default(0)
+  partsCost               Float     @default(0)
+  thirdPartyCost          Float     @default(0)
+  toolsCost               Float     @default(0)
+  realStopStart           DateTime?
+  realStopEnd             DateTime?
+  realMaintenanceStart    DateTime?
+  realMaintenanceEnd      DateTime?
+  executionResources      Json?
+  executionSteps          Json?
+  generateCorrectiveOS    Boolean   @default(false)
+
+  executionNotes String?
+  beforePhotoUrl String?
+  afterPhotoUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  assetId String?
+  asset   Asset? @relation(fields: [assetId], references: [id])
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  categoryId String?
+  category   WorkOrderCategory? @relation(fields: [categoryId], references: [id])
+
+  createdById String?
+  createdBy   User? @relation("CreatedBy", fields: [createdById], references: [id])
+
+  completedById String?
+  completedBy   User? @relation("CompletedBy", fields: [completedById], references: [id])
+
+  assignedToId String?
+  assignedTo   User? @relation("AssignedToUser", fields: [assignedToId], references: [id])
+
+  sourceRequestId String? @unique
+  sourceRequest   Request? @relation("GeneratedFromRequest", fields: [sourceRequestId], references: [id])
+
+  parentPreventiveMaintenanceId String?
+  parentPreventiveMaintenance   PreventiveMaintenance? @relation(fields: [parentPreventiveMaintenanceId], references: [id])
+
+  unitId String?
+  unit   Unit? @relation(fields: [unitId], references: [id])
+
+  serviceTypeId String?
+  serviceType   ServiceType? @relation(fields: [serviceTypeId], references: [id])
+
+  assetMaintenancePlanId String?
+  assetMaintenancePlan   AssetMaintenancePlan? @relation(fields: [assetMaintenancePlanId], references: [id])
+
+  maintenancePlanExecId String?
+  maintenancePlanExec   MaintenancePlanExecution? @relation(fields: [maintenancePlanExecId], references: [id])
+
+  assignedUsers   User[] @relation("WorkOrderAssignedUsers")
+  assignedTeams   Team[] @relation("WorkOrderAssignedTeams")
+  tasks           Task[]
+  labors          Labor[]
+  parts           WorkOrderPart[]
+  additionalCosts AdditionalCost[]
+  files           File[]
+  scheduleItems   WorkOrderScheduleItem[]
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([locationId])
+  @@index([status])
+  @@index([unitId])
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  label     String
+  notes     String?
+  completed Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+}
+
+model Labor {
+  id                 String   @id @default(cuid())
+  timeCategory       String?
+  duration           Int
+  hourlyRate         Float    @default(0)
+  includeToTotalCost Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  @@index([workOrderId])
+  @@index([userId])
+}
+
+model AdditionalCost {
+  id          String   @id @default(cuid())
+  description String
+  cost        Float
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+}
+
+// ============================================
+// SOLICITAÇÕES
+// ============================================
+
+model Request {
+  id                 String            @id @default(cuid())
+  title              String
+  description        String?
+  priority           WorkOrderPriority @default(NONE)
+  status             RequestStatus     @default(PENDING)
+  dueDate            DateTime?
+  teamApprovalStatus String            @default("PENDING")
+  approvedAt         DateTime?
+  rejectionReason    String?
+  convertToWorkOrder Boolean           @default(false)
+  urgency            String?
+
+  executionStartedAt   DateTime?
+  executionCompletedAt DateTime?
+  executionNotes       String?
+  beforePhotoUrl       String?
+  afterPhotoUrl        String?
+  executionData        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  assetId String?
+  asset   Asset? @relation(fields: [assetId], references: [id])
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  approvedById String?
+  approvedBy   User? @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  assignedToId String?
+  assignedTo   User? @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
+
+  createdById String?
+  createdBy   User? @relation("CreatedBy", fields: [createdById], references: [id])
+
+  teamId String?
+  team   Team? @relation(fields: [teamId], references: [id])
+
+  unitId String?
+  unit   Unit? @relation(fields: [unitId], references: [id])
+
+  workOrderId        String?    @unique
+  generatedWorkOrder WorkOrder? @relation("GeneratedFromRequest")
+
+  files File[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([teamId])
+  @@index([approvedById])
+  @@index([assignedToId])
+  @@index([status, assignedToId])
+}
+
+// ============================================
+// PEÇAS E INVENTÁRIO
+// ============================================
+
+model PartCategory {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  parts Part[]
+
+  @@index([companyId])
+}
+
+model Part {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  cost        Float    @default(0)
+  quantity    Int      @default(0)
+  minQuantity Int      @default(0)
+  barcode     String?
+  area        String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  categoryId String?
+  category   PartCategory? @relation(fields: [categoryId], references: [id])
+
+  workOrderParts     WorkOrderPart[]
+  assetParts         AssetPart[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@index([companyId])
+  @@index([categoryId])
+}
+
+model WorkOrderPart {
+  id        String   @id @default(cuid())
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  partId String
+  part   Part @relation(fields: [partId], references: [id])
+
+  @@index([workOrderId])
+  @@index([partId])
+}
+
+model AssetPart {
+  id        String   @id @default(cuid())
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assetId String
+  asset   Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  partId String
+  part   Part @relation(fields: [partId], references: [id])
+
+  @@index([assetId])
+  @@index([partId])
+}
+
+// ============================================
+// FORNECEDORES, CLIENTES E COMPRAS
+// ============================================
+
+model Vendor {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  website     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  purchaseOrders PurchaseOrder[]
+
+  @@index([companyId])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  website     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model PurchaseOrder {
+  id        String   @id @default(cuid())
+  name      String
+  notes     String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  vendorId String?
+  vendor   Vendor? @relation(fields: [vendorId], references: [id])
+
+  items PurchaseOrderItem[]
+
+  @@index([companyId])
+  @@index([vendorId])
+}
+
+model PurchaseOrderItem {
+  id        String   @id @default(cuid())
+  quantity  Int
+  unitPrice Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  partId String
+  part   Part @relation(fields: [partId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@index([partId])
+}
+
+// ============================================
+// MEDIDORES E MANUTENÇÃO PREVENTIVA LEGADA
+// ============================================
+
+model Meter {
+  id              String   @id @default(cuid())
+  name            String
+  unit            String
+  updateFrequency Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  assetId String?
+  asset   Asset? @relation(fields: [assetId], references: [id])
+
+  readings MeterReading[]
+
+  @@index([companyId])
+  @@index([assetId])
+}
+
+model MeterReading {
+  id        String   @id @default(cuid())
+  value     Float
+  date      DateTime @default(now())
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meterId String
+  meter   Meter @relation(fields: [meterId], references: [id], onDelete: Cascade)
+
+  @@index([meterId])
+}
+
+model PreventiveMaintenance {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  frequency   Int
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  workOrders WorkOrder[]
+
+  @@index([companyId])
+}
+
+// ============================================
+// ARQUIVOS E NOTIFICAÇÕES
+// ============================================
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String?
+  size      Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  requestId String?
+  request   Request? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  assetId String?
+  asset   Asset? @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+  @@index([assetId])
+  @@index([requestId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+}
+
+// ============================================
+// RAF - RELATÓRIO DE ANÁLISE DE FALHA
+// ============================================
+
+model FailureAnalysisReport {
+  id               String      @id @default(cuid())
+  rafNumber        String      @unique
+  area             String
+  equipment        String
+  occurrenceDate   DateTime
+  occurrenceTime   String
+  panelOperator    String
+  stopExtension    Boolean     @default(false)
+  failureBreakdown Boolean     @default(false)
+  productionLost   Float?
+  failureDescription String    @db.Text
+  observation      String      @db.Text
+  immediateAction  String      @db.Text
+  fiveWhys         Json
+  hypothesisTests  Json
+  failureType      FailureType @default(RANDOM)
+  actionPlan       Json
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User? @relation("RAFCreatedBy", fields: [createdById], references: [id])
+
+  unitId String?
+  unit   Unit? @relation(fields: [unitId], references: [id])
+
+  @@index([companyId])
+  @@index([createdById])
+  @@index([occurrenceDate])
+}
+
+// ============================================
+// KPI - INDICADORES
+// ============================================
+
+model KpiIndicator {
+  id           String   @id @default(cuid())
+  code         String
+  name         String
+  formula      String?
+  unit         String?
+  classCode    String?
+  className    String?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model KpiVariable {
+  id           String   @id @default(cuid())
+  code         String
+  name         String
+  functionType String?
+  functionCode String?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+// ============================================
+// GEP - GERENCIAMENTO DE VARIÁVEIS DE PROCESSO
+// ============================================
+
+model ProcessVariable {
+  id          String       @id @default(cuid())
+  sector      ProcessSector
+  tagName     String
+  description String
+  type        VariableType @default(ANALOG)
+  unit        VariableUnit @default(NONE)
+  position    Int
+  minValue    Float?
+  maxValue    Float?
+  enabled     Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  readings ProcessReading[]
+  alarms   ProcessAlarm[]
+
+  @@unique([companyId, sector, tagName])
+  @@index([companyId])
+  @@index([sector])
+  @@index([tagName])
+}
+
+model ProcessReading {
+  id        String   @id @default(cuid())
+  timestamp DateTime
+  value     Float
+  createdAt DateTime @default(now())
+
+  variableId String
+  variable   ProcessVariable @relation(fields: [variableId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([variableId])
+  @@index([timestamp])
+  @@index([companyId])
+  @@index([variableId, timestamp])
+}
+
+model ProcessAlarm {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  condition   String
+  priority    WorkOrderPriority @default(MEDIUM)
+  enabled     Boolean           @default(true)
+  emailNotify Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  variableId String
+  variable   ProcessVariable @relation(fields: [variableId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  triggers ProcessAlarmTrigger[]
+
+  @@index([companyId])
+  @@index([variableId])
+  @@index([enabled])
+}
+
+model ProcessAlarmTrigger {
+  id          String    @id @default(cuid())
+  triggeredAt DateTime  @default(now())
+  value       Float
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime?
+  notes       String?
+
+  alarmId String
+  alarm   ProcessAlarm @relation(fields: [alarmId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([alarmId])
+  @@index([companyId])
+  @@index([triggeredAt])
+}
+
+// ============================================
+// ASSET ATTACHMENTS E HISTORY
+// ============================================
+
+model AssetAttachment {
+  id          String                  @id @default(cuid())
+  name        String
+  description String?
+  category    AssetAttachmentCategory
+  url         String
+  mimeType    String?
+  size        Int?
+  version     String?
+  tags        String[]
+  isPublic    Boolean                 @default(false)
+  expiresAt   DateTime?
+  metadata    Json?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  assetId      String
+  asset        Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  uploadedById String?
+
+  @@index([assetId])
+  @@index([category])
+  @@index([createdAt])
+  @@index([assetId, category])
+}
+
+model AssetHistory {
+  id          String                @id @default(cuid())
+  eventType   AssetHistoryEventType
+  title       String
+  description String?
+  metadata    Json?
+  createdAt   DateTime              @default(now())
+
+  assetId     String
+  asset       Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  workOrderId String?
+  requestId   String?
+  fileId      String?
+  userId      String?
+
+  @@index([assetId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([assetId, createdAt])
+}
+
+model ProcessDataFile {
+  id          String        @id @default(cuid())
+  fileName    String
+  sector      ProcessSector
+  fileDate    DateTime
+  recordCount Int
+  fileSize    Int?
+  importedAt  DateTime      @default(now())
+  importedBy  String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, fileName])
+  @@index([companyId])
+  @@index([sector])
+  @@index([fileDate])
+}

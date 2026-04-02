@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+:root {
+  /* Base Colors - Fundo branco */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 10%;
+
+  /* Primary - Cinza escuro */
+  --primary: 0 0% 22%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 0 0% 15%;
+
+  /* Secondary - Cinza claro */
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 15%;
+  --secondary-hover: 0 0% 88%;
+
+  /* Accent */
+  --accent: 0 0% 94%;
+  --accent-foreground: 0 0% 15%;
+
+  /* Muted */
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+
+  /* Card */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+
+  /* Popover */
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+
+  /* Border */
+  --border: 0 0% 78%;
+  --input: 0 0% 78%;
+  --ring: 0 0% 22%;
+
+  /* Sidebar - Preto */
+  --sidebar: 0 0% 8%;
+  --sidebar-foreground: 0 0% 96%;
+  --sidebar-border: 0 0% 16%;
+  --sidebar-accent: 0 0% 18%;
+  --sidebar-muted: 0 0% 55%;
+  --sidebar-active-accent: 0 0% 60%;
+
+  /* Success - Cinza médio-escuro */
+  --success: 0 0% 35%;
+  --success-foreground: 0 0% 100%;
+  --success-light: 0 0% 95%;
+  --success-light-foreground: 0 0% 30%;
+
+  /* Warning - Cinza médio */
+  --warning: 0 0% 45%;
+  --warning-foreground: 0 0% 100%;
+  --warning-light: 0 0% 93%;
+  --warning-light-foreground: 0 0% 35%;
+
+  /* Danger - Cinza muito escuro */
+  --danger: 0 0% 25%;
+  --danger-foreground: 0 0% 100%;
+  --danger-light: 0 0% 92%;
+  --danger-light-foreground: 0 0% 20%;
+
+  /* Info - Cinza médio-claro */
+  --info: 0 0% 50%;
+  --info-foreground: 0 0% 100%;
+  --info-light: 0 0% 95%;
+  --info-light-foreground: 0 0% 35%;
+
+  /* Radius */
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-hover: hsl(var(--secondary-hover));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-light: hsl(var(--success-light));
+  --color-success-light-foreground: hsl(var(--success-light-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-light: hsl(var(--warning-light));
+  --color-warning-light-foreground: hsl(var(--warning-light-foreground));
+  --color-danger: hsl(var(--danger));
+  --color-danger-foreground: hsl(var(--danger-foreground));
+  --color-danger-light: hsl(var(--danger-light));
+  --color-danger-light-foreground: hsl(var(--danger-light-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-light: hsl(var(--info-light));
+  --color-info-light-foreground: hsl(var(--info-light-foreground));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-muted: hsl(var(--sidebar-muted));
+  --color-sidebar-active-accent: hsl(var(--sidebar-active-accent));
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 0% 75%;
+    --primary-foreground: 0 0% 5%;
+    --primary-hover: 0 0% 82%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+    --secondary-hover: 0 0% 20%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 95%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 75%;
+    --success: 0 0% 60%;
+    --success-foreground: 0 0% 5%;
+    --success-light: 0 0% 15%;
+    --success-light-foreground: 0 0% 75%;
+    --warning: 0 0% 55%;
+    --warning-foreground: 0 0% 5%;
+    --warning-light: 0 0% 15%;
+    --warning-light-foreground: 0 0% 70%;
+    --danger: 0 0% 70%;
+    --danger-foreground: 0 0% 5%;
+    --danger-light: 0 0% 15%;
+    --danger-light-foreground: 0 0% 75%;
+    --info: 0 0% 50%;
+    --info-foreground: 0 0% 5%;
+    --info-light: 0 0% 15%;
+    --info-light-foreground: 0 0% 65%;
+  }
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Animações para modais */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Scrollbar customizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 75%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 60%);
+}
+
+/* Sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 40%);
+  border-radius: 3px;
+}
+
+/* Estilos de impressão */
+@media print {
+  body {
+    background: white;
+  }
+}

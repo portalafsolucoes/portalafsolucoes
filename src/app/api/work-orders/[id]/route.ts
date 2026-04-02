@@ -1,0 +1,309 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { getSession } from '@/lib/session'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    const { data: workOrder, error } = await supabase
+      .from('WorkOrder')
+      .select(`
+        *,
+        asset:Asset(*),
+        location:Location(*),
+        createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email, image),
+        completedBy:User!WorkOrder_completedById_fkey(id, firstName, lastName, email),
+        tasks:Task(*),
+        files:File(*),
+        sourceRequest:Request(
+          *,
+          files:File(*),
+          createdBy:User!Request_createdById_fkey(id, firstName, lastName, email)
+        )
+      `)
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
+    if (error || !workOrder) {
+      console.error('Get work order error:', error)
+      return NextResponse.json(
+        { error: 'Work order not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ data: workOrder })
+  } catch (error) {
+    console.error('Get work order error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const body = await request.json()
+
+    console.log('=== Update work order body ===')
+    console.log(JSON.stringify(body, null, 2))
+
+    // Verificar se a OS existe e pertence à empresa
+    const { data: workOrder, error: findError } = await supabase
+      .from('WorkOrder')
+      .select('id')
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
+    if (findError || !workOrder) {
+      return NextResponse.json(
+        { error: 'Work order not found' },
+        { status: 404 }
+      )
+    }
+
+    // Validar assignedToId se fornecido
+    let validAssignedToId: string | null = body.assignedToId || null
+    if (validAssignedToId) {
+      const { data: assignedUser } = await supabase
+        .from('User')
+        .select('id')
+        .eq('id', validAssignedToId)
+        .eq('companyId', session.companyId)
+        .single()
+      if (!assignedUser) {
+        validAssignedToId = null
+      }
+    }
+
+    // Validar assetId se fornecido
+    let validAssetId: string | null = body.assetId || null
+    if (validAssetId) {
+      const { data: asset } = await supabase
+        .from('Asset')
+        .select('id')
+        .eq('id', validAssetId)
+        .eq('companyId', session.companyId)
+        .single()
+      if (!asset) {
+        validAssetId = null
+      }
+    }
+
+    // Validar locationId se fornecido
+    let validLocationId: string | null = body.locationId || null
+    if (validLocationId) {
+      const { data: location } = await supabase
+        .from('Location')
+        .select('id')
+        .eq('id', validLocationId)
+        .eq('companyId', session.companyId)
+        .single()
+      if (!location) {
+        validLocationId = null
+      }
+    }
+
+    // Validar categoryId se fornecido
+    let validCategoryId: string | null = body.categoryId || null
+    if (validCategoryId) {
+      const { data: category } = await supabase
+        .from('WorkOrderCategory')
+        .select('id')
+        .eq('id', validCategoryId)
+        .eq('companyId', session.companyId)
+        .single()
+      if (!category) {
+        validCategoryId = null
+      }
+    }
+
+    // Validar equipes se fornecido
+    let validTeamIds: string[] = []
+    if (body.assignedTeamIds && Array.isArray(body.assignedTeamIds)) {
+      const { data: teams } = await supabase
+        .from('Team')
+        .select('id')
+        .in('id', body.assignedTeamIds)
+        .eq('companyId', session.companyId)
+      validTeamIds = (teams || []).map((t: { id: string }) => t.id)
+    }
+
+    // Validar usuários se fornecido
+    let validUserIds: string[] = []
+    if (body.assignedUserIds && Array.isArray(body.assignedUserIds)) {
+      const { data: users } = await supabase
+        .from('User')
+        .select('id')
+        .in('id', body.assignedUserIds)
+        .eq('companyId', session.companyId)
+      validUserIds = (users || []).map((u: { id: string }) => u.id)
+    }
+
+    // Preparar dados de atualização
+    const updateData: any = {
+      title: body.title,
+      description: body.description,
+      type: body.type,
+      priority: body.priority,
+      status: body.status,
+      dueDate: body.dueDate ? new Date(body.dueDate).toISOString() : null,
+      completedOn: body.completedOn ? new Date(body.completedOn).toISOString() : null,
+      assetId: validAssetId,
+      locationId: validLocationId,
+      categoryId: validCategoryId,
+      assignedToId: validAssignedToId,
+      maintenanceFrequency: body.maintenanceFrequency || null,
+      frequencyValue: body.frequencyValue ? parseInt(body.frequencyValue) : null,
+      externalId: body.externalId || null
+    }
+
+    console.log('Update data:', JSON.stringify(updateData, null, 2))
+
+    // Atualizar a work order
+    const { data: updatedWorkOrder, error: updateError } = await supabase
+      .from('WorkOrder')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        asset:Asset(*),
+        location:Location(*),
+        category:WorkOrderCategory(*),
+        tasks:Task(*)
+      `)
+      .single()
+
+    if (updateError) throw updateError
+
+    // Processar equipes na tabela de junção
+    if (body.assignedTeamIds !== undefined) {
+      // Remover associações existentes
+      await supabase
+        .from('_WorkOrderTeams')
+        .delete()
+        .eq('A', id)
+
+      // Inserir novas associações
+      if (validTeamIds.length > 0) {
+        const teamInserts = validTeamIds.map((teamId: string) => ({
+          A: id,
+          B: teamId
+        }))
+        await supabase.from('_WorkOrderTeams').insert(teamInserts)
+      }
+    }
+
+    // Processar usuários na tabela de junção
+    if (body.assignedUserIds !== undefined) {
+      // Remover associações existentes
+      await supabase
+        .from('_WorkOrderUsers')
+        .delete()
+        .eq('A', id)
+
+      // Inserir novas associações
+      if (validUserIds.length > 0) {
+        const userInserts = validUserIds.map((userId: string) => ({
+          A: id,
+          B: userId
+        }))
+        await supabase.from('_WorkOrderUsers').insert(userInserts)
+      }
+    }
+
+    // Buscar usuários atribuídos para a resposta
+    const { data: assignedUsers } = await supabase
+      .from('_WorkOrderUsers')
+      .select('B')
+      .eq('A', id)
+
+    let assignedUserDetails: any[] = []
+    if (assignedUsers && assignedUsers.length > 0) {
+      const userIds = assignedUsers.map((u: any) => u.B)
+      const { data: users } = await supabase
+        .from('User')
+        .select('id, firstName, lastName, email')
+        .in('id', userIds)
+      assignedUserDetails = users || []
+    }
+
+    return NextResponse.json({
+      data: { ...updatedWorkOrder, assignedUsers: assignedUserDetails },
+      message: 'Work order updated successfully'
+    })
+  } catch (error) {
+    console.error('Update work order error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    // Verificar se a OS existe e pertence à empresa
+    const { data: workOrder, error: findError } = await supabase
+      .from('WorkOrder')
+      .select('id')
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
+    if (findError || !workOrder) {
+      return NextResponse.json(
+        { error: 'Work order not found' },
+        { status: 404 }
+      )
+    }
+
+    const { error: deleteError } = await supabase
+      .from('WorkOrder')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) throw deleteError
+
+    return NextResponse.json({
+      message: 'Work order deleted successfully'
+    })
+  } catch (error) {
+    console.error('Delete work order error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

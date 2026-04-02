@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nRefatoração completa do AdwTech para Next.js 16 + TypeScript\n\nMigração de arquitetura Java/Spring Boot para stack moderna:\n\n- Next.js 16 full-stack (frontend + backend integrados)\n- TypeScript com type safety completo\n- Prisma ORM com PostgreSQL\n- Autenticação session-based com bcrypt\n- Interface responsiva com TailwindCSS\n\nImplementações principais:\n- Schema Prisma com 27 modelos (Company, User, WorkOrder, Asset, Part, etc)\n- API REST completa com endpoints autenticados\n- Sistema de autenticação (register, login, logout, session)\n- Dashboard com métricas e estatísticas\n- CRUD completo para Work Orders, Assets, Parts, Locations, Teams, Requests\n- Middleware de proteção de rotas\n- Multi-tenant com isolamento por companyId\n- Componentes UI reutilizáveis (Button, Input, Card, Badge, FileUpload)\n\nDocumentação:\n- README.md atualizado com instruções completas\n- ARQUITETURA_E_BANCO.md explicando estrutura e fluxo de dados\n- IMPLEMENTACAO.md e RELATORIO_FINAL.md com detalhes da refatoração\n- CLAUDE.md para orientação de desenvolvimento futuro\n- QUICKSTART.md para início rápido\n\nMelhorias de performance:\n- Startup: ~30s → ~1s (30x mais rápido)\n- RAM usage: ~500MB → ~100MB (5x mais eficiente)\n- Build time: ~2min → ~15s (8x mais rápido)\n- Deploy simplificado (Vercel 1-click vs Docker complexo)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Read(//c/Users/adw73/Desktop/**)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(npm run dev)",
+      "Bash(git merge:*)",
+      "Bash(git checkout:*)",
+      "mcp__desktop-commander__list_directory",
+      "Bash(find '/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Elementar' -maxdepth 1 -name tailwind.config.* -o -name vite.config.* -o -name tsconfig.json)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__execute_sql",
+      "Bash(npx next:*)",
+      "Bash(taskkill //F //IM node.exe)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(node -e \":*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npm install:*)",
+      "Bash(git -C \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Área de Trabalho\\\\Sistema Portal\" status --short -u)",
+      "Bash(git -C \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Área de Trabalho\\\\Sistema Portal\" diff --stat HEAD)",
+      "Bash(git -C \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Área de Trabalho\\\\Sistema Portal\" log --oneline -5)",
+      "Bash(git -C \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Área de Trabalho\\\\Sistema Portal\" diff --stat 8d92ee9..76ba0ce)",
+      "Bash(git -C \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Área de Trabalho\\\\Sistema Portal\" remote -v)",
+      "Bash(git -C \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Área de Trabalho\\\\Sistema Portal\\\\Portal Gestão de Manutenção\\\\cmm_gestor_manutencao\" remote -v)",
+      "mcp__github__create_repository",
+      "Bash(gh auth:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

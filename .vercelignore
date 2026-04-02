@@ -1,0 +1,18 @@
+# Dev only
+tests/
+test-results/
+docs/
+scripts/
+
+# IDE & AI
+.cursor/
+.windsurf/
+.claude/
+.agents/
+.codex/
+
+# Misc
+*.ps1
+*.log
+*.md
+!README.md
