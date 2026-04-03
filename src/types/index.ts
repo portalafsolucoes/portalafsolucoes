@@ -43,19 +43,8 @@ export interface Company {
   updatedAt: Date
 }
 
-export interface Unit {
-  id: string
-  name: string
-  code?: string
-  protheusCode?: string
-  address?: string
-  phone?: string
-  email?: string
-  active: boolean
-  companyId: string
-  createdAt: Date
-  updatedAt: Date
-}
+// Unit foi removido — Location agora serve como unidade organizacional.
+// Use a interface Location para representar unidades.
 
 export interface WorkOrder {
   id: string

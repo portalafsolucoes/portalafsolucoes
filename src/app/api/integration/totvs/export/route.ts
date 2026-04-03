@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       'generic-steps': { table: 'GenericStep', select: '*', scope: 'company' },
       assets: { table: 'Asset', select: '*', scope: 'unit' },
       'work-orders': { table: 'WorkOrder', select: '*', scope: 'unit' },
-      units: { table: 'Unit', select: '*', scope: 'company' },
+      units: { table: 'Location', select: '*', scope: 'company' },
     }
 
     const config = ENTITY_MAP[entity]

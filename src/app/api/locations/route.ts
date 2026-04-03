@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     const { data: locations, error } = await supabase
       .from('Location')
-      .select('*')
+      .select('*, Asset(count), WorkOrder(count)')
       .eq('companyId', session.companyId)
       .order('name', { ascending: true })
 
@@ -20,7 +20,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
-    return NextResponse.json({ data: locations || [] })
+    const locationsWithCount = (locations || []).map((loc: Record<string, unknown>) => {
+      const { Asset, WorkOrder, ...rest } = loc
+      return {
+        ...rest,
+        _count: {
+          assets: (Asset as { count: number }[])?.[0]?.count ?? 0,
+          workOrders: (WorkOrder as { count: number }[])?.[0]?.count ?? 0,
+        },
+      }
+    })
+
+    return NextResponse.json({ data: locationsWithCount })
   } catch (error) {
     console.error('Get locations error:', error)
     return NextResponse.json(

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         asset:Asset(*),
-        location:Location(*),
+        location:Location!WorkOrder_locationId_fkey(*),
         createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email)
       `, { count: 'exact' })
       .eq('companyId', session.companyId)

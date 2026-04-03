@@ -19,7 +19,7 @@ export async function GET(
       .select(`
         *,
         asset:Asset(*),
-        location:Location(*),
+        location:Location!WorkOrder_locationId_fkey(*),
         createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email, image),
         completedBy:User!WorkOrder_completedById_fkey(id, firstName, lastName, email),
         tasks:Task(*),
@@ -189,7 +189,7 @@ export async function PATCH(
       .select(`
         *,
         asset:Asset(*),
-        location:Location(*),
+        location:Location!WorkOrder_locationId_fkey(*),
         category:WorkOrderCategory(*),
         tasks:Task(*)
       `)

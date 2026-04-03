@@ -75,7 +75,7 @@ export async function POST(
         assignedTo:User!WorkOrder_assignedToId_fkey(id, firstName, lastName, email),
         completedBy:User!WorkOrder_completedById_fkey(id, firstName, lastName, email),
         asset:Asset(*),
-        location:Location(*),
+        location:Location!WorkOrder_locationId_fkey(*),
         files:File(*)
       `)
       .single()

@@ -7,8 +7,10 @@ Fluxo: editar localmente -> salvar e enviar -> Vercel atualiza sozinho.
 import json
 import os
 import queue
+import shutil
 import subprocess
 import threading
+import time
 import webbrowser
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
@@ -94,8 +96,9 @@ class DevControlApp:
 
         self._build_ui()
         self._load_existing_process()
-        self.refresh_all()
         self.root.after(300, self._process_events)
+        # Refresh em background para a janela aparecer imediatamente
+        self.root.after(500, self.refresh_all)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # -----------------------------------------------------------------------
@@ -456,12 +459,13 @@ class DevControlApp:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def _safe_run(self, cmd: list[str]) -> str:
+    def _safe_run(self, cmd: list[str], timeout: int = 10) -> str:
         try:
             r = subprocess.run(cmd, cwd=self.repo_root, capture_output=True,
-                               text=True, encoding="utf-8", errors="replace")
+                               text=True, encoding="utf-8", errors="replace",
+                               timeout=timeout)
             return (r.stdout or r.stderr or "").strip()
-        except Exception:
+        except (subprocess.TimeoutExpired, Exception):
             return ""
 
     # -----------------------------------------------------------------------
@@ -519,29 +523,97 @@ class DevControlApp:
     # -----------------------------------------------------------------------
     # Servidor local
     # -----------------------------------------------------------------------
+    def _kill_server_process(self) -> None:
+        """Encerra o servidor e qualquer processo na porta 3000."""
+        # 1. Mata pelo PID salvo
+        pid = self._read_pid()
+        if pid:
+            self._append(f"  Encerrando servidor (PID {pid})...\n")
+            try:
+                subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                               capture_output=True, text=True,
+                               encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+        # 2. Mata qualquer processo remanescente na porta 3000
+        try:
+            result = subprocess.run(
+                ["netstat", "-ano"], capture_output=True,
+                text=True, encoding="utf-8", errors="replace",
+            )
+            for line in result.stdout.splitlines():
+                if ":3000" in line and "LISTENING" in line:
+                    parts = line.split()
+                    pid_str = parts[-1] if parts else ""
+                    if pid_str.isdigit() and pid_str != "0":
+                        self._append(f"  Encerrando processo na porta 3000 (PID {pid_str})...\n")
+                        subprocess.run(["taskkill", "/PID", pid_str, "/T", "/F"],
+                                       capture_output=True, text=True,
+                                       encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+        self.pid_path.unlink(missing_ok=True)
+        self.dev_process = None
+
+    def _clean_next_cache(self) -> bool:
+        """Remove a pasta .next. Retorna True se ficou limpa."""
+        next_dir = self.repo_root / ".next"
+        if not next_dir.exists():
+            return True
+        try:
+            shutil.rmtree(next_dir)
+            self._append("  Cache .next limpo com sucesso.\n")
+            return True
+        except Exception as exc:
+            self._append(f"  Falha ao limpar .next: {exc}\n")
+            return False
+
     def _start_server(self) -> None:
-        if self._is_server_running():
-            self._set_status("O site local ja esta rodando.")
+        if self.busy:
+            self._set_status("Aguarde o comando anterior terminar...")
             return
 
         self.busy = True
-        creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
 
-        self.dev_process = subprocess.Popen(
-            ["npm.cmd", "run", "dev"],
-            cwd=self.repo_root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL,
-            text=True, encoding="utf-8", errors="replace",
-            creationflags=creation_flags,
-        )
-        self.pid_path.write_text(str(self.dev_process.pid), encoding="utf-8")
-        self._set_status("Iniciando site local...")
-        self._append("\n========================================\n  Iniciando site local\n========================================\n$ npm run dev\n\n")
+        def worker() -> None:
+            self.event_queue.put(("log",
+                "\n========================================\n"
+                "  Iniciando site local\n"
+                "========================================\n"))
 
-        def reader() -> None:
-            assert self.dev_process is not None
+            # 1. Parar servidor anterior (se houver)
+            if self._is_server_running() or self._read_pid():
+                self.event_queue.put(("log", "\n--- Parando servidor anterior ---\n"))
+                self._kill_server_process()
+                time.sleep(2)  # Aguarda o Windows liberar os locks dos arquivos
+
+            # 2. Limpar cache .next
+            self.event_queue.put(("log", "\n--- Limpando cache de build (.next) ---\n"))
+            if not self._clean_next_cache():
+                # Tenta mais uma vez apos aguardar
+                time.sleep(2)
+                self._clean_next_cache()
+
+            # 3. Iniciar o servidor
+            self.event_queue.put(("log", "\n--- Iniciando npm run dev ---\n"))
+            self.event_queue.put(("status", "Iniciando site local..."))
+
+            creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+
+            self.dev_process = subprocess.Popen(
+                ["npm.cmd", "run", "dev"],
+                cwd=self.repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                text=True, encoding="utf-8", errors="replace",
+                creationflags=creation_flags,
+            )
+            self.pid_path.write_text(str(self.dev_process.pid), encoding="utf-8")
+
+            # Le a saida do servidor em tempo real
             try:
                 for line in self.dev_process.stdout or []:
                     self.event_queue.put(("log", line))
@@ -549,25 +621,18 @@ class DevControlApp:
                 self.event_queue.put(("refresh", ""))
                 self.event_queue.put(("done", ""))
 
-        self.log_reader_thread = threading.Thread(target=reader, daemon=True)
-        self.log_reader_thread.start()
-        self.root.after(2000, self.refresh_all)
+        threading.Thread(target=worker, daemon=True).start()
+        self.root.after(3000, self.refresh_all)
 
     def _stop_server(self) -> None:
-        pid = self._read_pid()
-        if not pid:
+        if not self._is_server_running() and not self._read_pid():
             self._set_status("O site local nao esta rodando.")
             return
 
-        self._append(f"\n--- Parando site local (PID {pid}) ---\n")
-        try:
-            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
-                           capture_output=True, text=True,
-                           encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        self.pid_path.unlink(missing_ok=True)
-        self.dev_process = None
+        self._append("\n========================================\n"
+                     "  Parando site local\n"
+                     "========================================\n")
+        self._kill_server_process()
         self.refresh_all()
         self._set_status("Site local parado.")
 
@@ -611,10 +676,14 @@ class DevControlApp:
         pid = self._read_pid()
         if not pid:
             return False
-        r = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
-                           capture_output=True, text=True,
-                           encoding="utf-8", errors="replace")
-        return str(pid) in r.stdout
+        try:
+            r = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
+                               capture_output=True, text=True,
+                               encoding="utf-8", errors="replace",
+                               timeout=5)
+            return str(pid) in r.stdout
+        except (subprocess.TimeoutExpired, Exception):
+            return False
 
     def _read_pid(self) -> int | None:
         if not self.pid_path.exists():

@@ -46,15 +46,12 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Buscar unidades
-    let unitsQuery = supabase
-      .from('Unit')
-      .select('id, name, code, active')
+    // Buscar unidades (agora são Localizações)
+    const { data: units, error: unitsError } = await supabase
+      .from('Location')
+      .select('id, name, address')
       .eq('companyId', session.companyId)
-      .eq('active', true)
       .order('name')
-
-    const { data: units, error: unitsError } = await unitsQuery
     if (unitsError) throw unitsError
 
     // Se especificou unitId, buscar áreas e ativos dessa unidade

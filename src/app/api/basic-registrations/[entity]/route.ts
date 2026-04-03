@@ -8,6 +8,7 @@ const ENTITY_CONFIG: Record<string, {
   scope: 'company' | 'unit' | 'child'  // company = compartilhado, unit = por unidade, child = filho (sem companyId direto)
   requiredFields: string[]
   orderBy?: string
+  selectQuery?: string  // Query customizada para incluir relações (Supabase select syntax)
 }> = {
   calendars: {
     table: 'Calendar',
@@ -32,6 +33,7 @@ const ENTITY_CONFIG: Record<string, {
     scope: 'unit',
     requiredFields: ['name', 'unitId'],
     orderBy: 'name',
+    selectQuery: '*, calendar:Calendar(name)',
   },
   'asset-families': {
     table: 'AssetFamily',
@@ -114,7 +116,7 @@ export async function GET(
 
     let query = supabase
       .from(config.table)
-      .select('*')
+      .select(config.selectQuery || '*')
 
     if (config.scope === 'company') {
       query = query.eq('companyId', session.companyId)
@@ -144,7 +146,16 @@ export async function GET(
       return NextResponse.json({ error: 'Erro ao buscar dados' }, { status: 500 })
     }
 
-    return NextResponse.json({ data: data || [] })
+    // Achatar relações para exibição na tabela
+    let result = data || []
+    if (entity === 'work-centers') {
+      result = result.map((item: any) => ({
+        ...item,
+        calendarName: item.calendar?.name || '—',
+      }))
+    }
+
+    return NextResponse.json({ data: result })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
@@ -180,8 +191,11 @@ export async function POST(
       }
     }
 
-    // Adicionar companyId para entidades compartilhadas
-    if (config.scope === 'company') {
+    // Definir updatedAt (Prisma @updatedAt não gera default no banco)
+    body.updatedAt = new Date().toISOString()
+
+    // Adicionar companyId para entidades que precisam
+    if (config.scope === 'company' || entity === 'work-centers') {
       body.companyId = session.companyId
     }
 

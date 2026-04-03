@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       'MaintenanceType', 'MaintenanceArea', 'ServiceType', 'Calendar',
       'CostCenter', 'WorkCenter', 'AssetFamily', 'AssetFamilyModel',
       'Position', 'Characteristic', 'Resource', 'GenericTask', 'GenericStep',
-      'Asset', 'Unit',
+      'Asset', 'Location',
     ]
 
     if (!ALLOWED_ENTITIES.includes(entity)) {

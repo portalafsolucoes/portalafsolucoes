@@ -11,12 +11,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Acesso restrito ao Super Admin' }, { status: 403 })
     }
 
-    // Buscar todas as unidades
+    // Buscar todas as unidades (agora são Localizações)
     const { data: units } = await supabase
-      .from('Unit')
-      .select('id, name, code, active')
+      .from('Location')
+      .select('id, name, address')
       .eq('companyId', session.companyId)
-      .eq('active', true)
       .order('name')
 
     const unitSummaries = []
@@ -57,7 +56,7 @@ export async function GET() {
       const preventives = woList.filter(w => w.type === 'PREVENTIVE').length
 
       unitSummaries.push({
-        unit: { id: unit.id, name: unit.name, code: unit.code },
+        unit: { id: unit.id, name: unit.name },
         assets: assetCount || 0,
         users: userCount || 0,
         pendingRequests: pendingRequests || 0,

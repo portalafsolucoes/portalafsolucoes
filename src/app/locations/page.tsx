@@ -84,8 +84,8 @@ export default function LocationsPage() {
                     </div>
                   </div>
                   <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
-                    <span>{location._count.assets} Ativos</span>
-                    <span>{location._count.workOrders} Ordens</span>
+                    <span>{location._count?.assets ?? 0} Ativos</span>
+                    <span>{location._count?.workOrders ?? 0} Ordens</span>
                   </div>
                 </CardContent>
               </Card>

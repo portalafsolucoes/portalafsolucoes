@@ -25,9 +25,10 @@ interface CrudTableProps {
   columns: { key: string; label: string; render?: (value: any, row: any) => React.ReactNode }[]
   unitScoped?: boolean // Se precisa de unitId
   selectedUnitId?: string
+  customModalRender?: (props: { editingItem: any | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
 }
 
-export function CrudTable({ entity, title, fields, columns, unitScoped, selectedUnitId }: CrudTableProps) {
+export function CrudTable({ entity, title, fields, columns, unitScoped, selectedUnitId, customModalRender }: CrudTableProps) {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -139,8 +140,15 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
     })
   })
 
+  const noUnitSelected = unitScoped && !selectedUnitId
+
   return (
     <div>
+      {noUnitSelected && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+          Selecione uma unidade para visualizar e gerenciar os registros desta aba.
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="relative flex-1 w-full sm:max-w-xs">
@@ -167,14 +175,14 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Excel</span>
           </button>
-          <Button onClick={openCreate} size="sm">
+          <Button onClick={openCreate} size="sm" disabled={noUnitSelected}>
             <Plus className="h-4 w-4 mr-1" /> Novo
           </Button>
         </div>
       </div>
 
       {/* Table */}
-      {loading ? (
+      {noUnitSelected ? null : loading ? (
         <div className="text-center py-8 text-muted-foreground">Carregando...</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground border border-border rounded-lg bg-card">
@@ -227,80 +235,88 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
       )}
 
       {/* Modal de Criação/Edição */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingItem ? `Editar ${title}` : `Novo ${title}`}
-        size="md"
-      >
-        <div className="space-y-4">
-          {error && (
-            <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          {fields.filter(f => !f.readOnly || editingItem).map(field => (
-            <div key={field.key}>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                {field.label} {field.required && <span className="text-danger">*</span>}
-              </label>
-              {field.type === 'select' ? (
-                <select
-                  value={formData[field.key] || ''}
-                  onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-                  disabled={field.readOnly}
-                >
-                  <option value="">Selecione...</option>
-                  {field.options?.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              ) : field.type === 'textarea' ? (
-                <textarea
-                  value={formData[field.key] || ''}
-                  onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
-                  placeholder={field.placeholder}
-                  rows={3}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-                  readOnly={field.readOnly}
-                />
-              ) : field.type === 'checkbox' ? (
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={!!formData[field.key]}
-                    onChange={e => setFormData({ ...formData, [field.key]: e.target.checked })}
-                    className="rounded border-border"
-                    disabled={field.readOnly}
-                  />
-                  <span className="text-sm text-muted-foreground">{field.placeholder || 'Sim'}</span>
+      {customModalRender ? (
+        showModal && customModalRender({
+          editingItem,
+          onClose: () => setShowModal(false),
+          onSaved: fetchItems,
+        })
+      ) : (
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title={editingItem ? `Editar ${title}` : `Novo ${title}`}
+          size="md"
+        >
+          <div className="space-y-4">
+            {error && (
+              <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            {fields.filter(f => !f.readOnly || editingItem).map(field => (
+              <div key={field.key}>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  {field.label} {field.required && <span className="text-danger">*</span>}
                 </label>
-              ) : (
-                <input
-                  type={field.type}
-                  value={formData[field.key] ?? ''}
-                  onChange={e => setFormData({
-                    ...formData,
-                    [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value
-                  })}
-                  placeholder={field.placeholder}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-                  readOnly={field.readOnly}
-                />
-              )}
+                {field.type === 'select' ? (
+                  <select
+                    value={formData[field.key] || ''}
+                    onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                    disabled={field.readOnly}
+                  >
+                    <option value="">Selecione...</option>
+                    {field.options?.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : field.type === 'textarea' ? (
+                  <textarea
+                    value={formData[field.key] || ''}
+                    onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
+                    placeholder={field.placeholder}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                    readOnly={field.readOnly}
+                  />
+                ) : field.type === 'checkbox' ? (
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!formData[field.key]}
+                      onChange={e => setFormData({ ...formData, [field.key]: e.target.checked })}
+                      className="rounded border-border"
+                      disabled={field.readOnly}
+                    />
+                    <span className="text-sm text-muted-foreground">{field.placeholder || 'Sim'}</span>
+                  </label>
+                ) : (
+                  <input
+                    type={field.type}
+                    value={formData[field.key] ?? ''}
+                    onChange={e => setFormData({
+                      ...formData,
+                      [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value
+                    })}
+                    placeholder={field.placeholder}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                    readOnly={field.readOnly}
+                  />
+                )}
+              </div>
+            ))}
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+              <Button variant="outline" onClick={() => setShowModal(false)} size="sm">
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving} size="sm">
+                {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
+              </Button>
             </div>
-          ))}
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowModal(false)} size="sm">
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving} size="sm">
-              {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
-            </Button>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </div>
   )
 }

@@ -185,7 +185,7 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  units                  Unit[]
+  // units removido — Location agora serve como unidade
   users                  User[]
   workOrders             WorkOrder[]
   assets                 Asset[]
@@ -209,6 +209,7 @@ model Company {
   processDataFiles       ProcessDataFile[]
   // Cadastros Básicos (compartilhados entre unidades)
   calendars              Calendar[]
+  workCenters            WorkCenter[]
   costCenters            CostCenter[]
   assetFamilies          AssetFamily[]
   positions              Position[]
@@ -228,34 +229,8 @@ model Company {
   kpiVariables             KpiVariable[]
 }
 
-model Unit {
-  id           String   @id @default(cuid())
-  name         String
-  code         String?
-  protheusCode String?
-  address      String?
-  phone        String?
-  email        String?
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  users                     User[]
-  assets                    Asset[]
-  workOrders                WorkOrder[]
-  requests                  Request[]
-  areas                     Area[]
-  workCenters               WorkCenter[]
-  rafs                      FailureAnalysisReport[]
-  maintenancePlanExecutions MaintenancePlanExecution[]
-  workOrderSchedules        WorkOrderSchedule[]
-
-  @@index([companyId])
-  @@unique([companyId, protheusCode])
-}
+// Unit foi removido — Localizações (Location) agora servem como unidades organizacionais.
+// As colunas unitId em todas as tabelas agora referenciam Location(id).
 
 model User {
   id                String   @id @default(cuid())
@@ -279,10 +254,10 @@ model User {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   locationId String?
-  location   Location? @relation(fields: [locationId], references: [id])
+  location   Location? @relation("LocationUsers", fields: [locationId], references: [id])
 
   unitId String?
-  unit   Unit?   @relation(fields: [unitId], references: [id])
+  unit   Location? @relation("UnitUsers", fields: [unitId], references: [id])
 
   assignedWorkOrders         WorkOrder[]  @relation("WorkOrderAssignedUsers")
   directlyAssignedWorkOrders WorkOrder[]  @relation("AssignedToUser")
@@ -357,10 +332,22 @@ model Location {
   parent   Location?  @relation("ChildLocations", fields: [parentId], references: [id])
   children Location[] @relation("ChildLocations")
 
-  assets     Asset[]
-  workOrders WorkOrder[]
-  requests   Request[]
-  users      User[]
+  // Relações via locationId
+  assets     Asset[]     @relation("LocationAssets")
+  workOrders WorkOrder[] @relation("LocationWorkOrders")
+  requests   Request[]   @relation("LocationRequests")
+  users      User[]      @relation("LocationUsers")
+
+  // Relações via unitId (Location como unidade organizacional)
+  unitAssets             Asset[]                   @relation("UnitAssets")
+  unitWorkOrders         WorkOrder[]               @relation("UnitWorkOrders")
+  unitRequests           Request[]                 @relation("UnitRequests")
+  unitUsers              User[]                    @relation("UnitUsers")
+  areas                  Area[]
+  workCenters            WorkCenter[]
+  rafs                   FailureAnalysisReport[]
+  maintenancePlanExecutions MaintenancePlanExecution[]
+  workOrderSchedules     WorkOrderSchedule[]
 
   @@index([companyId])
 }
@@ -384,6 +371,7 @@ model Calendar {
 
   standardMaintenancePlans StandardMaintenancePlan[]
   assetMaintenancePlans    AssetMaintenancePlan[]
+  workCenters              WorkCenter[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -397,7 +385,7 @@ model Area {
   updatedAt   DateTime @updatedAt
 
   unitId String
-  unit   Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unit   Location @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
   workCenters WorkCenter[]
   assets      Asset[]
@@ -427,18 +415,18 @@ model WorkCenter {
   id           String   @id @default(cuid())
   name         String
   description  String?
-  hoursPerDay  Float    @default(8)
-  hoursPerSat  Float    @default(0)
-  hoursPerSun  Float    @default(0)
   protheusCode String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  calendarId String?
+  calendar   Calendar? @relation(fields: [calendarId], references: [id])
 
   areaId String?
   area   Area? @relation(fields: [areaId], references: [id])
 
   unitId String
-  unit   Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unit   Location @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
   costCenterId String?
   costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
@@ -697,7 +685,7 @@ model Asset {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   locationId String?
-  location   Location? @relation(fields: [locationId], references: [id])
+  location   Location? @relation("LocationAssets", fields: [locationId], references: [id])
 
   categoryId String?
   category   AssetCategory? @relation(fields: [categoryId], references: [id])
@@ -710,7 +698,7 @@ model Asset {
   childAssets   Asset[] @relation("ChildAssets")
 
   unitId String?
-  unit   Unit? @relation(fields: [unitId], references: [id])
+  unit   Location? @relation("UnitAssets", fields: [unitId], references: [id])
 
   areaId String?
   assetArea Area? @relation(fields: [areaId], references: [id])
@@ -992,7 +980,7 @@ model MaintenancePlanExecution {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   unitId String
-  unit   Unit @relation(fields: [unitId], references: [id])
+  unit   Location @relation(fields: [unitId], references: [id])
 
   workOrders WorkOrder[]
 
@@ -1019,7 +1007,7 @@ model WorkOrderSchedule {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   unitId String
-  unit   Unit @relation(fields: [unitId], references: [id])
+  unit   Location @relation(fields: [unitId], references: [id])
 
   items WorkOrderScheduleItem[]
 
@@ -1115,7 +1103,7 @@ model WorkOrder {
   asset   Asset? @relation(fields: [assetId], references: [id])
 
   locationId String?
-  location   Location? @relation(fields: [locationId], references: [id])
+  location   Location? @relation("LocationWorkOrders", fields: [locationId], references: [id])
 
   categoryId String?
   category   WorkOrderCategory? @relation(fields: [categoryId], references: [id])
@@ -1136,7 +1124,7 @@ model WorkOrder {
   parentPreventiveMaintenance   PreventiveMaintenance? @relation(fields: [parentPreventiveMaintenanceId], references: [id])
 
   unitId String?
-  unit   Unit? @relation(fields: [unitId], references: [id])
+  unit   Location? @relation("UnitWorkOrders", fields: [unitId], references: [id])
 
   serviceTypeId String?
   serviceType   ServiceType? @relation(fields: [serviceTypeId], references: [id])
@@ -1245,7 +1233,7 @@ model Request {
   asset   Asset? @relation(fields: [assetId], references: [id])
 
   locationId String?
-  location   Location? @relation(fields: [locationId], references: [id])
+  location   Location? @relation("LocationRequests", fields: [locationId], references: [id])
 
   approvedById String?
   approvedBy   User? @relation("ApprovedBy", fields: [approvedById], references: [id])
@@ -1260,7 +1248,7 @@ model Request {
   team   Team? @relation(fields: [teamId], references: [id])
 
   unitId String?
-  unit   Unit? @relation(fields: [unitId], references: [id])
+  unit   Location? @relation("UnitRequests", fields: [unitId], references: [id])
 
   workOrderId        String?    @unique
   generatedWorkOrder WorkOrder? @relation("GeneratedFromRequest")
@@ -1558,7 +1546,7 @@ model FailureAnalysisReport {
   createdBy   User? @relation("RAFCreatedBy", fields: [createdById], references: [id])
 
   unitId String?
-  unit   Unit? @relation(fields: [unitId], references: [id])
+  unit   Location? @relation(fields: [unitId], references: [id])
 
   @@index([companyId])
   @@index([createdById])

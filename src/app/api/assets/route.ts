@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
       .from('Asset')
       .select(`
         *,
-        location:Location(*),
+        location:Location!Asset_locationId_fkey(*),
         category:Category(*),
         primaryUser:User(id, firstName, lastName, email),
         files:File(*)

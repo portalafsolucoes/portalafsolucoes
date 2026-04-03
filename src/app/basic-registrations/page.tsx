@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { CrudTable, FieldConfig } from '@/components/basic-registrations/CrudTable'
+import { CalendarModal } from '@/components/basic-registrations/CalendarModal'
 import { Settings2 } from 'lucide-react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
@@ -18,6 +19,7 @@ interface TabConfig {
   unitScoped?: boolean
   fields: FieldConfig[]
   columns: { key: string; label: string; render?: (value: any, row: any) => React.ReactNode }[]
+  customModalRender?: (props: { editingItem: any | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
 }
 
 export default function BasicRegistrationsPage() {
@@ -32,10 +34,10 @@ export default function BasicRegistrationsPage() {
   const [maintenanceTypes, setMaintenanceTypes] = useState<any[]>([])
   const [maintenanceAreas, setMaintenanceAreas] = useState<any[]>([])
   const [assetFamilies, setAssetFamilies] = useState<any[]>([])
+  const [calendars, setCalendars] = useState<any[]>([])
 
   useEffect(() => {
     checkAccess()
-    loadDependencies()
   }, [])
 
   const checkAccess = async () => {
@@ -49,6 +51,7 @@ export default function BasicRegistrationsPage() {
         return
       }
       setLoading(false)
+      loadDependencies()
     } catch {
       router.push('/login')
     }
@@ -56,20 +59,24 @@ export default function BasicRegistrationsPage() {
 
   const loadDependencies = async () => {
     try {
-      const [unitsRes, mtRes, maRes, afRes] = await Promise.all([
+      const [unitsRes, mtRes, maRes, afRes, calRes] = await Promise.all([
         fetch('/api/units'),
         fetch('/api/basic-registrations/maintenance-types'),
         fetch('/api/basic-registrations/maintenance-areas'),
         fetch('/api/basic-registrations/asset-families'),
+        fetch('/api/basic-registrations/calendars'),
       ])
-      const [unitsData, mtData, maData, afData] = await Promise.all([
-        unitsRes.json(), mtRes.json(), maRes.json(), afRes.json()
+      const [unitsData, mtData, maData, afData, calData] = await Promise.all([
+        unitsRes.json(), mtRes.json(), maRes.json(), afRes.json(), calRes.json()
       ])
       setUnits(unitsData.data || [])
       setMaintenanceTypes(mtData.data || [])
       setMaintenanceAreas(maData.data || [])
       setAssetFamilies(afData.data || [])
-    } catch { /* ignore */ }
+      setCalendars(calData.data || [])
+    } catch (err) {
+      console.error('Erro ao carregar dependências:', err)
+    }
   }
 
   const canEdit = userRole && hasPermission(userRole as UserRole, 'basic-registrations', 'create')
@@ -124,20 +131,13 @@ export default function BasicRegistrationsPage() {
     },
     {
       key: 'calendars', label: 'Calendários', entity: 'calendars',
-      fields: [
-        { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Calendário Operacional' },
-        { key: 'description', label: 'Descrição', type: 'textarea' },
-        { key: 'type', label: 'Tipo', type: 'select', defaultValue: 'WORK', options: [
-          { value: 'WORK', label: 'Trabalho' },
-          { value: 'EQUIPMENT', label: 'Equipamento' },
-        ]},
-        { key: 'protheusCode', label: 'Código Protheus', type: 'text', placeholder: 'Ex: M03' },
-      ],
+      fields: [],
       columns: [
         { key: 'name', label: 'Nome' },
-        { key: 'type', label: 'Tipo', render: (v: string) => v === 'WORK' ? 'Trabalho' : 'Equipamento' },
+        { key: 'type', label: 'Tipo', render: (v: string) => v === 'WORK' ? 'Mão de Obra' : 'Equipamento' },
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
+      customModalRender: (props) => <CalendarModal {...props} />,
     },
     {
       key: 'cost-centers', label: 'Centros de Custos', entity: 'cost-centers',
@@ -168,14 +168,15 @@ export default function BasicRegistrationsPage() {
       fields: [
         { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Britagem - Grupo A' },
         { key: 'description', label: 'Descrição', type: 'textarea' },
-        { key: 'hoursPerDay', label: 'Horas/Dia', type: 'number', defaultValue: 8 },
-        { key: 'hoursPerSat', label: 'Horas/Sábado', type: 'number', defaultValue: 0 },
-        { key: 'hoursPerSun', label: 'Horas/Domingo', type: 'number', defaultValue: 0 },
+        { key: 'calendarId', label: 'Calendário', type: 'select', options: [
+          { value: '', label: 'Nenhum' },
+          ...calendars.map(c => ({ value: c.id, label: c.name })),
+        ]},
         { key: 'protheusCode', label: 'Código Protheus', type: 'text', placeholder: 'Ex: UTI001' },
       ],
       columns: [
         { key: 'name', label: 'Nome' },
-        { key: 'hoursPerDay', label: 'H/Dia' },
+        { key: 'calendarName', label: 'Calendário' },
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
     },
@@ -351,6 +352,7 @@ export default function BasicRegistrationsPage() {
             columns={currentTab.columns}
             unitScoped={currentTab.unitScoped}
             selectedUnitId={selectedUnitId}
+            customModalRender={currentTab.customModalRender}
           />
         )}
       </div>

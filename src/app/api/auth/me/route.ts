@@ -18,7 +18,7 @@ export async function GET() {
       .select(`
         *,
         company:Company(*),
-        location:Location(*)
+        location:Location!User_locationId_fkey(*)
       `)
       .eq('id', session.id)
       .single()
