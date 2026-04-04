@@ -22,12 +22,18 @@ import {
   Settings2,
   CalendarClock,
   CalendarDays,
-  TrendingUp
+  TrendingUp,
+  ChevronDown
 } from 'lucide-react'
-import { useState, useEffect, type ComponentType } from 'react'
+import { useState, useEffect, type ComponentType, type ReactNode } from 'react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { APP_LOGO_PATH, APP_NAME, APP_SHORT_NAME } from '@/lib/branding'
+
+type SidebarSubItem = {
+  name: string
+  href: string
+}
 
 type SidebarMenuItem = {
   name: string
@@ -37,6 +43,7 @@ type SidebarMenuItem = {
   requireApprove?: boolean
   badge?: number
   adminOnly?: boolean
+  subItems?: SidebarSubItem[]
 }
 
 export function Sidebar() {
@@ -46,14 +53,16 @@ export function Sidebar() {
   const [userRole, setUserRole] = useState<string>('')
   const [pendingCount, setPendingCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
+  // Carrega dados do usuário apenas uma vez (não a cada navegação)
   useEffect(() => {
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
         if (data.user) {
           setUserRole(data.user.role)
-          
+
           if (data.user.role === 'SUPER_ADMIN' || data.user.role === 'GESTOR') {
             fetch('/api/requests/pending')
               .then(res => res.json())
@@ -67,14 +76,43 @@ export function Sidebar() {
         }
       })
       .catch(() => {})
-  }, [pathname])
+  }, [])
+
+  // Atualiza contagem de pendentes periodicamente (a cada 60s) sem bloquear navegação
+  useEffect(() => {
+    if (!userRole || (userRole !== 'SUPER_ADMIN' && userRole !== 'GESTOR')) return
+    const interval = setInterval(() => {
+      fetch('/api/requests/pending')
+        .then(res => res.json())
+        .then(pendingData => {
+          if (pendingData.data) setPendingCount(pendingData.data.length)
+        })
+        .catch(() => {})
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [userRole])
 
   // Menu na ordem definida no documento de requisitos (15 itens)
   const allMenus: SidebarMenuItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, module: 'dashboard' },
     { name: 'Árvore', href: '/tree', icon: GitBranch, module: 'tree' },
     { name: 'Pessoas/Equipes', href: '/people-teams', icon: Users, module: 'people-teams' },
-    { name: 'Cadastros Básicos', href: '/basic-registrations', icon: Settings2, module: 'basic-registrations' },
+    { name: 'Cadastros Básicos', href: '/basic-registrations', icon: Settings2, module: 'basic-registrations', subItems: [
+      { name: 'Tipos de Manutenção', href: '/basic-registrations/maintenance-types' },
+      { name: 'Áreas de Manutenção', href: '/basic-registrations/maintenance-areas' },
+      { name: 'Tipos de Serviço', href: '/basic-registrations/service-types' },
+      { name: 'Calendários', href: '/basic-registrations/calendars' },
+      { name: 'Centros de Custos', href: '/basic-registrations/cost-centers' },
+      { name: 'Áreas', href: '/basic-registrations/areas' },
+      { name: 'Centros de Trabalho', href: '/basic-registrations/work-centers' },
+      { name: 'Tipos Modelo', href: '/basic-registrations/asset-family-models' },
+      { name: 'Famílias de Bens', href: '/basic-registrations/asset-families' },
+      { name: 'Posições', href: '/basic-registrations/positions' },
+      { name: 'Recursos', href: '/basic-registrations/resources' },
+      { name: 'Tarefas Genéricas', href: '/basic-registrations/generic-tasks' },
+      { name: 'Etapas Genéricas', href: '/basic-registrations/generic-steps' },
+      { name: 'Características', href: '/basic-registrations/characteristics' },
+    ]},
     { name: 'Ativos', href: '/assets', icon: Box, module: 'assets' },
     { name: 'Criticidade de Ativos', href: '/criticality', icon: AlertTriangle, module: 'criticality' },
     { name: 'Plano de Manutenção', href: '/maintenance-plan', icon: CalendarClock, module: 'maintenance-plan' },
@@ -105,6 +143,21 @@ export function Sidebar() {
     // Caso contrário, verificar permissão de visualizar
     return hasPermission(userRole as UserRole, menu.module, 'view')
   })
+
+  // Auto-expand menus based on current path
+  useEffect(() => {
+    navigation.forEach(item => {
+      if (item.subItems && pathname.startsWith(item.href)) {
+        setExpandedMenus(prev => prev.includes(item.name) ? prev : [...prev, item.name])
+      }
+    })
+  }, [pathname, userRole])
+
+  const toggleExpanded = (name: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    )
+  }
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -157,7 +210,7 @@ export function Sidebar() {
                         fill
                         className="object-contain object-left"
                         priority
-                        unoptimized
+                        sizes="(max-width: 1024px) 200px, 160px"
                       />
                     </div>
                   </Link>
@@ -215,7 +268,69 @@ export function Sidebar() {
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          const hasSubItems = item.subItems && item.subItems.length > 0
+          const isExpanded = expandedMenus.includes(item.name)
+          const isActive = hasSubItems
+            ? pathname.startsWith(item.href)
+            : pathname === item.href
+
+          if (hasSubItems) {
+            return (
+              <div key={item.name}>
+                {/* Parent item - toggles expansion */}
+                <button
+                  onClick={() => {
+                    if (isCollapsed) {
+                      setIsCollapsed(false)
+                      setExpandedMenus(prev => prev.includes(item.name) ? prev : [...prev, item.name])
+                    } else {
+                      toggleExpanded(item.name)
+                    }
+                  }}
+                  className={`w-full group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative ${
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-foreground shadow-lg border-l-2 border-sidebar-active-accent'
+                      : 'text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
+                  }`}
+                  title={isCollapsed ? item.name : ''}
+                >
+                  <Icon className={`${isCollapsed ? '' : 'mr-3'} h-5 w-5 flex-shrink-0 ${
+                    isActive ? 'text-sidebar-foreground' : 'text-sidebar-muted group-hover:text-sidebar-foreground'
+                  }`} />
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">{item.name}</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </>
+                  )}
+                </button>
+
+                {/* Sub-items */}
+                {!isCollapsed && isExpanded && (
+                  <div className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-3">
+                    {item.subItems!.map(sub => {
+                      const isSubActive = pathname === sub.href
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`block px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
+                            isSubActive
+                              ? 'bg-sidebar-accent text-sidebar-foreground'
+                              : 'text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
+                          }`}
+                        >
+                          {sub.name}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          }
+
           return (
             <Link
               key={item.name}

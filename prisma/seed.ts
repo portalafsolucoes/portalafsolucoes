@@ -44,7 +44,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Marcos',
         lastName: 'Lima',
         username: 'admin.valenorte',
-        role: 'ADMIN',
+        role: 'GESTOR',
         jobTitle: 'Administrador',
       },
       {
@@ -52,7 +52,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Joao',
         lastName: 'Ferreira',
         username: 'tecnico.valenorte',
-        role: 'TECHNICIAN',
+        role: 'MECANICO',
         jobTitle: 'Tecnico de Manutencao',
       },
       {
@@ -60,7 +60,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Paula',
         lastName: 'Santos',
         username: 'tecnico.limitado.valenorte',
-        role: 'LIMITED_TECHNICIAN',
+        role: 'ELETRICISTA',
         jobTitle: 'Tecnica Limitada',
       },
       {
@@ -68,7 +68,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Ana',
         lastName: 'Souza',
         username: 'solicitante.valenorte',
-        role: 'REQUESTER',
+        role: 'OPERADOR',
         jobTitle: 'Solicitante',
       },
       {
@@ -76,7 +76,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Bruno',
         lastName: 'Almeida',
         username: 'consulta.valenorte',
-        role: 'VIEW_ONLY',
+        role: 'OPERADOR',
         jobTitle: 'Visualizador',
       },
     ],
@@ -101,7 +101,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Marcos',
         lastName: 'Lima',
         username: 'admin.polimix',
-        role: 'ADMIN',
+        role: 'GESTOR',
         jobTitle: 'Administrador',
       },
       {
@@ -109,7 +109,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Joao',
         lastName: 'Ferreira',
         username: 'tecnico.polimix',
-        role: 'TECHNICIAN',
+        role: 'MECANICO',
         jobTitle: 'Tecnico de Manutencao',
       },
       {
@@ -117,7 +117,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Paula',
         lastName: 'Santos',
         username: 'tecnico.limitado.polimix',
-        role: 'LIMITED_TECHNICIAN',
+        role: 'ELETRICISTA',
         jobTitle: 'Tecnica Limitada',
       },
       {
@@ -125,7 +125,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Ana',
         lastName: 'Souza',
         username: 'solicitante.polimix',
-        role: 'REQUESTER',
+        role: 'OPERADOR',
         jobTitle: 'Solicitante',
       },
       {
@@ -133,7 +133,7 @@ const seedCompanies: SeedCompany[] = [
         firstName: 'Bruno',
         lastName: 'Almeida',
         username: 'consulta.polimix',
-        role: 'VIEW_ONLY',
+        role: 'OPERADOR',
         jobTitle: 'Visualizador',
       },
     ],

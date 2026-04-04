@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -8,14 +9,16 @@ import { Plus, Search, LayoutGrid, Table2, Filter } from 'lucide-react'
 import { getStatusColor } from '@/lib/utils'
 import { AssetTree } from '@/components/assets/AssetTree'
 import { AssetTable } from '@/components/assets/AssetTable'
-import { AssetDetailPanel } from '@/components/assets/AssetDetailPanel'
-import { AssetEditPanel } from '@/components/assets/AssetEditPanel'
-import { AssetCreatePanel } from '@/components/assets/AssetCreatePanel'
-import { AssetDetailModal } from '@/components/assets/AssetDetailModal'
-import { AssetEditModal } from '@/components/assets/AssetEditModal'
-import { AssetCreateModal } from '@/components/assets/AssetCreateModal'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { ExportButton } from '@/components/ui/ExportButton'
+
+// Lazy load: modais e painéis só carregam quando necessário
+const AssetDetailPanel = dynamic(() => import('@/components/assets/AssetDetailPanel').then(m => ({ default: m.AssetDetailPanel })), { ssr: false })
+const AssetEditPanel = dynamic(() => import('@/components/assets/AssetEditPanel').then(m => ({ default: m.AssetEditPanel })), { ssr: false })
+const AssetCreatePanel = dynamic(() => import('@/components/assets/AssetCreatePanel').then(m => ({ default: m.AssetCreatePanel })), { ssr: false })
+const AssetDetailModal = dynamic(() => import('@/components/assets/AssetDetailModal').then(m => ({ default: m.AssetDetailModal })), { ssr: false })
+const AssetEditModal = dynamic(() => import('@/components/assets/AssetEditModal').then(m => ({ default: m.AssetEditModal })), { ssr: false })
+const AssetCreateModal = dynamic(() => import('@/components/assets/AssetCreateModal').then(m => ({ default: m.AssetCreateModal })), { ssr: false })
 
 type ViewMode = 'tree' | 'table'
 

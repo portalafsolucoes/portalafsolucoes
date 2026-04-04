@@ -212,6 +212,7 @@ model Company {
   workCenters            WorkCenter[]
   costCenters            CostCenter[]
   assetFamilies          AssetFamily[]
+  assetFamilyModels      AssetFamilyModel[]
   positions              Position[]
   characteristics        Characteristic[]
   resources              Resource[]
@@ -453,7 +454,7 @@ model AssetFamily {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  models                   AssetFamilyModel[]
+  modelMappings            AssetFamilyModelMapping[]
   assets                   Asset[]
   standardMaintenancePlans StandardMaintenancePlan[]
 
@@ -469,13 +470,30 @@ model AssetFamilyModel {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  familyId String
-  family   AssetFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  familyMappings           AssetFamilyModelMapping[]
   assets                   Asset[]
   standardMaintenancePlans StandardMaintenancePlan[]
 
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model AssetFamilyModelMapping {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  familyId String
+  family   AssetFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  modelId String
+  model   AssetFamilyModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, modelId])
   @@index([familyId])
+  @@index([modelId])
 }
 
 model Position {

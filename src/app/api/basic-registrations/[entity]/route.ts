@@ -40,11 +40,12 @@ const ENTITY_CONFIG: Record<string, {
     scope: 'company',
     requiredFields: ['code', 'name'],
     orderBy: 'code',
+    selectQuery: '*, modelMappings:AssetFamilyModelMapping(modelId, model:AssetFamilyModel!modelId(id, name))',
   },
   'asset-family-models': {
     table: 'AssetFamilyModel',
-    scope: 'child',
-    requiredFields: ['name', 'familyId'],
+    scope: 'company',
+    requiredFields: ['name'],
     orderBy: 'name',
   },
   positions: {
@@ -154,6 +155,12 @@ export async function GET(
         calendarName: item.calendar?.name || '—',
       }))
     }
+    if (entity === 'asset-families') {
+      result = result.map((item: any) => ({
+        ...item,
+        modelNames: item.modelMappings?.map((m: any) => m.model?.name).filter(Boolean).join(', ') || '—',
+      }))
+    }
 
     return NextResponse.json({ data: result })
   } catch (error) {
@@ -197,11 +204,6 @@ export async function POST(
     // Adicionar companyId para entidades que precisam
     if (config.scope === 'company' || entity === 'work-centers') {
       body.companyId = session.companyId
-    }
-
-    // Para AssetFamilyModel, não precisa de companyId direto
-    if (entity === 'asset-family-models') {
-      delete body.companyId
     }
 
     const { data, error } = await supabase

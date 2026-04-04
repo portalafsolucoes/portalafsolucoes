@@ -42,10 +42,11 @@ export default function MaintenancePlanPage() {
     checkAccess()
   }, [])
 
+  const [depsLoaded, setDepsLoaded] = useState(false)
+
   useEffect(() => {
     if (userRole) {
       loadData()
-      loadDependencies()
     }
   }, [userRole, tab])
 
@@ -95,14 +96,20 @@ export default function MaintenancePlanPage() {
   }
 
   const loadModels = async (familyId: string) => {
-    const res = await fetch(`/api/basic-registrations/asset-family-models?familyId=${familyId}`)
+    const res = await fetch(`/api/basic-registrations/asset-family-model-mappings?familyId=${familyId}`)
     const data = await res.json()
-    setFamilyModels(data.data || [])
+    const models = (data.data || []).map((m: any) => m.model).filter(Boolean)
+    setFamilyModels(models)
   }
 
   const openCreate = () => {
     setFormData({})
     setError('')
+    // Carrega dependências dos selects apenas quando o modal abre (não no carregamento da página)
+    if (!depsLoaded) {
+      loadDependencies()
+      setDepsLoaded(true)
+    }
     setShowCreateModal(true)
   }
 

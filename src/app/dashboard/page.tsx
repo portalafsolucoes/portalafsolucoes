@@ -8,8 +8,6 @@ import { Wrench, Package, MapPin, ClipboardList, Box, TrendingUp, AlertCircle } 
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { CorporateDashboard } from '@/components/dashboard/CorporateDashboard'
 
-export const dynamic = 'force-dynamic'
-
 interface Stats {
   workOrders: { total: number; open: number; inProgress: number; completed: number }
   assets: { total: number; operational: number; down: number }
@@ -47,37 +45,13 @@ export default function DashboardPage() {
 
   const loadStats = async () => {
     try {
-      const [woRes, assetsRes, reqRes] = await Promise.all([
-        fetch('/api/work-orders?limit=1000'),
-        fetch('/api/assets?limit=1000'),
-        fetch('/api/requests?limit=1000')
-      ])
+      // Usa API otimizada que retorna apenas contagens (não carrega registros inteiros)
+      const res = await fetch('/api/dashboard/stats')
+      const data = await res.json()
 
-      const [woData, assetsData, reqData] = await Promise.all([
-        woRes.json(),
-        assetsRes.json(),
-        reqRes.json()
-      ])
-
-      const workOrders = {
-        total: woData.data?.length || 0,
-        open: woData.data?.filter((wo: any) => wo.status === 'PENDING').length || 0,
-        inProgress: woData.data?.filter((wo: any) => wo.status === 'IN_PROGRESS').length || 0,
-        completed: woData.data?.filter((wo: any) => wo.status === 'COMPLETE').length || 0
+      if (data.data) {
+        setStats(data.data)
       }
-
-      const assets = {
-        total: assetsData.data?.length || 0,
-        operational: assetsData.data?.filter((a: any) => a.status === 'OPERATIONAL').length || 0,
-        down: assetsData.data?.filter((a: any) => a.status === 'DOWN').length || 0
-      }
-
-      const requests = {
-        total: reqData.data?.length || 0,
-        pending: reqData.data?.filter((r: any) => r.status === 'PENDING').length || 0
-      }
-
-      setStats({ workOrders, assets, requests })
     } catch (error) {
       console.error('Error loading stats:', error)
     } finally {

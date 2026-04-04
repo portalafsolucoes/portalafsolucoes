@@ -11,65 +11,60 @@ export async function GET() {
       return NextResponse.json({ error: 'Acesso restrito ao Super Admin' }, { status: 403 })
     }
 
-    // Buscar todas as unidades (agora são Localizações)
-    const { data: units } = await supabase
-      .from('Location')
-      .select('id, name, address')
-      .eq('companyId', session.companyId)
-      .order('name')
+    // Buscar unidades e todos os dados em paralelo (elimina N+1 queries)
+    const [
+      { data: units },
+      { data: allWOs },
+      { data: allAssets },
+      { data: allRequests },
+      { data: allUsers }
+    ] = await Promise.all([
+      supabase.from('Location').select('id, name, address').eq('companyId', session.companyId).order('name'),
+      supabase.from('WorkOrder').select('id, status, type, unitId').eq('companyId', session.companyId),
+      supabase.from('Asset').select('id, unitId').eq('companyId', session.companyId).eq('archived', false),
+      supabase.from('Request').select('id, unitId, status').eq('companyId', session.companyId).eq('status', 'PENDING'),
+      supabase.from('User').select('id, unitId').eq('companyId', session.companyId).eq('enabled', true),
+    ])
 
-    const unitSummaries = []
+    // Agrupar dados por unitId em memória (muito mais rápido que N queries)
+    const woByUnit = new Map<string, typeof allWOs>()
+    for (const wo of (allWOs || [])) {
+      const list = woByUnit.get(wo.unitId) || []
+      list.push(wo)
+      woByUnit.set(wo.unitId, list)
+    }
 
-    for (const unit of (units || [])) {
-      // Contar OSs por status
-      const { data: wos } = await supabase
-        .from('WorkOrder')
-        .select('id, status, type')
-        .eq('unitId', unit.id)
+    const assetCountByUnit = new Map<string, number>()
+    for (const a of (allAssets || [])) {
+      assetCountByUnit.set(a.unitId, (assetCountByUnit.get(a.unitId) || 0) + 1)
+    }
 
-      // Contar ativos
-      const { count: assetCount } = await supabase
-        .from('Asset')
-        .select('id', { count: 'exact', head: true })
-        .eq('unitId', unit.id)
-        .eq('archived', false)
+    const pendingReqByUnit = new Map<string, number>()
+    for (const r of (allRequests || [])) {
+      pendingReqByUnit.set(r.unitId, (pendingReqByUnit.get(r.unitId) || 0) + 1)
+    }
 
-      // Contar SSs pendentes
-      const { count: pendingRequests } = await supabase
-        .from('Request')
-        .select('id', { count: 'exact', head: true })
-        .eq('unitId', unit.id)
-        .eq('status', 'PENDING')
+    const userCountByUnit = new Map<string, number>()
+    for (const u of (allUsers || [])) {
+      userCountByUnit.set(u.unitId, (userCountByUnit.get(u.unitId) || 0) + 1)
+    }
 
-      // Contar usuários
-      const { count: userCount } = await supabase
-        .from('User')
-        .select('id', { count: 'exact', head: true })
-        .eq('unitId', unit.id)
-        .eq('enabled', true)
-
-      const woList = wos || []
+    const unitSummaries = (units || []).map(unit => {
+      const woList = woByUnit.get(unit.id) || []
       const completed = woList.filter(w => w.status === 'COMPLETE').length
       const pending = woList.filter(w => ['PENDING', 'RELEASED'].includes(w.status)).length
       const inProgress = woList.filter(w => w.status === 'IN_PROGRESS').length
       const correctives = woList.filter(w => w.type === 'CORRECTIVE').length
       const preventives = woList.filter(w => w.type === 'PREVENTIVE').length
 
-      unitSummaries.push({
+      return {
         unit: { id: unit.id, name: unit.name },
-        assets: assetCount || 0,
-        users: userCount || 0,
-        pendingRequests: pendingRequests || 0,
-        workOrders: {
-          total: woList.length,
-          completed,
-          pending,
-          inProgress,
-          correctives,
-          preventives,
-        },
-      })
-    }
+        assets: assetCountByUnit.get(unit.id) || 0,
+        users: userCountByUnit.get(unit.id) || 0,
+        pendingRequests: pendingReqByUnit.get(unit.id) || 0,
+        workOrders: { total: woList.length, completed, pending, inProgress, correctives, preventives },
+      }
+    })
 
     // Totais corporativos
     const totals = {
