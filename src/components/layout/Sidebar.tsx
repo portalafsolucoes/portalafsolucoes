@@ -16,7 +16,6 @@ import {
   Menu,
   X,
   FileText,
-  Activity,
   AlertTriangle,
   GitBranch,
   Settings2,
@@ -123,7 +122,6 @@ export function Sidebar() {
     { name: 'RAF', href: '/rafs', icon: FileText, module: 'rafs', adminOnly: true },
     { name: 'Localizações', href: '/locations', icon: MapPin, module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: TrendingUp, module: 'kpi' },
-    { name: 'GVP', href: '/gep', icon: Activity, module: 'gep' },
   ]
 
   // Filtrar menus baseado nas permissões
