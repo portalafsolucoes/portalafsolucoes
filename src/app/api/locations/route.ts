@@ -9,15 +9,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const summary = searchParams.get('summary') === 'true'
+
     const { data: locations, error } = await supabase
       .from('Location')
-      .select('*, Asset!locationId(count), WorkOrder!locationId(count)')
+      .select(summary ? 'id, name, address' : '*, Asset!locationId(count), WorkOrder!locationId(count)')
       .eq('companyId', session.companyId)
       .order('name', { ascending: true })
 
     if (error) {
       console.error('Supabase error:', error)
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
+    }
+
+    if (summary) {
+      return NextResponse.json({ data: locations || [] })
     }
 
     const locationsWithCount = (locations || []).map((loc: Record<string, unknown>) => {

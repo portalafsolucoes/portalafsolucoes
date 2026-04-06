@@ -13,6 +13,37 @@ import { GenericStepModal } from '@/components/basic-registrations/GenericStepMo
 import { Settings2, Users, ExternalLink, Search, ChevronDown, ChevronRight, Wrench } from 'lucide-react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 
+const dependencyCache = new Map<string, any[]>()
+const dependencyPromiseCache = new Map<string, Promise<any[]>>()
+
+async function fetchCachedList(url: string) {
+  if (dependencyCache.has(url)) {
+    return dependencyCache.get(url)
+  }
+
+  if (dependencyPromiseCache.has(url)) {
+    return dependencyPromiseCache.get(url)
+  }
+
+  const request = fetch(url)
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error(`Falha ao carregar ${url}: ${response.status}`)
+      }
+
+      const payload = await response.json()
+      const data = payload.data || []
+      dependencyCache.set(url, data)
+      return data
+    })
+    .finally(() => {
+      dependencyPromiseCache.delete(url)
+    })
+
+  dependencyPromiseCache.set(url, request)
+  return request
+}
+
 interface TabConfig {
   key: string
   label: string
@@ -196,31 +227,60 @@ export default function BasicRegistrationEntityPage() {
       router.push('/dashboard')
       return
     }
-    loadDependencies()
-  }, [authLoading, user, role])
+    loadDependencies(entity)
+  }, [authLoading, user, role, entity])
 
-  const loadDependencies = async () => {
-    try {
-      const [unitsRes, mtRes, maRes, afmRes, calRes, usersRes] = await Promise.all([
-        fetch('/api/units'),
-        fetch('/api/basic-registrations/maintenance-types'),
-        fetch('/api/basic-registrations/maintenance-areas'),
-        fetch('/api/basic-registrations/asset-family-models'),
-        fetch('/api/basic-registrations/calendars'),
-        fetch('/api/users?enabled=true'),
-      ])
-      const [unitsData, mtData, maData, afmData, calData, usersData] = await Promise.all([
-        unitsRes.json(), mtRes.json(), maRes.json(), afmRes.json(), calRes.json(), usersRes.json()
-      ])
-      setUnits(unitsData.data || [])
-      setMaintenanceTypes(mtData.data || [])
-      setMaintenanceAreas(maData.data || [])
-      setAssetFamilyModels(afmData.data || [])
-      setCalendars(calData.data || [])
-      setUsers(usersData.data || [])
-    } catch (err) {
-      console.error('Erro ao carregar dependências:', err)
+  const loadDependencies = async (currentEntity: string) => {
+    const loaders: Array<Promise<void>> = []
+
+    const runLoader = async (load: () => Promise<any[]>, setter: (value: any[]) => void) => {
+      try {
+        setter(await load())
+      } catch (error) {
+        console.error(`Erro ao carregar dependência de ${currentEntity}:`, error)
+        setter([])
+      }
     }
+
+    const needsUnits = new Set(['areas', 'work-centers'])
+    const needsMaintenanceRefs = currentEntity === 'service-types'
+    const needsAssetFamilyModels = currentEntity === 'asset-families'
+    const needsCalendars = new Set(['work-centers', 'resources'])
+    const needsUsers = currentEntity === 'resources'
+
+    if (needsUnits.has(currentEntity)) {
+      loaders.push(runLoader(() => fetchCachedList('/api/units'), setUnits))
+    } else {
+      setUnits([])
+    }
+
+    if (needsMaintenanceRefs) {
+      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/maintenance-types'), setMaintenanceTypes))
+      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/maintenance-areas'), setMaintenanceAreas))
+    } else {
+      setMaintenanceTypes([])
+      setMaintenanceAreas([])
+    }
+
+    if (needsAssetFamilyModels) {
+      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/asset-family-models'), setAssetFamilyModels))
+    } else {
+      setAssetFamilyModels([])
+    }
+
+    if (needsCalendars.has(currentEntity)) {
+      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/calendars'), setCalendars))
+    } else {
+      setCalendars([])
+    }
+
+    if (needsUsers) {
+      loaders.push(runLoader(() => fetchCachedList('/api/users?enabled=true&brief=resource'), setUsers))
+    } else {
+      setUsers([])
+    }
+
+    await Promise.all(loaders)
   }
 
   const tabs: TabConfig[] = [
@@ -346,7 +406,7 @@ export default function BasicRegistrationEntityPage() {
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
       customModalRender: (props) => (
-        <AssetFamilyModal {...props} assetFamilyModels={assetFamilyModels} onModelsChanged={loadDependencies} />
+        <AssetFamilyModal {...props} assetFamilyModels={assetFamilyModels} onModelsChanged={() => loadDependencies(entity)} />
       ),
     },
     {

@@ -11,27 +11,29 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const summary = searchParams.get('summary') === 'true'
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = (page - 1) * limit
 
-    const where: any = {
-      companyId: session.companyId
-    }
-
-    if (status) {
-      where.status = status
-    }
-
     let query = supabase
       .from('Request')
-      .select(`
-        *,
-        createdBy:User!createdById(id, firstName, lastName, email),
-        team:Team(id, name),
-        files:File(id, name, url, type, size, createdAt),
-        generatedWorkOrder:WorkOrder(id, title, status)
-      `, { count: 'exact' })
+      .select(summary
+        ? `
+            id, title, description, priority, status, dueDate, teamApprovalStatus, createdAt,
+            createdBy:User!createdById(id, firstName, lastName),
+            team:Team(id, name),
+            files:File(id)
+          `
+        : `
+            *,
+            createdBy:User!createdById(id, firstName, lastName, email),
+            team:Team(id, name),
+            files:File(id, name, url, type, size, createdAt),
+            generatedWorkOrder:WorkOrder(id, title, status)
+          `,
+        { count: summary ? undefined : 'exact' }
+      )
       .eq('companyId', session.companyId)
       .order('createdAt', { ascending: false })
       .range(skip, skip + limit - 1)
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: requests || [],
-      pagination: {
+      pagination: summary ? undefined : {
         page,
         limit,
         total: total || 0,

@@ -11,7 +11,7 @@ interface Location {
   id: string
   name: string
   address?: string
-  _count: {
+  _count?: {
     assets: number
     workOrders: number
   }
@@ -27,7 +27,7 @@ export default function LocationsPage() {
 
   const loadLocations = async () => {
     try {
-      const res = await fetch('/api/locations')
+      const res = await fetch('/api/locations?summary=true')
       const data = await res.json()
       setLocations(data.data || [])
     } catch (error) {

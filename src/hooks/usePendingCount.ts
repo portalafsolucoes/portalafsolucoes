@@ -17,8 +17,12 @@ export function usePendingCount() {
   const { data: count = 0 } = useQuery({
     queryKey: ['requests', 'pending-count'],
     queryFn: fetchPendingCount,
-    staleTime: 30 * 1000, // 30 segundos
-    refetchInterval: 60 * 1000, // polling a cada 60s
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     enabled: canSeeApprovals,
   })
 

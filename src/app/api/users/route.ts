@@ -13,34 +13,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const roleParam = searchParams.get('role')
     const enabled = searchParams.get('enabled')
+    const brief = searchParams.get('brief')
 
-    const where: any = {
-      companyId: session.companyId
-    }
-
-    if (roleParam) {
-      // Suporta múltiplos roles separados por vírgula
-      const roles = roleParam.split(',').map(r => r.trim())
-      if (roles.length === 1) {
-        where.role = roles[0]
-      } else {
-        where.role = { in: roles }
-      }
-    }
-
-    if (enabled !== null) {
-      where.enabled = enabled === 'true'
-    }
+    const isBrief = brief === 'true' || brief === 'resource'
+    const briefSelect = `
+      id, firstName, lastName, email, role, jobTitle, rate, enabled,
+      calendar:Calendar(name)
+    `
+    const fullSelect = `
+      id, email, firstName, lastName, phone, jobTitle, username,
+      role, image, rate, enabled, lastLogin, locationId, calendarId,
+      createdAt, updatedAt,
+      calendar:Calendar(name),
+      teamMemberships:TeamMember(*, team:Team(*))
+    `
 
     let query = supabase
       .from('User')
-      .select(`
-        id, email, firstName, lastName, phone, jobTitle, username,
-        role, image, rate, enabled, lastLogin, locationId, calendarId,
-        createdAt, updatedAt,
-        calendar:Calendar(name),
-        teamMemberships:TeamMember(*, team:Team(*))
-      `)
+      .select(isBrief ? briefSelect : fullSelect)
       .eq('companyId', session.companyId)
       .order('firstName', { ascending: true })
 

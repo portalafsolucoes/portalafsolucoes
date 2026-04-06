@@ -6,6 +6,39 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { exportToExcel } from '@/lib/exportExcel'
 
+const crudDataCache = new Map<string, any[]>()
+const crudPromiseCache = new Map<string, Promise<any[]>>()
+
+async function fetchCrudData(url: string) {
+  if (crudDataCache.has(url)) {
+    return crudDataCache.get(url) || []
+  }
+
+  if (crudPromiseCache.has(url)) {
+    return crudPromiseCache.get(url) || []
+  }
+
+  const request = fetch(url)
+    .then(async res => {
+      const data = await res.json()
+      const items = data.data || []
+      crudDataCache.set(url, items)
+      return items
+    })
+    .catch(() => [])
+    .finally(() => {
+      crudPromiseCache.delete(url)
+    })
+
+  crudPromiseCache.set(url, request)
+  return request
+}
+
+function invalidateCrudData(url: string) {
+  crudDataCache.delete(url)
+  crudPromiseCache.delete(url)
+}
+
 export interface FieldConfig {
   key: string
   label: string
@@ -121,24 +154,25 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [requestUrl, setRequestUrl] = useState('')
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
+    let url = `/api/basic-registrations/${entity}`
+    const params: string[] = []
+    if (unitScoped && selectedUnitId) {
+      params.push(`unitId=${selectedUnitId}`)
+    }
+    if (apiQueryParams) {
+      params.push(apiQueryParams)
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`
+    }
+    setRequestUrl(url)
+
     try {
-      let url = `/api/basic-registrations/${entity}`
-      const params: string[] = []
-      if (unitScoped && selectedUnitId) {
-        params.push(`unitId=${selectedUnitId}`)
-      }
-      if (apiQueryParams) {
-        params.push(apiQueryParams)
-      }
-      if (params.length > 0) {
-        url += `?${params.join('&')}`
-      }
-      const res = await fetch(url)
-      const data = await res.json()
-      setItems(data.data || [])
+      setItems(await fetchCrudData(url))
     } catch {
       setItems([])
     }
@@ -199,6 +233,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
         return
       }
 
+      invalidateCrudData(requestUrl)
       setShowModal(false)
       fetchItems()
     } catch {
@@ -216,6 +251,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
         alert(result.error || 'Erro ao excluir')
         return
       }
+      invalidateCrudData(requestUrl)
       fetchItems()
     } catch {
       alert('Erro de conexão')

@@ -2,10 +2,10 @@
 
 | # | Tela | Rota | Tipo | Acoes observadas | Screenshot |
 |---|---|---|---|---|---|
-| 1 | Dashboard | `/dashboard` | Modulo | 4 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_03_dashboard.png |
-| 2 | Árvore | `/tree` | Modulo | 3 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_04_arvore.png |
-| 3 | Pessoas/Equipes | `/people-teams` | Modulo | 10 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_05_pessoas-equipes.png |
-| 4 | Tipos de Manutenção | `/basic-registrations/maintenance-types` | CRUD | 7 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_06_tipos-de-manutencao.png |
+| 1 | Dashboard | `/dashboard` | Modulo | 5 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_03_dashboard.png |
+| 2 | Árvore | `/tree` | Modulo | 5 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_04_arvore.png |
+| 3 | Pessoas/Equipes | `/people-teams` | Modulo | 5 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_05_pessoas-equipes.png |
+| 4 | Tipos de Manutenção | `/basic-registrations/maintenance-types` | CRUD | 15 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_06_tipos-de-manutencao.png |
 | 5 | Áreas de Manutenção | `/basic-registrations/maintenance-areas` | CRUD | 17 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_07_areas-de-manutencao.png |
 | 6 | Tipos de Serviço | `/basic-registrations/service-types` | CRUD | 35 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_08_tipos-de-servico.png |
 | 7 | Calendários | `/basic-registrations/calendars` | CRUD | 13 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_09_calendarios.png |
@@ -25,7 +25,7 @@
 | 21 | Planejamento e Programação | `/planning` | Modulo | 8 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_23_planejamento-e-programacao.png |
 | 22 | Ordens de Serviço (OS) | `/work-orders` | Modulo | 9 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_24_ordens-de-servico-os.png |
 | 23 | Solicitações (SS) | `/requests` | Modulo | 11 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_25_solicitacoes-ss.png |
-| 24 | Aprovações0 | `/requests/approvals` | Modulo | 8 botoes, 1 tabelas, 0 formularios | F1_discovery/screenshots/F1_26_aprovacoes0.png |
+| 24 | Aprovações0 | `/requests/approvals` | Modulo | 8 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_26_aprovacoes0.png |
 | 25 | RAF | `/rafs` | Modulo | 9 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_27_raf.png |
 | 26 | Localizações | `/locations` | Modulo | 6 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_28_localizacoes.png |
 | 27 | KPI - Indicadores | `/kpi` | Modulo | 5 botoes, 0 tabelas, 0 formularios | F1_discovery/screenshots/F1_29_kpi-indicadores.png |

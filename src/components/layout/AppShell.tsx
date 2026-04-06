@@ -1,0 +1,39 @@
+'use client'
+
+import { type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
+import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext'
+import { Sidebar } from './Sidebar'
+import { Header } from './Header'
+
+function ShellFrame({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
+  const { isCollapsed } = useSidebar()
+
+  const publicRoutes = ['/hub', '/login', '/register']
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))
+
+  if (isPublicRoute) {
+    return <>{children}</>
+  }
+
+  return (
+    <div className="h-screen overflow-hidden bg-background">
+      <Sidebar />
+      <Header />
+      <main className={`h-[calc(100vh-44px)] mt-11 overflow-hidden transition-all duration-300 ${isCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+        <div className="h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
+          {children}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <SidebarProvider>
+      <ShellFrame>{children}</ShellFrame>
+    </SidebarProvider>
+  )
+}

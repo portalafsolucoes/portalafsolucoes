@@ -57,7 +57,7 @@ export default function RequestsPage() {
 
   const loadRequests = async () => {
     try {
-      const res = await fetch('/api/requests')
+      const res = await fetch('/api/requests?summary=true')
       const data = await res.json()
       setRequests(data.data || [])
     } catch (error) {

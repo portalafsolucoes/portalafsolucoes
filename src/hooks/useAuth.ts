@@ -36,6 +36,9 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutos - auth muda raramente
     gcTime: 10 * 60 * 1000,
     retry: 1,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   })
 
   return {

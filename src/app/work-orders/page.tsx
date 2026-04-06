@@ -72,8 +72,8 @@ export default function WorkOrdersPage() {
       if (systemStatusFilter) params.append('systemStatus', systemStatusFilter)
       
       const url = params.toString() 
-        ? `/api/work-orders?${params.toString()}`
-        : '/api/work-orders'
+        ? `/api/work-orders?summary=true&${params.toString()}`
+        : '/api/work-orders?summary=true'
       
       const res = await fetch(url)
       const data = await res.json()

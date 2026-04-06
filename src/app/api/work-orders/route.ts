@@ -50,16 +50,26 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = (page - 1) * limit
+    const summary = searchParams.get('summary') === 'true'
 
     // Build query
     let query = supabase
       .from('WorkOrder')
-      .select(`
-        *,
-        asset:Asset(*),
-        location:Location!locationId(*),
-        createdBy:User!createdById(id, firstName, lastName, email)
-      `, { count: 'exact' })
+      .select(summary
+        ? `
+            id, customId, externalId, internalId, systemStatus, title, description,
+            priority, status, dueDate, createdAt, assignedToId,
+            asset:Asset(name),
+            location:Location!locationId(name)
+          `
+        : `
+            *,
+            asset:Asset(*),
+            location:Location!locationId(*),
+            createdBy:User!createdById(id, firstName, lastName, email)
+          `,
+        { count: summary ? undefined : 'exact' }
+      )
       .eq('companyId', session.companyId)
       .eq('archived', false)
       .order('createdAt', { ascending: false })
@@ -81,7 +91,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: workOrders,
-      pagination: {
+      pagination: summary ? undefined : {
         page,
         limit,
         total: total || 0,
