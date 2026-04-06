@@ -27,6 +27,8 @@ import {
 import { useState, useEffect, type ComponentType, type ReactNode } from 'react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { useAuth } from '@/hooks/useAuth'
+import { usePendingCount } from '@/hooks/usePendingCount'
 import { APP_LOGO_PATH, APP_NAME, APP_SHORT_NAME } from '@/lib/branding'
 
 type SidebarSubItem = {
@@ -49,47 +51,10 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { isCollapsed, setIsCollapsed } = useSidebar()
-  const [userRole, setUserRole] = useState<string>('')
-  const [pendingCount, setPendingCount] = useState(0)
+  const { role: userRole } = useAuth()
+  const pendingCount = usePendingCount()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
-
-  // Carrega dados do usuário apenas uma vez (não a cada navegação)
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setUserRole(data.user.role)
-
-          if (data.user.role === 'SUPER_ADMIN' || data.user.role === 'GESTOR') {
-            fetch('/api/requests/pending')
-              .then(res => res.json())
-              .then(pendingData => {
-                if (pendingData.data) {
-                  setPendingCount(pendingData.data.length)
-                }
-              })
-              .catch(() => {})
-          }
-        }
-      })
-      .catch(() => {})
-  }, [])
-
-  // Atualiza contagem de pendentes periodicamente (a cada 60s) sem bloquear navegação
-  useEffect(() => {
-    if (!userRole || (userRole !== 'SUPER_ADMIN' && userRole !== 'GESTOR')) return
-    const interval = setInterval(() => {
-      fetch('/api/requests/pending')
-        .then(res => res.json())
-        .then(pendingData => {
-          if (pendingData.data) setPendingCount(pendingData.data.length)
-        })
-        .catch(() => {})
-    }, 60000)
-    return () => clearInterval(interval)
-  }, [userRole])
 
   // Menu na ordem definida no documento de requisitos (15 itens)
   const allMenus: SidebarMenuItem[] = [

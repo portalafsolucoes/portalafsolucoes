@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Wrench, Package, MapPin, ClipboardList, Box, TrendingUp, AlertCircle } from 'lucide-react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { CorporateDashboard } from '@/components/dashboard/CorporateDashboard'
@@ -16,32 +17,22 @@ interface Stats {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [hasAccess, setHasAccess] = useState(false)
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+
+  const role = user?.role ?? ''
+  const hasAccess = !!user && hasPermission(role as UserRole, 'dashboard', 'view')
+  const isSuperAdmin = role === 'SUPER_ADMIN'
 
   useEffect(() => {
-    checkAccess()
-  }, [])
-
-  const checkAccess = async () => {
-    try {
-      const meRes = await fetch('/api/auth/me')
-      const meData = await meRes.json()
-      
-      if (!meData.user || !hasPermission(meData.user.role as UserRole, 'dashboard', 'view')) {
-        router.push('/work-orders')
-        return
-      }
-      
-      setHasAccess(true)
-      setIsSuperAdmin(meData.user.role === 'SUPER_ADMIN')
-      loadStats()
-    } catch {
-      router.push('/login')
+    if (authLoading || !user) return
+    if (!hasPermission(user.role as UserRole, 'dashboard', 'view')) {
+      router.push('/work-orders')
+      return
     }
-  }
+    loadStats()
+  }, [authLoading, user])
 
   const loadStats = async () => {
     try {
@@ -59,7 +50,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (!hasAccess) {
+  if (authLoading || !user || !hasAccess) {
     return null
   }
 

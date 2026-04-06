@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { CrudTable, FieldConfig } from '@/components/basic-registrations/CrudTable'
 import { CalendarModal } from '@/components/basic-registrations/CalendarModal'
 import { AssetFamilyModal } from '@/components/basic-registrations/AssetFamilyModal'
@@ -175,8 +176,8 @@ export default function BasicRegistrationEntityPage() {
   const router = useRouter()
   const entity = params.entity as string
 
-  const [userRole, setUserRole] = useState<string>('')
-  const [loading, setLoading] = useState(true)
+  const { user, isLoading: authLoading } = useAuth()
+  const role = user?.role ?? ''
   const [units, setUnits] = useState<any[]>([])
   const [selectedUnitId, setSelectedUnitId] = useState<string>('')
 
@@ -188,26 +189,15 @@ export default function BasicRegistrationEntityPage() {
   const [users, setUsers] = useState<any[]>([])
   const [resourcesTableExpanded, setResourcesTableExpanded] = useState(true)
 
+  // Redirect if not authenticated or no permission
   useEffect(() => {
-    checkAccess()
-  }, [])
-
-  const checkAccess = async () => {
-    try {
-      const res = await fetch('/api/auth/me')
-      const data = await res.json()
-      if (!data.user) { router.push('/login'); return }
-      setUserRole(data.user.role)
-      if (!hasPermission(data.user.role as UserRole, 'basic-registrations', 'view')) {
-        router.push('/dashboard')
-        return
-      }
-      setLoading(false)
-      loadDependencies()
-    } catch {
-      router.push('/login')
+    if (authLoading || !user) return
+    if (!hasPermission(role as UserRole, 'basic-registrations', 'view')) {
+      router.push('/dashboard')
+      return
     }
-  }
+    loadDependencies()
+  }, [authLoading, user, role])
 
   const loadDependencies = async () => {
     try {
@@ -518,7 +508,7 @@ export default function BasicRegistrationEntityPage() {
 
   const currentTab = tabs.find(t => t.key === entity)
 
-  if (loading) {
+  if (authLoading || !user) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

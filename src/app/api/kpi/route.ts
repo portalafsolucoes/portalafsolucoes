@@ -12,14 +12,17 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
-    // Buscar todas as OSs da empresa (filtradas por unidade e período se fornecidos)
+    // Buscar OSs da empresa com filtro de data (padrão: últimos 12 meses)
+    const defaultStart = new Date()
+    defaultStart.setMonth(defaultStart.getMonth() - 12)
+
     let woQuery = supabase
       .from('WorkOrder')
-      .select('id, title, type, status, priority, createdAt, completedOn, actualDuration, laborCost, partsCost, thirdPartyCost, toolsCost, assetId, osType, realMaintenanceStart, realMaintenanceEnd, realStopStart, realStopEnd')
+      .select('id, type, status, createdAt, completedOn, actualDuration, laborCost, partsCost, thirdPartyCost, toolsCost, assetId, osType, realMaintenanceStart, realMaintenanceEnd, realStopStart, realStopEnd')
       .eq('companyId', session.companyId)
+      .gte('createdAt', (startDate ? new Date(startDate) : defaultStart).toISOString())
 
     if (unitId) woQuery = woQuery.eq('unitId', unitId)
-    if (startDate) woQuery = woQuery.gte('createdAt', new Date(startDate).toISOString())
     if (endDate) woQuery = woQuery.lte('createdAt', new Date(endDate).toISOString())
 
     const { data: workOrders, error: woError } = await woQuery

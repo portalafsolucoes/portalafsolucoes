@@ -20,10 +20,10 @@ export async function GET() {
       { data: allUsers }
     ] = await Promise.all([
       supabase.from('Location').select('id, name, address').eq('companyId', session.companyId).order('name'),
-      supabase.from('WorkOrder').select('id, status, type, unitId').eq('companyId', session.companyId),
-      supabase.from('Asset').select('id, unitId').eq('companyId', session.companyId).eq('archived', false),
-      supabase.from('Request').select('id, unitId, status').eq('companyId', session.companyId).eq('status', 'PENDING'),
-      supabase.from('User').select('id, unitId').eq('companyId', session.companyId).eq('enabled', true),
+      supabase.from('WorkOrder').select('id, status, type, unitId').eq('companyId', session.companyId).limit(10000),
+      supabase.from('Asset').select('id, unitId').eq('companyId', session.companyId).eq('archived', false).limit(10000),
+      supabase.from('Request').select('id, unitId, status').eq('companyId', session.companyId).eq('status', 'PENDING').limit(5000),
+      supabase.from('User').select('id, unitId').eq('companyId', session.companyId).eq('enabled', true).limit(5000),
     ])
 
     // Agrupar dados por unitId em memória (muito mais rápido que N queries)
@@ -77,7 +77,9 @@ export async function GET() {
       pendingRequests: unitSummaries.reduce((sum, u) => sum + u.pendingRequests, 0),
     }
 
-    return NextResponse.json({ data: { totals, units: unitSummaries } })
+    const response = NextResponse.json({ data: { totals, units: unitSummaries } })
+    response.headers.set('Cache-Control', 'private, max-age=30, stale-while-revalidate=60')
+    return response
   } catch (error) {
     console.error('Corporate dashboard error:', error)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })

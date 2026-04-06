@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -47,29 +48,16 @@ export default function WorkOrdersPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [workOrderToDelete, setWorkOrderToDelete] = useState<WorkOrder | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const { user: currentUser } = useAuth()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<any>(null)
 
   useEffect(() => {
-    loadCurrentUser()
     loadWorkOrders()
   }, [statusFilter, systemStatusFilter])
 
-  const loadCurrentUser = async () => {
-    try {
-      const res = await fetch('/api/auth/me')
-      const data = await res.json()
-      if (data.user) {
-        setCurrentUser(data.user)
-      }
-    } catch (error) {
-      console.error('Error loading current user:', error)
-    }
-  }
-
   const isTechnician = () => {
-    return ['MECANICO', 'ELETRICISTA', 'OPERADOR', 'CONSTRUTOR_CIVIL'].includes(currentUser?.role)
+    return ['MECANICO', 'ELETRICISTA', 'OPERADOR', 'CONSTRUTOR_CIVIL'].includes(currentUser?.role ?? '')
   }
 
   const isAssignedExecutor = (workOrder: any) => {

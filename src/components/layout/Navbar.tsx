@@ -15,38 +15,16 @@ import {
   CheckCircle,
   Activity
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import { usePendingCount } from '@/hooks/usePendingCount'
 
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [userRole, setUserRole] = useState<string>('')
-  const [pendingCount, setPendingCount] = useState(0)
-
-  useEffect(() => {
-    // Buscar role do usuário e contador
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setUserRole(data.user.role)
-          
-          // Se for admin, buscar contador
-          if (data.user.role === 'SUPER_ADMIN' || data.user.role === 'GESTOR') {
-            fetch('/api/requests/pending')
-              .then(res => res.json())
-              .then(pendingData => {
-                if (pendingData.data) {
-                  setPendingCount(pendingData.data.length)
-                }
-              })
-              .catch(() => {})
-          }
-        }
-      })
-      .catch(() => {})
-  }, [pathname])
+  const { role: userRole } = useAuth()
+  const pendingCount = usePendingCount()
 
   const baseNavigation = [
     { name: 'Ordens de Serviço', href: '/work-orders', icon: Wrench },

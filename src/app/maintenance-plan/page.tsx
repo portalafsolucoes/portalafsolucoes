@@ -7,14 +7,15 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 type Tab = 'standard' | 'asset'
 
 export default function MaintenancePlanPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
+  const role = user?.role ?? ''
   const [tab, setTab] = useState<Tab>('standard')
-  const [userRole, setUserRole] = useState<string>('')
-  const [loading, setLoading] = useState(true)
 
   // Planos padrão
   const [standardPlans, setStandardPlans] = useState<any[]>([])
@@ -38,30 +39,21 @@ export default function MaintenancePlanPage() {
   const [maintenanceAreas, setMaintenanceAreas] = useState<any[]>([])
   const [maintenanceTypes, setMaintenanceTypes] = useState<any[]>([])
 
-  useEffect(() => {
-    checkAccess()
-  }, [])
-
   const [depsLoaded, setDepsLoaded] = useState(false)
 
+  // Redirect if not authenticated or no permission
   useEffect(() => {
-    if (userRole) {
+    if (authLoading || !user) return
+    if (!hasPermission(role as UserRole, 'maintenance-plan', 'view')) {
+      router.push('/dashboard'); return
+    }
+  }, [authLoading, user, role])
+
+  useEffect(() => {
+    if (role) {
       loadData()
     }
-  }, [userRole, tab])
-
-  const checkAccess = async () => {
-    try {
-      const res = await fetch('/api/auth/me')
-      const data = await res.json()
-      if (!data.user) { router.push('/login'); return }
-      setUserRole(data.user.role)
-      if (!hasPermission(data.user.role as UserRole, 'maintenance-plan', 'view')) {
-        router.push('/dashboard'); return
-      }
-      setLoading(false)
-    } catch { router.push('/login') }
-  }
+  }, [role, tab])
 
   const loadData = async () => {
     if (tab === 'standard') {
@@ -138,7 +130,7 @@ export default function MaintenancePlanPage() {
     loadData()
   }
 
-  const canEdit = userRole && hasPermission(userRole as UserRole, 'maintenance-plan', 'create')
+  const canEdit = role && hasPermission(role as UserRole, 'maintenance-plan', 'create')
 
   const filteredStandard = standardPlans.filter(p =>
     !search || p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -150,7 +142,7 @@ export default function MaintenancePlanPage() {
     p.asset?.tag?.toLowerCase().includes(search.toLowerCase())
   )
 
-  if (loading) {
+  if (authLoading || !user) {
     return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" /></div></AppLayout>
   }
 

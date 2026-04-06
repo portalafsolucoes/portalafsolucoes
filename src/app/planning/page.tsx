@@ -8,14 +8,15 @@ import { Modal } from '@/components/ui/Modal'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 type Tab = 'plans' | 'schedules'
 
 export default function PlanningPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
+  const role = user?.role ?? ''
   const [tab, setTab] = useState<Tab>('plans')
-  const [userRole, setUserRole] = useState<string>('')
-  const [loading, setLoading] = useState(true)
 
   const [plans, setPlans] = useState<any[]>([])
   const [schedules, setSchedules] = useState<any[]>([])
@@ -29,23 +30,20 @@ export default function PlanningPage() {
   const [error, setError] = useState('')
   const [result, setResult] = useState('')
 
-  useEffect(() => { checkAccess() }, [])
-  useEffect(() => { if (userRole) loadData() }, [userRole, tab])
-
-  const checkAccess = async () => {
-    try {
-      const res = await fetch('/api/auth/me')
-      const data = await res.json()
-      if (!data.user) { router.push('/login'); return }
-      setUserRole(data.user.role)
-      if (!hasPermission(data.user.role as UserRole, 'planning', 'view')) { router.push('/dashboard'); return }
-      // Load units
+  // Redirect if not authenticated or no permission
+  useEffect(() => {
+    if (authLoading || !user) return
+    if (!hasPermission(role as UserRole, 'planning', 'view')) { router.push('/dashboard'); return }
+    // Load units
+    const loadUnits = async () => {
       const unitsRes = await fetch('/api/units')
       const unitsData = await unitsRes.json()
       setUnits(unitsData.data || [])
-      setLoading(false)
-    } catch { router.push('/login') }
-  }
+    }
+    loadUnits()
+  }, [authLoading, user, role])
+
+  useEffect(() => { if (role) loadData() }, [role, tab])
 
   const loadData = async () => {
     if (tab === 'plans') {
@@ -100,9 +98,9 @@ export default function PlanningPage() {
     }
   }
 
-  const canEdit = userRole && hasPermission(userRole as UserRole, 'planning', 'create')
+  const canEdit = role && hasPermission(role as UserRole, 'planning', 'create')
 
-  if (loading) {
+  if (authLoading || !user) {
     return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" /></div></AppLayout>
   }
 

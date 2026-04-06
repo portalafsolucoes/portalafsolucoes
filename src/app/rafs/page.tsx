@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Plus, FileText, Search, Calendar, User, Trash2, Edit, Eye, Table, Grid } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
@@ -49,12 +50,12 @@ interface RAF {
 
 export default function RAFsPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
+  const role = user?.role ?? ''
   const [rafs, setRafs] = useState<RAF[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
-  const [userRole, setUserRole] = useState<string>('')
-  const [hasAccess, setHasAccess] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
   const [filterArea, setFilterArea] = useState('Contaminar')
@@ -66,28 +67,17 @@ export default function RAFsPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [rafToEdit, setRafToEdit] = useState<string | null>(null)
 
-  useEffect(() => {
-    checkAccess()
-  }, [])
+  const hasAccess = !!user && (role === 'GESTOR' || role === 'SUPER_ADMIN')
 
-  const checkAccess = async () => {
-    try {
-      const meRes = await fetch('/api/auth/me')
-      const meData = await meRes.json()
-      
-      // Apenas admins podem acessar RAFs
-      if (!meData.user || (meData.user.role !== 'GESTOR' && meData.user.role !== 'SUPER_ADMIN')) {
-        router.push('/dashboard')
-        return
-      }
-      
-      setUserRole(meData.user.role)
-      setHasAccess(true)
-      loadRAFs()
-    } catch {
-      router.push('/login')
+  useEffect(() => {
+    if (authLoading || !user) return
+    // Apenas admins podem acessar RAFs
+    if (role !== 'GESTOR' && role !== 'SUPER_ADMIN') {
+      router.push('/dashboard')
+      return
     }
-  }
+    loadRAFs()
+  }, [authLoading, user, role])
 
   const loadRAFs = async () => {
     setLoading(true)
@@ -163,7 +153,7 @@ export default function RAFsPage() {
     return matchesArea && matchesSearch
   })
 
-  if (!hasAccess) {
+  if (authLoading || !hasAccess) {
     return null
   }
 

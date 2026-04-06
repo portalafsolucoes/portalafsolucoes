@@ -38,7 +38,9 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ user })
+    const response = NextResponse.json({ user })
+    response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=300')
+    return response
   } catch (error) {
     console.error('Get user error:', error)
     return NextResponse.json(

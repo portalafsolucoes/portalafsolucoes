@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -29,7 +30,7 @@ interface Request {
 type ViewMode = 'grid' | 'table'
 
 export default function RequestsPage() {
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const { user: currentUser } = useAuth()
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -51,21 +52,8 @@ export default function RequestsPage() {
   }
 
   useEffect(() => {
-    loadCurrentUser()
     loadRequests()
   }, [])
-
-  const loadCurrentUser = async () => {
-    try {
-      const res = await fetch('/api/auth/me')
-      if (res.ok) {
-        const data = await res.json()
-        setCurrentUser(data.user)
-      }
-    } catch (error) {
-      console.error('Error loading session:', error)
-    }
-  }
 
   const loadRequests = async () => {
     try {

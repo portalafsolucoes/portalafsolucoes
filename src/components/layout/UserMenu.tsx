@@ -4,32 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { User, Settings, LogOut, ChevronDown, Shield, Wrench, UserCog, HardHat, Zap, Cog, Building2, LayoutGrid } from 'lucide-react'
-
-interface UserData {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: string
-  jobTitle?: string
-}
+import { useAuth } from '@/hooks/useAuth'
 
 export function UserMenu() {
-  const [user, setUser] = useState<UserData | null>(null)
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setUser(data.user)
-        }
-      })
-      .catch(() => {})
-  }, [])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

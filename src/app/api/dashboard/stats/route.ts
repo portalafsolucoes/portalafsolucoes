@@ -10,18 +10,20 @@ export async function GET() {
 
     const companyId = session.companyId
 
-    // Fazer todas as contagens em paralelo usando count queries (sem transferir dados)
-    const [
-      woTotal, woOpen, woInProgress, woCompleted,
-      assetsTotal, assetsOperational, assetsDown,
-      reqTotal, reqPending
-    ] = await Promise.all([
+    // Serializar em 3 batches para evitar rate limit do Supabase
+    const [woTotal, woOpen, woInProgress] = await Promise.all([
       supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId),
       supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'PENDING'),
       supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'IN_PROGRESS'),
+    ])
+
+    const [woCompleted, assetsTotal, assetsOperational] = await Promise.all([
       supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'COMPLETE'),
       supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false),
       supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false).eq('status', 'OPERATIONAL'),
+    ])
+
+    const [assetsDown, reqTotal, reqPending] = await Promise.all([
       supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false).eq('status', 'DOWN'),
       supabase.from('Request').select('id', { count: 'exact', head: true }).eq('companyId', companyId),
       supabase.from('Request').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'PENDING'),

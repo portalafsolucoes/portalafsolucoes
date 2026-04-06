@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { User, Mail, Briefcase, Shield, Calendar, Building } from 'lucide-react'
 
@@ -21,20 +21,9 @@ interface UserData {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setUser(data.user)
-        }
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
-  }, [])
+  const { user: authUser, isLoading: loading } = useAuth()
+  // Cast to UserData since the API returns all fields but the hook type is narrower
+  const user = authUser as unknown as UserData | null
 
   const getRoleName = (role: string) => {
     switch (role) {

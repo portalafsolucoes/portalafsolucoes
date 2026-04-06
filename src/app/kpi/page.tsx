@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { TrendingUp, Activity, DollarSign, BarChart3, Info } from 'lucide-react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 import { formatCurrency } from '@/lib/utils'
 
 interface KpiData {
@@ -30,31 +31,27 @@ function KpiCard({ label, value, unit, description, highlight }: {
 
 export default function KpiPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const { user, isLoading: authLoading } = useAuth()
+  const role = user?.role ?? ''
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
   const [units, setUnits] = useState<any[]>([])
   const [selectedUnit, setSelectedUnit] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
+  // Redirect if not authenticated or no permission
   useEffect(() => {
-    checkAccess()
-    loadUnits()
-  }, [])
+    if (authLoading || !user) return
+    if (!hasPermission(role as UserRole, 'kpi', 'view')) { router.push('/dashboard'); return }
+  }, [authLoading, user, role])
+
+  useEffect(() => {
+    if (!authLoading && user) loadUnits()
+  }, [authLoading, user])
 
   useEffect(() => {
     loadKpis()
   }, [selectedUnit, startDate, endDate])
-
-  const checkAccess = async () => {
-    try {
-      const res = await fetch('/api/auth/me')
-      const data = await res.json()
-      if (!data.user) { router.push('/login'); return }
-      if (!hasPermission(data.user.role as UserRole, 'kpi', 'view')) { router.push('/dashboard'); return }
-      setLoading(false)
-    } catch { router.push('/login') }
-  }
 
   const loadUnits = async () => {
     const res = await fetch('/api/units')
@@ -73,7 +70,7 @@ export default function KpiPage() {
     setKpiData(data.data || null)
   }
 
-  if (loading) {
+  if (authLoading || !user) {
     return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" /></div></AppLayout>
   }
 
