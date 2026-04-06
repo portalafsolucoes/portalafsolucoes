@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar planos de manutenção padrão
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('StandardMaintenancePlan')
       .insert({
+        id: generateId(),
         sequence: nextSequence,
         name,
         maintenanceTime,

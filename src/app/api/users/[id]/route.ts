@@ -87,7 +87,7 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, locationId } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, locationId, calendarId } = body
 
     // Verificar se o usuário existe e pertence à empresa
     const { data: existingUser, error: findError } = await supabase
@@ -126,7 +126,8 @@ export async function PUT(
       jobTitle,
       rate,
       enabled,
-      locationId
+      locationId,
+      calendarId: calendarId !== undefined ? (calendarId || null) : undefined
     }
 
     // Se uma nova senha foi fornecida, fazer hash

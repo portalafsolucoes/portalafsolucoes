@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
       .from('Request')
       .select(`
         *,
-        createdBy:User!Request_createdById_fkey(id, firstName, lastName, email),
-        approvedBy:User!Request_approvedById_fkey(id, firstName, lastName, email),
-        assignedTo:User!Request_assignedToId_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
+        approvedBy:User!approvedById(id, firstName, lastName, email),
+        assignedTo:User!assignedToId(id, firstName, lastName, email),
         team:Team(id, name),
         asset:Asset(id, name),
         location:Location(id, name),

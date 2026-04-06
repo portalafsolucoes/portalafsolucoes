@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 const TABLE_MAP: Record<string, string> = {
@@ -75,10 +75,22 @@ export async function PUT(
 
     const body = await request.json()
 
+    // Extrair options para generic-steps (campo virtual)
+    let stepOptions: { label: string; order: number }[] | undefined
+    if (entity === 'generic-steps' && body.options !== undefined) {
+      stepOptions = body.options
+      delete body.options
+    }
+
     // Remover campos que não devem ser atualizados
     delete body.id
     delete body.createdAt
     delete body.companyId
+
+    // Converter strings vazias em null (evita conflitos em unique constraints de campos opcionais)
+    for (const key of Object.keys(body)) {
+      if (body[key] === '') body[key] = null
+    }
 
     // Atualizar updatedAt
     body.updatedAt = new Date().toISOString()
@@ -98,6 +110,20 @@ export async function PUT(
         return NextResponse.json({ error: 'Registro duplicado' }, { status: 409 })
       }
       throw error
+    }
+
+    // Atualizar opções da etapa genérica (delete + re-insert)
+    if (entity === 'generic-steps' && stepOptions !== undefined) {
+      await supabase.from('GenericStepOption').delete().eq('stepId', id)
+      if (stepOptions.length > 0) {
+        const optionsToInsert = stepOptions.map((opt, i) => ({
+          id: generateId(),
+          stepId: id,
+          label: opt.label,
+          order: opt.order ?? i,
+        }))
+        await supabase.from('GenericStepOption').insert(optionsToInsert)
+      }
     }
 
     return NextResponse.json({ data, message: 'Registro atualizado com sucesso' })

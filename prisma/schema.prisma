@@ -275,6 +275,10 @@ model User {
   notifications              Notification[]
   createdRAFs                FailureAnalysisReport[] @relation("RAFCreatedBy")
   createdSchedules           WorkOrderSchedule[]     @relation("ScheduleCreatedBy")
+  resources                  Resource[]              @relation("UserResources")
+
+  calendarId String?
+  calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
 
   @@index([companyId])
   @@index([email])
@@ -373,6 +377,8 @@ model Calendar {
   standardMaintenancePlans StandardMaintenancePlan[]
   assetMaintenancePlans    AssetMaintenancePlan[]
   workCenters              WorkCenter[]
+  resources                Resource[]
+  users                    User[]     @relation("UserCalendar")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -517,6 +523,7 @@ model Characteristic {
   id           String   @id @default(cuid())
   name         String
   infoType     String   @default("Caractere")
+  unit         String?
   protheusCode String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -534,9 +541,9 @@ model Resource {
   id           String   @id @default(cuid())
   name         String
   type         String
-  unit         String?
-  unitCost     Float    @default(0)
-  availability Float    @default(100)
+  unit           String?
+  unitCost       Float    @default(0)
+  availableCount Int?
   protheusCode String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -544,11 +551,18 @@ model Resource {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  userId String?
+  user   User?   @relation("UserResources", fields: [userId], references: [id], onDelete: SetNull)
+
+  calendarId String?
+  calendar   Calendar? @relation(fields: [calendarId], references: [id])
+
   standardTaskResources StandardMaintenanceTaskResource[]
   assetTaskResources    AssetMaintenanceTaskResource[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
+  @@index([userId])
 }
 
 model MaintenanceType {
@@ -643,9 +657,21 @@ model GenericStep {
 
   standardTaskSteps StandardMaintenanceTaskStep[]
   assetTaskSteps    AssetMaintenanceTaskStep[]
+  options           GenericStepOption[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
+}
+
+model GenericStepOption {
+  id    String @id @default(cuid())
+  label String
+  order Int    @default(0)
+
+  stepId String
+  step   GenericStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
 }
 
 // ============================================
@@ -682,7 +708,7 @@ model Asset {
   gutUrgency      Int         @default(1)
   gutTendency     Int         @default(1)
 
-  // Novos campos Fase 1
+  // Campos TOTVS (ST9 - Tabela Bem)
   tag               String?   @db.VarChar(6)
   protheusCode      String?
   hasStructure      Boolean   @default(false)
@@ -695,6 +721,29 @@ model Asset {
   modelName         String?
   serialNumber      String?
   purchaseDate      DateTime?
+
+  // Campos adicionais TOTVS (Fase Integração)
+  fixedAssetCode    String?   // Imobilizado (código contábil)
+  assetPlate        String?   // Chapa Imobilizado
+  ownershipType     String    @default("PROPRIO") // Próprio/Terceiro
+  supplierCode      String?   // Código do Fornecedor
+  supplierStore     String?   // Loja do Fornecedor
+  warrantyPeriod    Int?      // Prazo de Garantia
+  warrantyUnit      String?   // Unidade da Garantia (DIAS/MESES/ANOS)
+  warrantyDate      DateTime? // Data fim da Garantia
+  counterType       String?   // Tipo do Contador
+  counterPosition   Float?    // Posição atual do Contador
+  counterLimit      Float?    // Limite do Contador
+  dailyVariation    Float?    // Variação diária do Contador
+  accumulatedCounter Float?   // Contador Acumulado
+  lifeValue         Float?    // Valor Vida Útil
+  lifeUnit          String?   // Unidade Vida Útil
+  purchaseValue     Float?    // Valor de Compra
+  installationDate  DateTime? // Data de Instalação
+  deactivationDate  DateTime? // Data de Baixa
+  deactivationReason String?  // Motivo da Baixa
+  warehouse         String?   // Almoxarifado
+  shiftCode         String?   // Turno de Trabalho
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

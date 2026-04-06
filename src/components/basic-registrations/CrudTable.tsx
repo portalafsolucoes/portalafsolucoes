@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, Trash2, Search, X, Download } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Plus, Pencil, Trash2, Search, X, Download, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { exportToExcel } from '@/lib/exportExcel'
@@ -9,13 +9,96 @@ import { exportToExcel } from '@/lib/exportExcel'
 export interface FieldConfig {
   key: string
   label: string
-  type: 'text' | 'number' | 'select' | 'textarea' | 'checkbox'
+  type: 'text' | 'number' | 'select' | 'textarea' | 'checkbox' | 'combobox'
   required?: boolean
   placeholder?: string
   options?: { value: string; label: string }[]
   defaultValue?: string | number | boolean
   readOnly?: boolean
   width?: string // classe CSS de largura
+  visibleWhen?: { field: string; value: string | string[] }
+}
+
+function ComboboxField({ value, onChange, options, placeholder }: {
+  value: string
+  onChange: (val: string) => void
+  options: { value: string; label: string }[]
+  placeholder: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [inputValue, setInputValue] = useState(value)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setInputValue(value) }, [value])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const filtered = options.filter(o =>
+    !inputValue || o.label.toLowerCase().includes(inputValue.toLowerCase())
+  )
+
+  const isCustom = inputValue && !options.some(o => o.value === inputValue)
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={e => {
+            setInputValue(e.target.value)
+            onChange(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder}
+          className="w-full px-3 py-2 pr-8 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+      </div>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-card border border-border rounded-lg shadow-lg">
+          {filtered.length > 0 ? filtered.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                setInputValue(opt.value)
+                onChange(opt.value)
+                setOpen(false)
+              }}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${
+                opt.value === value ? 'bg-muted font-medium' : ''
+              }`}
+            >
+              {opt.label}
+            </button>
+          )) : (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              Nenhuma opção encontrada
+            </div>
+          )}
+          {isCustom && filtered.length > 0 && (
+            <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+              Valor personalizado: <span className="font-medium text-foreground">{inputValue}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 interface CrudTableProps {
@@ -25,10 +108,11 @@ interface CrudTableProps {
   columns: { key: string; label: string; render?: (value: any, row: any) => React.ReactNode }[]
   unitScoped?: boolean // Se precisa de unitId
   selectedUnitId?: string
+  apiQueryParams?: string // Query params extras para a API (ex: "types=MATERIAL,TOOL")
   customModalRender?: (props: { editingItem: any | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
 }
 
-export function CrudTable({ entity, title, fields, columns, unitScoped, selectedUnitId, customModalRender }: CrudTableProps) {
+export function CrudTable({ entity, title, fields, columns, unitScoped, selectedUnitId, apiQueryParams, customModalRender }: CrudTableProps) {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -42,8 +126,15 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
     setLoading(true)
     try {
       let url = `/api/basic-registrations/${entity}`
+      const params: string[] = []
       if (unitScoped && selectedUnitId) {
-        url += `?unitId=${selectedUnitId}`
+        params.push(`unitId=${selectedUnitId}`)
+      }
+      if (apiQueryParams) {
+        params.push(apiQueryParams)
+      }
+      if (params.length > 0) {
+        url += `?${params.join('&')}`
       }
       const res = await fetch(url)
       const data = await res.json()
@@ -52,7 +143,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
       setItems([])
     }
     setLoading(false)
-  }, [entity, unitScoped, selectedUnitId])
+  }, [entity, unitScoped, selectedUnitId, apiQueryParams])
 
   useEffect(() => {
     fetchItems()
@@ -254,15 +345,46 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                 {error}
               </div>
             )}
-            {fields.filter(f => !f.readOnly || editingItem).map(field => (
+            {fields.filter(f => {
+              if (f.readOnly && !editingItem) return false
+              if (f.visibleWhen) {
+                const depValue = formData[f.visibleWhen.field]
+                const expected = f.visibleWhen.value
+                if (Array.isArray(expected)) {
+                  if (!expected.includes(depValue)) return false
+                } else {
+                  if (depValue !== expected) return false
+                }
+              }
+              return true
+            }).map(field => (
               <div key={field.key}>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   {field.label} {field.required && <span className="text-danger">*</span>}
                 </label>
-                {field.type === 'select' ? (
+                {field.type === 'combobox' ? (
+                  <ComboboxField
+                    value={formData[field.key] || ''}
+                    onChange={(val) => setFormData({ ...formData, [field.key]: val })}
+                    options={field.options || []}
+                    placeholder={field.placeholder || 'Selecione ou digite...'}
+                  />
+                ) : field.type === 'select' ? (
                   <select
                     value={formData[field.key] || ''}
-                    onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
+                    onChange={e => {
+                      const newVal = e.target.value
+                      const updated = { ...formData, [field.key]: newVal }
+                      // Limpar campos que dependem deste via visibleWhen
+                      fields.forEach(f => {
+                        if (f.visibleWhen?.field === field.key) {
+                          const expected = f.visibleWhen.value
+                          const visible = Array.isArray(expected) ? expected.includes(newVal) : newVal === expected
+                          if (!visible) updated[f.key] = ''
+                        }
+                      })
+                      setFormData(updated)
+                    }}
                     className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
                     disabled={field.readOnly}
                   >

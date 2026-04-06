@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 export async function GET(
@@ -131,6 +131,7 @@ export async function PUT(
       // Adicionar novos membros
       if (memberIds.length > 0) {
         const newMembers = memberIds.map((userId: string) => ({
+          id: generateId(),
           teamId: id,
           userId
         }))

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 export async function GET(request: NextRequest) {
@@ -28,7 +27,7 @@ export async function GET(request: NextRequest) {
       .from('Request')
       .select(`
         *,
-        createdBy:User!Request_createdById_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(id, name, url, type, size, createdAt),
         generatedWorkOrder:WorkOrder(id, title, status)
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
     const { data: maintenanceRequest, error: createError } = await supabase
       .from('Request')
       .insert({
-        id: randomUUID(),
+        id: generateId(),
         title,
         description,
         priority: priority || 'NONE',
@@ -101,7 +100,7 @@ export async function POST(request: NextRequest) {
       })
       .select(`
         *,
-        createdBy:User!Request_createdById_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(*)
       `)
@@ -119,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Insert files separately if provided
     if (files.length > 0 && maintenanceRequest) {
       const fileInserts = files.map((file: any) => ({
-        id: randomUUID(),
+        id: generateId(),
         name: file.name,
         url: file.url,
         type: file.type,

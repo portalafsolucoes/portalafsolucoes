@@ -10,10 +10,11 @@ interface ModalProps {
   children: React.ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'full'
   hideHeader?: boolean
+  noPadding?: boolean
   inPage?: boolean // Novo: renderizar dentro da página ao invés de fullscreen
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeader = false, inPage = false }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeader = false, noPadding = false, inPage = false }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -102,7 +103,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeade
           )}
           
           {/* Content */}
-          <div className={`flex-1 overflow-y-auto ${hideHeader ? 'p-6 sm:p-8' : 'px-0 py-0'}`}>
+          <div className={`flex-1 overflow-y-auto ${noPadding ? '' : hideHeader ? 'p-6 sm:p-8' : 'px-0 py-0'}`}>
             {children}
           </div>
         </div>

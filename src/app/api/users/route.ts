@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashPassword } from '@/lib/auth'
 
@@ -36,8 +36,9 @@ export async function GET(request: NextRequest) {
       .from('User')
       .select(`
         id, email, firstName, lastName, phone, jobTitle, username,
-        role, image, rate, enabled, lastLogin, locationId,
+        role, image, rate, enabled, lastLogin, locationId, calendarId,
         createdAt, updatedAt,
+        calendar:Calendar(name),
         teamMemberships:TeamMember(*, team:Team(*))
       `)
       .eq('companyId', session.companyId)
@@ -66,7 +67,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ data: users || [] })
+    const result = (users || []).map((u: any) => ({
+      ...u,
+      calendarName: u.calendar?.name || null,
+    }))
+
+    return NextResponse.json({ data: result })
   } catch (error) {
     console.error('Get users error:', error)
     return NextResponse.json(
@@ -84,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, rate, calendarId, locationId } = body
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
@@ -102,24 +108,38 @@ export async function POST(request: NextRequest) {
     if (checkError && checkError.code !== 'PGRST116') {
       console.error('Check user error:', checkError)
       return NextResponse.json(
-        { error: 'Database error' },
+        { error: 'Erro ao verificar usuário' },
         { status: 500 }
       )
     }
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User already exists' },
+        { error: 'Este email já está em uso' },
         { status: 409 }
       )
     }
 
     const hashedPassword = await hashPassword(password)
-    const username = email.split('@')[0]
+    let username = email.split('@')[0]
+
+    // Verificar se o username já existe e gerar um único
+    const { data: existingUsername } = await supabase
+      .from('User')
+      .select('id')
+      .eq('username', username)
+      .single()
+
+    if (existingUsername) {
+      username = email.replace('@', '_at_').replace(/\./g, '_')
+    }
+
+    const now = new Date().toISOString()
 
     const { data: user, error: createError } = await supabase
       .from('User')
       .insert({
+        id: generateId(),
         email,
         password: hashedPassword,
         firstName,
@@ -130,7 +150,11 @@ export async function POST(request: NextRequest) {
         jobTitle,
         rate: rate || 0,
         enabled: true,
-        companyId: session.companyId
+        companyId: session.companyId,
+        calendarId: calendarId || null,
+        locationId: locationId || null,
+        createdAt: now,
+        updatedAt: now
       })
       .select('id, email, firstName, lastName, phone, jobTitle, username, role, rate, enabled, createdAt')
       .single()
@@ -138,7 +162,7 @@ export async function POST(request: NextRequest) {
     if (createError) {
       console.error('Create user error:', createError)
       return NextResponse.json(
-        { error: 'Database error' },
+        { error: 'Erro ao criar usuário: ' + (createError.message || 'erro no banco de dados') },
         { status: 500 }
       )
     }

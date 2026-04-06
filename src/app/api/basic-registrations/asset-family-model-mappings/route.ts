@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar mapeamentos (filtrar por familyId ou modelId)
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     // Inserir novos mapeamentos
     if (modelIds.length > 0) {
       const mappings = modelIds.map((modelId: string) => ({
+        id: generateId(),
         familyId,
         modelId,
       }))

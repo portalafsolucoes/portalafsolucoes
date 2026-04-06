@@ -74,7 +74,7 @@ export async function POST(
         *,
         createdBy:User(*),
         team:Team(*),
-        approvedBy:User!Request_approvedById_fkey(*)
+        approvedBy:User!approvedById(*)
       `)
       .single()
 

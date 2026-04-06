@@ -28,6 +28,8 @@ interface Asset {
   location?: { name: string; id: string }
   category?: { name: string; id: string }
   parentAssetId?: string | null
+  protheusCode?: string
+  tag?: string
   createdAt: string
   updatedAt: string
 }
@@ -40,7 +42,7 @@ interface AssetTableProps {
   onDelete?: (assetId: string) => void
 }
 
-type SortField = 'name' | 'status' | 'area' | 'createdAt'
+type SortField = 'name' | 'protheusCode' | 'status' | 'area' | 'createdAt'
 type SortDirection = 'asc' | 'desc'
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -90,6 +92,9 @@ export function AssetTable({
     switch (sortField) {
       case 'name':
         comparison = a.name.localeCompare(b.name)
+        break
+      case 'protheusCode':
+        comparison = (a.protheusCode || '').localeCompare(b.protheusCode || '')
         break
       case 'status':
         comparison = a.status.localeCompare(b.status)
@@ -185,8 +190,19 @@ export function AssetTable({
                 />
               </th>
               
+              {/* Código do Bem */}
+              <th
+                className="px-4 py-3 text-left cursor-pointer group"
+                onClick={() => handleSort('protheusCode')}
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Código
+                  <SortIcon field="protheusCode" />
+                </div>
+              </th>
+
               {/* Nome */}
-              <th 
+              <th
                 className="px-4 py-3 text-left cursor-pointer group"
                 onClick={() => handleSort('name')}
               >
@@ -244,7 +260,7 @@ export function AssetTable({
           <tbody className="divide-y divide-border">
             {sortedAssets.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Package className="w-12 h-12 opacity-20" />
                     <p className="text-sm">Nenhum ativo encontrado</p>
@@ -278,6 +294,16 @@ export function AssetTable({
                       />
                     </td>
                     
+                    {/* Código do Bem */}
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-foreground font-mono">
+                        {asset.protheusCode || '-'}
+                      </span>
+                      {asset.tag && (
+                        <span className="ml-1 text-xs text-muted-foreground">({asset.tag})</span>
+                      )}
+                    </td>
+
                     {/* Nome */}
                     <td className="px-4 py-3">
                       <div className="flex flex-col">

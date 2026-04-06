@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar planos de manutenção do bem
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const insertData: any = {
+      id: generateId(),
       sequence: nextSequence,
       name: name || standardData?.name || null,
       isStandard: isStandard || false,
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
           const { data: newTask } = await supabase
             .from('AssetMaintenanceTask')
             .insert({
+              id: generateId(),
               planId: data.id,
               taskCode: stdTask.taskCode,
               description: stdTask.description,
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
               .eq('taskId', stdTask.id)
             if (stdSteps && stdSteps.length > 0) {
               await supabase.from('AssetMaintenanceTaskStep').insert(
-                stdSteps.map((s: any) => ({ taskId: newTask.id, stepId: s.stepId, order: s.order }))
+                stdSteps.map((s: any) => ({ id: generateId(), taskId: newTask.id, stepId: s.stepId, order: s.order }))
               )
             }
 
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
             if (stdRes && stdRes.length > 0) {
               await supabase.from('AssetMaintenanceTaskResource').insert(
                 stdRes.map((r: any) => ({
-                  taskId: newTask.id, resourceId: r.resourceId, resourceCount: r.resourceCount,
+                  id: generateId(), taskId: newTask.id, resourceId: r.resourceId, resourceCount: r.resourceCount,
                   quantity: r.quantity, unit: r.unit, generatesReserve: r.generatesReserve,
                 }))
               )

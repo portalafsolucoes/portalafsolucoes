@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateId } from '@/lib/supabase';
 import { getSession } from '@/lib/session';
 
 // GET - Listar variáveis de processo
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
     const { data: variable, error } = await supabase
       .from('ProcessVariable')
       .insert({
+        id: generateId(),
         companyId: session.companyId,
         sector,
         tagName,

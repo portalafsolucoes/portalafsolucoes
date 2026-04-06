@@ -26,6 +26,39 @@ interface Asset {
   gutTendency?: number
   createdAt: string
   updatedAt: string
+  // Campos TOTVS
+  protheusCode?: string
+  tag?: string
+  fixedAssetCode?: string
+  assetPlate?: string
+  assetCategoryType?: string
+  assetPriority?: string
+  ownershipType?: string
+  manufacturer?: string
+  modelName?: string
+  serialNumber?: string
+  hasStructure?: boolean
+  hasCounter?: boolean
+  counterType?: string
+  counterPosition?: number
+  counterLimit?: number
+  dailyVariation?: number
+  purchaseValue?: number
+  hourlyCost?: number
+  purchaseDate?: string
+  installationDate?: string
+  supplierCode?: string
+  supplierStore?: string
+  warrantyPeriod?: number
+  warrantyUnit?: string
+  warrantyDate?: string
+  maintenanceStatus?: string
+  deactivationDate?: string
+  deactivationReason?: string
+  warehouse?: string
+  shiftCode?: string
+  lifeValue?: number
+  lifeUnit?: string
 }
 
 interface WorkOrder {
@@ -139,86 +172,239 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
           </div>
         )}
 
-        {/* Informações Básicas */}
+        {/* Identificação */}
         <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Informações</h3>
-          
+          <h3 className="text-sm font-semibold text-foreground mb-3">Identificação</h3>
           {asset.description && (
             <div className="mb-3">
               <p className="text-sm text-muted-foreground">{asset.description}</p>
             </div>
           )}
-
-          <div className="space-y-2">
-            {asset.location && (
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Localização</p>
-                  <p className="text-sm text-foreground">{asset.location.name}</p>
-                </div>
-              </div>
-            )}
-
-            {asset.category && (
-              <div className="flex items-start gap-2">
-                <Package className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Categoria</p>
-                  <p className="text-sm text-foreground">{asset.category.name}</p>
-                </div>
-              </div>
-            )}
-
-            {asset.primaryUser && (
-              <div className="flex items-start gap-2">
-                <User className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Responsável</p>
-                  <p className="text-sm text-foreground">
-                    {asset.primaryUser.firstName} {asset.primaryUser.lastName}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {asset.barCode && (
-              <div className="flex items-start gap-2">
-                <QrIcon className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Código de Barras</p>
-                  <p className="text-sm text-foreground font-mono">{asset.barCode}</p>
-                </div>
-              </div>
-            )}
-
-            {asset.acquisitionCost && (
-              <div className="flex items-start gap-2">
-                <DollarSign className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Custo de Aquisição</p>
-                  <p className="text-sm text-foreground">{formatCurrency(asset.acquisitionCost)}</p>
-                </div>
-              </div>
-            )}
-
-            {asset.area && (
-              <div className="flex items-start gap-2">
-                <Maximize2 className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Área</p>
-                  <p className="text-sm text-foreground">{asset.area} m²</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {asset.protheusCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Criado em</p>
-                <p className="text-sm text-foreground">{formatDate(asset.createdAt)}</p>
+                <p className="text-xs text-muted-foreground">Código do Bem</p>
+                <p className="text-sm text-foreground font-mono font-semibold">{asset.protheusCode}</p>
               </div>
+            )}
+            {asset.tag && (
+              <div>
+                <p className="text-xs text-muted-foreground">Tag</p>
+                <p className="text-sm text-foreground font-mono">{asset.tag}</p>
+              </div>
+            )}
+            {asset.barCode && (
+              <div>
+                <p className="text-xs text-muted-foreground">Código de Barras</p>
+                <p className="text-sm text-foreground font-mono">{asset.barCode}</p>
+              </div>
+            )}
+            {asset.fixedAssetCode && (
+              <div>
+                <p className="text-xs text-muted-foreground">Cód. Imobilizado</p>
+                <p className="text-sm text-foreground">{asset.fixedAssetCode}</p>
+              </div>
+            )}
+            {asset.assetPlate && (
+              <div>
+                <p className="text-xs text-muted-foreground">Chapa Imobilizado</p>
+                <p className="text-sm text-foreground">{asset.assetPlate}</p>
+              </div>
+            )}
+            {asset.assetCategoryType && (
+              <div>
+                <p className="text-xs text-muted-foreground">Categoria</p>
+                <p className="text-sm text-foreground">{asset.assetCategoryType}</p>
+              </div>
+            )}
+            {asset.assetPriority && (
+              <div>
+                <p className="text-xs text-muted-foreground">Prioridade</p>
+                <p className="text-sm text-foreground">{asset.assetPriority}</p>
+              </div>
+            )}
+            {asset.ownershipType && (
+              <div>
+                <p className="text-xs text-muted-foreground">Proprietário</p>
+                <p className="text-sm text-foreground">{asset.ownershipType === 'PROPRIO' ? 'Próprio' : 'Terceiro'}</p>
+              </div>
+            )}
+            {asset.maintenanceStatus && (
+              <div>
+                <p className="text-xs text-muted-foreground">Sit. Manutenção</p>
+                <p className="text-sm text-foreground">{asset.maintenanceStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Localização e Organização */}
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Localização</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {asset.location && (
+              <div>
+                <p className="text-xs text-muted-foreground">Localização</p>
+                <p className="text-sm text-foreground">{asset.location.name}</p>
+              </div>
+            )}
+            {asset.warehouse && (
+              <div>
+                <p className="text-xs text-muted-foreground">Almoxarifado</p>
+                <p className="text-sm text-foreground">{asset.warehouse}</p>
+              </div>
+            )}
+            {asset.shiftCode && (
+              <div>
+                <p className="text-xs text-muted-foreground">Turno</p>
+                <p className="text-sm text-foreground">{asset.shiftCode}</p>
+              </div>
+            )}
+            {asset.primaryUser && (
+              <div>
+                <p className="text-xs text-muted-foreground">Responsável</p>
+                <p className="text-sm text-foreground">{asset.primaryUser.firstName} {asset.primaryUser.lastName}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Dados Técnicos */}
+        {(asset.manufacturer || asset.modelName || asset.serialNumber || asset.hasCounter) && (
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Dados Técnicos</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {asset.manufacturer && (
+              <div>
+                <p className="text-xs text-muted-foreground">Fabricante</p>
+                <p className="text-sm text-foreground">{asset.manufacturer}</p>
+              </div>
+            )}
+            {asset.modelName && (
+              <div>
+                <p className="text-xs text-muted-foreground">Modelo</p>
+                <p className="text-sm text-foreground">{asset.modelName}</p>
+              </div>
+            )}
+            {asset.serialNumber && (
+              <div>
+                <p className="text-xs text-muted-foreground">N. Série</p>
+                <p className="text-sm text-foreground font-mono">{asset.serialNumber}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-muted-foreground">Estrutura</p>
+              <p className="text-sm text-foreground">{asset.hasStructure ? 'Sim' : 'Não'}</p>
             </div>
+            {asset.hasCounter && (
+              <>
+                <div>
+                  <p className="text-xs text-muted-foreground">Contador</p>
+                  <p className="text-sm text-foreground">{asset.counterType || 'Sim'}</p>
+                </div>
+                {asset.counterPosition != null && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Posição Contador</p>
+                    <p className="text-sm text-foreground">{asset.counterPosition}</p>
+                  </div>
+                )}
+              </>
+            )}
+            {asset.lifeValue != null && (
+              <div>
+                <p className="text-xs text-muted-foreground">Vida Útil</p>
+                <p className="text-sm text-foreground">{asset.lifeValue} {asset.lifeUnit || ''}</p>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Financeiro */}
+        {(asset.acquisitionCost || asset.purchaseValue || asset.hourlyCost || asset.purchaseDate) && (
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Financeiro e Aquisição</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {asset.purchaseValue != null && (
+              <div>
+                <p className="text-xs text-muted-foreground">Valor de Compra</p>
+                <p className="text-sm text-foreground">{formatCurrency(asset.purchaseValue)}</p>
+              </div>
+            )}
+            {asset.acquisitionCost != null && (
+              <div>
+                <p className="text-xs text-muted-foreground">Custo de Aquisição</p>
+                <p className="text-sm text-foreground">{formatCurrency(asset.acquisitionCost)}</p>
+              </div>
+            )}
+            {asset.hourlyCost != null && asset.hourlyCost > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Custo Hora</p>
+                <p className="text-sm text-foreground">{formatCurrency(asset.hourlyCost)}</p>
+              </div>
+            )}
+            {asset.purchaseDate && (
+              <div>
+                <p className="text-xs text-muted-foreground">Data de Compra</p>
+                <p className="text-sm text-foreground">{formatDate(asset.purchaseDate)}</p>
+              </div>
+            )}
+            {asset.installationDate && (
+              <div>
+                <p className="text-xs text-muted-foreground">Data de Instalação</p>
+                <p className="text-sm text-foreground">{formatDate(asset.installationDate)}</p>
+              </div>
+            )}
+            {asset.supplierCode && (
+              <div>
+                <p className="text-xs text-muted-foreground">Fornecedor</p>
+                <p className="text-sm text-foreground">{asset.supplierCode}{asset.supplierStore ? ` / ${asset.supplierStore}` : ''}</p>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Garantia */}
+        {(asset.warrantyPeriod || asset.warrantyDate) && (
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Garantia</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {asset.warrantyPeriod != null && (
+              <div>
+                <p className="text-xs text-muted-foreground">Prazo</p>
+                <p className="text-sm text-foreground">{asset.warrantyPeriod} {asset.warrantyUnit || ''}</p>
+              </div>
+            )}
+            {asset.warrantyDate && (
+              <div>
+                <p className="text-xs text-muted-foreground">Data Garantia</p>
+                <p className="text-sm text-foreground">{formatDate(asset.warrantyDate)}</p>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Datas */}
+        <div className="p-4 border-b border-border">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground">Criado em</p>
+              <p className="text-sm text-foreground">{formatDate(asset.createdAt)}</p>
+            </div>
+            {asset.deactivationDate && (
+              <div>
+                <p className="text-xs text-muted-foreground">Data de Baixa</p>
+                <p className="text-sm text-foreground">{formatDate(asset.deactivationDate)}</p>
+              </div>
+            )}
+            {asset.deactivationReason && (
+              <div className="col-span-2">
+                <p className="text-xs text-muted-foreground">Motivo da Baixa</p>
+                <p className="text-sm text-foreground">{asset.deactivationReason}</p>
+              </div>
+            )}
           </div>
         </div>
 

@@ -75,7 +75,7 @@ export async function POST(
         executionData: executionData || null
       })
       .eq('id', id)
-      .select('*, assignedTo:User!Request_assignedToId_fkey(id, firstName, lastName, email), createdBy:User!Request_createdById_fkey(id, firstName, lastName, email)')
+      .select('*, assignedTo:User!assignedToId(id, firstName, lastName, email), createdBy:User!createdById(id, firstName, lastName, email)')
       .single()
 
     return NextResponse.json({

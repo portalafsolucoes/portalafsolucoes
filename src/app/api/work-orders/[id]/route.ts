@@ -19,15 +19,15 @@ export async function GET(
       .select(`
         *,
         asset:Asset(*),
-        location:Location!WorkOrder_locationId_fkey(*),
-        createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email, image),
-        completedBy:User!WorkOrder_completedById_fkey(id, firstName, lastName, email),
+        location:Location!locationId(*),
+        createdBy:User!createdById(id, firstName, lastName, email, image),
+        completedBy:User!completedById(id, firstName, lastName, email),
         tasks:Task(*),
         files:File(*),
         sourceRequest:Request(
           *,
           files:File(*),
-          createdBy:User!Request_createdById_fkey(id, firstName, lastName, email)
+          createdBy:User!createdById(id, firstName, lastName, email)
         )
       `)
       .eq('id', id)
@@ -189,7 +189,7 @@ export async function PATCH(
       .select(`
         *,
         asset:Asset(*),
-        location:Location!WorkOrder_locationId_fkey(*),
+        location:Location!locationId(*),
         category:WorkOrderCategory(*),
         tasks:Task(*)
       `)

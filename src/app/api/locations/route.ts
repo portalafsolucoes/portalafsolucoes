@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 export async function GET(request: NextRequest) {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     const { data: locations, error } = await supabase
       .from('Location')
-      .select('*, Asset(count), WorkOrder(count)')
+      .select('*, Asset!locationId(count), WorkOrder!locationId(count)')
       .eq('companyId', session.companyId)
       .order('name', { ascending: true })
 
@@ -58,15 +58,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const now = new Date().toISOString()
+
     const { data: location, error: createError } = await supabase
       .from('Location')
       .insert({
+        id: generateId(),
         name,
         address,
         latitude,
         longitude,
         parentId,
-        companyId: session.companyId
+        companyId: session.companyId,
+        createdAt: now,
+        updatedAt: now
       })
       .select('*')
       .single()

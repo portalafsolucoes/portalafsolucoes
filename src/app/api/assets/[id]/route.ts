@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -75,16 +75,60 @@ export async function PATCH(
 
     const { id } = await params
     const formData = await request.formData()
-    
+
     const name = formData.get('name') as string
     const description = formData.get('description') as string | null
     const locationId = formData.get('locationId') as string | null
     const mainImage = formData.get('mainImage') as File | null
-    
+
     // Campos GUT (Gravidade, Urgência, Tendência)
     const gutGravityStr = formData.get('gutGravity') as string | null
     const gutUrgencyStr = formData.get('gutUrgency') as string | null
     const gutTendencyStr = formData.get('gutTendency') as string | null
+
+    // Campos TOTVS
+    const protheusCode = formData.get('protheusCode') as string | null
+    const tag = formData.get('tag') as string | null
+    const unitId = formData.get('unitId') as string | null
+    const areaId = formData.get('areaId') as string | null
+    const workCenterId = formData.get('workCenterId') as string | null
+    const costCenterId = formData.get('costCenterId') as string | null
+    const positionId = formData.get('positionId') as string | null
+    const familyId = formData.get('familyId') as string | null
+    const familyModelId = formData.get('familyModelId') as string | null
+    const assetCategoryType = formData.get('assetCategoryType') as string | null
+    const assetPriority = formData.get('assetPriority') as string | null
+    const ownershipType = formData.get('ownershipType') as string | null
+    const manufacturer = formData.get('manufacturer') as string | null
+    const modelName = formData.get('modelName') as string | null
+    const serialNumber = formData.get('serialNumber') as string | null
+    const barCode = formData.get('barCode') as string | null
+    const hasStructure = formData.get('hasStructure') as string | null
+    const hasCounter = formData.get('hasCounter') as string | null
+    const counterType = formData.get('counterType') as string | null
+    const counterPosition = formData.get('counterPosition') as string | null
+    const counterLimit = formData.get('counterLimit') as string | null
+    const dailyVariation = formData.get('dailyVariation') as string | null
+    const purchaseValue = formData.get('purchaseValue') as string | null
+    const acquisitionCost = formData.get('acquisitionCost') as string | null
+    const hourlyCost = formData.get('hourlyCost') as string | null
+    const purchaseDate = formData.get('purchaseDate') as string | null
+    const installationDate = formData.get('installationDate') as string | null
+    const supplierCode = formData.get('supplierCode') as string | null
+    const supplierStore = formData.get('supplierStore') as string | null
+    const warrantyPeriod = formData.get('warrantyPeriod') as string | null
+    const warrantyUnit = formData.get('warrantyUnit') as string | null
+    const warrantyDate = formData.get('warrantyDate') as string | null
+    const fixedAssetCode = formData.get('fixedAssetCode') as string | null
+    const assetPlate = formData.get('assetPlate') as string | null
+    const maintenanceStatus = formData.get('maintenanceStatus') as string | null
+    const warehouse = formData.get('warehouse') as string | null
+    const shiftCode = formData.get('shiftCode') as string | null
+    const deactivationDate = formData.get('deactivationDate') as string | null
+    const deactivationReason = formData.get('deactivationReason') as string | null
+    const lifeValue = formData.get('lifeValue') as string | null
+    const lifeUnit = formData.get('lifeUnit') as string | null
+    const parentAssetId = formData.get('parentAssetId') as string | null
 
     // Verificar se o ativo existe
     const { data: asset, error: findError } = await supabase
@@ -130,10 +174,10 @@ export async function PATCH(
       updatedAt: new Date().toISOString()
     }
     if (description !== null) updateData.description = description
-    if (locationId !== null) updateData.locationId = locationId
+    if (locationId !== null) updateData.locationId = locationId || null
     if (imageUrl) updateData.image = imageUrl
-    
-    // Atualizar campos GUT se fornecidos (valores de 1-5)
+
+    // Campos GUT (valores de 1-5)
     if (gutGravityStr !== null) {
       const gutGravity = parseInt(gutGravityStr, 10)
       if (gutGravity >= 1 && gutGravity <= 5) updateData.gutGravity = gutGravity
@@ -146,6 +190,58 @@ export async function PATCH(
       const gutTendency = parseInt(gutTendencyStr, 10)
       if (gutTendency >= 1 && gutTendency <= 5) updateData.gutTendency = gutTendency
     }
+
+    // Campos TOTVS — identificação e classificação
+    if (protheusCode !== undefined) updateData.protheusCode = protheusCode || null
+    if (tag !== undefined) updateData.tag = tag || null
+    if (unitId !== undefined) updateData.unitId = unitId || null
+    if (areaId !== undefined) updateData.areaId = areaId || null
+    if (workCenterId !== undefined) updateData.workCenterId = workCenterId || null
+    if (costCenterId !== undefined) updateData.costCenterId = costCenterId || null
+    if (positionId !== undefined) updateData.positionId = positionId || null
+    if (familyId !== undefined) updateData.familyId = familyId || null
+    if (familyModelId !== undefined) updateData.familyModelId = familyModelId || null
+    if (parentAssetId !== undefined) updateData.parentAssetId = parentAssetId || null
+    if (assetCategoryType) updateData.assetCategoryType = assetCategoryType
+    if (assetPriority !== undefined) updateData.assetPriority = assetPriority || null
+    if (ownershipType) updateData.ownershipType = ownershipType
+
+    // Dados técnicos
+    if (manufacturer !== undefined) updateData.manufacturer = manufacturer || null
+    if (modelName !== undefined) updateData.modelName = modelName || null
+    if (serialNumber !== undefined) updateData.serialNumber = serialNumber || null
+    if (barCode !== undefined) updateData.barCode = barCode || null
+    if (hasStructure !== null) updateData.hasStructure = hasStructure === 'true'
+    if (hasCounter !== null) updateData.hasCounter = hasCounter === 'true'
+    if (counterType !== undefined) updateData.counterType = counterType || null
+    if (counterPosition !== null) updateData.counterPosition = counterPosition ? parseFloat(counterPosition) : null
+    if (counterLimit !== null) updateData.counterLimit = counterLimit ? parseFloat(counterLimit) : null
+    if (dailyVariation !== null) updateData.dailyVariation = dailyVariation ? parseFloat(dailyVariation) : null
+
+    // Financeiro
+    if (purchaseValue !== null) updateData.purchaseValue = purchaseValue ? parseFloat(purchaseValue) : null
+    if (acquisitionCost !== null) updateData.acquisitionCost = acquisitionCost ? parseFloat(acquisitionCost) : null
+    if (hourlyCost !== null) updateData.hourlyCost = hourlyCost ? parseFloat(hourlyCost) : null
+    if (purchaseDate !== null) updateData.purchaseDate = purchaseDate ? new Date(purchaseDate).toISOString() : null
+    if (installationDate !== null) updateData.installationDate = installationDate ? new Date(installationDate).toISOString() : null
+    if (supplierCode !== undefined) updateData.supplierCode = supplierCode || null
+    if (supplierStore !== undefined) updateData.supplierStore = supplierStore || null
+
+    // Garantia
+    if (warrantyPeriod !== null) updateData.warrantyPeriod = warrantyPeriod ? parseInt(warrantyPeriod, 10) : null
+    if (warrantyUnit !== undefined) updateData.warrantyUnit = warrantyUnit || null
+    if (warrantyDate !== null) updateData.warrantyDate = warrantyDate ? new Date(warrantyDate).toISOString() : null
+
+    // Contábil e status
+    if (fixedAssetCode !== undefined) updateData.fixedAssetCode = fixedAssetCode || null
+    if (assetPlate !== undefined) updateData.assetPlate = assetPlate || null
+    if (maintenanceStatus) updateData.maintenanceStatus = maintenanceStatus
+    if (warehouse !== undefined) updateData.warehouse = warehouse || null
+    if (shiftCode !== undefined) updateData.shiftCode = shiftCode || null
+    if (deactivationDate !== null) updateData.deactivationDate = deactivationDate ? new Date(deactivationDate).toISOString() : null
+    if (deactivationReason !== undefined) updateData.deactivationReason = deactivationReason || null
+    if (lifeValue !== null) updateData.lifeValue = lifeValue ? parseFloat(lifeValue) : null
+    if (lifeUnit !== undefined) updateData.lifeUnit = lifeUnit || null
 
     const { data: updatedAsset, error: updateError } = await supabase
       .from('Asset')
@@ -187,11 +283,13 @@ export async function PATCH(
         await writeFile(filepath, buffer)
 
         const { data: insertedFile } = await supabase.from('File').insert({
+          id: generateId(),
           name: attachment.name,
           url: `/uploads/${filename}`,
           type: attachment.type,
           size: attachment.size,
-          assetId: id
+          assetId: id,
+          updatedAt: new Date().toISOString()
         }).select().single()
 
         // Registrar evento de upload de arquivo

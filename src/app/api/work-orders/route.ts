@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { generateInternalId, isValidExternalId, determineSystemStatus } from '@/lib/workOrderUtils'
 
@@ -58,8 +57,8 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         asset:Asset(*),
-        location:Location!WorkOrder_locationId_fkey(*),
-        createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email)
+        location:Location!locationId(*),
+        createdBy:User!createdById(id, firstName, lastName, email)
       `, { count: 'exact' })
       .eq('companyId', session.companyId)
       .eq('archived', false)
@@ -248,7 +247,7 @@ export async function POST(request: NextRequest) {
     const { data: workOrder, error: woError } = await supabase
       .from('WorkOrder')
       .insert({
-        id: randomUUID(),
+        id: generateId(),
         title,
         description,
         type: type || 'CORRECTIVE',
@@ -281,7 +280,7 @@ export async function POST(request: NextRequest) {
     // Criar tasks se fornecidas
     if (tasks && tasks.length > 0) {
       const taskInserts = tasks.map((task: any, index: number) => ({
-        id: randomUUID(),
+        id: generateId(),
         label: task.label,
         notes: task.notes,
         order: index,

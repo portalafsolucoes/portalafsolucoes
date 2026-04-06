@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 export async function GET() {
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     const { data: team, error: createError } = await supabase
       .from('Team')
       .insert({
+        id: generateId(),
         name,
         description,
         companyId: session.companyId
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
     // Insert members separately if provided
     if (memberIds && memberIds.length > 0 && team) {
       const memberInserts = memberIds.map((userId: string) => ({
+        id: generateId(),
         teamId: team.id,
         userId
       }))

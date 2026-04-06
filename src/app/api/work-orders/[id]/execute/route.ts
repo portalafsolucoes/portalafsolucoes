@@ -29,7 +29,7 @@ export async function POST(
       .from('WorkOrder')
       .select(`
         *,
-        assignedTo:User!WorkOrder_assignedToId_fkey(id, firstName, lastName, email)
+        assignedTo:User!assignedToId(id, firstName, lastName, email)
       `)
       .eq('id', id)
       .single()
@@ -71,11 +71,11 @@ export async function POST(
       .eq('id', id)
       .select(`
         *,
-        createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email),
-        assignedTo:User!WorkOrder_assignedToId_fkey(id, firstName, lastName, email),
-        completedBy:User!WorkOrder_completedById_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
+        assignedTo:User!assignedToId(id, firstName, lastName, email),
+        completedBy:User!completedById(id, firstName, lastName, email),
         asset:Asset(*),
-        location:Location!WorkOrder_locationId_fkey(*),
+        location:Location!locationId(*),
         files:File(*)
       `)
       .single()

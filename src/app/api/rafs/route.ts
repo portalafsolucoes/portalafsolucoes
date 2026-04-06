@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar todos os RAFs
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     const { data: raf, error } = await supabase
       .from('FailureAnalysisReport')
       .insert({
+        id: generateId(),
         rafNumber: body.rafNumber,
         area: body.area,
         equipment: body.equipment,

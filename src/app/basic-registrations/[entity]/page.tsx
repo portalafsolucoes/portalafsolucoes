@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { CrudTable, FieldConfig } from '@/components/basic-registrations/CrudTable'
 import { CalendarModal } from '@/components/basic-registrations/CalendarModal'
 import { AssetFamilyModal } from '@/components/basic-registrations/AssetFamilyModal'
-import { Settings2 } from 'lucide-react'
+import { ResourceModal } from '@/components/basic-registrations/ResourceModal'
+import { GenericStepModal } from '@/components/basic-registrations/GenericStepModal'
+import { Settings2, Users, ExternalLink, Search, ChevronDown, ChevronRight, Wrench } from 'lucide-react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 
 interface TabConfig {
@@ -16,7 +19,155 @@ interface TabConfig {
   unitScoped?: boolean
   fields: FieldConfig[]
   columns: { key: string; label: string; render?: (value: any, row: any) => React.ReactNode }[]
+  apiQueryParams?: string
   customModalRender?: (props: { editingItem: any | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
+  customSectionRender?: () => React.ReactNode
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: 'Super Admin',
+  GESTOR: 'Gestor',
+  PLANEJADOR: 'Planejador',
+  MECANICO: 'Mecânico',
+  ELETRICISTA: 'Eletricista',
+  OPERADOR: 'Operador',
+  CONSTRUTOR_CIVIL: 'Construtor Civil',
+}
+
+function PeopleSummarySection({ users }: { users: any[] }) {
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const enabledUsers = useMemo(() => {
+    return users.filter(u => u.enabled !== false)
+  }, [users])
+
+  const filtered = useMemo(() => {
+    if (!searchTerm) return enabledUsers
+    const s = searchTerm.toLowerCase()
+    return enabledUsers.filter(u => {
+      const fullName = `${u.firstName} ${u.lastName}`.toLowerCase()
+      const role = (ROLE_LABELS[u.role] || u.role || '').toLowerCase()
+      const job = (u.jobTitle || '').toLowerCase()
+      return fullName.includes(s) || role.includes(s) || job.includes(s)
+    })
+  }, [enabledUsers, searchTerm])
+
+  // Agrupar por role
+  const groupedByRole = useMemo(() => {
+    const groups: Record<string, any[]> = {}
+    for (const user of filtered) {
+      const role = user.role || 'SEM_CARGO'
+      if (!groups[role]) groups[role] = []
+      groups[role].push(user)
+    }
+    return groups
+  }, [filtered])
+
+  const roleOrder = ['MECANICO', 'ELETRICISTA', 'OPERADOR', 'CONSTRUTOR_CIVIL', 'PLANEJADOR', 'GESTOR', 'SUPER_ADMIN']
+  const sortedRoles = Object.keys(groupedByRole).sort((a, b) => {
+    const ia = roleOrder.indexOf(a)
+    const ib = roleOrder.indexOf(b)
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+  })
+
+  const [expanded, setExpanded] = useState(true)
+
+  return (
+    <div className="mb-6 border border-border rounded-lg bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+      >
+        <div className="flex items-center gap-2">
+          {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+          <Users className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-base font-semibold text-foreground">Mão de Obra & Especialidades</h2>
+          <span className="text-xs text-muted-foreground">({enabledUsers.length} pessoas)</span>
+        </div>
+        <Link
+          href="/people-teams"
+          onClick={e => e.stopPropagation()}
+          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+        >
+          Gerenciar em Pessoas/Equipes
+          <ExternalLink className="h-3 w-3" />
+        </Link>
+      </button>
+
+      {expanded && (
+        <>
+          {/* Busca */}
+          <div className="p-3 border-t border-border">
+            <div className="relative max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar por nome, cargo ou especialidade..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="text-center py-6 text-sm text-muted-foreground">
+              {enabledUsers.length === 0
+                ? 'Nenhuma pessoa cadastrada. Acesse Pessoas/Equipes para cadastrar.'
+                : 'Nenhuma pessoa encontrada para a busca.'}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Nome</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Cargo</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Especialidade</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Taxa/Hora (R$)</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Calendário</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {sortedRoles.map(role => (
+                    groupedByRole[role].map(user => (
+                      <tr key={user.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-2.5 text-foreground font-medium">
+                          {user.firstName} {user.lastName}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted-foreground">
+                          {user.jobTitle || '—'}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                            {ROLE_LABELS[user.role] || user.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-muted-foreground">
+                          {user.rate ? `R$ ${Number(user.rate).toFixed(2)}` : '—'}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted-foreground">
+                          {user.calendarName || '—'}
+                        </td>
+                      </tr>
+                    ))
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="px-4 py-2 border-t border-border bg-muted/30">
+            <p className="text-xs text-muted-foreground">
+              {enabledUsers.length} pessoa(s) ativa(s) — Para adicionar ou editar mão de obra, acesse{' '}
+              <Link href="/people-teams" className="text-primary hover:underline">Pessoas/Equipes</Link>.
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 export default function BasicRegistrationEntityPage() {
@@ -34,6 +185,8 @@ export default function BasicRegistrationEntityPage() {
   const [maintenanceAreas, setMaintenanceAreas] = useState<any[]>([])
   const [assetFamilyModels, setAssetFamilyModels] = useState<any[]>([])
   const [calendars, setCalendars] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [resourcesTableExpanded, setResourcesTableExpanded] = useState(true)
 
   useEffect(() => {
     checkAccess()
@@ -58,21 +211,23 @@ export default function BasicRegistrationEntityPage() {
 
   const loadDependencies = async () => {
     try {
-      const [unitsRes, mtRes, maRes, afmRes, calRes] = await Promise.all([
+      const [unitsRes, mtRes, maRes, afmRes, calRes, usersRes] = await Promise.all([
         fetch('/api/units'),
         fetch('/api/basic-registrations/maintenance-types'),
         fetch('/api/basic-registrations/maintenance-areas'),
         fetch('/api/basic-registrations/asset-family-models'),
         fetch('/api/basic-registrations/calendars'),
+        fetch('/api/users?enabled=true'),
       ])
-      const [unitsData, mtData, maData, afmData, calData] = await Promise.all([
-        unitsRes.json(), mtRes.json(), maRes.json(), afmRes.json(), calRes.json()
+      const [unitsData, mtData, maData, afmData, calData, usersData] = await Promise.all([
+        unitsRes.json(), mtRes.json(), maRes.json(), afmRes.json(), calRes.json(), usersRes.json()
       ])
       setUnits(unitsData.data || [])
       setMaintenanceTypes(mtData.data || [])
       setMaintenanceAreas(maData.data || [])
       setAssetFamilyModels(afmData.data || [])
       setCalendars(calData.data || [])
+      setUsers(usersData.data || [])
     } catch (err) {
       console.error('Erro ao carregar dependências:', err)
     }
@@ -218,26 +373,35 @@ export default function BasicRegistrationEntityPage() {
     },
     {
       key: 'resources', label: 'Recursos', entity: 'resources',
+      apiQueryParams: 'types=MATERIAL,TOOL',
       fields: [
-        { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Eletricista Prev.' },
+        { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Graxa Industrial' },
         { key: 'type', label: 'Tipo', type: 'select', required: true, options: [
-          { value: 'LABOR', label: 'Mão de Obra' },
           { value: 'MATERIAL', label: 'Material' },
-          { value: 'SPECIALTY', label: 'Especialidade' },
+          { value: 'TOOL', label: 'Ferramenta' },
         ]},
-        { key: 'unit', label: 'Unidade', type: 'text', placeholder: 'Ex: H, kg, litros' },
+        { key: 'unit', label: 'Unidade', type: 'text', placeholder: 'Ex: kg, litros, un' },
         { key: 'unitCost', label: 'Custo Unitário (R$)', type: 'number', defaultValue: 0 },
-        { key: 'availability', label: 'Disponibilidade (%)', type: 'number', defaultValue: 100 },
         { key: 'protheusCode', label: 'Código Protheus', type: 'text', placeholder: 'Ex: E01' },
       ],
       columns: [
         { key: 'name', label: 'Nome' },
-        { key: 'type', label: 'Tipo', render: (v: string) =>
-          v === 'LABOR' ? 'Mão de Obra' : v === 'MATERIAL' ? 'Material' : 'Especialidade'
-        },
+        { key: 'type', label: 'Tipo', render: (v: string) => {
+          const typeLabels: Record<string, string> = {
+            MATERIAL: 'Material',
+            TOOL: 'Ferramenta',
+          }
+          return typeLabels[v] || v
+        }},
+        { key: 'calendarName', label: 'Calendário' },
         { key: 'unit', label: 'Unidade' },
+        { key: 'unitCost', label: 'Custo (R$)', render: (v: any) => v ? `R$ ${Number(v).toFixed(2)}` : '—' },
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
+      customModalRender: (props) => (
+        <ResourceModal {...props} calendars={calendars} />
+      ),
+      customSectionRender: () => <PeopleSummarySection users={users} />,
     },
     {
       key: 'generic-tasks', label: 'Tarefas Genéricas', entity: 'generic-tasks',
@@ -266,9 +430,17 @@ export default function BasicRegistrationEntityPage() {
       ],
       columns: [
         { key: 'name', label: 'Descrição' },
-        { key: 'optionType', label: 'Tipo' },
+        { key: 'optionType', label: 'Tipo', render: (value: string, row: any) => {
+          const labels: Record<string, string> = { NONE: 'Nenhuma', RESPONSE: 'Resposta', OPTION: 'Opção' }
+          const label = labels[value] || value
+          const optCount = row.options?.length || 0
+          return value === 'OPTION' && optCount > 0 ? `${label} (${optCount})` : label
+        }},
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
+      customModalRender: (props) => (
+        <GenericStepModal {...props} />
+      ),
     },
     {
       key: 'characteristics', label: 'Características', entity: 'characteristics',
@@ -278,11 +450,67 @@ export default function BasicRegistrationEntityPage() {
           { value: 'Caractere', label: 'Caractere' },
           { value: 'Numerico', label: 'Numérico' },
         ]},
+        { key: 'unit', label: 'Unidade de Medida', type: 'combobox', placeholder: 'Selecione ou digite...', visibleWhen: { field: 'infoType', value: 'Numerico' }, options: [
+          { value: 'CV', label: 'CV (Cavalo-Vapor)' },
+          { value: 'kW', label: 'kW (Quilowatt)' },
+          { value: 'HP', label: 'HP (Horse Power)' },
+          { value: 'W', label: 'W (Watt)' },
+          { value: 'V', label: 'V (Volt)' },
+          { value: 'kV', label: 'kV (Quilovolt)' },
+          { value: 'mV', label: 'mV (Milivolt)' },
+          { value: 'A', label: 'A (Ampère)' },
+          { value: 'mA', label: 'mA (Miliampère)' },
+          { value: 'm', label: 'm (Metro)' },
+          { value: 'mm', label: 'mm (Milímetro)' },
+          { value: 'cm', label: 'cm (Centímetro)' },
+          { value: 'pol', label: 'pol (Polegada)' },
+          { value: 'kg', label: 'kg (Quilograma)' },
+          { value: 'g', label: 'g (Grama)' },
+          { value: 't', label: 't (Tonelada)' },
+          { value: 'lb', label: 'lb (Libra)' },
+          { value: 'bar', label: 'bar (Bar)' },
+          { value: 'psi', label: 'psi (Pound per Square Inch)' },
+          { value: 'kPa', label: 'kPa (Quilopascal)' },
+          { value: 'MPa', label: 'MPa (Megapascal)' },
+          { value: 'atm', label: 'atm (Atmosfera)' },
+          { value: 'kgf/cm²', label: 'kgf/cm²' },
+          { value: '°C', label: '°C (Celsius)' },
+          { value: '°F', label: '°F (Fahrenheit)' },
+          { value: 'K', label: 'K (Kelvin)' },
+          { value: 'm³/h', label: 'm³/h (Metro Cúbico/Hora)' },
+          { value: 'L/min', label: 'L/min (Litro/Minuto)' },
+          { value: 'L/h', label: 'L/h (Litro/Hora)' },
+          { value: 'GPM', label: 'GPM (Galão/Minuto)' },
+          { value: 'Hz', label: 'Hz (Hertz)' },
+          { value: 'kHz', label: 'kHz (Quilohertz)' },
+          { value: 'RPM', label: 'RPM (Rotações/Minuto)' },
+          { value: 'N·m', label: 'N·m (Newton-Metro)' },
+          { value: 'kgf·m', label: 'kgf·m (Quilograma-Força Metro)' },
+          { value: 'm/s', label: 'm/s (Metro/Segundo)' },
+          { value: 'km/h', label: 'km/h (Quilômetro/Hora)' },
+          { value: 'm²', label: 'm² (Metro Quadrado)' },
+          { value: 'cm²', label: 'cm² (Centímetro Quadrado)' },
+          { value: 'mm²', label: 'mm² (Milímetro Quadrado)' },
+          { value: 'm³', label: 'm³ (Metro Cúbico)' },
+          { value: 'L', label: 'L (Litro)' },
+          { value: 'mL', label: 'mL (Mililitro)' },
+          { value: '°', label: '° (Grau)' },
+          { value: 'rad', label: 'rad (Radiano)' },
+          { value: 'Ω', label: 'Ω (Ohm)' },
+          { value: 'kΩ', label: 'kΩ (Quilo-Ohm)' },
+          { value: 's', label: 's (Segundo)' },
+          { value: 'min', label: 'min (Minuto)' },
+          { value: 'h', label: 'h (Hora)' },
+          { value: 'N', label: 'N (Newton)' },
+          { value: 'kN', label: 'kN (Quilonewton)' },
+          { value: 'kgf', label: 'kgf (Quilograma-Força)' },
+        ]},
         { key: 'protheusCode', label: 'Código Protheus', type: 'text', placeholder: 'Ex: ACI001' },
       ],
       columns: [
         { key: 'name', label: 'Nome' },
         { key: 'infoType', label: 'Tipo' },
+        { key: 'unit', label: 'Unidade' },
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
     },
@@ -339,17 +567,50 @@ export default function BasicRegistrationEntityPage() {
           </div>
         )}
 
+        {/* Seção customizada acima do CRUD (ex: resumo de pessoas para recursos) */}
+        {currentTab.customSectionRender && currentTab.customSectionRender()}
+
         {/* Conteúdo */}
-        <CrudTable
-          key={`${currentTab.key}-${selectedUnitId}`}
-          entity={currentTab.entity}
-          title={currentTab.label}
-          fields={currentTab.fields}
-          columns={currentTab.columns}
-          unitScoped={currentTab.unitScoped}
-          selectedUnitId={selectedUnitId}
-          customModalRender={currentTab.customModalRender}
-        />
+        {currentTab.key === 'resources' ? (
+          <div className="border border-border rounded-lg bg-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setResourcesTableExpanded(!resourcesTableExpanded)}
+              className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
+              {resourcesTableExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+              <Wrench className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-base font-semibold text-foreground">Materiais & Ferramentas</h2>
+            </button>
+            {resourcesTableExpanded && (
+              <div className="border-t border-border p-4">
+                <CrudTable
+                  key={`${currentTab.key}-${selectedUnitId}`}
+                  entity={currentTab.entity}
+                  title={currentTab.label}
+                  fields={currentTab.fields}
+                  columns={currentTab.columns}
+                  unitScoped={currentTab.unitScoped}
+                  selectedUnitId={selectedUnitId}
+                  apiQueryParams={currentTab.apiQueryParams}
+                  customModalRender={currentTab.customModalRender}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <CrudTable
+            key={`${currentTab.key}-${selectedUnitId}`}
+            entity={currentTab.entity}
+            title={currentTab.label}
+            fields={currentTab.fields}
+            columns={currentTab.columns}
+            unitScoped={currentTab.unitScoped}
+            selectedUnitId={selectedUnitId}
+            apiQueryParams={currentTab.apiQueryParams}
+            customModalRender={currentTab.customModalRender}
+          />
+        )}
       </div>
     </AppLayout>
   )

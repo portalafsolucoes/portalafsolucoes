@@ -50,7 +50,7 @@ export async function POST(
         beforePhotoUrl: beforePhotoUrl || null
       })
       .eq('id', id)
-      .select('*, assignedTo:User!Request_assignedToId_fkey(id, firstName, lastName, email)')
+      .select('*, assignedTo:User!assignedToId(id, firstName, lastName, email)')
       .single()
 
     return NextResponse.json({

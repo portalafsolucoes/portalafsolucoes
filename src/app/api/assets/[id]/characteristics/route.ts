@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar características do ativo
@@ -63,7 +63,7 @@ export async function POST(
     } else {
       ({ data, error } = await supabase
         .from('AssetCharacteristicValue')
-        .insert({ assetId: id, characteristicId, value, unit, operator: operator || 'EQUAL' })
+        .insert({ id: generateId(), assetId: id, characteristicId, value, unit, operator: operator || 'EQUAL' })
         .select('*, characteristic:Characteristic!characteristicId(id, name, infoType)')
         .single())
     }

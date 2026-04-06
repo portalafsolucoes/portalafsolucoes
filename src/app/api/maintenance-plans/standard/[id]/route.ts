@@ -40,7 +40,7 @@ export async function GET(
       for (const task of tasks) {
         const [stepsRes, resourcesRes] = await Promise.all([
           supabase.from('StandardMaintenanceTaskStep')
-            .select('*, step:GenericStep!stepId(id, name, protheusCode)')
+            .select('*, step:GenericStep!stepId(id, name, protheusCode, optionType, options:GenericStepOption(id, label, order))')
             .eq('taskId', task.id)
             .order('order'),
           supabase.from('StandardMaintenanceTaskResource')

@@ -238,7 +238,7 @@ export default function AssetsPage() {
             {!isMobile && (
               <>
                 {/* Left Panel - Asset Tree ou Table baseado no viewMode */}
-                <div className={`${selectedAsset || isCreating ? 'w-1/2' : 'w-full'} border-r border-border bg-card transition-all overflow-hidden`}>
+                <div className={`${selectedAsset && !isCreating ? 'w-1/2' : 'w-full'} border-r border-border bg-card transition-all overflow-hidden`}>
                   <div className="h-full flex flex-col overflow-hidden">
                     <div className="p-3 border-b border-border bg-secondary flex-shrink-0">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -266,16 +266,10 @@ export default function AssetsPage() {
                   </div>
                 </div>
 
-                {/* Right Panel - Create, Edit, or Details */}
-                {(isCreating || selectedAsset) && (
+                {/* Right Panel - Edit, or Details */}
+                {(!isCreating && selectedAsset) && (
                   <div className="w-1/2">
-                    {isCreating ? (
-                      <AssetCreatePanel
-                        onClose={handleCreateClose}
-                        onSuccess={handleCreateSuccess}
-                        parentAsset={parentAssetForNew}
-                      />
-                    ) : selectedAsset && isEditingInPanel ? (
+                    {selectedAsset && isEditingInPanel ? (
                       <AssetEditPanel
                         asset={selectedAsset}
                         onClose={() => setIsEditingInPanel(false)}
@@ -373,21 +367,13 @@ export default function AssetsPage() {
         </div>
       )}
 
-      {isMobile && isCreating && (
-        <div 
-          className="fixed top-16 left-0 right-0 bottom-0 bg-black/20 z-40 overflow-y-auto lg:left-64"
-          onClick={handleCreateClose}
-        >
-          <div className="max-w-7xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-            <AssetCreateModal
-              isOpen={true}
-              onClose={handleCreateClose}
-              onSuccess={handleCreateSuccess}
-              parentAsset={parentAssetForNew}
-              inPage={true}
-            />
-          </div>
-        </div>
+      {isCreating && (
+        <AssetCreateModal
+          isOpen={true}
+          onClose={handleCreateClose}
+          onSuccess={handleCreateSuccess}
+          parentAsset={parentAssetForNew}
+        />
       )}
       </div>
     </AppLayout>

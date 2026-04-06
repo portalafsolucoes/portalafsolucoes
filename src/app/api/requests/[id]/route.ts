@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 export async function GET(
@@ -19,7 +18,7 @@ export async function GET(
       .from('Request')
       .select(`
         *,
-        createdBy:User!Request_createdById_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(*),
         generatedWorkOrder:WorkOrder(id, title, status)
@@ -90,7 +89,7 @@ export async function PUT(
       .eq('id', id)
       .select(`
         *,
-        createdBy:User!Request_createdById_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(*)
       `)
@@ -105,7 +104,7 @@ export async function PUT(
     if (files.length > 0) {
       await supabase.from('File').delete().eq('requestId', id)
       const fileInserts = files.map((file: any) => ({
-        id: randomUUID(),
+        id: generateId(),
         name: file.name,
         url: file.url,
         type: file.type,

@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
         *,
         asset:Asset(id, name),
         location:Location(id, name),
-        createdBy:User!WorkOrder_createdById_fkey(id, firstName, lastName, email),
-        assignedTo:User!WorkOrder_assignedToId_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
+        assignedTo:User!assignedToId(id, firstName, lastName, email),
         sourceRequest:Request(id, title),
         files:File(*)
       `)

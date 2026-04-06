@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -143,6 +143,7 @@ export async function POST(
     // Criar novos registros de anexos (acumular)
     if (attachmentData.length > 0) {
       const fileInserts = attachmentData.map(att => ({
+        id: generateId(),
         name: att.name,
         url: att.url,
         type: att.type,

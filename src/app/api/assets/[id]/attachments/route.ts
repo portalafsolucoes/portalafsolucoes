@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
 import { writeFile, mkdir } from 'fs/promises'
@@ -180,6 +180,7 @@ export async function POST(
     const { data: attachment, error: createError } = await supabase
       .from('AssetAttachment')
       .insert({
+        id: generateId(),
         name,
         description: description || null,
         category,
@@ -191,7 +192,8 @@ export async function POST(
         isPublic,
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         assetId: id,
-        uploadedById: session.id
+        uploadedById: session.id,
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single()

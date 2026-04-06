@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 
 export type AssetHistoryEventType =
   | 'ASSET_CREATED'
@@ -75,7 +75,7 @@ export async function createAssetHistoryEvent(params: CreateHistoryEventParams) 
     const { data, error } = await supabase
       .from('AssetHistory')
       .insert({
-        id: `ah_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        id: generateId(),
         assetId,
         eventType,
         title,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 /**
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Criar
           delete record.id
+          record.id = generateId()
           const { error } = await supabase
             .from(entity)
             .insert(record)

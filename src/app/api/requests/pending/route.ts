@@ -27,10 +27,10 @@ export async function GET(request: NextRequest) {
       .from('Request')
       .select(`
         *,
-        createdBy:User!Request_createdById_fkey(id, firstName, lastName, email),
+        createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         asset:Asset(id, name),
-        location:Location(id, name),
+        location:Location!locationId(id, name),
         files:File(*)
       `, { count: 'exact' })
       .eq('companyId', session.companyId)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
     const parentAssetId = formData.get('parentAssetId') as string | null
     const mainImage = formData.get('mainImage') as File | null
 
-    // Novos campos Fase 3
+    // Campos de classificação e organização
+    const protheusCode = formData.get('protheusCode') as string | null
     const tag = formData.get('tag') as string | null
     const unitId = formData.get('unitId') as string | null
     const areaId = formData.get('areaId') as string | null
@@ -94,15 +95,65 @@ export async function POST(request: NextRequest) {
     const positionId = formData.get('positionId') as string | null
     const familyId = formData.get('familyId') as string | null
     const familyModelId = formData.get('familyModelId') as string | null
+    const assetCategoryType = formData.get('assetCategoryType') as string | null
+    const assetPriority = formData.get('assetPriority') as string | null
+    const ownershipType = formData.get('ownershipType') as string | null
+
+    // Campos técnicos
     const manufacturer = formData.get('manufacturer') as string | null
     const modelName = formData.get('modelName') as string | null
     const serialNumber = formData.get('serialNumber') as string | null
+    const barCode = formData.get('barCode') as string | null
+    const hasStructure = formData.get('hasStructure') as string | null
+    const hasCounter = formData.get('hasCounter') as string | null
+    const counterType = formData.get('counterType') as string | null
+    const counterPosition = formData.get('counterPosition') as string | null
+    const counterLimit = formData.get('counterLimit') as string | null
+    const dailyVariation = formData.get('dailyVariation') as string | null
+
+    // Campos financeiros e aquisição
+    const purchaseValue = formData.get('purchaseValue') as string | null
+    const acquisitionCost = formData.get('acquisitionCost') as string | null
+    const hourlyCost = formData.get('hourlyCost') as string | null
+    const purchaseDate = formData.get('purchaseDate') as string | null
+    const installationDate = formData.get('installationDate') as string | null
+    const supplierCode = formData.get('supplierCode') as string | null
+    const supplierStore = formData.get('supplierStore') as string | null
+
+    // Campos de garantia
+    const warrantyPeriod = formData.get('warrantyPeriod') as string | null
+    const warrantyUnit = formData.get('warrantyUnit') as string | null
+    const warrantyDate = formData.get('warrantyDate') as string | null
+
+    // Campos contábeis e status
+    const fixedAssetCode = formData.get('fixedAssetCode') as string | null
+    const assetPlate = formData.get('assetPlate') as string | null
+    const maintenanceStatus = formData.get('maintenanceStatus') as string | null
+    const warehouse = formData.get('warehouse') as string | null
+    const shiftCode = formData.get('shiftCode') as string | null
+    const deactivationDate = formData.get('deactivationDate') as string | null
+    const deactivationReason = formData.get('deactivationReason') as string | null
+    const lifeValue = formData.get('lifeValue') as string | null
+    const lifeUnit = formData.get('lifeUnit') as string | null
 
     if (!name) {
       return NextResponse.json(
         { error: 'Name is required' },
         { status: 400 }
       )
+    }
+
+    // Validar Código do Bem (protheusCode) — único por empresa
+    if (protheusCode) {
+      const { data: existingCode } = await supabase
+        .from('Asset')
+        .select('id')
+        .eq('companyId', session.companyId)
+        .eq('protheusCode', protheusCode)
+        .single()
+      if (existingCode) {
+        return NextResponse.json({ error: 'Código do Bem já existe nesta empresa' }, { status: 409 })
+      }
     }
 
     // Validar TAG se fornecido (padrão AGR_Tagueamento: máx 6 chars, único por unidade)
@@ -147,7 +198,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar o ativo
+    const now = new Date().toISOString()
     const insertData: Record<string, any> = {
+      id: generateId(),
       name,
       description: description || undefined,
       locationId: locationId || undefined,
@@ -155,8 +208,11 @@ export async function POST(request: NextRequest) {
       image: imageUrl,
       status: 'OPERATIONAL',
       companyId: session.companyId,
+      updatedAt: now,
     }
-    // Campos novos (Fase 3) — somente adicionar se fornecidos
+
+    // Identificação e classificação
+    if (protheusCode) insertData.protheusCode = protheusCode
     if (tag) insertData.tag = tag
     if (unitId) insertData.unitId = unitId
     if (areaId) insertData.areaId = areaId
@@ -165,10 +221,48 @@ export async function POST(request: NextRequest) {
     if (positionId) insertData.positionId = positionId
     if (familyId) insertData.familyId = familyId
     if (familyModelId) insertData.familyModelId = familyModelId
+    if (assetCategoryType) insertData.assetCategoryType = assetCategoryType
+    if (assetPriority) insertData.assetPriority = assetPriority
+    if (ownershipType) insertData.ownershipType = ownershipType
+
+    // Dados técnicos
     if (manufacturer) insertData.manufacturer = manufacturer
     if (modelName) insertData.modelName = modelName
     if (serialNumber) insertData.serialNumber = serialNumber
-    if (parentAssetId) insertData.hasStructure = false // filhos iniciam sem estrutura própria
+    if (barCode) insertData.barCode = barCode
+    if (hasStructure === 'true') insertData.hasStructure = true
+    if (hasCounter === 'true') insertData.hasCounter = true
+    if (counterType) insertData.counterType = counterType
+    if (counterPosition) insertData.counterPosition = parseFloat(counterPosition)
+    if (counterLimit) insertData.counterLimit = parseFloat(counterLimit)
+    if (dailyVariation) insertData.dailyVariation = parseFloat(dailyVariation)
+
+    // Financeiro e aquisição
+    if (purchaseValue) insertData.purchaseValue = parseFloat(purchaseValue)
+    if (acquisitionCost) insertData.acquisitionCost = parseFloat(acquisitionCost)
+    if (hourlyCost) insertData.hourlyCost = parseFloat(hourlyCost)
+    if (purchaseDate) insertData.purchaseDate = new Date(purchaseDate).toISOString()
+    if (installationDate) insertData.installationDate = new Date(installationDate).toISOString()
+    if (supplierCode) insertData.supplierCode = supplierCode
+    if (supplierStore) insertData.supplierStore = supplierStore
+
+    // Garantia
+    if (warrantyPeriod) insertData.warrantyPeriod = parseInt(warrantyPeriod, 10)
+    if (warrantyUnit) insertData.warrantyUnit = warrantyUnit
+    if (warrantyDate) insertData.warrantyDate = new Date(warrantyDate).toISOString()
+
+    // Contábil, status e outros
+    if (fixedAssetCode) insertData.fixedAssetCode = fixedAssetCode
+    if (assetPlate) insertData.assetPlate = assetPlate
+    if (maintenanceStatus) insertData.maintenanceStatus = maintenanceStatus
+    if (warehouse) insertData.warehouse = warehouse
+    if (shiftCode) insertData.shiftCode = shiftCode
+    if (deactivationDate) insertData.deactivationDate = new Date(deactivationDate).toISOString()
+    if (deactivationReason) insertData.deactivationReason = deactivationReason
+    if (lifeValue) insertData.lifeValue = parseFloat(lifeValue)
+    if (lifeUnit) insertData.lifeUnit = lifeUnit
+
+    if (parentAssetId) insertData.hasStructure = false
 
     const { data: asset, error: createError } = await supabase
       .from('Asset')
@@ -214,11 +308,13 @@ export async function POST(request: NextRequest) {
             await writeFile(filepath, buffer)
 
             return supabase.from('File').insert({
+              id: generateId(),
               name: attachment.name,
               url: `/uploads/${filename}`,
               type: attachment.type,
               size: attachment.size,
-              assetId: asset.id
+              assetId: asset.id,
+              updatedAt: new Date().toISOString()
             }).select()
           })()
         )
@@ -232,8 +328,8 @@ export async function POST(request: NextRequest) {
       .from('Asset')
       .select(`
         *,
-        location:Location!Asset_locationId_fkey(*),
-        category:Category(*),
+        location:Location!locationId(*),
+        category:AssetCategory(*),
         primaryUser:User(id, firstName, lastName, email),
         files:File(*)
       `)

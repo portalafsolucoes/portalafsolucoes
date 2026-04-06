@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateId } from '@/lib/supabase';
 import { getSession } from '@/lib/session';
 
 // GET - Buscar leituras de variáveis
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
 
     // Adicionar companyId a todas as leituras
     const readingsWithCompany = readings.map((reading) => ({
+      id: generateId(),
       ...reading,
       companyId: session.companyId,
     }));

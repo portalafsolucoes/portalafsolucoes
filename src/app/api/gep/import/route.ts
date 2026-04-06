@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateId } from '@/lib/supabase';
 import { getSession } from '@/lib/session';
 
 // POST - Importar arquivo GEP
@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
 
         if (!isNaN(value)) {
           readings.push({
+            id: generateId(),
             variableId: variable.id,
             timestamp: timestamp.toISOString(),
             value,
@@ -110,6 +111,7 @@ export async function POST(req: NextRequest) {
     const { error: fileError } = await supabase
       .from('ProcessDataFile')
       .insert({
+        id: generateId(),
         companyId: session.companyId,
         fileName,
         sector,

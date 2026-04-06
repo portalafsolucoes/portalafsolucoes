@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { parseWorkDays, getWeeklyHours } from '@/lib/calendarUtils'
 
 // Mapeamento de entidades para tabelas Supabase e configurações
 const ENTITY_CONFIG: Record<string, {
@@ -65,6 +66,7 @@ const ENTITY_CONFIG: Record<string, {
     scope: 'company',
     requiredFields: ['name', 'type'],
     orderBy: 'name',
+    selectQuery: '*, user:User!userId(id, firstName, lastName, jobTitle), calendar:Calendar(name, workDays)',
   },
   'maintenance-types': {
     table: 'MaintenanceType',
@@ -95,6 +97,7 @@ const ENTITY_CONFIG: Record<string, {
     scope: 'company',
     requiredFields: ['name'],
     orderBy: 'name',
+    selectQuery: '*, options:GenericStepOption(id, label, order)',
   },
 }
 
@@ -136,6 +139,15 @@ export async function GET(
       query = query.eq('familyId', familyId)
     }
 
+    // Filtro por tipos (para resources: ?types=MATERIAL,TOOL)
+    const types = url.searchParams.get('types')
+    if (entity === 'resources' && types) {
+      const typeList = types.split(',').map(t => t.trim()).filter(Boolean)
+      if (typeList.length > 0) {
+        query = query.in('type', typeList)
+      }
+    }
+
     if (config.orderBy) {
       query = query.order(config.orderBy, { ascending: true })
     }
@@ -160,6 +172,19 @@ export async function GET(
         ...item,
         modelNames: item.modelMappings?.map((m: any) => m.model?.name).filter(Boolean).join(', ') || '—',
       }))
+    }
+    if (entity === 'resources') {
+      result = result.map((item: any) => {
+        const workDays = item.calendar?.workDays ? parseWorkDays(item.calendar.workDays) : null
+        const weeklyHrs = workDays ? getWeeklyHours(workDays) : null
+        return {
+          ...item,
+          userName: item.user ? `${item.user.firstName} ${item.user.lastName}` : '—',
+          calendarName: item.calendar?.name || '—',
+          weeklyHours: weeklyHrs ? Math.round(weeklyHrs * 10) / 10 : null,
+          calendar: item.calendar ? { name: item.calendar.name } : null, // remover workDays do response
+        }
+      })
     }
 
     return NextResponse.json({ data: result })
@@ -198,6 +223,11 @@ export async function POST(
       }
     }
 
+    // Converter strings vazias em null (evita conflitos em unique constraints de campos opcionais)
+    for (const key of Object.keys(body)) {
+      if (body[key] === '') body[key] = null
+    }
+
     // Definir updatedAt (Prisma @updatedAt não gera default no banco)
     body.updatedAt = new Date().toISOString()
 
@@ -205,6 +235,16 @@ export async function POST(
     if (config.scope === 'company' || entity === 'work-centers') {
       body.companyId = session.companyId
     }
+
+    // Extrair options para generic-steps (campo virtual, não existe na tabela)
+    let stepOptions: { label: string; order: number }[] | undefined
+    if (entity === 'generic-steps' && body.options) {
+      stepOptions = body.options
+      delete body.options
+    }
+
+    // Gerar ID para a nova entidade
+    body.id = generateId()
 
     const { data, error } = await supabase
       .from(config.table)
@@ -218,6 +258,17 @@ export async function POST(
         return NextResponse.json({ error: 'Registro duplicado' }, { status: 409 })
       }
       return NextResponse.json({ error: 'Erro ao criar registro' }, { status: 500 })
+    }
+
+    // Criar opções da etapa genérica (se houver)
+    if (entity === 'generic-steps' && stepOptions && stepOptions.length > 0) {
+      const optionsToInsert = stepOptions.map((opt, i) => ({
+        id: generateId(),
+        stepId: body.id,
+        label: opt.label,
+        order: opt.order ?? i,
+      }))
+      await supabase.from('GenericStepOption').insert(optionsToInsert)
     }
 
     return NextResponse.json({ data, message: 'Registro criado com sucesso' }, { status: 201 })

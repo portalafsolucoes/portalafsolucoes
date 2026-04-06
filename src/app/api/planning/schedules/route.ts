@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar programações de OS
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     const { data: schedule, error: schedError } = await supabase
       .from('WorkOrderSchedule')
       .insert({
+        id: generateId(),
         description,
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     // Inserir itens (OSs programadas) se fornecidos
     if (items && Array.isArray(items) && items.length > 0) {
       const itemsToInsert = items.map((item: any) => ({
+        id: generateId(),
         scheduleId: schedule.id,
         workOrderId: item.workOrderId,
         scheduledDate: new Date(item.scheduledDate).toISOString(),

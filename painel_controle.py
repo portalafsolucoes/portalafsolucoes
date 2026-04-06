@@ -523,8 +523,10 @@ class DevControlApp:
     # -----------------------------------------------------------------------
     # Servidor local
     # -----------------------------------------------------------------------
-    def _kill_server_process(self) -> None:
+    def _kill_server_process(self, wait: bool = True) -> None:
         """Encerra o servidor e qualquer processo na porta 3000."""
+        killed_any = False
+
         # 1. Mata pelo PID salvo
         pid = self._read_pid()
         if pid:
@@ -533,6 +535,7 @@ class DevControlApp:
                 subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
                                capture_output=True, text=True,
                                encoding="utf-8", errors="replace")
+                killed_any = True
             except Exception:
                 pass
 
@@ -551,24 +554,52 @@ class DevControlApp:
                         subprocess.run(["taskkill", "/PID", pid_str, "/T", "/F"],
                                        capture_output=True, text=True,
                                        encoding="utf-8", errors="replace")
+                        killed_any = True
         except Exception:
             pass
 
         self.pid_path.unlink(missing_ok=True)
         self.dev_process = None
 
+        # Aguarda o Windows liberar os file locks dos arquivos .next
+        if wait and killed_any:
+            self._append("  Aguardando processos encerrarem...\n")
+            time.sleep(3)
+
     def _clean_next_cache(self) -> bool:
         """Remove a pasta .next. Retorna True se ficou limpa."""
         next_dir = self.repo_root / ".next"
         if not next_dir.exists():
             return True
-        try:
-            shutil.rmtree(next_dir)
-            self._append("  Cache .next limpo com sucesso.\n")
-            return True
-        except Exception as exc:
-            self._append(f"  Falha ao limpar .next: {exc}\n")
-            return False
+
+        # Usa 'rd /s /q' no Windows — mais robusto que shutil.rmtree
+        # contra locks do OneDrive e handles pendentes
+        if os.name == "nt":
+            try:
+                result = subprocess.run(
+                    ["cmd", "/c", "rd", "/s", "/q", str(next_dir)],
+                    capture_output=True, text=True,
+                    encoding="utf-8", errors="replace",
+                    timeout=30,
+                )
+                if not next_dir.exists():
+                    self._append("  Cache .next limpo com sucesso.\n")
+                    return True
+                else:
+                    msg = (result.stderr or result.stdout or "").strip()
+                    self._append(f"  Falha ao limpar .next: {msg}\n")
+                    return False
+            except Exception as exc:
+                self._append(f"  Falha ao limpar .next: {exc}\n")
+                return False
+        else:
+            try:
+                shutil.rmtree(next_dir)
+                self._append("  Cache .next limpo com sucesso.\n")
+                return True
+            except Exception as exc:
+                self._append(f"  Falha ao limpar .next: {exc}\n")
+                return False
 
     def _start_server(self) -> None:
         if self.busy:
@@ -586,15 +617,22 @@ class DevControlApp:
             # 1. Parar servidor anterior (se houver)
             if self._is_server_running() or self._read_pid():
                 self.event_queue.put(("log", "\n--- Parando servidor anterior ---\n"))
-                self._kill_server_process()
-                time.sleep(2)  # Aguarda o Windows liberar os locks dos arquivos
+                self._kill_server_process(wait=True)
 
             # 2. Limpar cache .next
             self.event_queue.put(("log", "\n--- Limpando cache de build (.next) ---\n"))
             if not self._clean_next_cache():
-                # Tenta mais uma vez apos aguardar
-                time.sleep(2)
-                self._clean_next_cache()
+                # Tenta mais uma vez apos aguardar locks serem liberados
+                self._append("  Tentando novamente em 3s...\n")
+                time.sleep(3)
+                if not self._clean_next_cache():
+                    self.event_queue.put(("log",
+                        "\n  AVISO: Nao foi possivel limpar o cache .next.\n"
+                        "  Feche outros programas que possam estar usando a pasta\n"
+                        "  (ex: VS Code, Explorer, OneDrive) e tente novamente.\n"))
+                    self.event_queue.put(("status", "Falha ao limpar cache — servidor nao iniciado"))
+                    self.event_queue.put(("done", ""))
+                    return
 
             # 3. Iniciar o servidor
             self.event_queue.put(("log", "\n--- Iniciando npm run dev ---\n"))
@@ -629,12 +667,28 @@ class DevControlApp:
             self._set_status("O site local nao esta rodando.")
             return
 
-        self._append("\n========================================\n"
-                     "  Parando site local\n"
-                     "========================================\n")
-        self._kill_server_process()
-        self.refresh_all()
-        self._set_status("Site local parado.")
+        if self.busy:
+            self._set_status("Aguarde o comando anterior terminar...")
+            return
+
+        self.busy = True
+
+        def worker() -> None:
+            self.event_queue.put(("log",
+                "\n========================================\n"
+                "  Parando site local\n"
+                "========================================\n"))
+            self._kill_server_process(wait=True)
+
+            # Limpa cache .next para evitar problemas na proxima inicializacao
+            self.event_queue.put(("log", "\n--- Limpando cache de build (.next) ---\n"))
+            self._clean_next_cache()
+
+            self.event_queue.put(("refresh", ""))
+            self.event_queue.put(("status", "Site local parado."))
+            self.event_queue.put(("done", ""))
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _free_port(self) -> None:
         if not messagebox.askyesno("Liberar porta",

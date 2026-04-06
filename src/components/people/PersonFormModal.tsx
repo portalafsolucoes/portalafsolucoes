@@ -16,6 +16,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [locations, setLocations] = useState<Location[]>([])
+  const [calendars, setCalendars] = useState<any[]>([])
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -26,12 +27,14 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
     role: 'MECANICO',
     rate: '0',
     locationId: '',
+    calendarId: '',
     enabled: true
   })
 
   useEffect(() => {
     if (isOpen) {
       fetchLocations()
+      fetchCalendars()
       if (userId) {
         fetchUser()
       } else {
@@ -51,6 +54,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
       role: 'MECANICO',
       rate: '0',
       locationId: '',
+      calendarId: '',
       enabled: true
     })
   }
@@ -73,6 +77,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
           role: user.role,
           rate: user.rate.toString(),
           locationId: user.locationId || '',
+          calendarId: user.calendarId || '',
           enabled: user.enabled
         })
       }
@@ -92,6 +97,18 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
       }
     } catch (error) {
       console.error('Error fetching locations:', error)
+    }
+  }
+
+  const fetchCalendars = async () => {
+    try {
+      const response = await fetch('/api/basic-registrations/calendars')
+      const data = await response.json()
+      if (data.data) {
+        setCalendars(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching calendars:', error)
     }
   }
 
@@ -119,6 +136,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
         role: formData.role,
         rate: parseFloat(formData.rate),
         locationId: formData.locationId || null,
+        calendarId: formData.calendarId || null,
         enabled: formData.enabled
       }
 
@@ -321,6 +339,26 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
             {locations.map(location => (
               <option key={location.id} value={location.id}>
                 {location.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="calendarId" className="block text-sm font-medium text-foreground mb-1">
+            Calendário
+          </label>
+          <select
+            id="calendarId"
+            name="calendarId"
+            value={formData.calendarId}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+          >
+            <option value="">Nenhum</option>
+            {calendars.map(cal => (
+              <option key={cal.id} value={cal.id}>
+                {cal.name}
               </option>
             ))}
           </select>

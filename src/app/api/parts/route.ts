@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 export async function GET(request: NextRequest) {
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     const { data: part, error: createError } = await supabase
       .from('Part')
       .insert({
+        id: generateId(),
         name,
         description,
         cost: cost || 0,

@@ -198,7 +198,8 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
             <Input
               label="Nome do Ativo *"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value.slice(0, 40) })}
+              maxLength={40}
               required
               placeholder="Digite o nome do Ativo"
             />

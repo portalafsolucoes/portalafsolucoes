@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar planos de manutenção emitidos
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     const { data: plan, error: planError } = await supabase
       .from('MaintenancePlanExecution')
       .insert({
+        id: generateId(),
         description,
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         const { error: woError } = await supabase
           .from('WorkOrder')
           .insert({
+            id: generateId(),
             title: ap.name || `Manutenção Preventiva - ${ap.asset?.name}`,
             description: `OS gerada pelo Plano #${plan.planNumber}`,
             type: 'PREVENTIVE',

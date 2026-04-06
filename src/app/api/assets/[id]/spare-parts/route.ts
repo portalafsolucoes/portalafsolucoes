@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Listar peças de reposição do ativo
@@ -48,6 +48,7 @@ export async function POST(
     const { data, error } = await supabase
       .from('AssetSparePart')
       .insert({
+        id: generateId(),
         assetId: id,
         productCode,
         quantity: quantity || 0,

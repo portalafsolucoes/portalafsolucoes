@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { generateInternalId } from '@/lib/workOrderUtils'
 
@@ -81,7 +80,7 @@ export async function POST(
       const { data: workOrder, error: woError } = await supabase
         .from('WorkOrder')
         .insert({
-          id: randomUUID(),
+          id: generateId(),
           internalId,
           title: maintenanceRequest.title,
           description: maintenanceRequest.description || null,
@@ -113,7 +112,7 @@ export async function POST(
       // Copiar arquivos se existirem
       if (maintenanceRequest.files && maintenanceRequest.files.length > 0) {
         const fileInserts = maintenanceRequest.files.map((file: any) => ({
-          id: randomUUID(),
+          id: generateId(),
           name: file.name,
           url: file.url,
           type: file.type || null,

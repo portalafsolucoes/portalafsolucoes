@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
 // GET - Buscar histórico do ativo
@@ -131,7 +131,7 @@ export async function POST(
     const { data: historyEvent, error: insertError } = await supabase
       .from('AssetHistory')
       .insert({
-        id: `ah_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        id: generateId(),
         eventType,
         title,
         description: description || null,

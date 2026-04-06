@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { ImageViewerModal } from '../ui/ImageViewerModal'
-import { 
-  X, FileText, Calendar, Users, Paperclip, 
+import {
+  X, FileText, Calendar, Users, Paperclip,
   Clock, User, Edit, Trash2, Download, Image as ImageIcon,
-  Box, MapPin, CheckCircle2, AlertCircle, Printer
+  Box, MapPin, CheckCircle2, AlertCircle, Printer,
+  CheckSquare, Square, MessageSquare, List
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
@@ -390,6 +391,43 @@ export function WorkOrderDetailModal({
                     <h3 className="text-sm md:text-base font-semibold text-foreground">Descrição do Trabalho Realizado:</h3>
                     <div className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 md:p-3 rounded border">
                       {workOrder.executionNotes}
+                    </div>
+                  </div>
+                )}
+
+                {/* Etapas de Execução */}
+                {workOrder.executionSteps && Array.isArray(workOrder.executionSteps) && workOrder.executionSteps.length > 0 && (
+                  <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg mb-2 md:mb-3">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground mb-2">
+                      Etapas de Execução ({workOrder.executionSteps.filter((s: any) => s.completed).length}/{workOrder.executionSteps.length}):
+                    </h3>
+                    <div className="space-y-1.5">
+                      {workOrder.executionSteps.map((step: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 p-2 bg-card rounded border text-sm">
+                          {step.completed ? (
+                            <CheckSquare className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                          ) : (
+                            <Square className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <span className={step.completed ? 'text-foreground' : 'text-muted-foreground'}>
+                              {step.stepName}
+                            </span>
+                            {step.optionType === 'RESPONSE' && step.responseValue && (
+                              <div className="flex items-center gap-1 mt-1 text-xs text-blue-700 dark:text-blue-400">
+                                <MessageSquare className="h-3 w-3" />
+                                <span className="font-medium">Resposta:</span> {step.responseValue}
+                              </div>
+                            )}
+                            {step.optionType === 'OPTION' && step.selectedOption && (
+                              <div className="flex items-center gap-1 mt-1 text-xs text-purple-700 dark:text-purple-400">
+                                <List className="h-3 w-3" />
+                                <span className="font-medium">Opção:</span> {step.selectedOption}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

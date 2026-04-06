@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { hashPassword, validateEmail, validatePassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -47,12 +47,17 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password)
     const username = email.split('@')[0]
 
+    const now = new Date().toISOString()
+
     // Create company first
     const { data: company, error: companyError } = await supabase
       .from('Company')
       .insert({
+        id: generateId(),
         name: companyName,
-        email: email
+        email: email,
+        createdAt: now,
+        updatedAt: now
       })
       .select()
       .single()
@@ -66,6 +71,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabase
       .from('User')
       .insert({
+        id: generateId(),
         email,
         password: hashedPassword,
         firstName,
@@ -73,7 +79,9 @@ export async function POST(request: NextRequest) {
         username,
         role: 'GESTOR',
         companyId: company.id,
-        enabled: true
+        enabled: true,
+        createdAt: now,
+        updatedAt: now
       })
       .select()
       .single()

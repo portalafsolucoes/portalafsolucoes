@@ -1,6 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { parseWorkDays, getWeeklyHours, getWeeklySummary } from '@/lib/calendarUtils'
+
+// GET - Listar tarefas com etapas, recursos e info de calendário
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    const { id: planId } = await params
+
+    const { data: tasks, error } = await supabase
+      .from('StandardMaintenanceTask')
+      .select(`
+        *,
+        steps:StandardMaintenanceTaskStep(*, step:GenericStep!stepId(id, name, optionType, options:GenericStepOption(id, label, order))),
+        resources:StandardMaintenanceTaskResource(
+          *,
+          resource:Resource!resourceId(
+            id, name, type, unit, unitCost, calendarId,
+            calendar:Calendar!calendarId(id, name, workDays)
+          )
+        )
+      `)
+      .eq('planId', planId)
+      .order('order')
+
+    if (error) throw error
+
+    // Enriquecer recursos com dados de calendário
+    const enrichedTasks = (tasks || []).map((task: any) => ({
+      ...task,
+      resources: (task.resources || []).map((tr: any) => {
+        const resource = tr.resource as any
+        const workDays = resource?.calendar?.workDays ? parseWorkDays(resource.calendar.workDays) : null
+        return {
+          ...tr,
+          resource: resource ? {
+            id: resource.id,
+            name: resource.name,
+            type: resource.type,
+            unit: resource.unit,
+            unitCost: resource.unitCost,
+            calendarId: resource.calendarId,
+            calendarName: resource.calendar?.name || null,
+            weeklyHours: workDays ? Math.round(getWeeklyHours(workDays) * 10) / 10 : null,
+            weeklySummary: workDays ? getWeeklySummary(workDays) : null,
+          } : null,
+        }
+      }),
+    }))
+
+    return NextResponse.json({ data: enrichedTasks })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Erro ao buscar tarefas' }, { status: 500 })
+  }
+}
 
 // POST - Salvar tarefas com etapas e recursos (batch upsert)
 export async function POST(
@@ -27,6 +86,7 @@ export async function POST(
       const { data: newTask, error: taskError } = await supabase
         .from('StandardMaintenanceTask')
         .insert({
+          id: generateId(),
           planId,
           taskCode: task.taskCode || i,
           description: task.description,
@@ -41,6 +101,7 @@ export async function POST(
       // Inserir etapas
       if (task.steps && task.steps.length > 0) {
         const stepsToInsert = task.steps.map((s: any, j: number) => ({
+          id: generateId(),
           taskId: newTask.id,
           stepId: s.stepId,
           order: s.order || j,
@@ -52,6 +113,7 @@ export async function POST(
       // Inserir recursos
       if (task.resources && task.resources.length > 0) {
         const resourcesToInsert = task.resources.map((r: any) => ({
+          id: generateId(),
           taskId: newTask.id,
           resourceId: r.resourceId,
           resourceCount: r.resourceCount || 1,
