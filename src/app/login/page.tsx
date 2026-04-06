@@ -1,17 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { APP_DESCRIPTION, APP_NAME } from '@/lib/branding'
-import { getDefaultRedirectPath } from '@/lib/redirect'
-import { type UserRole } from '@/lib/permissions'
+import { APP_DESCRIPTION, APP_NAME, PORTAL_NAME } from '@/lib/branding'
+import { ArrowLeft } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get('returnUrl')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -37,9 +38,8 @@ export default function LoginPage() {
         return
       }
 
-      // Redirecionar baseado no role do usuário
-      const redirectPath = getDefaultRedirectPath(data.data.role as UserRole)
-      router.push(redirectPath)
+      // Redirecionar: returnUrl (módulo clicado) ou hub
+      router.push(returnUrl || '/hub')
     } catch {
       setError('Erro ao conectar ao servidor')
       setLoading(false)
@@ -49,6 +49,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
+        {/* Voltar ao Portal */}
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/hub')}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar ao {PORTAL_NAME}
+          </button>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">{APP_NAME}</h1>
           <p className="text-muted-foreground">{APP_DESCRIPTION}</p>

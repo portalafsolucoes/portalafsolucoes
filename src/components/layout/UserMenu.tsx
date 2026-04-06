@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Settings, LogOut, ChevronDown, Shield, Wrench, UserCog, HardHat, Zap, Cog, Building2 } from 'lucide-react'
+import { User, Settings, LogOut, ChevronDown, Shield, Wrench, UserCog, HardHat, Zap, Cog, Building2, LayoutGrid } from 'lucide-react'
 
 interface UserData {
   id: string
@@ -180,14 +180,21 @@ export function UserMenu() {
             </Link>
           </div>
 
-          {/* Logout */}
+          {/* Portal & Logout */}
           <div className="border-t border-border pt-2">
+            <button
+              onClick={() => { setIsOpen(false); router.push('/hub') }}
+              className="flex items-center gap-3 px-4 py-2 text-sm text-popover-foreground hover:bg-accent/10 transition-colors w-full"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Voltar ao Portal
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-accent/10 transition-colors w-full"
             >
               <LogOut className="w-4 h-4" />
-              Sair
+              Sair do Sistema
             </button>
           </div>
         </div>

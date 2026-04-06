@@ -9,7 +9,7 @@ import {
   Users,
   ClipboardList,
   BarChart3,
-  LogOut,
+  LayoutGrid,
   CheckCircle,
   LayoutDashboard,
   Box,
@@ -159,9 +159,8 @@ export function Sidebar() {
     )
   }
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
+  const handleBackToPortal = () => {
+    router.push('/hub')
   }
 
   return (
@@ -366,15 +365,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Logout Button */}
+      {/* Back to Portal Button */}
       <div className="p-4 border-t border-sidebar-border">
         <button
-          onClick={handleLogout}
+          onClick={handleBackToPortal}
           className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-medium text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-foreground rounded-lg transition-all duration-200`}
-          title={isCollapsed ? 'Sair' : ''}
+          title={isCollapsed ? 'Voltar ao Portal' : ''}
         >
-          <LogOut className={`${isCollapsed ? '' : 'mr-3'} h-5 w-5 text-sidebar-muted`} />
-          {!isCollapsed && 'Sair'}
+          <LayoutGrid className={`${isCollapsed ? '' : 'mr-3'} h-5 w-5 text-sidebar-muted`} />
+          {!isCollapsed && 'Voltar ao Portal'}
         </button>
       </div>
       </aside>
