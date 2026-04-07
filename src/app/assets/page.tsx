@@ -58,7 +58,7 @@ export default function AssetsPage() {
 
   const loadAssets = async () => {
     try {
-      const res = await fetch('/api/assets')
+      const res = await fetch('/api/assets?summary=true')
       const data = await res.json()
       setAssets(data.data || [])
     } catch (error) {

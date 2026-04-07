@@ -7,37 +7,40 @@ import { createAssetHistoryEvent } from '@/lib/assetHistory'
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('GET /api/assets - Starting request')
     const session = await getSession()
-    console.log('Session:', session)
     if (!session) {
-      console.log('No session found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const locationId = searchParams.get('locationId')
     const status = searchParams.get('status')
+    const summary = searchParams.get('summary') === 'true'
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = (page - 1) * limit
 
-    const where: any = {
-      companyId: session.companyId,
-      archived: false
-    }
-
-    if (locationId) {
-      where.locationId = locationId
-    }
-
-    if (status) {
-      where.status = status
-    }
-
     let query = supabase
       .from('Asset')
-      .select('*', { count: 'exact' })
+      .select(
+        summary
+          ? `
+            id,
+            name,
+            description,
+            status,
+            area,
+            locationId,
+            categoryId,
+            parentAssetId,
+            protheusCode,
+            tag,
+            createdAt,
+            updatedAt
+          `
+          : '*',
+        summary ? undefined : { count: 'exact' }
+      )
       .eq('companyId', session.companyId)
       .eq('archived', false)
       .order('createdAt', { ascending: false })
@@ -53,15 +56,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
-    return NextResponse.json({
-      data: assets || [],
-      pagination: {
-        page,
-        limit,
-        total: total || 0,
-        totalPages: Math.ceil((total || 0) / limit)
-      }
-    })
+    return NextResponse.json(
+      summary
+        ? { data: assets || [] }
+        : {
+            data: assets || [],
+            pagination: {
+              page,
+              limit,
+              total: total || 0,
+              totalPages: Math.ceil((total || 0) / limit)
+            }
+          }
+    )
   } catch (error) {
     console.error('Get assets error:', error)
     return NextResponse.json(

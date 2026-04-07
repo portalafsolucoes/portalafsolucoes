@@ -38,6 +38,10 @@ interface AssetCriticality {
   classification: 'critical' | 'warning' | 'ok'
 }
 
+function normalizeText(value: string | null | undefined) {
+  return (value || '').trim().toLowerCase()
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
@@ -127,16 +131,45 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Para RAFs, tentar encontrar matches por nome do ativo
-    const assetNames = assets.map(a => a.name.toLowerCase())
-    rafsResult.data?.forEach(raf => {
-      const equipName = raf.equipment?.toLowerCase() || ''
-      assets.forEach(asset => {
-        if (equipName.includes(asset.name.toLowerCase()) || asset.name.toLowerCase().includes(equipName)) {
-          rafCounts[asset.id] = (rafCounts[asset.id] || 0) + 1
+    const assetsByNormalizedName = new Map<string, string[]>()
+    for (const asset of assets) {
+      const normalizedName = normalizeText(asset.name)
+      if (!normalizedName) continue
+
+      const existing = assetsByNormalizedName.get(normalizedName)
+      if (existing) {
+        existing.push(asset.id)
+      } else {
+        assetsByNormalizedName.set(normalizedName, [asset.id])
+      }
+    }
+
+    const normalizedAssetEntries = Array.from(assetsByNormalizedName.entries()).sort(
+      (a, b) => b[0].length - a[0].length
+    )
+
+    for (const raf of rafsResult.data || []) {
+      const equipmentName = normalizeText(raf.equipment)
+      if (!equipmentName) continue
+
+      const exactMatchIds = assetsByNormalizedName.get(equipmentName)
+      if (exactMatchIds) {
+        for (const assetId of exactMatchIds) {
+          rafCounts[assetId] = (rafCounts[assetId] || 0) + 1
         }
-      })
-    })
+        continue
+      }
+
+      const partialMatch = normalizedAssetEntries.find(([assetName]) =>
+        equipmentName.includes(assetName) || assetName.includes(equipmentName)
+      )
+
+      if (!partialMatch) continue
+
+      for (const assetId of partialMatch[1]) {
+        rafCounts[assetId] = (rafCounts[assetId] || 0) + 1
+      }
+    }
 
     // Calcular scores
     const maxRequests = Math.max(...Object.values(requestCounts), 1)

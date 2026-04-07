@@ -10,9 +10,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const summary = searchParams.get('summary') === 'true'
+
     const { data: rafs, error } = await supabase
       .from('FailureAnalysisReport')
-      .select('*, createdBy:User!createdById(id, firstName, lastName, email)')
+      .select(
+        summary
+          ? `
+            id,
+            rafNumber,
+            area,
+            equipment,
+            occurrenceDate,
+            occurrenceTime,
+            panelOperator,
+            failureType,
+            createdAt,
+            createdBy:User!createdById(firstName, lastName)
+          `
+          : '*, createdBy:User!createdById(id, firstName, lastName, email)'
+      )
       .eq('companyId', session.companyId)
       .order('createdAt', { ascending: false })
 

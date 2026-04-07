@@ -82,7 +82,7 @@ export default function RAFsPage() {
   const loadRAFs = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/rafs')
+      const res = await fetch('/api/rafs?summary=true')
       const data = await res.json()
       setRafs(data.data || [])
     } catch (error) {
