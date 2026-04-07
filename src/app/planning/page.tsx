@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Icon } from '@/components/ui/Icon'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor } from '@/lib/utils'

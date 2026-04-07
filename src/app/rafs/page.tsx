@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate } from '@/lib/utils'

@@ -1,7 +1,7 @@
 'use client'
 
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { formatDate } from '@/lib/utils'
 

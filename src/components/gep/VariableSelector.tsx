@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Icon } from '@/components/ui/Icon';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { getVariableInfo } from '@/app/gep/variableDescriptions';
 import { getVariableType } from '@/app/gep/variables';
 

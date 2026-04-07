@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
 import { TeamFormModal } from '@/components/teams/TeamFormModal'
 import { Icon } from '@/components/ui/Icon'

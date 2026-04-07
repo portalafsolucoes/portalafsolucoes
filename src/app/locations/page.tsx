@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
 import Link from 'next/link'

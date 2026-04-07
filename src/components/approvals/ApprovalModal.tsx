@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '../ui/Modal'
-import { Button } from '../ui/button'
+import { Button } from '../ui/Button'
 import { ImageViewerModal } from '../ui/ImageViewerModal'
 import { formatDate } from '@/lib/utils'
 

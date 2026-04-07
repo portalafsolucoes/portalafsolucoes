@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 
 const WEEK_DAYS = [
   { day: 'monday', label: 'Segunda-feira' },

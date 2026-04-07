@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 
 interface WorkOrderEditModalProps {
   isOpen: boolean

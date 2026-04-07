@@ -2,7 +2,7 @@
 
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useAuth } from '@/hooks/useAuth'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
 
 

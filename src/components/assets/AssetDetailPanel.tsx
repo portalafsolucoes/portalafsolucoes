@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import AssetAttachments from './AssetAttachments'
 import AssetTimeline from './AssetTimelineEnhanced'
 

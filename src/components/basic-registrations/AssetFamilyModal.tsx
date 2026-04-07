@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 
 interface AssetFamilyModalProps {
   editingItem: any | null

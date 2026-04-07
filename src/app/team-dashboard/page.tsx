@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import Link from 'next/link'

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 
 const UNIT_OPTIONS: Record<string, { value: string; label: string }[]> = {
   TOOL: [

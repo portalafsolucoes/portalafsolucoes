@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
-import { Button } from '../ui/button'
+import { Button } from '../ui/Button'
 import { ImageViewerModal } from '../ui/ImageViewerModal'
 import { Icon } from '@/components/ui/Icon'
 import { formatDate } from '@/lib/utils'

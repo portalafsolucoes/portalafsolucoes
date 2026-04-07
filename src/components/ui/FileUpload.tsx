@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Icon } from './Icon'
-import { Button } from './button'
+import { Button } from './Button'
 
 interface UploadedFile {
   name: string

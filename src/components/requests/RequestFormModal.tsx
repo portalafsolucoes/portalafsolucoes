@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
-import { Input } from '../ui/input'
-import { Button } from '../ui/button'
+import { Input } from '../ui/Input'
+import { Button } from '../ui/Button'
 import { FileUploader } from './FileUploader'
 import { Icon } from '@/components/ui/Icon'
 

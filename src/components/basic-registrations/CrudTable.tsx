@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { exportToExcel } from '@/lib/exportExcel'
 

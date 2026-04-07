@@ -3,7 +3,7 @@
 
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { Button } from './button'
+import { Button } from './Button'
 
 interface ConfirmationModalProps {
   isOpen: boolean

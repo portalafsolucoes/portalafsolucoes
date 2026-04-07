@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { getStatusColor } from '@/lib/utils'
