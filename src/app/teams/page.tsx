@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/card'
 import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
 import { TeamFormModal } from '@/components/teams/TeamFormModal'
-import { Plus, Users as UsersIcon } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 
 interface Team {
   id: string
@@ -83,9 +84,9 @@ export default function TeamsPage() {
           </div>
           <button
             onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-blue-700 transition-colors"
           >
-            <Plus className="w-5 h-5" />
+            <Icon name="add" className="text-xl" />
             Nova Equipe
           </button>
         </div>
@@ -110,7 +111,7 @@ export default function TeamsPage() {
               >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3 mb-3">
-                    <UsersIcon className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                    <Icon name="group" className="text-2xl text-primary flex-shrink-0 mt-1" />
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-foreground">
                         {team.name}

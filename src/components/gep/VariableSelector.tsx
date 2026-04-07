@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { X, Search, CheckSquare, Square, Zap, Activity, Thermometer, Gauge, Settings, BarChart3, Droplet, Plug, Power, Circle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui/button';
 import { getVariableInfo } from '@/app/gep/variableDescriptions';
 import { getVariableType } from '@/app/gep/variables';
 
@@ -28,19 +28,19 @@ type CategoryType = 'ALL' | 'VAZAO' | 'TEMPERATURA' | 'PRESSAO' | 'TENSAO' | 'PO
 interface Category {
   id: CategoryType;
   name: string;
-  icon: any;
+  icon: string;
 }
 
 const CATEGORIES: Category[] = [
-  { id: 'ALL', name: 'Todas', icon: BarChart3 },
-  { id: 'VAZAO', name: 'Vazão', icon: Droplet },
-  { id: 'TEMPERATURA', name: 'Temperatura', icon: Thermometer },
-  { id: 'PRESSAO', name: 'Pressão', icon: Gauge },
-  { id: 'TENSAO', name: 'Tensão Elétrica', icon: Plug },
-  { id: 'POTENCIA', name: 'Potência', icon: Power },
-  { id: 'STATUS', name: 'Status', icon: Circle },
-  { id: 'CORRENTE', name: 'Corrente Elétrica', icon: Zap },
-  { id: 'VELOCIDADE', name: 'Velocidade', icon: Settings }
+  { id: 'ALL', name: 'Todas', icon: 'bar_chart' },
+  { id: 'VAZAO', name: 'Vazão', icon: 'water_drop' },
+  { id: 'TEMPERATURA', name: 'Temperatura', icon: 'thermostat' },
+  { id: 'PRESSAO', name: 'Pressão', icon: 'speed' },
+  { id: 'TENSAO', name: 'Tensão Elétrica', icon: 'power' },
+  { id: 'POTENCIA', name: 'Potência', icon: 'power_settings_new' },
+  { id: 'STATUS', name: 'Status', icon: 'circle' },
+  { id: 'CORRENTE', name: 'Corrente Elétrica', icon: 'bolt' },
+  { id: 'VELOCIDADE', name: 'Velocidade', icon: 'settings' }
 ];
 
 // Identificar tipo de variável
@@ -123,7 +123,7 @@ export function VariableSelector({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-6xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
@@ -132,8 +132,8 @@ export function VariableSelector({
               {selectedVariables.length} de {variables.length} variáveis selecionadas
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
-            <X className="h-6 w-6" />
+          <button onClick={onClose} className="p-2 hover:bg-surface-low rounded-full">
+            <Icon name="close" className="text-2xl" />
           </button>
         </div>
 
@@ -141,7 +141,7 @@ export function VariableSelector({
         <div className="p-4 border-b">
           <div className="flex flex-wrap gap-2 mb-4">
             {CATEGORIES.map((category) => {
-              const Icon = category.icon;
+              const iconName = category.icon;
               const isActive = activeCategory === category.id;
               const count = categoryCounts[category.id];
               
@@ -149,16 +149,16 @@ export function VariableSelector({
                 <button
                   key={category.id}
                   onClick={() => setActiveCategory(category.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-[4px] font-medium transition-all ${
                     isActive
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary text-white ambient-shadow'
+                      : 'bg-surface-low text-foreground hover:bg-surface-high'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon name={iconName} className="text-base" />
                   <span>{category.name}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    isActive ? 'bg-white/20' : 'bg-gray-200'
+                    isActive ? 'bg-white/20' : 'bg-surface-high'
                   }`}>
                     {count}
                   </span>
@@ -169,19 +169,19 @@ export function VariableSelector({
           
           {/* Search */}
           <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar por código, nome ou descrição..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-10 pr-4 py-2 border rounded-[4px] focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
           
           {/* Actions */}
           <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {filteredVariables.length} variáveis encontradas
             </div>
             <div className="flex gap-2">
@@ -198,7 +198,7 @@ export function VariableSelector({
         {/* Table */}
         <div className="flex-1 overflow-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+            <thead className="bg-surface sticky top-0 z-10">
               <tr>
                 <th className="w-12 p-3 text-left"></th>
                 <th className="p-3 text-left font-semibold">Código</th>
@@ -218,37 +218,37 @@ export function VariableSelector({
                   <tr
                     key={variable.key}
                     onClick={() => onToggleVariable(variable.key)}
-                    className={`cursor-pointer hover:bg-gray-50 border-b transition-colors ${
-                      isSelected ? 'bg-gray-50' : ''
+                    className={`cursor-pointer hover:bg-surface border-b transition-colors ${
+                      isSelected ? 'bg-surface' : ''
                     }`}
                   >
                     <td className="p-3">
                       {isSelected ? (
-                        <CheckSquare className="h-5 w-5 text-primary" />
+                        <Icon name="check_box" className="text-xl text-primary" />
                       ) : (
-                        <Square className="h-5 w-5 text-gray-400" />
+                        <Icon name="check_box_outline_blank" className="text-xl text-muted-foreground" />
                       )}
                     </td>
-                    <td className="p-3 font-mono text-xs text-gray-600">{variable.key}</td>
+                    <td className="p-3 font-mono text-xs text-muted-foreground">{variable.key}</td>
                     <td className="p-3 font-medium">{info.name}</td>
                     <td className="p-3">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
                         isTotal 
-                          ? 'bg-gray-100 text-gray-700' 
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-surface-low text-foreground' 
+                          : 'bg-surface-low text-foreground'
                       }`}>
                         {isTotal ? '📊 Total' : '📈 Média'}
                       </span>
                     </td>
-                    <td className="p-3 text-sm text-gray-600 font-medium">{info.unit}</td>
-                    <td className="p-3 text-sm text-gray-600">{info.description}</td>
+                    <td className="p-3 text-sm text-muted-foreground font-medium">{info.unit}</td>
+                    <td className="p-3 text-sm text-muted-foreground">{info.description}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
           {filteredVariables.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <div className="text-4xl mb-2">🔍</div>
               <p className="font-medium">Nenhuma variável encontrada</p>
               <p className="text-sm mt-1">Tente ajustar os filtros ou o termo de busca</p>

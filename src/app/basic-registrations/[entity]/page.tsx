@@ -10,7 +10,8 @@ import { CalendarModal } from '@/components/basic-registrations/CalendarModal'
 import { AssetFamilyModal } from '@/components/basic-registrations/AssetFamilyModal'
 import { ResourceModal } from '@/components/basic-registrations/ResourceModal'
 import { GenericStepModal } from '@/components/basic-registrations/GenericStepModal'
-import { Settings2, Users, ExternalLink, Search, ChevronDown, ChevronRight, Wrench } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { hasPermission, type UserRole } from '@/lib/permissions'
 
 const dependencyCache = new Map<string, any[]>()
@@ -105,15 +106,15 @@ function PeopleSummarySection({ users }: { users: any[] }) {
   const [expanded, setExpanded] = useState(true)
 
   return (
-    <div className="mb-6 border border-border rounded-lg bg-card overflow-hidden">
+    <div className="mb-6 rounded-[4px] bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-          <Users className="h-5 w-5 text-muted-foreground" />
+          {expanded ? <Icon name="expand_more" className="text-base text-muted-foreground" /> : <Icon name="chevron_right" className="text-base text-muted-foreground" />}
+          <Icon name="group" className="text-xl text-muted-foreground" />
           <h2 className="text-base font-semibold text-foreground">Mão de Obra & Especialidades</h2>
           <span className="text-xs text-muted-foreground">({enabledUsers.length} pessoas)</span>
         </div>
@@ -123,7 +124,7 @@ function PeopleSummarySection({ users }: { users: any[] }) {
           className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
         >
           Gerenciar em Pessoas/Equipes
-          <ExternalLink className="h-3 w-3" />
+          <Icon name="open_in_new" className="text-sm" />
         </Link>
       </button>
 
@@ -132,13 +133,13 @@ function PeopleSummarySection({ users }: { users: any[] }) {
           {/* Busca */}
           <div className="p-3 border-t border-border">
             <div className="relative max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar por nome, cargo ou especialidade..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-9 pr-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
@@ -572,7 +573,7 @@ export default function BasicRegistrationEntityPage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
         </div>
       </AppLayout>
     )
@@ -593,7 +594,7 @@ export default function BasicRegistrationEntityPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Settings2 className="h-7 w-7 text-foreground" />
+          <Icon name="tune" className="text-2xl text-foreground" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">{currentTab.label}</h1>
             <p className="text-sm text-muted-foreground">Cadastros Básicos</p>
@@ -602,12 +603,12 @@ export default function BasicRegistrationEntityPage() {
 
         {/* Seletor de Unidade (para entidades com escopo de unidade) */}
         {currentTab.unitScoped && (
-          <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-card rounded-[4px]">
             <label className="text-sm font-medium text-foreground">Unidade:</label>
             <select
               value={selectedUnitId}
               onChange={e => setSelectedUnitId(e.target.value)}
-              className="flex-1 max-w-xs px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="flex-1 max-w-xs px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Selecione a unidade...</option>
               {units.map((u: any) => (
@@ -622,14 +623,14 @@ export default function BasicRegistrationEntityPage() {
 
         {/* Conteúdo */}
         {currentTab.key === 'resources' ? (
-          <div className="border border-border rounded-lg bg-card overflow-hidden">
+          <div className="rounded-[4px] bg-card overflow-hidden">
             <button
               type="button"
               onClick={() => setResourcesTableExpanded(!resourcesTableExpanded)}
               className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
             >
-              {resourcesTableExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-              <Wrench className="h-5 w-5 text-muted-foreground" />
+              {resourcesTableExpanded ? <Icon name="expand_more" className="text-base text-muted-foreground" /> : <Icon name="chevron_right" className="text-base text-muted-foreground" />}
+              <Icon name="construction" className="text-xl text-muted-foreground" />
               <h2 className="text-base font-semibold text-foreground">Materiais & Ferramentas</h2>
             </button>
             {resourcesTableExpanded && (

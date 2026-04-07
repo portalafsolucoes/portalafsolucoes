@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { X, Upload, Image as ImageIcon, Play, CheckCircle, FileText, Camera } from 'lucide-react'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
+import { Icon } from '@/components/ui/Icon'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 import { formatDate } from '@/lib/utils'
 
 interface ExecutionModalProps {
@@ -154,7 +154,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
   const getPriorityBadge = (priority: string) => {
     const colors = {
       CRITICAL: 'bg-danger-light0',
-      HIGH: 'bg-gray-500',
+      HIGH: 'bg-on-surface-variant',
       MEDIUM: 'bg-warning-light0',
       LOW: 'bg-success-light0',
       NONE: 'bg-secondary0'
@@ -164,19 +164,19 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-[4px] ambient-ambient-shadow max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-card z-10">
+        <div className="p-6 border-b border-on-surface-variant/10 flex justify-between items-center sticky top-0 bg-card z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-foreground">
               {type === 'workorder' ? 'Ordem de Serviço' : 'Solicitação de Serviço'}
             </h2>
             {type === 'workorder' && item.internalId && (
-              <p className="text-sm text-gray-500 font-mono">{item.internalId}</p>
+              <p className="text-sm text-muted-foreground font-mono">{item.internalId}</p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="text-muted-foreground hover:text-muted-foreground">
+            <Icon name="close" className="text-2xl" />
           </button>
         </div>
 
@@ -184,7 +184,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
         <div className="p-6 space-y-6">
           {/* Informações Básicas */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">{item.title}</h3>
             <div className="flex gap-2 items-center">
               {getPriorityBadge(item.priority)}
               {isCompleted && <Badge className="bg-success-light0">Concluída</Badge>}
@@ -195,11 +195,11 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
           {item.description && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <FileText className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <Icon name="description" className="text-base inline mr-1" />
                 Descrição
               </label>
-              <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">{item.description}</p>
+              <p className="text-foreground bg-surface p-4 rounded-[4px]">{item.description}</p>
             </div>
           )}
 
@@ -210,27 +210,27 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
               <div className="grid grid-cols-2 gap-4">
                 {beforePhoto && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Camera className="w-4 h-4 inline mr-1" />
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      <Icon name="photo_camera" className="text-base inline mr-1" />
                       Foto ANTES
                     </label>
                     <img 
                       src={beforePhoto} 
                       alt="Antes" 
-                      className="w-full h-64 object-cover rounded-lg border-2 border-gray-200"
+                      className="w-full h-64 object-cover rounded-[4px] border-2 border-border"
                     />
                   </div>
                 )}
                 {afterPhoto && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Camera className="w-4 h-4 inline mr-1" />
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      <Icon name="photo_camera" className="text-base inline mr-1" />
                       Foto DEPOIS
                     </label>
                     <img 
                       src={afterPhoto} 
                       alt="Depois" 
-                      className="w-full h-64 object-cover rounded-lg border-2 border-gray-200"
+                      className="w-full h-64 object-cover rounded-[4px] border-2 border-border"
                     />
                   </div>
                 )}
@@ -239,11 +239,11 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
               {/* Notas */}
               {executionNotes && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FileText className="w-4 h-4 inline mr-1" />
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    <Icon name="description" className="text-base inline mr-1" />
                     Notas de Execução
                   </label>
-                  <p className="text-gray-900 bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">{executionNotes}</p>
+                  <p className="text-foreground bg-surface p-4 rounded-[4px] whitespace-pre-wrap">{executionNotes}</p>
                 </div>
               )}
             </div>
@@ -251,35 +251,35 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
           {/* Iniciar Execução */}
           {!isCompleted && step === 'start' && (
-            <div className="space-y-6 bg-primary/5 p-6 rounded-lg">
+            <div className="space-y-6 bg-primary/5 p-6 rounded-[4px]">
               <div className="text-center mb-4">
-                <Play className="w-12 h-12 mx-auto text-primary mb-2" />
-                <h4 className="text-lg font-semibold text-gray-900">Iniciar Execução</h4>
-                <p className="text-sm text-gray-600">Tire uma foto do estado atual antes de começar</p>
+                <Icon name="play_arrow" className="text-5xl mx-auto text-primary mb-2" />
+                <h4 className="text-lg font-semibold text-foreground">Iniciar Execução</h4>
+                <p className="text-sm text-muted-foreground">Tire uma foto do estado atual antes de começar</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  <Camera className="w-4 h-4 inline mr-1" />
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  <Icon name="photo_camera" className="text-base inline mr-1" />
                   Foto ANTES da Execução *
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-card">
+                <div className="border-2 border-dashed border-border rounded-[4px] p-6 text-center bg-card">
                   {beforePhoto ? (
                     <div className="relative">
-                      <img src={beforePhoto} alt="Antes" className="max-h-64 mx-auto rounded-lg" />
+                      <img src={beforePhoto} alt="Antes" className="max-h-64 mx-auto rounded-[4px]" />
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => beforeInputRef.current?.click()}
                         className="mt-4"
                       >
-                        <Upload className="w-4 h-4 mr-1" />
+                        <Icon name="upload" className="text-base mr-1" />
                         Trocar Foto
                       </Button>
                     </div>
                   ) : (
                     <div>
-                      <ImageIcon className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                      <Icon name="image" className="text-5xl mx-auto text-muted-foreground mb-3" />
                       <Button
                         size="sm"
                         onClick={() => beforeInputRef.current?.click()}
@@ -287,12 +287,12 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
                       >
                         {uploadingBefore ? 'Enviando...' : (
                           <>
-                            <Upload className="w-4 h-4 mr-1" />
+                            <Icon name="upload" className="text-base mr-1" />
                             Selecionar Foto
                           </>
                         )}
                       </Button>
-                      <p className="text-xs text-gray-500 mt-2">PNG, JPG até 10MB</p>
+                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG até 10MB</p>
                     </div>
                   )}
                   <input
@@ -311,11 +311,11 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
               <Button
                 onClick={handleStartExecution}
                 disabled={!beforePhoto || loading}
-                className="w-full bg-primary hover:bg-gray-700"
+                className="w-full bg-primary hover:bg-primary-graphite"
               >
                 {loading ? 'Iniciando...' : (
                   <>
-                    <Play className="w-4 h-4 mr-2" />
+                    <Icon name="play_arrow" className="text-base mr-2" />
                     Iniciar Execução
                   </>
                 )}
@@ -325,51 +325,51 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
           {/* Completar Execução */}
           {!isCompleted && step === 'complete' && (
-            <div className="space-y-6 bg-success-light p-6 rounded-lg">
+            <div className="space-y-6 bg-success-light p-6 rounded-[4px]">
               <div className="text-center mb-4">
-                <CheckCircle className="w-12 h-12 mx-auto text-success mb-2" />
-                <h4 className="text-lg font-semibold text-gray-900">Completar Execução</h4>
-                <p className="text-sm text-gray-600">Documente o trabalho realizado</p>
+                <Icon name="check_circle" className="text-5xl mx-auto text-success mb-2" />
+                <h4 className="text-lg font-semibold text-foreground">Completar Execução</h4>
+                <p className="text-sm text-muted-foreground">Documente o trabalho realizado</p>
               </div>
 
               {/* Foto Antes (read-only) */}
               {beforePhoto && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Camera className="w-4 h-4 inline mr-1" />
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    <Icon name="photo_camera" className="text-base inline mr-1" />
                     Foto ANTES (registrada)
                   </label>
                   <img 
                     src={beforePhoto} 
                     alt="Antes" 
-                    className="max-h-48 mx-auto rounded-lg border-2 border-gray-200"
+                    className="max-h-48 mx-auto rounded-[4px] border-2 border-border"
                   />
                 </div>
               )}
 
               {/* Foto Depois */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  <Camera className="w-4 h-4 inline mr-1" />
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  <Icon name="photo_camera" className="text-base inline mr-1" />
                   Foto DEPOIS da Execução *
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-card">
+                <div className="border-2 border-dashed border-border rounded-[4px] p-6 text-center bg-card">
                   {afterPhoto ? (
                     <div className="relative">
-                      <img src={afterPhoto} alt="Depois" className="max-h-64 mx-auto rounded-lg" />
+                      <img src={afterPhoto} alt="Depois" className="max-h-64 mx-auto rounded-[4px]" />
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => afterInputRef.current?.click()}
                         className="mt-4"
                       >
-                        <Upload className="w-4 h-4 mr-1" />
+                        <Icon name="upload" className="text-base mr-1" />
                         Trocar Foto
                       </Button>
                     </div>
                   ) : (
                     <div>
-                      <ImageIcon className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                      <Icon name="image" className="text-5xl mx-auto text-muted-foreground mb-3" />
                       <Button
                         size="sm"
                         onClick={() => afterInputRef.current?.click()}
@@ -377,12 +377,12 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
                       >
                         {uploadingAfter ? 'Enviando...' : (
                           <>
-                            <Upload className="w-4 h-4 mr-1" />
+                            <Icon name="upload" className="text-base mr-1" />
                             Selecionar Foto
                           </>
                         )}
                       </Button>
-                      <p className="text-xs text-gray-500 mt-2">PNG, JPG até 10MB</p>
+                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG até 10MB</p>
                     </div>
                   )}
                   <input
@@ -400,28 +400,28 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
               {/* Notas */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FileText className="w-4 h-4 inline mr-1" />
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  <Icon name="description" className="text-base inline mr-1" />
                   Notas de Execução *
                 </label>
                 <textarea
                   value={executionNotes}
                   onChange={(e) => setExecutionNotes(e.target.value)}
                   rows={6}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                  className="w-full p-3 rounded-[4px] focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                   placeholder="Descreva o trabalho realizado, peças utilizadas, observações, etc..."
                 />
-                <p className="text-xs text-gray-500 mt-1">Seja o mais detalhado possível</p>
+                <p className="text-xs text-muted-foreground mt-1">Seja o mais detalhado possível</p>
               </div>
 
               <Button
                 onClick={handleCompleteExecution}
                 disabled={!afterPhoto || !executionNotes.trim() || loading}
-                className="w-full bg-success hover:bg-gray-700"
+                className="w-full bg-success hover:bg-primary-graphite"
               >
                 {loading ? 'Finalizando...' : (
                   <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
+                    <Icon name="check_circle" className="text-base mr-2" />
                     Finalizar Execução
                   </>
                 )}
@@ -431,8 +431,8 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex justify-between items-center bg-gray-50">
-          <div className="text-sm text-gray-500">
+        <div className="p-6 border-t border-on-surface-variant/10 flex justify-between items-center bg-surface">
+          <div className="text-sm text-muted-foreground">
             Criada em: {formatDate(item.createdAt)}
           </div>
           <Button onClick={onClose} variant="outline">

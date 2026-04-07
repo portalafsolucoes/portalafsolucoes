@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
-import { Button } from '../ui/Button'
-import { 
-  X, FileText, Calendar, Users, Paperclip, 
-  Clock, User, Edit, Trash2, Download, Image as ImageIcon
-} from 'lucide-react'
+import { Button } from '../ui/button'
+import { Icon } from '@/components/ui/Icon'
 import { formatDate } from '@/lib/utils'
 
 interface RequestDetailModalProps {
@@ -119,7 +116,7 @@ export function RequestDetailModal({
       ) : error ? (
         <div className="text-center py-12">
           <div className="mb-4">
-            <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <Icon name="description" className="text-5xl text-muted-foreground mx-auto mb-4" />
             <p className="text-lg font-medium text-foreground mb-2">{error}</p>
             <p className="text-sm text-muted-foreground">A solicitação pode ter sido excluída ou você não tem permissão para visualizá-la.</p>
           </div>
@@ -131,14 +128,14 @@ export function RequestDetailModal({
           <div className="flex justify-between items-start pb-4 border-b px-4 md:px-6 pt-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <FileText className="w-6 h-6 text-primary" />
+                <Icon name="description" className="text-2xl text-primary" />
                 <h2 className="text-lg md:text-2xl font-bold text-foreground">{request.title}</h2>
               </div>
               <div className="flex gap-2">
                 <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium ${getPriorityColor(request.priority)}`}>
                   {getPriorityLabel(request.priority)}
                 </span>
-                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium bg-primary/10 text-blue-800">
+                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium bg-primary/10 text-info-light-foreground">
                   {request.status}
                 </span>
               </div>
@@ -146,23 +143,23 @@ export function RequestDetailModal({
             <div className="flex gap-2">
               <button
                 onClick={handleEdit}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-[4px] transition-colors"
                 title="Editar"
               >
-                <Edit className="w-5 h-5 text-muted-foreground" />
+                <Icon name="edit" className="text-xl text-muted-foreground" />
               </button>
               <button
                 onClick={handleDelete}
-                className="p-2 hover:bg-danger-light rounded-lg transition-colors"
+                className="p-2 hover:bg-danger-light rounded-[4px] transition-colors"
                 title="Excluir"
               >
-                <Trash2 className="w-5 h-5 text-danger" />
+                <Icon name="delete" className="text-xl text-danger" />
               </button>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-[4px] transition-colors"
               >
-                <X className="w-6 h-6 text-muted-foreground" />
+                <Icon name="close" className="text-2xl text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -181,7 +178,7 @@ export function RequestDetailModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {request.createdBy && (
                 <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <Icon name="person" className="text-xl text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm md:text-base font-medium text-foreground">Solicitado por</p>
                     <p className="text-sm md:text-base text-muted-foreground">
@@ -193,7 +190,7 @@ export function RequestDetailModal({
 
               {request.team && (
                 <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <Icon name="group" className="text-xl text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm md:text-base font-medium text-foreground">Equipe Atribuída</p>
                     <p className="text-sm md:text-base text-muted-foreground">{request.team.name}</p>
@@ -203,7 +200,7 @@ export function RequestDetailModal({
 
               {request.dueDate && (
                 <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <Icon name="calendar_today" className="text-xl text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm md:text-base font-medium text-foreground">Data Desejada</p>
                     <p className="text-sm md:text-base text-muted-foreground">{formatDate(request.dueDate)}</p>
@@ -212,7 +209,7 @@ export function RequestDetailModal({
               )}
 
               <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <Icon name="schedule" className="text-xl text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-sm md:text-base font-medium text-foreground">Criado em</p>
                   <p className="text-sm md:text-base text-muted-foreground">{formatDate(request.createdAt)}</p>
@@ -224,14 +221,14 @@ export function RequestDetailModal({
             {request.files && request.files.length > 0 && (
               <div>
                 <h3 className="text-sm md:text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Paperclip className="w-4 h-4" />
+                  <Icon name="attach_file" className="text-base" />
                   Anexos ({request.files.length})
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {request.files.map((file: any, index: number) => (
                     <div key={index}>
                       {isImage(file) ? (
-                        <div className="border rounded-lg overflow-hidden">
+                        <div className="border rounded-[4px] overflow-hidden">
                           <img 
                             src={file.url} 
                             alt={file.name}
@@ -244,14 +241,14 @@ export function RequestDetailModal({
                               download={file.name}
                               className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1 mt-1"
                             >
-                              <Download className="w-3 h-3" />
+                              <Icon name="download" className="text-sm" />
                               Baixar imagem
                             </a>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-secondary">
-                          <FileText className="w-8 h-8 text-muted-foreground" />
+                        <div className="flex items-center gap-3 p-3 border rounded-[4px] hover:bg-secondary">
+                          <Icon name="description" className="text-3xl text-muted-foreground" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
                             <a 
@@ -259,7 +256,7 @@ export function RequestDetailModal({
                               download={file.name}
                               className="text-xs text-primary hover:underline flex items-center gap-1"
                             >
-                              <Download className="w-3 h-3" />
+                              <Icon name="download" className="text-sm" />
                               Baixar arquivo
                             </a>
                           </div>

@@ -12,7 +12,7 @@ export default function BasicRegistrationsPage() {
 
   return (
     <div className="flex items-center justify-center h-64">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" />
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
     </div>
   )
 }

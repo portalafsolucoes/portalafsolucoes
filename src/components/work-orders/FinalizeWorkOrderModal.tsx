@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { Plus, Trash2, AlertTriangle, Clock, Calendar, CheckSquare, MessageSquare, List } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
 
 interface FinalizeModalProps {
   isOpen: boolean
@@ -310,10 +310,10 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Finalizar OS: ${workOrder.title}`} size="xl">
       <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-        {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">{error}</div>}
+        {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
 
         {/* Info da OS */}
-        <div className="p-3 bg-muted rounded-lg text-sm">
+        <div className="p-3 bg-muted rounded-[4px] text-sm">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div><span className="text-muted-foreground">OS:</span> <span className="font-medium">{workOrder.internalId || workOrder.id.slice(0,8)}</span></div>
             <div><span className="text-muted-foreground">Ativo:</span> <span className="font-medium">{workOrder.asset?.name || '-'}</span></div>
@@ -324,9 +324,9 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
 
         {/* Avisos de Calendário */}
         {calendarWarnings.length > 0 && (
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-[4px]">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <Icon name="warning" className="text-base text-amber-600 dark:text-amber-400" />
               <span className="text-sm font-medium text-amber-800 dark:text-amber-300">Avisos de Calendário</span>
             </div>
             <ul className="space-y-1">
@@ -342,10 +342,10 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
 
         {/* Detalhes de eficiência de calendário */}
         {calendarDetails.length > 0 && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-[4px]">
             <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Disponibilidade por Calendário</span>
+              <Icon name="schedule" className="text-base text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium text-info-light-foreground dark:text-blue-300">Disponibilidade por Calendário</span>
             </div>
             <div className="space-y-1">
               {calendarDetails.map((cd, i) => (
@@ -367,12 +367,12 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         {executionSteps.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
+              <Icon name="check_box" className="text-base" />
               Etapas de Execução ({executionSteps.filter(s => s.completed).length}/{executionSteps.length})
             </h3>
             <div className="space-y-2">
               {executionSteps.map((step, i) => (
-                <div key={i} className="p-3 border border-border rounded-lg space-y-2">
+                <div key={i} className="p-3 rounded-[4px] space-y-2">
                   {/* Linha principal: checkbox + nome */}
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
@@ -388,9 +388,9 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                       {step.optionType !== 'NONE' && (
                         <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                           {step.optionType === 'RESPONSE' ? (
-                            <><MessageSquare className="h-2.5 w-2.5" /> Resposta</>
+                            <><Icon name="chat" className="text-xs" /> Resposta</>
                           ) : (
-                            <><List className="h-2.5 w-2.5" /> Opção</>
+                            <><Icon name="list" className="text-xs" /> Opção</>
                           )}
                         </span>
                       )}
@@ -405,7 +405,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                         value={step.responseValue}
                         onChange={e => updateStep(i, 'responseValue', e.target.value)}
                         placeholder="Digite o valor observado (ex: 72°C, 2.3 mm/s...)"
-                        className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-2 py-1.5 text-sm rounded bg-card focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                   )}
@@ -416,7 +416,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                       <select
                         value={step.selectedOption}
                         onChange={e => updateStep(i, 'selectedOption', e.target.value)}
-                        className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-2 py-1.5 text-sm rounded bg-card focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <option value="">Selecione...</option>
                         {step.options.map(opt => (
@@ -442,13 +442,13 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Dados Reais de Execução</h3>
             <Button size="sm" variant="outline" onClick={addResource}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> Recurso
+              <Icon name="add" className="text-sm mr-1" /> Recurso
             </Button>
           </div>
 
           <div className="space-y-3">
             {resources.map((r, i) => (
-              <div key={i} className="p-3 border border-border rounded-lg space-y-3">
+              <div key={i} className="p-3 rounded-[4px] space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">Recurso #{i + 1}</span>
                   <div className="flex items-center gap-2">
@@ -461,7 +461,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                           if (selected) selectPlanResource(i, selected)
                           else updateResource(i, 'resourceId', '')
                         }}
-                        className="px-2 py-1 text-xs border border-border rounded bg-card"
+                        className="px-2 py-1 text-xs rounded bg-card"
                         title="Vincular a recurso do plano"
                       >
                         <option value="">Vincular recurso...</option>
@@ -475,12 +475,12 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                     )}
                     {r.resourceId && (
                       <span className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/30 rounded text-xs text-blue-600 dark:text-blue-400" title="Recurso vinculado ao calendário">
-                        <Calendar className="h-3 w-3" />
+                        <Icon name="calendar_today" className="text-sm" />
                       </span>
                     )}
                     {resources.length > 1 && (
                       <button onClick={() => removeResource(i)} className="p-1 hover:bg-danger-light rounded">
-                        <Trash2 className="h-3.5 w-3.5 text-danger" />
+                        <Icon name="delete" className="text-sm text-danger" />
                       </button>
                     )}
                   </div>
@@ -489,45 +489,45 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Nome do Integrante</label>
                     <input type="text" value={r.memberName} onChange={e => updateResource(i, 'memberName', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Qtd. Recurso</label>
                     <input type="number" value={r.quantity} onChange={e => updateResource(i, 'quantity', Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Horas</label>
                     <input type="number" step="0.5" value={r.hours} onChange={e => updateResource(i, 'hours', Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Data Início</label>
                     <input type="date" value={r.startDate} onChange={e => updateResource(i, 'startDate', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Hora Início</label>
                     <input type="time" value={r.startTime} onChange={e => updateResource(i, 'startTime', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Data Fim</label>
                     <input type="date" value={r.endDate} onChange={e => updateResource(i, 'endDate', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Hora Fim</label>
                     <input type="time" value={r.endTime} onChange={e => updateResource(i, 'endTime', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-muted-foreground mb-1">Observação</label>
                   <input type="text" value={r.observation} onChange={e => updateResource(i, 'observation', e.target.value)}
-                    className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                    className="w-full px-2 py-1.5 text-sm rounded bg-card" />
                 </div>
               </div>
             ))}
@@ -538,12 +538,12 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Observação Geral</label>
           <textarea value={executionNotes} onChange={e => setExecutionNotes(e.target.value)}
-            rows={3} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            rows={3} className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Notas sobre a execução..." />
         </div>
 
         {/* Emitir OS corretiva */}
-        <div className="p-3 border border-border rounded-lg space-y-3">
+        <div className="p-3 rounded-[4px] space-y-3">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={generateCorrective} onChange={e => setGenerateCorrective(e.target.checked)} className="rounded border-border" />
             <span className="text-sm font-medium">Emitir OS Corretiva?</span>
@@ -553,12 +553,12 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
               <div>
                 <label className="block text-xs text-muted-foreground mb-1">Título da OS Corretiva</label>
                 <input type="text" value={correctiveTitle} onChange={e => setCorrectiveTitle(e.target.value)}
-                  placeholder="Ex: Substituição de rolamento" className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card" />
+                  placeholder="Ex: Substituição de rolamento" className="w-full px-2 py-1.5 text-sm rounded bg-card" />
               </div>
               <div>
                 <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
                 <select value={correctiveType} onChange={e => setCorrectiveType(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm border border-border rounded bg-card">
+                  className="w-full px-2 py-1.5 text-sm rounded bg-card">
                   <option value="CORRECTIVE_PLANNED">Corretiva Programada</option>
                   <option value="CORRECTIVE_IMMEDIATE">Corretiva Imediata</option>
                 </select>
@@ -568,7 +568,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         </div>
 
         {/* Botões */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
           <Button variant="outline" onClick={onClose} size="sm">Cancelar</Button>
           <Button onClick={handleFinalize} disabled={saving} size="sm">
             {saving ? 'Finalizando...' : 'Finalizar OS'}

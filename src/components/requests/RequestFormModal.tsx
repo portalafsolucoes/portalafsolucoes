@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
-import { Input } from '../ui/Input'
-import { Button } from '../ui/Button'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
 import { FileUploader } from './FileUploader'
-import { X, Calendar } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface UploadedFile {
   name: string
@@ -138,7 +138,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
             className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors"
             disabled={loading}
           >
-            <X className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground" />
+            <Icon name="close" className="text-xl md:text-2xl text-muted-foreground" />
           </button>
         </div>
 
@@ -162,7 +162,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Descreva detalhadamente o problema ou necessidade..."
             />
           </div>
@@ -176,7 +176,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="NONE">Nenhuma</option>
                 <option value="LOW">Baixa</option>
@@ -194,9 +194,9 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
-                <Calendar className="absolute right-3 top-2.5 w-5 h-5 text-muted-foreground pointer-events-none" />
+                <Icon name="calendar_today" className="absolute right-3 top-2.5 text-xl text-muted-foreground pointer-events-none" />
               </div>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
             <select
               value={formData.teamId}
               onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Nenhuma equipe</option>
               {teams.map(team => (

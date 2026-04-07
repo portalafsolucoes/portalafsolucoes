@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Building2, Wrench, Box, Users, ClipboardList, TrendingUp } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface UnitSummary {
   unit: { id: string; name: string; code: string }
@@ -34,7 +34,7 @@ export function CorporateDashboard() {
   }, [])
 
   if (loading) {
-    return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" /></div>
+    return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div>
   }
 
   if (!data) return <p className="text-muted-foreground text-center py-8">Erro ao carregar dashboard corporativo.</p>
@@ -43,7 +43,7 @@ export function CorporateDashboard() {
     <div className="space-y-6">
       {/* Título */}
       <div className="flex items-center gap-3">
-        <Building2 className="h-7 w-7 text-foreground" />
+        <Icon name="business" className="h-7 w-7 text-foreground" />
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard Corporativo</h1>
           <p className="text-sm text-muted-foreground">Visão consolidada de todas as unidades</p>
@@ -52,38 +52,38 @@ export function CorporateDashboard() {
 
       {/* Totais Corporativos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <Building2 className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="business" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.units}</p>
           <p className="text-xs text-muted-foreground">Unidades</p>
         </div>
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <Box className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="inventory_2" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.assets}</p>
           <p className="text-xs text-muted-foreground">Ativos</p>
         </div>
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <Users className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="group" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.users}</p>
           <p className="text-xs text-muted-foreground">Usuários</p>
         </div>
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <Wrench className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="construction" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.workOrders}</p>
           <p className="text-xs text-muted-foreground">Total OSs</p>
         </div>
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <TrendingUp className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="trending_up" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.completedWOs}</p>
           <p className="text-xs text-muted-foreground">Concluídas</p>
         </div>
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <Wrench className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="construction" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.pendingWOs}</p>
           <p className="text-xs text-muted-foreground">OSs Pendentes</p>
         </div>
-        <div className="p-4 bg-card border border-border rounded-lg text-center">
-          <ClipboardList className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+        <div className="p-4 bg-card rounded-[4px] text-center">
+          <Icon name="assignment" className="text-xl mx-auto mb-1 text-muted-foreground" />
           <p className="text-2xl font-bold">{data.totals.pendingRequests}</p>
           <p className="text-xs text-muted-foreground">SSs Pendentes</p>
         </div>
@@ -93,9 +93,9 @@ export function CorporateDashboard() {
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-3">Comparativo por Unidade</h2>
         {data.units.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8 border border-border rounded-lg bg-card">Nenhuma unidade cadastrada.</p>
+          <p className="text-muted-foreground text-center py-8 rounded-[4px] bg-card">Nenhuma unidade cadastrada.</p>
         ) : (
-          <div className="overflow-x-auto border border-border rounded-lg">
+          <div className="overflow-x-auto rounded-[4px]">
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>

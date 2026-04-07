@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Upload, Image as ImageIcon } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface Asset {
   id?: string
@@ -168,9 +168,9 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
       />
       
       {/* Panel */}
-      <div className="relative w-full max-w-2xl h-full bg-card shadow-2xl overflow-y-auto">
+      <div className="relative w-full max-w-2xl h-full bg-card ambient-ambient-shadow overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-card border-b border-on-surface-variant/10 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-bold text-foreground">
             {editAsset ? 'Editar Ativo' : parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Cadastrar novo Ativo'}
           </h2>
@@ -178,7 +178,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
             onClick={onClose}
             className="p-2 hover:bg-muted rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-muted-foreground" />
+            <Icon name="close" className="text-xl text-muted-foreground" />
           </button>
         </div>
 
@@ -186,7 +186,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Parent Asset Info */}
           {parentAsset && (
-            <div className="bg-primary/5 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary/5 border border-blue-200 rounded-[4px] p-4">
               <p className="text-sm text-blue-900">
                 <strong>Ativo Pai:</strong> {parentAsset.name}
               </p>
@@ -214,7 +214,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Adicione mais informações"
             />
           </div>
@@ -228,7 +228,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
               <select
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Selecione uma localização</option>
                 {locations.map((loc) => (
@@ -266,7 +266,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
             <select
               value={formData.primaryUserId}
               onChange={(e) => setFormData({ ...formData, primaryUserId: e.target.value })}
-              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Selecione um Responsável</option>
               {users.map((user) => (
@@ -286,7 +286,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="OPERATIONAL">Operacional</option>
                 <option value="DOWN">Parado</option>
@@ -308,8 +308,8 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
             <label className="block text-sm font-medium text-foreground mb-2">
               Adicionar Imagem do Ativo
             </label>
-            <div className="border-2 border-dashed border-input rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-              <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+            <div className="border-2 border-dashed border-input rounded-[4px] p-8 text-center hover:border-primary transition-colors cursor-pointer">
+              <Icon name="image" className="text-5xl text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">
                 Clique para adicionar ou arraste uma imagem
               </p>
@@ -318,7 +318,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-border">
+          <div className="flex gap-3 pt-4 border-t border-on-surface-variant/10">
             <Button
               type="button"
               variant="outline"

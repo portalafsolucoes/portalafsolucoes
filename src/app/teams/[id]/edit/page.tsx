@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { ArrowLeft, Save, X } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { User } from '@/types'
 
 export default function EditTeamPage() {
@@ -123,17 +124,17 @@ export default function EditTeamPage() {
           href={`/teams/${params.id}`}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <Icon name="arrow_back" className="text-base" />
           Voltar
         </Link>
 
-        <div className="bg-card rounded-lg shadow-sm p-6">
+        <div className="bg-card rounded-[4px] ambient-shadow p-6">
           <h1 className="text-2xl font-bold text-foreground mb-6">Editar Equipe</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
-                Nome da Equipe <span className="text-red-500">*</span>
+                Nome da Equipe <span className="text-danger">*</span>
               </label>
               <input
                 type="text"
@@ -142,7 +143,7 @@ export default function EditTeamPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
@@ -156,7 +157,7 @@ export default function EditTeamPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
@@ -164,7 +165,7 @@ export default function EditTeamPage() {
               <label className="block text-sm font-medium text-foreground mb-3">
                 Membros da Equipe ({formData.memberIds.length} selecionados)
               </label>
-              <div className="border border-input rounded-lg p-4 max-h-96 overflow-y-auto">
+              <div className="border border-input rounded-[4px] p-4 max-h-96 overflow-y-auto">
                 {users.length === 0 ? (
                   <p className="text-muted-foreground text-center py-4">Nenhum usuário disponível</p>
                 ) : (
@@ -172,7 +173,7 @@ export default function EditTeamPage() {
                     {users.map(user => (
                       <label
                         key={user.id}
-                        className="flex items-center gap-3 p-3 hover:bg-secondary rounded-lg cursor-pointer"
+                        className="flex items-center gap-3 p-3 hover:bg-secondary rounded-[4px] cursor-pointer"
                       >
                         <input
                           type="checkbox"
@@ -209,16 +210,16 @@ export default function EditTeamPage() {
             <div className="flex justify-end gap-3 pt-6 border-t border-border">
               <Link
                 href={`/teams/${params.id}`}
-                className="px-6 py-2 border border-input rounded-lg text-foreground hover:bg-secondary transition-colors"
+                className="px-6 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
               >
                 Cancelar
               </Link>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
+                <Icon name="save" className="text-base" />
                 {saving ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             </div>

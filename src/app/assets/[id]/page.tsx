@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { FileUpload } from '@/components/ui/FileUpload'
-import { Edit, Trash2, Plus, FileText, Download, History, Paperclip, FolderTree, GitBranch } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import AssetTimeline from '@/components/assets/AssetTimelineEnhanced'
 import AssetAttachments from '@/components/assets/AssetAttachments'
 import { getStatusColor, formatCurrency, formatDate } from '@/lib/utils'
@@ -144,7 +145,7 @@ export default function AssetDetailPage() {
       <AppLayout>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
           </div>
         </div>
       </AppLayout>
@@ -186,17 +187,17 @@ export default function AssetDetailPage() {
             {!editing && (
               <>
                 <Button variant="outline" onClick={() => setEditing(true)}>
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Icon name="edit" className="mr-2 text-base" />
                   Editar
                 </Button>
                 <Link href={`/assets/new?parentId=${asset.id}`}>
                   <Button variant="outline">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Icon name="add" className="mr-2 text-base" />
                     Adicionar Subativo
                   </Button>
                 </Link>
                 <Button variant="danger" onClick={handleDelete}>
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Icon name="delete" className="mr-2 text-base" />
                   Deletar
                 </Button>
               </>
@@ -215,50 +216,50 @@ export default function AssetDetailPage() {
         </div>
 
         {/* Tabs de navegação */}
-        <div className="mb-6 border-b border-gray-200">
+        <div className="mb-6 border-b border-border">
           <nav className="-mb-px flex space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('details')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === 'details'
-                  ? 'border-gray-500 text-gray-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-on-surface-variant text-muted-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
-              <FileText className="inline-block h-4 w-4 mr-2" />
+              <Icon name="description" className="inline-block text-base mr-2" />
               Detalhes
             </button>
             <button
               onClick={() => setActiveTab('attachments')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === 'attachments'
-                  ? 'border-gray-500 text-gray-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-on-surface-variant text-muted-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
-              <Paperclip className="inline-block h-4 w-4 mr-2" />
+              <Icon name="attach_file" className="inline-block text-base mr-2" />
               Anexos e Documentos
             </button>
             <button
               onClick={() => setActiveTab('history')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === 'history'
-                  ? 'border-gray-500 text-gray-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-on-surface-variant text-muted-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
-              <History className="inline-block h-4 w-4 mr-2" />
+              <Icon name="history" className="inline-block text-base mr-2" />
               Histórico
             </button>
             <button
               onClick={() => setActiveTab('hierarchy')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === 'hierarchy'
-                  ? 'border-gray-500 text-gray-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-on-surface-variant text-muted-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
-              <GitBranch className="inline-block h-4 w-4 mr-2" />
+              <Icon name="account_tree" className="inline-block text-base mr-2" />
               Hierarquia
             </button>
           </nav>
@@ -300,7 +301,7 @@ export default function AssetDetailPage() {
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={4}
-                        className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -316,7 +317,7 @@ export default function AssetDetailPage() {
                         <select
                           value={formData.status}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                         >
                           <option value="OPERATIONAL">Operacional</option>
                           <option value="DOWN">Inativo</option>
@@ -382,7 +383,7 @@ export default function AssetDetailPage() {
                 {files && files.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {files.map((file, index) => (
-                      <div key={index} className="border border-border rounded-lg p-3">
+                      <div key={index} className="rounded-[4px] p-3">
                         {file.mimeType?.startsWith('image/') || file.type?.startsWith('image/') ? (
                           <img
                             src={file.url}
@@ -391,7 +392,7 @@ export default function AssetDetailPage() {
                           />
                         ) : (
                           <div className="w-full h-32 bg-muted rounded mb-2 flex items-center justify-center">
-                            <FileText className="h-12 w-12 text-muted-foreground" />
+                            <Icon name="description" className="text-5xl text-muted-foreground" />
                           </div>
                         )}
                         <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
@@ -399,9 +400,9 @@ export default function AssetDetailPage() {
                           href={file.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-primary hover:text-gray-800 flex items-center gap-1 mt-1"
+                          className="text-xs text-primary hover:text-foreground flex items-center gap-1 mt-1"
                         >
-                          <Download className="h-3 w-3" />
+                          <Icon name="download" className="text-sm" />
                           Download
                         </a>
                       </div>
@@ -423,7 +424,7 @@ export default function AssetDetailPage() {
                   <div className="space-y-2">
                     {asset.childAssets.map((child) => (
                       <Link key={child.id} href={`/assets/${child.id}`}>
-                        <div className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-secondary cursor-pointer">
+                        <div className="flex items-center justify-between p-3 rounded-[4px] hover:bg-secondary cursor-pointer">
                           <span className="font-medium text-foreground">{child.name}</span>
                           <Badge className={getStatusColor(child.status)}>{child.status}</Badge>
                         </div>
@@ -467,7 +468,7 @@ export default function AssetDetailPage() {
                   <div>
                     <h4 className="text-sm font-medium text-foreground">Ativo Pai</h4>
                     <Link href={`/assets/${asset.parentAsset.id}`}>
-                      <p className="text-primary hover:text-gray-800">{asset.parentAsset.name}</p>
+                      <p className="text-primary hover:text-foreground">{asset.parentAsset.name}</p>
                     </Link>
                   </div>
                 )}
@@ -482,7 +483,7 @@ export default function AssetDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <GitBranch className="h-5 w-5" />
+                <Icon name="account_tree" className="text-xl" />
                 Hierarquia do Ativo
               </CardTitle>
             </CardHeader>
@@ -492,10 +493,10 @@ export default function AssetDetailPage() {
                 <div className="mb-6">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Ativo Pai</h4>
                   <Link href={`/assets/${asset.parentAsset.id}`}>
-                    <div className="inline-flex items-center gap-2 p-3 border border-border rounded-lg hover:bg-secondary transition-colors">
-                      <FolderTree className="h-5 w-5 text-gray-600" />
+                    <div className="inline-flex items-center gap-2 p-3 rounded-[4px] hover:bg-secondary transition-colors">
+                      <Icon name="account_tree" className="text-xl text-muted-foreground" />
                       <span className="font-medium text-foreground">{asset.parentAsset.name}</span>
-                      <Badge className="ml-2 bg-gray-100 text-gray-800">Pai</Badge>
+                      <Badge className="ml-2 bg-surface-low text-foreground">Pai</Badge>
                     </div>
                   </Link>
                 </div>
@@ -504,9 +505,9 @@ export default function AssetDetailPage() {
               {/* Current Asset */}
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Ativo Atual</h4>
-                <div className="inline-flex items-center gap-2 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg">
-                  <FolderTree className="h-5 w-5 text-gray-600" />
-                  <span className="font-medium text-gray-900">{asset.name}</span>
+                <div className="inline-flex items-center gap-2 p-3 bg-surface border-2 border-border rounded-[4px]">
+                  <Icon name="account_tree" className="text-xl text-muted-foreground" />
+                  <span className="font-medium text-foreground">{asset.name}</span>
                   <Badge className={getStatusColor(asset.status)}>{asset.status}</Badge>
                 </div>
               </div>
@@ -519,19 +520,19 @@ export default function AssetDetailPage() {
                   </h4>
                   <Link href={`/assets/new?parentId=${asset.id}`}>
                     <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Icon name="add" className="text-base mr-1" />
                       Adicionar Subativo
                     </Button>
                   </Link>
                 </div>
                 
                 {asset.childAssets && asset.childAssets.length > 0 ? (
-                  <div className="space-y-2 ml-6 border-l-2 border-gray-200 pl-4">
+                  <div className="space-y-2 ml-6 border-l-2 border-border pl-4">
                     {asset.childAssets.map((child) => (
                       <Link key={child.id} href={`/assets/${child.id}`}>
-                        <div className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-secondary transition-colors cursor-pointer">
+                        <div className="flex items-center justify-between p-3 rounded-[4px] hover:bg-secondary transition-colors cursor-pointer">
                           <div className="flex items-center gap-2">
-                            <FolderTree className="h-4 w-4 text-gray-500" />
+                            <Icon name="account_tree" className="text-base text-muted-foreground" />
                             <span className="font-medium text-foreground">{child.name}</span>
                           </div>
                           <Badge className={getStatusColor(child.status)}>{child.status}</Badge>
@@ -540,11 +541,11 @@ export default function AssetDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-                    <FolderTree className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                  <div className="text-center py-8 border border-dashed border-border rounded-[4px]">
+                    <Icon name="account_tree" className="text-4xl text-muted-foreground mx-auto mb-2" />
                     <p className="text-muted-foreground">Nenhum subativo cadastrado</p>
                     <Link href={`/assets/new?parentId=${asset.id}`}>
-                      <Button variant="ghost" className="mt-2 text-gray-600 hover:text-gray-800">
+                      <Button variant="ghost" className="mt-2 text-muted-foreground hover:text-foreground">
                         Adicionar primeiro subativo
                       </Button>
                     </Link>
@@ -553,9 +554,9 @@ export default function AssetDetailPage() {
               </div>
 
               {/* Info about hierarchy */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Sobre a Hierarquia</h4>
-                <p className="text-sm text-gray-600">
+              <div className="mt-6 p-4 bg-surface rounded-[4px]">
+                <h4 className="text-sm font-medium text-foreground mb-2">Sobre a Hierarquia</h4>
+                <p className="text-sm text-muted-foreground">
                   A estrutura hierárquica permite organizar ativos em níveis ilimitados. 
                   Você pode criar subativos para representar componentes, partes ou equipamentos 
                   relacionados a este ativo principal.

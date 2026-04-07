@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
 
 interface RAF {
   id: string
@@ -162,9 +162,9 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
           <h2 className="text-lg md:text-2xl font-bold text-foreground">Editar RAF</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-[4px] transition-colors"
           >
-            <X className="w-6 h-6 text-muted-foreground" />
+            <Icon name="close" className="text-2xl text-muted-foreground" />
           </button>
         </div>
 
@@ -177,10 +177,10 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
             <div className="space-y-4 md:space-y-6">
               {/* Informações Básicas */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-primary">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
                   📋 INFORMAÇÕES BÁSICAS
                 </h2>
-                <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">Número RAF *</label>
@@ -189,7 +189,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.rafNumber}
                       onChange={(e) => setFormData({...formData, rafNumber: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -200,7 +200,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.area}
                       onChange={(e) => setFormData({...formData, area: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -211,7 +211,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.equipment}
                       onChange={(e) => setFormData({...formData, equipment: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -222,7 +222,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.occurrenceDate}
                       onChange={(e) => setFormData({...formData, occurrenceDate: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -233,7 +233,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.occurrenceTime}
                       onChange={(e) => setFormData({...formData, occurrenceTime: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -244,7 +244,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.panelOperator}
                       onChange={(e) => setFormData({...formData, panelOperator: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -255,7 +255,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       step="0.01"
                       value={formData.productionLost}
                       onChange={(e) => setFormData({...formData, productionLost: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     />
                   </div>
 
@@ -265,7 +265,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                       required
                       value={formData.failureType}
                       onChange={(e) => setFormData({...formData, failureType: e.target.value as 'RANDOM' | 'REPETITIVE'})}
-                      className="w-full px-3 py-2 text-sm border border-input rounded-lg focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:ring-2 focus:ring-ring"
                     >
                       <option value="RANDOM">Aleatória</option>
                       <option value="REPETITIVE">Repetitiva</option>
@@ -280,10 +280,10 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
               {/* Descrição da Falha */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-danger-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-danger">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-danger-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-danger">
                   ⚠️ DESCRIÇÃO DA FALHA
                 </h2>
-                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
                   <textarea
                     required
                     value={formData.failureDescription}
@@ -297,10 +297,10 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
               {/* Observações */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-warning-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-warning">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-warning-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-warning">
                   📝 OBSERVAÇÕES
                 </h2>
-                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
                   <textarea
                     value={formData.observation}
                     onChange={(e) => setFormData({...formData, observation: e.target.value})}
@@ -313,10 +313,10 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
               {/* Ação Imediata */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-green-500">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-green-500">
                   ✅ AÇÃO IMEDIATA
                 </h2>
-                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
                   <textarea
                     value={formData.immediateAction}
                     onChange={(e) => setFormData({...formData, immediateAction: e.target.value})}
@@ -329,10 +329,10 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
               {/* 5 Porquês */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-primary">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
                   🔍 5 PORQUÊS
                 </h2>
-                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
                   {fiveWhys.map((why, index) => (
                     <div key={index} className="flex gap-2">
                       <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0 text-sm">
@@ -355,7 +355,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                           onClick={() => setFiveWhys(fiveWhys.filter((_, i) => i !== index))}
                           className="p-2 text-danger hover:bg-danger-light rounded transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Icon name="delete" className="text-base" />
                         </button>
                       )}
                     </div>
@@ -365,7 +365,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                     onClick={() => setFiveWhys([...fiveWhys, ''])}
                     className="flex items-center gap-2 text-sm text-primary hover:underline"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Icon name="add" className="text-base" />
                     Adicionar Porquê
                   </button>
                 </div>
@@ -373,12 +373,12 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
               {/* Teste de Hipóteses */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-amber-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-amber-500">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-amber-50 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-amber-500">
                   🧪 TESTE DE HIPÓTESES
                 </h2>
-                <div className="space-y-3 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
                   {hypothesisTests.map((test, index) => (
-                    <div key={index} className="p-3 bg-card rounded-lg border border-border">
+                    <div key={index} className="p-3 bg-card rounded-[4px]">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-semibold text-sm">Item {test.item}</span>
                         {hypothesisTests.length > 1 && (
@@ -387,7 +387,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                             onClick={() => setHypothesisTests(hypothesisTests.filter((_, i) => i !== index))}
                             className="p-1 text-danger hover:bg-danger-light rounded transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Icon name="delete" className="text-base" />
                           </button>
                         )}
                       </div>
@@ -438,7 +438,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                     }])}
                     className="flex items-center gap-2 text-sm text-primary hover:underline"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Icon name="add" className="text-base" />
                     Adicionar Hipótese
                   </button>
                 </div>
@@ -446,12 +446,12 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
               {/* Plano de Ação */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-green-500">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-green-500">
                   📋 PLANO DE AÇÃO
                 </h2>
-                <div className="space-y-3 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
                   {actionPlan.map((action, index) => (
-                    <div key={index} className="p-3 bg-card rounded-lg border border-border">
+                    <div key={index} className="p-3 bg-card rounded-[4px]">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-semibold text-sm">Ação {index + 1}</span>
                         {actionPlan.length > 1 && (
@@ -460,7 +460,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                             onClick={() => setActionPlan(actionPlan.filter((_, i) => i !== index))}
                             className="p-1 text-danger hover:bg-danger-light rounded transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Icon name="delete" className="text-base" />
                           </button>
                         )}
                       </div>
@@ -506,7 +506,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                     onClick={() => setActionPlan([...actionPlan, { what: '', who: '', when: '' }])}
                     className="flex items-center gap-2 text-sm text-primary hover:underline"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Icon name="add" className="text-base" />
                     Adicionar Ação
                   </button>
                 </div>

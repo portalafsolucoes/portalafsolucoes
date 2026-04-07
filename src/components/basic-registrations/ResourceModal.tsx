@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 const UNIT_OPTIONS: Record<string, { value: string; label: string }[]> = {
   TOOL: [
@@ -130,7 +130,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
     >
       <div className="space-y-4">
         {error && (
-          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
+          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
           </div>
         )}
@@ -143,7 +143,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
           <select
             value={type}
             onChange={e => handleTypeChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Selecione...</option>
             <option value="MATERIAL">Material</option>
@@ -161,7 +161,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder={type === 'TOOL' ? 'Ex: Chave de Torque' : 'Ex: Graxa Industrial'}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -174,7 +174,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
             value={unit}
             onChange={e => setUnit(e.target.value)}
             disabled={!type}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {!type ? (
               <option value="">Selecione um tipo primeiro</option>
@@ -198,7 +198,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
             type="number"
             value={unitCost}
             onChange={e => setUnitCost(Number(e.target.value))}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -210,7 +210,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
           <select
             value={calendarId}
             onChange={e => setCalendarId(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Nenhum</option>
             {calendars.map(c => (
@@ -229,11 +229,11 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
             value={protheusCode}
             onChange={e => setProtheusCode(e.target.value)}
             placeholder="Ex: E01"
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

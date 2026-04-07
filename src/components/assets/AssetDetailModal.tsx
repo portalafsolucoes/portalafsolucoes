@@ -1,7 +1,7 @@
 'use client'
 
 import { Modal } from '../ui/Modal'
-import { X, Edit, Image as ImageIcon, FileText, Download, Calendar, MapPin, User, Package, QrCode as QrIcon, DollarSign, Maximize2, Wrench, CheckCircle, Trash2, Paperclip, Box } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -67,7 +67,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
         <div className="flex justify-between items-start pb-4 border-b px-4 md:px-6 pt-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <Box className="w-6 h-6 text-primary" />
+              <Icon name="inventory_2" className="text-2xl text-primary" />
               <h2 className="text-lg md:text-2xl font-bold text-foreground">{asset.name}</h2>
             </div>
             <div className="flex gap-2">
@@ -79,23 +79,23 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
           <div className="flex gap-2">
             <button
               onClick={() => onEdit(asset)}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
+              className="p-2 hover:bg-muted rounded-[4px] transition-colors"
               title="Editar"
             >
-              <Edit className="w-5 h-5 text-muted-foreground" />
+              <Icon name="edit" className="text-xl text-muted-foreground" />
             </button>
             <button
               onClick={() => onDelete(asset.id)}
-              className="p-2 hover:bg-danger-light rounded-lg transition-colors"
+              className="p-2 hover:bg-danger-light rounded-[4px] transition-colors"
               title="Excluir"
             >
-              <Trash2 className="w-5 h-5 text-danger" />
+              <Icon name="delete" className="text-xl text-danger" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
+              className="p-2 hover:bg-muted rounded-[4px] transition-colors"
             >
-              <X className="w-6 h-6 text-muted-foreground" />
+              <Icon name="close" className="text-2xl text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -104,9 +104,9 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
         <div className="flex-1 overflow-y-auto">
           {/* Imagem do Ativo */}
           {asset.image && (
-            <div className="p-4 md:p-6 border-b border-border">
+            <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
               <h3 className="text-sm font-semibold text-foreground mb-2">Imagem Principal</h3>
-              <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+              <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
                 <img 
                   src={asset.image} 
                   alt={asset.name}
@@ -117,7 +117,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
           )}
 
           {/* Informações Básicas */}
-          <div className="p-4 md:p-6 border-b border-border">
+          <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
             <h3 className="text-sm font-semibold text-foreground mb-3">Informações</h3>
             
             {asset.description && (
@@ -129,7 +129,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
             <div className="space-y-2">
               {asset.location && (
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <Icon name="location_on" className="text-base text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-xs text-muted-foreground">Localização</p>
                     <p className="text-sm text-foreground">{asset.location.name}</p>
@@ -139,7 +139,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
               {asset.category && (
                 <div className="flex items-start gap-2">
-                  <Package className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <Icon name="inventory_2" className="text-base text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-xs text-muted-foreground">Categoria</p>
                     <p className="text-sm text-foreground">{asset.category.name}</p>
@@ -149,7 +149,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
               {asset.primaryUser && (
                 <div className="flex items-start gap-2">
-                  <User className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <Icon name="person" className="text-base text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-xs text-muted-foreground">Responsável</p>
                     <p className="text-sm text-foreground">
@@ -161,7 +161,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
               {asset.barCode && (
                 <div className="flex items-start gap-2">
-                  <QrIcon className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <Icon name="qr_code_2" className="text-base text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-xs text-muted-foreground">Código de Barras</p>
                     <p className="text-sm text-foreground font-mono">{asset.barCode}</p>
@@ -171,7 +171,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
               {asset.acquisitionCost && (
                 <div className="flex items-start gap-2">
-                  <DollarSign className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <Icon name="attach_money" className="text-base text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-xs text-muted-foreground">Custo de Aquisição</p>
                     <p className="text-sm text-foreground">{formatCurrency(asset.acquisitionCost)}</p>
@@ -181,7 +181,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
               {asset.area && (
                 <div className="flex items-start gap-2">
-                  <Maximize2 className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <Icon name="open_in_full" className="text-base text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-xs text-muted-foreground">Área</p>
                     <p className="text-sm text-foreground">{asset.area} m²</p>
@@ -190,7 +190,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
               )}
 
               <div className="flex items-start gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <Icon name="calendar_today" className="text-base text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-xs text-muted-foreground">Criado em</p>
                   <p className="text-sm text-foreground">{formatDate(asset.createdAt)}</p>
@@ -200,9 +200,9 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
           </div>
 
           {/* QR Code */}
-          <div className="p-4 md:p-6 border-b border-border">
+          <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
             <h3 className="text-sm font-semibold text-foreground mb-3">QR Code do Ativo</h3>
-            <div className="flex flex-col items-center bg-secondary rounded-lg p-4">
+            <div className="flex flex-col items-center bg-secondary rounded-[4px] p-4">
               <QRCodeSVG 
                 value={`${typeof window !== 'undefined' ? window.location.origin : ''}/assets?id=${asset.id}`}
                 size={150}
@@ -217,9 +217,9 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
           {/* Arquivos Anexos */}
           {asset.files && asset.files.length > 0 && (
-            <div className="p-4 md:p-6 border-b border-border">
+            <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Paperclip className="w-4 h-4" />
+                <Icon name="attach_file" className="text-base" />
                 Arquivos Anexos ({asset.files.length})
               </h3>
               <div className="space-y-2">
@@ -229,13 +229,13 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
                     href={file.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-2 bg-secondary rounded border border-border hover:bg-muted transition-colors"
+                    className="flex items-center justify-between p-2 bg-secondary rounded hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <Icon name="description" className="text-base text-muted-foreground" />
                       <span className="text-sm text-foreground truncate">{file.name}</span>
                     </div>
-                    <Download className="w-4 h-4 text-muted-foreground" />
+                    <Icon name="download" className="text-base text-muted-foreground" />
                   </a>
                 ))}
               </div>
@@ -245,18 +245,18 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
           {/* Histórico de Ordens de Serviço */}
           <div className="p-4 md:p-6">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Wrench className="w-4 h-4" />
+              <Icon name="construction" className="text-base" />
               Histórico de OS
             </h3>
             
             {workOrders.length > 0 ? (
               <div className="space-y-2">
                 {workOrders.slice(0, 5).map((wo) => (
-                  <div key={wo.id} className="p-2 bg-secondary rounded border border-border">
+                  <div key={wo.id} className="p-2 bg-secondary rounded">
                     <div className="flex items-start justify-between mb-1">
                       <p className="text-sm font-medium text-foreground">{wo.title}</p>
                       {wo.status === 'COMPLETED' && (
-                        <CheckCircle className="w-4 h-4 text-success" />
+                        <Icon name="check_circle" className="text-base text-success" />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">{formatDate(wo.createdAt)}</p>

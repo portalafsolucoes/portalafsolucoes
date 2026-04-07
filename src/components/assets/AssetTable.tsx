@@ -1,21 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
-  Trash2,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  Wrench,
-  MapPin,
-  Calendar,
-  Package
-} from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -45,31 +31,31 @@ interface AssetTableProps {
 type SortField = 'name' | 'protheusCode' | 'status' | 'area' | 'createdAt'
 type SortDirection = 'asc' | 'desc'
 
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  OPERATIONAL: { 
-    label: 'Operacional', 
-    icon: CheckCircle2, 
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' 
+const statusConfig: Record<string, { label: string; icon: string; className: string }> = {
+  OPERATIONAL: {
+    label: 'Operacional',
+    icon: 'check_circle',
+    className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },
-  DOWN: { 
-    label: 'Parado', 
-    icon: XCircle, 
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' 
+  DOWN: {
+    label: 'Parado',
+    icon: 'cancel',
+    className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },
-  IN_REPAIR: { 
-    label: 'Em Reparo', 
-    icon: Wrench, 
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' 
+  IN_REPAIR: {
+    label: 'Em Reparo',
+    icon: 'construction',
+    className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },
-  IN_OPERATION: { 
-    label: 'Em Operação', 
-    icon: CheckCircle2, 
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' 
+  IN_OPERATION: {
+    label: 'Em Operação',
+    icon: 'check_circle',
+    className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },
-  INACTIVE: { 
-    label: 'Inativo', 
-    icon: AlertCircle, 
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' 
+  INACTIVE: {
+    label: 'Inativo',
+    icon: 'error',
+    className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },
 }
 
@@ -139,11 +125,11 @@ export function AssetTable({
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
-      return <ChevronDown className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-50" />
+      return <Icon name="expand_more" className="text-base text-muted-foreground opacity-0 group-hover:opacity-50" />
     }
-    return sortDirection === 'asc' 
-      ? <ChevronUp className="w-4 h-4 text-primary" />
-      : <ChevronDown className="w-4 h-4 text-primary" />
+    return sortDirection === 'asc'
+      ? <Icon name="expand_less" className="text-base text-primary" />
+      : <Icon name="expand_more" className="text-base text-primary" />
   }
 
   const getStatusInfo = (status: string) => {
@@ -162,7 +148,7 @@ export function AssetTable({
     <div className="h-full flex flex-col bg-card min-h-0 overflow-hidden">
       {/* Barra de seleção em massa */}
       {selectedIds.size > 0 && (
-        <div className="px-4 py-2 bg-primary/10 border-b border-border flex items-center gap-4">
+        <div className="px-4 py-2 bg-primary/10 border-b border-on-surface-variant/10 flex items-center gap-4">
           <span className="text-sm font-medium text-primary">
             {selectedIds.size} ativo(s) selecionado(s)
           </span>
@@ -207,7 +193,7 @@ export function AssetTable({
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Package className="w-4 h-4" />
+                  <Icon name="inventory_2" className="text-base" />
                   Nome do Ativo
                   <SortIcon field="name" />
                 </div>
@@ -230,7 +216,7 @@ export function AssetTable({
                 onClick={() => handleSort('area')}
               >
                 <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <MapPin className="w-4 h-4" />
+                  <Icon name="location_on" className="text-base" />
                   Área
                   <SortIcon field="area" />
                 </div>
@@ -242,7 +228,7 @@ export function AssetTable({
                 onClick={() => handleSort('createdAt')}
               >
                 <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Calendar className="w-4 h-4" />
+                  <Icon name="calendar_today" className="text-base" />
                   Criado em
                   <SortIcon field="createdAt" />
                 </div>
@@ -262,7 +248,7 @@ export function AssetTable({
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Package className="w-12 h-12 opacity-20" />
+                    <Icon name="inventory_2" className="text-5xl opacity-20" />
                     <p className="text-sm">Nenhum ativo encontrado</p>
                   </div>
                 </td>
@@ -270,7 +256,6 @@ export function AssetTable({
             ) : (
               sortedAssets.map((asset) => {
                 const statusInfo = getStatusInfo(asset.status)
-                const StatusIcon = statusInfo.icon
                 const isSelected = selectedIds.has(asset.id)
                 const isActive = selectedAssetId === asset.id
                 
@@ -324,7 +309,7 @@ export function AssetTable({
                         inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
                         ${statusInfo.className}
                       `}>
-                        <StatusIcon className="w-3.5 h-3.5" />
+                        <Icon name={statusInfo.icon} className="text-sm" />
                         {statusInfo.label}
                       </span>
                     </td>
@@ -348,9 +333,9 @@ export function AssetTable({
                       <div className="relative">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === asset.id ? null : asset.id)}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                          className="p-1.5 rounded-[4px] hover:bg-muted transition-colors"
                         >
-                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                          <Icon name="more_horiz" className="text-base text-muted-foreground" />
                         </button>
                         
                         {/* Dropdown Menu */}
@@ -360,7 +345,7 @@ export function AssetTable({
                               className="fixed inset-0 z-10" 
                               onClick={() => setOpenMenuId(null)}
                             />
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border rounded-lg shadow-lg z-20 py-1">
+                            <div className="absolute right-0 top-full mt-1 w-40 bg-popover rounded-[4px] ambient-shadow z-20 py-1">
                               <button
                                 onClick={() => {
                                   onSelectAsset(asset)
@@ -368,7 +353,7 @@ export function AssetTable({
                                 }}
                                 className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 hover:bg-muted transition-colors"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Icon name="visibility" className="text-base" />
                                 Visualizar
                               </button>
                               {onEdit && (
@@ -379,7 +364,7 @@ export function AssetTable({
                                   }}
                                   className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 hover:bg-muted transition-colors"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Icon name="edit" className="text-base" />
                                   Editar
                                 </button>
                               )}
@@ -389,9 +374,9 @@ export function AssetTable({
                                     onDelete(asset.id)
                                     setOpenMenuId(null)
                                   }}
-                                  className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 hover:bg-muted text-gray-600 transition-colors"
+                                  className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 hover:bg-muted text-muted-foreground transition-colors"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Icon name="delete" className="text-base" />
                                   Excluir
                                 </button>
                               )}
@@ -409,7 +394,7 @@ export function AssetTable({
       </div>
       
       {/* Footer com contagem */}
-      <div className="px-4 py-2 border-t border-border bg-secondary/50 flex-shrink-0">
+      <div className="px-4 py-2 border-t border-on-surface-variant/10 bg-secondary/50 flex-shrink-0">
         <p className="text-xs text-muted-foreground">
           {assets.length} ativo(s) no total
         </p>

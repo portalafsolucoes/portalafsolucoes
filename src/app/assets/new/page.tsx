@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { FileUpload } from '@/components/ui/FileUpload'
 
 interface UploadedFile {
@@ -118,7 +118,7 @@ export default function NewAssetPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {parentAsset && (
-                <div className="bg-primary/5 border border-blue-200 rounded-md p-4 mb-4">
+                <div className="bg-primary/5 border border-blue-200 rounded-[4px] p-4 mb-4">
                   <p className="text-sm text-blue-800">
                     <strong>Ativo Pai:</strong> {parentAsset.name}
                   </p>
@@ -140,7 +140,7 @@ export default function NewAssetPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -176,7 +176,7 @@ export default function NewAssetPage() {
                   <select
                     value={formData.locationId}
                     onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Selecione uma localização</option>
                     {locations.map((location) => (
@@ -195,7 +195,7 @@ export default function NewAssetPage() {
                 <select
                   value={formData.primaryUserId}
                   onChange={(e) => setFormData({ ...formData, primaryUserId: e.target.value })}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Selecione um usuário</option>
                   {users.map((user) => (
@@ -214,7 +214,7 @@ export default function NewAssetPage() {
                   <select
                     value={formData.parentAssetId}
                     onChange={(e) => setFormData({ ...formData, parentAssetId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Nenhum (Ativo Principal)</option>
                     {assets.map((asset) => (

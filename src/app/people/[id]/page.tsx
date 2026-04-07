@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Edit, Trash2, Users as UsersIcon, Mail, Phone, Briefcase, MapPin, Calendar } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 
@@ -76,7 +77,7 @@ export default function PersonDetailPage() {
     return (
       <div className="min-h-screen bg-secondary p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-card rounded-lg shadow-sm p-12 text-center">
+          <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
             <h3 className="text-lg font-semibold text-foreground mb-2">Pessoa não encontrada</h3>
             <Link href="/people" className="text-primary hover:underline">
               Voltar para a lista
@@ -96,7 +97,7 @@ export default function PersonDetailPage() {
             href="/people"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <Icon name="arrow_back" className="text-base" />
             Voltar para Pessoas
           </Link>
           
@@ -129,17 +130,17 @@ export default function PersonDetailPage() {
             <div className="flex gap-2">
               <Link
                 href={`/people/${user.id}/edit`}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
               >
-                <Edit className="w-4 h-4" />
+                <Icon name="edit" className="text-base" />
                 Editar
               </Link>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors disabled:opacity-50"
               >
-                <Trash2 className="w-4 h-4" />
+                <Icon name="delete" className="text-base" />
                 {deleting ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
@@ -149,11 +150,11 @@ export default function PersonDetailPage() {
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Contact Info */}
-          <div className="bg-card rounded-lg shadow-sm p-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Informações de Contato</h2>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-muted-foreground" />
+                <Icon name="mail" className="text-xl text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
                   <p className="text-foreground">{user.email}</p>
@@ -161,7 +162,7 @@ export default function PersonDetailPage() {
               </div>
               {user.phone && (
                 <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-muted-foreground" />
+                  <Icon name="phone" className="text-xl text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Telefone</p>
                     <p className="text-foreground">{user.phone}</p>
@@ -169,7 +170,7 @@ export default function PersonDetailPage() {
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <Briefcase className="w-5 h-5 text-muted-foreground" />
+                <Icon name="work" className="text-xl text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Taxa por Hora</p>
                   <p className="text-foreground">R$ {user.rate.toFixed(2)}/hora</p>
@@ -179,11 +180,11 @@ export default function PersonDetailPage() {
           </div>
 
           {/* Work Info */}
-          <div className="bg-card rounded-lg shadow-sm p-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Informações de Trabalho</h2>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <UsersIcon className="w-5 h-5 text-muted-foreground" />
+                <Icon name="group" className="text-xl text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Papel</p>
                   <p className="text-foreground">{getRoleLabel(user.role)}</p>
@@ -191,7 +192,7 @@ export default function PersonDetailPage() {
               </div>
               {user.location && (
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-muted-foreground" />
+                  <Icon name="location_on" className="text-xl text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Localização</p>
                     <p className="text-foreground">{user.location.name}</p>
@@ -199,7 +200,7 @@ export default function PersonDetailPage() {
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
+                <Icon name="calendar_today" className="text-xl text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Status</p>
                   <p className="text-foreground">
@@ -217,16 +218,16 @@ export default function PersonDetailPage() {
 
         {/* Teams */}
         {user.teamMemberships && user.teamMemberships.length > 0 && (
-          <div className="mt-6 bg-card rounded-lg shadow-sm p-6">
+          <div className="mt-6 bg-card rounded-[4px] ambient-shadow p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Equipes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {user.teamMemberships.map((membership: any) => (
                 <Link
                   key={membership.team.id}
                   href={`/teams/${membership.team.id}`}
-                  className="flex items-center gap-3 p-4 border border-border rounded-lg hover:bg-secondary transition-colors"
+                  className="flex items-center gap-3 p-4 rounded-[4px] hover:bg-secondary transition-colors"
                 >
-                  <UsersIcon className="w-5 h-5 text-primary" />
+                  <Icon name="group" className="text-xl text-primary" />
                   <span className="font-medium text-foreground">{membership.team.name}</span>
                 </Link>
               ))}
@@ -235,7 +236,7 @@ export default function PersonDetailPage() {
         )}
 
         {/* Metadata */}
-        <div className="mt-6 bg-card rounded-lg shadow-sm p-6">
+        <div className="mt-6 bg-card rounded-[4px] ambient-shadow p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Informações do Sistema</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>

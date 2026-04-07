@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { ArrowLeft, Edit, Trash2, Users as UsersIcon, Package, Wrench } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { Team } from '@/types'
 
 export default function TeamDetailPage() {
@@ -76,7 +77,7 @@ export default function TeamDetailPage() {
     return (
       <AppLayout>
         <div className="max-w-4xl mx-auto p-6">
-          <div className="bg-card rounded-lg shadow-sm p-12 text-center">
+          <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
             <h3 className="text-lg font-semibold text-foreground mb-2">Equipe não encontrada</h3>
             <Link href="/teams" className="text-primary hover:underline">
               Voltar para a lista
@@ -94,14 +95,14 @@ export default function TeamDetailPage() {
           href="/teams"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <Icon name="arrow_back" className="text-base" />
           Voltar para Equipes
         </Link>
         
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <UsersIcon className="w-8 h-8 text-primary" />
+              <Icon name="group" className="text-3xl text-primary" />
               {team.name}
             </h1>
             {team.description && (
@@ -112,26 +113,26 @@ export default function TeamDetailPage() {
           <div className="flex gap-2">
             <Link
               href={`/teams/${team.id}/edit`}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
             >
-              <Edit className="w-4 h-4" />
+              <Icon name="edit" className="text-base" />
               Editar
             </Link>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors disabled:opacity-50"
             >
-              <Trash2 className="w-4 h-4" />
+              <Icon name="delete" className="text-base" />
               {deleting ? 'Excluindo...' : 'Excluir'}
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-card rounded-lg shadow-sm p-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <div className="flex items-center gap-3">
-              <UsersIcon className="w-8 h-8 text-primary" />
+              <Icon name="group" className="text-3xl text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Membros</p>
                 <p className="text-2xl font-bold text-foreground">{team._count?.members || 0}</p>
@@ -139,9 +140,9 @@ export default function TeamDetailPage() {
             </div>
           </div>
           
-          <div className="bg-card rounded-lg shadow-sm p-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <div className="flex items-center gap-3">
-              <Wrench className="w-8 h-8 text-success" />
+              <Icon name="construction" className="text-3xl text-success" />
               <div>
                 <p className="text-sm text-muted-foreground">Ordens de Serviço</p>
                 <p className="text-2xl font-bold text-foreground">{team._count?.assignedWorkOrders || 0}</p>
@@ -149,9 +150,9 @@ export default function TeamDetailPage() {
             </div>
           </div>
           
-          <div className="bg-card rounded-lg shadow-sm p-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-purple-600" />
+              <Icon name="inventory_2" className="text-3xl text-purple-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Ativos Atribuídos</p>
                 <p className="text-2xl font-bold text-foreground">{team._count?.assignedAssets || 0}</p>
@@ -160,7 +161,7 @@ export default function TeamDetailPage() {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm p-6">
+        <div className="bg-card rounded-[4px] ambient-shadow p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Membros da Equipe</h2>
           {team.members && team.members.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -168,7 +169,7 @@ export default function TeamDetailPage() {
                 <Link
                   key={membership.id}
                   href={`/people/${membership.user.id}`}
-                  className="flex items-center gap-3 p-4 border border-border rounded-lg hover:bg-secondary transition-colors"
+                  className="flex items-center gap-3 p-4 rounded-[4px] hover:bg-secondary transition-colors"
                 >
                   {membership.user.image ? (
                     <img

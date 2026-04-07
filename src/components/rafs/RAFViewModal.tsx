@@ -1,8 +1,8 @@
 'use client'
 
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { X, FileText, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
 import { formatDate } from '@/lib/utils'
 
 interface RAF {
@@ -56,14 +56,14 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
         <div className="flex justify-between items-start pb-4 border-b px-4 md:px-6 pt-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <FileText className="w-6 h-6 text-primary" />
+              <Icon name="description" className="text-2xl text-primary" />
               <h2 className="text-lg md:text-2xl font-bold text-foreground">{raf.rafNumber}</h2>
             </div>
             <div className="flex gap-2 flex-wrap">
               <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium ${
                 raf.failureType === 'REPETITIVE'
-                  ? 'bg-danger-light text-gray-800'
-                  : 'bg-warning-light text-gray-800'
+                  ? 'bg-danger-light text-foreground'
+                  : 'bg-warning-light text-foreground'
               }`}>
                 {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
               </span>
@@ -71,9 +71,9 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-[4px] transition-colors"
           >
-            <X className="w-6 h-6 text-muted-foreground" />
+            <Icon name="close" className="text-2xl text-muted-foreground" />
           </button>
         </div>
 
@@ -81,10 +81,10 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
         <div className="flex-1 overflow-y-auto bg-card p-3 md:p-6">
           {/* Informações Básicas */}
           <div className="mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-primary">
+            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
               📋 INFORMAÇÕES BÁSICAS
             </h2>
-            <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-lg">
+            <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-1">Área:</label>
@@ -119,10 +119,10 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
 
           {/* Descrição da Falha */}
           <div className="mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-danger-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-danger">
+            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-danger-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-danger">
               ⚠️ DESCRIÇÃO DA FALHA
             </h2>
-            <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+            <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
               <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
                 {raf.failureDescription}
               </p>
@@ -132,10 +132,10 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
           {/* Observações */}
           {raf.observation && (
             <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-warning-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-warning">
+              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-warning-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-warning">
                 📝 OBSERVAÇÕES
               </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
                 <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
                   {raf.observation}
                 </p>
@@ -145,10 +145,10 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
 
           {/* Ação Imediata */}
           <div className="mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-gray-500">
+            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-border">
               ✅ AÇÃO IMEDIATA
             </h2>
-            <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+            <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
               <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
                 {raf.immediateAction}
               </p>
@@ -158,10 +158,10 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
           {/* 5 Porquês */}
           {raf.fiveWhys && raf.fiveWhys.length > 0 && (
             <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-primary">
+              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
                 🔍 5 PORQUÊS
               </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg">
+              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
                 {raf.fiveWhys.map((why, index) => (
                   <div key={index} className="flex gap-2">
                     <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
@@ -177,26 +177,26 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
           {/* Teste de Hipóteses */}
           {raf.hypothesisTests && raf.hypothesisTests.length > 0 && raf.hypothesisTests[0].description && (
             <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-gray-100 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-gray-500">
+              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-surface-low px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-border">
                 🧪 TESTE DE HIPÓTESES
               </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg overflow-x-auto">
-                <table className="w-full text-sm border border-border rounded-lg">
-                  <thead className="bg-gray-50">
+              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px] overflow-x-auto">
+                <table className="w-full text-sm rounded-[4px]">
+                  <thead className="bg-surface">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Item</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Descrição</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Possível</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Evidência</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">Item</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">Descrição</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">Possível</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">Evidência</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {raf.hypothesisTests.map((test, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-900">{test.item}</td>
-                        <td className="px-3 py-2 text-gray-900">{test.description}</td>
-                        <td className="px-3 py-2 text-gray-900">{test.possible}</td>
-                        <td className="px-3 py-2 text-gray-900">{test.evidence}</td>
+                      <tr key={index} className="hover:bg-surface">
+                        <td className="px-3 py-2 text-foreground">{test.item}</td>
+                        <td className="px-3 py-2 text-foreground">{test.description}</td>
+                        <td className="px-3 py-2 text-foreground">{test.possible}</td>
+                        <td className="px-3 py-2 text-foreground">{test.evidence}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -208,24 +208,24 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
           {/* Plano de Ação */}
           {raf.actionPlan && raf.actionPlan.length > 0 && raf.actionPlan[0].what && (
             <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-gray-500">
+              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-border">
                 📋 PLANO DE AÇÃO
               </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg overflow-x-auto">
-                <table className="w-full text-sm border border-border rounded-lg">
-                  <thead className="bg-gray-50">
+              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px] overflow-x-auto">
+                <table className="w-full text-sm rounded-[4px]">
+                  <thead className="bg-surface">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">O Que</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Quem</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Quando</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">O Que</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">Quem</th>
+                      <th className="px-3 py-2 text-left font-semibold text-foreground">Quando</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {raf.actionPlan.map((action, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-900">{action.what}</td>
-                        <td className="px-3 py-2 text-gray-900">{action.who}</td>
-                        <td className="px-3 py-2 text-gray-900">{action.when}</td>
+                      <tr key={index} className="hover:bg-surface">
+                        <td className="px-3 py-2 text-foreground">{action.what}</td>
+                        <td className="px-3 py-2 text-foreground">{action.who}</td>
+                        <td className="px-3 py-2 text-foreground">{action.when}</td>
                       </tr>
                     ))}
                   </tbody>

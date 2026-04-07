@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, DragEvent } from 'react'
-import { Upload, X, File as FileIcon, Image as ImageIcon } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface UploadedFile {
   name: string
@@ -104,10 +104,10 @@ export function FileUploader({ files, onFilesChange, maxFiles = 10 }: FileUpload
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-[4px] p-8 text-center cursor-pointer transition-colors ${
           isDragging
             ? 'border-primary bg-primary/5'
-            : 'border-input hover:border-gray-400'
+            : 'border-input hover:border-border'
         }`}
       >
         <input
@@ -120,12 +120,12 @@ export function FileUploader({ files, onFilesChange, maxFiles = 10 }: FileUpload
         
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-4 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
             <p className="text-sm text-muted-foreground">Enviando arquivos...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Upload className="w-12 h-12 text-muted-foreground" />
+            <Icon name="upload" className="text-5xl text-muted-foreground" />
             <p className="text-sm font-medium text-foreground">
               Arraste e solte arquivos aqui ou clique para selecionar
             </p>
@@ -146,13 +146,13 @@ export function FileUploader({ files, onFilesChange, maxFiles = 10 }: FileUpload
             {files.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-border"
+                className="flex items-center justify-between p-3 bg-secondary rounded-[4px]"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {isImage(file.type) ? (
-                    <ImageIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                    <Icon name="image" className="text-xl text-muted-foreground flex-shrink-0" />
                   ) : (
-                    <FileIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    <Icon name="attach_file" className="text-xl text-muted-foreground flex-shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
@@ -167,7 +167,7 @@ export function FileUploader({ files, onFilesChange, maxFiles = 10 }: FileUpload
                   onClick={() => removeFile(index)}
                   className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
                 >
-                  <X className="w-4 h-4 text-muted-foreground" />
+                  <Icon name="close" className="text-base text-muted-foreground" />
                 </button>
               </div>
             ))}

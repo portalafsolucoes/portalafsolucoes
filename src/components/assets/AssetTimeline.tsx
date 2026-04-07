@@ -3,12 +3,7 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import {
-  Plus, Edit, RefreshCw, ClipboardList, Play, CheckCircle,
-  FileText, ThumbsUp, ThumbsDown, Upload, Trash2, Package,
-  AlertTriangle, Gauge, ListChecks, Calendar, MessageSquare,
-  Star, ChevronDown, Filter, Clock, User, Loader2
-} from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface AssetHistoryEvent {
   id: string
@@ -30,27 +25,27 @@ interface AssetTimelineProps {
   assetName?: string
 }
 
-const eventTypeConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
-  ASSET_CREATED: { icon: Plus, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Ativo Criado' },
-  ASSET_UPDATED: { icon: Edit, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Ativo Atualizado' },
-  ASSET_STATUS_CHANGED: { icon: RefreshCw, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Status Alterado' },
-  WORK_ORDER_CREATED: { icon: ClipboardList, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'OS Criada' },
-  WORK_ORDER_STARTED: { icon: Play, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'OS Iniciada' },
-  WORK_ORDER_COMPLETED: { icon: CheckCircle, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'OS Concluída' },
-  REQUEST_CREATED: { icon: FileText, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Solicitação Criada' },
-  REQUEST_APPROVED: { icon: ThumbsUp, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Solicitação Aprovada' },
-  REQUEST_REJECTED: { icon: ThumbsDown, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Solicitação Rejeitada' },
-  FILE_UPLOADED: { icon: Upload, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Arquivo Anexado' },
-  FILE_DELETED: { icon: Trash2, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Arquivo Removido' },
-  PART_ADDED: { icon: Package, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Peça Adicionada' },
-  PART_REMOVED: { icon: Package, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Peça Removida' },
-  DOWNTIME_STARTED: { icon: AlertTriangle, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Parada Iniciada' },
-  DOWNTIME_ENDED: { icon: CheckCircle, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Parada Encerrada' },
-  METER_READING: { icon: Gauge, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Leitura de Medidor' },
-  CHECKLIST_COMPLETED: { icon: ListChecks, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Checklist Concluído' },
-  MAINTENANCE_SCHEDULED: { icon: Calendar, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Manutenção Agendada' },
-  NOTE_ADDED: { icon: MessageSquare, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Nota Adicionada' },
-  CUSTOM: { icon: Star, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Evento Personalizado' }
+const eventTypeConfig: Record<string, { icon: string; color: string; bgColor: string; label: string }> = {
+  ASSET_CREATED: { icon: 'add', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Ativo Criado' },
+  ASSET_UPDATED: { icon: 'edit', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Ativo Atualizado' },
+  ASSET_STATUS_CHANGED: { icon: 'refresh', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Status Alterado' },
+  WORK_ORDER_CREATED: { icon: 'assignment', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'OS Criada' },
+  WORK_ORDER_STARTED: { icon: 'play_arrow', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'OS Iniciada' },
+  WORK_ORDER_COMPLETED: { icon: 'check_circle', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'OS Concluída' },
+  REQUEST_CREATED: { icon: 'description', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Solicitação Criada' },
+  REQUEST_APPROVED: { icon: 'thumb_up', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Solicitação Aprovada' },
+  REQUEST_REJECTED: { icon: 'thumb_down', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Solicitação Rejeitada' },
+  FILE_UPLOADED: { icon: 'upload', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Arquivo Anexado' },
+  FILE_DELETED: { icon: 'delete', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Arquivo Removido' },
+  PART_ADDED: { icon: 'inventory_2', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Peça Adicionada' },
+  PART_REMOVED: { icon: 'inventory_2', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Peça Removida' },
+  DOWNTIME_STARTED: { icon: 'warning', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Parada Iniciada' },
+  DOWNTIME_ENDED: { icon: 'check_circle', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Parada Encerrada' },
+  METER_READING: { icon: 'speed', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Leitura de Medidor' },
+  CHECKLIST_COMPLETED: { icon: 'checklist', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Checklist Concluído' },
+  MAINTENANCE_SCHEDULED: { icon: 'calendar_today', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Manutenção Agendada' },
+  NOTE_ADDED: { icon: 'chat', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Nota Adicionada' },
+  CUSTOM: { icon: 'star', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Evento Personalizado' }
 }
 
 export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps) {
@@ -130,20 +125,20 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
   if (loading && events.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
-        <span className="ml-2 text-gray-600">Carregando histórico...</span>
+        <Icon name="progress_activity" className="text-3xl animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando histórico...</span>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-700">
+      <div className="bg-surface rounded-[4px] p-4 text-foreground">
         <p className="font-medium">Erro ao carregar histórico</p>
         <p className="text-sm">{error}</p>
         <button
           onClick={fetchHistory}
-          className="mt-2 text-sm text-gray-600 hover:text-gray-800 underline"
+          className="mt-2 text-sm text-muted-foreground hover:text-foreground underline"
         >
           Tentar novamente
         </button>
@@ -154,39 +149,39 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
   const groupedEvents = groupEventsByDate(events)
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-[4px] ambient-shadow">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-on-surface-variant/10">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               Histórico do Ativo
             </h3>
             {assetName && (
-              <p className="text-sm text-gray-500">{assetName}</p>
+              <p className="text-sm text-muted-foreground">{assetName}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {total} evento{total !== 1 ? 's' : ''}
             </span>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-[4px] transition-colors ${
                 showFilters || filterType
-                  ? 'bg-gray-100 text-gray-600'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-surface-low text-muted-foreground'
+                  : 'bg-surface-low text-muted-foreground hover:bg-surface-high'
               }`}
             >
-              <Filter className="h-4 w-4" />
+              <Icon name="filter_list" className="text-base" />
             </button>
           </div>
         </div>
 
         {/* Filtros */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mt-4 pt-4 border-t border-on-surface-variant/10">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Filtrar por tipo de evento
             </label>
             <select
@@ -195,7 +190,7 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
                 setFilterType(e.target.value)
                 setOffset(0)
               }}
-              className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+              className="w-full sm:w-64 px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
             >
               <option value="">Todos os eventos</option>
               {Object.entries(eventTypeConfig).map(([key, config]) => (
@@ -212,9 +207,9 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
       <div className="px-6 py-4">
         {events.length === 0 ? (
           <div className="text-center py-12">
-            <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Nenhum evento registrado</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <Icon name="schedule" className="text-5xl text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum evento registrado</p>
+            <p className="text-sm text-muted-foreground mt-1">
               O histórico aparecerá aqui conforme ações forem realizadas
             </p>
           </div>
@@ -224,22 +219,22 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
               <div key={date}>
                 {/* Data */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-px flex-1 bg-gray-200" />
-                  <span className="text-sm font-medium text-gray-500 bg-white px-3">
+                  <div className="h-px flex-1 bg-surface-high" />
+                  <span className="text-sm font-medium text-muted-foreground bg-white px-3">
                     {date}
                   </span>
-                  <div className="h-px flex-1 bg-gray-200" />
+                  <div className="h-px flex-1 bg-surface-high" />
                 </div>
 
                 {/* Eventos do dia */}
                 <div className="relative">
                   {/* Linha vertical */}
-                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200" />
+                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-surface-high" />
 
                   <div className="space-y-4">
                     {dateEvents.map((event, index) => {
                       const config = getConfig(event.eventType)
-                      const Icon = config.icon
+                      const iconName = config.icon
 
                       return (
                         <div key={event.id} className="relative flex gap-4">
@@ -247,48 +242,48 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
                           <div
                             className={`relative z-10 flex-shrink-0 w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center`}
                           >
-                            <Icon className={`h-5 w-5 ${config.color}`} />
+                            <Icon name={iconName} className={`text-xl ${config.color}`} />
                           </div>
 
                           {/* Conteúdo */}
                           <div className="flex-1 min-w-0 pb-4">
-                            <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                            <div className="bg-surface rounded-[4px] p-4 hover:bg-surface-low transition-colors">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-gray-900">
+                                  <p className="font-medium text-foreground">
                                     {event.title}
                                   </p>
                                   <p className={`text-xs font-medium ${config.color} mt-0.5`}>
                                     {config.label}
                                   </p>
                                 </div>
-                                <span className="text-xs text-gray-500 whitespace-nowrap">
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
                                   {formatTime(event.createdAt)}
                                 </span>
                               </div>
 
                               {event.description && (
-                                <p className="mt-2 text-sm text-gray-600">
+                                <p className="mt-2 text-sm text-muted-foreground">
                                   {event.description}
                                 </p>
                               )}
 
                               {event.userName && (
-                                <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
-                                  <User className="h-3 w-3" />
+                                <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Icon name="person" className="text-sm" />
                                   <span>{event.userName}</span>
                                 </div>
                               )}
 
                               {/* Metadata */}
                               {event.metadata && Object.keys(event.metadata).length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                <div className="mt-3 pt-3 border-t border-on-surface-variant/10">
                                   <details className="group">
-                                    <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-1">
-                                      <ChevronDown className="h-3 w-3 group-open:rotate-180 transition-transform" />
+                                    <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
+                                      <Icon name="expand_more" className="text-sm group-open:rotate-180 transition-transform" />
                                       Detalhes adicionais
                                     </summary>
-                                    <pre className="mt-2 text-xs text-gray-600 bg-white p-2 rounded overflow-x-auto">
+                                    <pre className="mt-2 text-xs text-muted-foreground bg-white p-2 rounded overflow-x-auto">
                                       {JSON.stringify(event.metadata, null, 2)}
                                     </pre>
                                   </details>
@@ -312,16 +307,16 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
             <button
               onClick={loadMore}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground bg-surface rounded-[4px] hover:bg-surface-low disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Icon name="progress_activity" className="text-base animate-spin" />
                   Carregando...
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-4 w-4" />
+                  <Icon name="expand_more" className="text-base" />
                   Carregar mais eventos
                 </>
               )}

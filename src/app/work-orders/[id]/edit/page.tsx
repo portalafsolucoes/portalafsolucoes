@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Save } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Icon } from '@/components/ui/Icon'
+
 
 export default function EditWorkOrderPage() {
   const router = useRouter()
@@ -128,7 +129,7 @@ export default function EditWorkOrderPage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
       </AppLayout>
     )
@@ -139,9 +140,9 @@ export default function EditWorkOrderPage() {
       <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8 pt-20 lg:pt-8">
         <button
           onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          className="flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors"
         >
-          <ArrowLeft className="h-5 w-5 mr-2" />
+          <Icon name="arrow_back" className="text-xl mr-2" />
           Voltar
         </button>
 
@@ -151,8 +152,8 @@ export default function EditWorkOrderPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-primary/5 border border-gray-200 rounded-lg p-4 mb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Número da OS</h3>
+              <div className="bg-primary/5 rounded-[4px] p-4 mb-6">
+                <h3 className="text-sm font-semibold text-foreground mb-2">Número da OS</h3>
                 <Input
                   label="Número Proteus (6 dígitos) - Opcional"
                   placeholder="Ex: 123456"
@@ -181,7 +182,7 @@ export default function EditWorkOrderPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -193,7 +194,7 @@ export default function EditWorkOrderPage() {
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="CORRECTIVE">Corretiva</option>
                     <option value="PREVENTIVE">Preventiva</option>
@@ -209,7 +210,7 @@ export default function EditWorkOrderPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="PENDING">Pendente</option>
                     <option value="RELEASED">Liberada</option>
@@ -228,7 +229,7 @@ export default function EditWorkOrderPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="NONE">Nenhuma</option>
                     <option value="LOW">Baixa</option>
@@ -247,8 +248,8 @@ export default function EditWorkOrderPage() {
               </div>
 
               {formData.type === 'PREVENTIVE' && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">⏰ Periodicidade (Manutenção Preventiva)</h3>
+                <div className="bg-surface rounded-[4px] p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">⏰ Periodicidade (Manutenção Preventiva)</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
@@ -257,7 +258,7 @@ export default function EditWorkOrderPage() {
                       <select
                         value={formData.maintenanceFrequency}
                         onChange={(e) => setFormData({ ...formData, maintenanceFrequency: e.target.value })}
-                        className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-gray-500"
                       >
                         <option value="">Selecione a frequência</option>
                         <option value="DAILY">Diária</option>
@@ -289,7 +290,7 @@ export default function EditWorkOrderPage() {
                 <select
                   value={formData.assetId}
                   onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Selecione um ativo</option>
                   {assets.map((asset) => (
@@ -307,7 +308,7 @@ export default function EditWorkOrderPage() {
                 <select
                   value={formData.locationId}
                   onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Selecione uma localização</option>
                   {locations.map((location) => (
@@ -318,8 +319,8 @@ export default function EditWorkOrderPage() {
                 </select>
               </div>
 
-              <div className="bg-success-light border border-gray-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">👥 Atribuição</h3>
+              <div className="bg-success-light rounded-[4px] p-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">👥 Atribuição</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
@@ -328,7 +329,7 @@ export default function EditWorkOrderPage() {
                     <select
                       value={formData.assignedTeamIds[0] || ''}
                       onChange={(e) => setFormData({ ...formData, assignedTeamIds: e.target.value ? [e.target.value] : [] })}
-                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
                       <option value="">Selecione uma equipe</option>
                       {teams.map((team) => (
@@ -346,7 +347,7 @@ export default function EditWorkOrderPage() {
                     <select
                       value={formData.assignedToId}
                       onChange={(e) => setFormData({ ...formData, assignedToId: e.target.value })}
-                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
                       <option value="">Nenhum (líder atribuirá)</option>
                       {users.map((user) => (
@@ -362,7 +363,7 @@ export default function EditWorkOrderPage() {
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Responsáveis Adicionais
                   </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto border border-input rounded-md p-3">
+                <div className="space-y-2 max-h-48 overflow-y-auto border border-input rounded-[4px] p-3">
                   {users.map((user) => (
                     <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-secondary p-2 rounded">
                       <input
@@ -401,7 +402,7 @@ export default function EditWorkOrderPage() {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={saving} className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
+                  <Icon name="save" className="text-base" />
                   {saving ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
               </div>

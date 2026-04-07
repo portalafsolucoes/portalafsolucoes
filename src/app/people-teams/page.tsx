@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Plus, Search, UserCheck, UserX, List, Grid3x3, Network } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { AppLayout } from '@/components/layout/AppLayout'
 import { PersonDetailModal } from '@/components/people/PersonDetailModal'
 import { PersonFormModal } from '@/components/people/PersonFormModal'
 import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
 import { TeamFormModal } from '@/components/teams/TeamFormModal'
-import { Card, CardContent } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/card'
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 import { ExportButton } from '@/components/ui/ExportButton'
@@ -177,7 +178,7 @@ export default function PeopleTeamsPage() {
         {/* Header with Tabs */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2 mb-4">
-            <Users className="w-8 h-8" />
+            <Icon name="group" className="text-3xl" />
             Pessoas e Equipes
           </h1>
           
@@ -189,7 +190,7 @@ export default function PeopleTeamsPage() {
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'people'
                     ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
                 Pessoas
@@ -199,7 +200,7 @@ export default function PeopleTeamsPage() {
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'teams'
                     ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
                 Equipes
@@ -216,60 +217,60 @@ export default function PeopleTeamsPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-2 rounded-[4px] transition-colors ${
                     viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'bg-card text-muted-foreground hover:bg-accent/10'
                   }`}
                   title="Visualização em Grade"
                 >
-                  <Grid3x3 className="w-5 h-5" />
+                  <Icon name="grid_view" className="text-xl" />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-2 rounded-[4px] transition-colors ${
                     viewMode === 'table' ? 'bg-primary/10 text-primary' : 'bg-card text-muted-foreground hover:bg-accent/10'
                   }`}
                   title="Visualização em Tabela"
                 >
-                  <List className="w-5 h-5" />
+                  <Icon name="list" className="text-xl" />
                 </button>
                 <button
                   onClick={() => setViewMode('hierarchy')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-2 rounded-[4px] transition-colors ${
                     viewMode === 'hierarchy' ? 'bg-primary/10 text-primary' : 'bg-card text-muted-foreground hover:bg-accent/10'
                   }`}
                   title="Visualização Hierárquica"
                 >
-                  <Network className="w-5 h-5" />
+                  <Icon name="hub" className="text-xl" />
                 </button>
               </div>
               
               <ExportButton data={filteredUsers} entity="users" />
               <button
                 onClick={() => setShowNewUserModal(true)}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
               >
-                <Plus className="w-5 h-5" />
+                <Icon name="add" className="text-xl" />
                 Adicionar Pessoa
               </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-card rounded-lg shadow-sm p-4 mb-6">
+            <div className="bg-card rounded-[4px] ambient-shadow p-4 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xl" />
                   <input
                     type="text"
                     placeholder="Buscar por nome ou email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="">Todos os Papéis</option>
                   <option value="SUPER_ADMIN">Super Administrador</option>
@@ -286,12 +287,12 @@ export default function PeopleTeamsPage() {
             {/* Content */}
             {loadingUsers ? (
               <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
                 <p className="mt-2 text-muted-foreground">Carregando...</p>
               </div>
             ) : filteredUsers.length === 0 ? (
-              <div className="bg-card rounded-lg shadow-sm p-12 text-center">
-                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+                <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
                 <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
               </div>
@@ -304,7 +305,7 @@ export default function PeopleTeamsPage() {
                       <div
                         key={user.id}
                         onClick={() => handleUserClick(user.id)}
-                        className="bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-border cursor-pointer"
+                        className="bg-card rounded-[4px] ambient-shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
                         data-user-id={user.id}
                       >
                         <div className="flex items-start justify-between mb-4">
@@ -330,9 +331,9 @@ export default function PeopleTeamsPage() {
                             </div>
                           </div>
                           {user.enabled ? (
-                            <UserCheck className="w-5 h-5 text-success" />
+                            <Icon name="how_to_reg" className="text-xl text-success" />
                           ) : (
-                            <UserX className="w-5 h-5 text-danger" />
+                            <Icon name="person_off" className="text-xl text-danger" />
                           )}
                         </div>
                         
@@ -360,7 +361,7 @@ export default function PeopleTeamsPage() {
 
                 {/* Table View */}
                 {viewMode === 'table' && (
-                  <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+                  <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-secondary">
                         <tr>
@@ -404,7 +405,7 @@ export default function PeopleTeamsPage() {
                               <div className="text-sm text-foreground">{user.jobTitle || '-'}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-gray-800">
+                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-foreground">
                                 {getRoleLabel(user.role)}
                               </span>
                             </td>
@@ -430,11 +431,11 @@ export default function PeopleTeamsPage() {
                 {viewMode === 'hierarchy' && (
                   <div className="space-y-6">
                     {Object.entries(buildHierarchy()).map(([teamName, jobTitles]: [string, any]) => (
-                      <div key={teamName} className="bg-card rounded-lg shadow-sm overflow-hidden">
+                      <div key={teamName} className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
                         {/* Layer 1: Team */}
-                        <div className="bg-primary/5 px-6 py-4 border-b border-gray-100">
-                          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <Users className="w-5 h-5" />
+                        <div className="bg-primary/5 px-6 py-4 border-b border-border">
+                          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                            <Icon name="group" className="text-xl" />
                             {teamName}
                             <span className="text-sm font-normal text-primary">
                               ({Object.values(jobTitles).reduce((acc: number, users: any) => acc + users.length, 0)} pessoas)
@@ -444,10 +445,10 @@ export default function PeopleTeamsPage() {
                         
                         <div className="p-6 space-y-4">
                           {Object.entries(jobTitles).map(([jobTitle, users]: [string, any]) => (
-                            <div key={jobTitle} className="border-l-4 border-gray-500 pl-4">
+                            <div key={jobTitle} className="border-l-4 border-on-surface-variant pl-4">
                               {/* Layer 2: Job Title */}
                               <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
-                                <Network className="w-4 h-4 text-success" />
+                                <Icon name="hub" className="text-base text-success" />
                                 {jobTitle}
                                 <span className="text-sm font-normal text-muted-foreground">({users.length})</span>
                               </h4>
@@ -458,7 +459,7 @@ export default function PeopleTeamsPage() {
                                   <div
                                     key={user.id}
                                     onClick={() => handleUserClick(user.id)}
-                                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-secondary cursor-pointer transition-colors"
+                                    className="flex items-center gap-3 p-3 rounded-[4px] hover:bg-secondary cursor-pointer transition-colors"
                                     data-user-id={user.id}
                                   >
                                     {user.image ? (
@@ -502,16 +503,16 @@ export default function PeopleTeamsPage() {
             <div className="flex justify-end mb-6">
               <button
                 onClick={() => setShowNewTeamModal(true)}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
               >
-                <Plus className="w-5 h-5" />
+                <Icon name="add" className="text-xl" />
                 Nova Equipe
               </button>
             </div>
 
             {loadingTeams ? (
               <div className="text-center py-12">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
               </div>
             ) : teams.length === 0 ? (
               <Card>
@@ -529,7 +530,7 @@ export default function PeopleTeamsPage() {
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-3 mb-3">
-                        <Users className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                        <Icon name="group" className="text-2xl text-primary flex-shrink-0 mt-1" />
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-foreground">
                             {team.name}

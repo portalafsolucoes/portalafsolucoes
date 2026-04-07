@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users, Plus, Search, UserCheck, UserX } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { AppLayout } from '@/components/layout/AppLayout'
 import { PersonDetailModal } from '@/components/people/PersonDetailModal'
 import { PersonFormModal } from '@/components/people/PersonFormModal'
@@ -80,37 +81,37 @@ export default function PeoplePage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Users className="w-8 h-8" />
+              <Icon name="group" className="text-3xl" />
               Pessoas
             </h1>
             <p className="text-muted-foreground mt-1">Gerencie as pessoas da organização</p>
           </div>
           <button
             onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-blue-700 transition-colors"
           >
-            <Plus className="w-5 h-5" />
+            <Icon name="add" className="text-xl" />
             Adicionar Pessoa
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-card rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-card rounded-[4px] ambient-shadow p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xl" />
               <input
                 type="text"
                 placeholder="Buscar por nome ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               <option value="">Todos os Papéis</option>
               <option value="SUPER_ADMIN">Super Administrador</option>
@@ -131,8 +132,8 @@ export default function PeoplePage() {
             <p className="mt-2 text-muted-foreground">Carregando...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="bg-card rounded-lg shadow-sm p-12 text-center">
-            <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+            <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
             <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
           </div>
@@ -142,7 +143,7 @@ export default function PeoplePage() {
               <div
                 key={user.id}
                 onClick={() => handleUserClick(user.id)}
-                className="bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-border cursor-pointer"
+                className="bg-card rounded-[4px] ambient-shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -167,9 +168,9 @@ export default function PeoplePage() {
                     </div>
                   </div>
                   {user.enabled ? (
-                    <UserCheck className="w-5 h-5 text-success" />
+                    <Icon name="how_to_reg" className="text-xl text-success" />
                   ) : (
-                    <UserX className="w-5 h-5 text-danger" />
+                    <Icon name="person_off" className="text-xl text-danger" />
                   )}
                 </div>
                 

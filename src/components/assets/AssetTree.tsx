@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown, ChevronRight, Box, Boxes, Component, AlertCircle, Plus } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { useState, useEffect } from 'react'
 
 interface Asset {
@@ -60,14 +60,14 @@ function AssetTreeNode({ asset, level, onSelect, selectedId, onAddSubAsset }: As
   const getIcon = () => {
     // Nível 0 (raiz) - Cubo 3D azul (principal)
     if (level === 0) {
-      return <Box className="w-4 h-4 text-primary" strokeWidth={2} />
+      return <Icon name="inventory_2" className="text-base text-primary" />
     }
     // Nível 1 (filhos diretos) - Múltiplos cubos laranja
     if (level === 1) {
-      return <Boxes className="w-4 h-4 text-orange-500" strokeWidth={2} />
+      return <Icon name="widgets" className="text-base text-orange-500" />
     }
     // Nível 2+ (netos em diante) - Componente cinza
-    return <Component className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
+    return <Icon name="memory" className="text-base text-muted-foreground" />
   }
 
   const getStatusIndicator = () => {
@@ -99,9 +99,9 @@ function AssetTreeNode({ asset, level, onSelect, selectedId, onAddSubAsset }: As
             className="p-0.5 hover:bg-muted rounded"
           >
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <Icon name="expand_more" className="text-base text-muted-foreground" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <Icon name="chevron_right" className="text-base text-muted-foreground" />
             )}
           </button>
         )}
@@ -119,14 +119,14 @@ function AssetTreeNode({ asset, level, onSelect, selectedId, onAddSubAsset }: As
       {/* Context Menu */}
       {showContextMenu && (
         <div
-          className="fixed bg-card border border-border rounded-lg shadow-lg py-1 z-50"
+          className="fixed bg-card rounded-[4px] ambient-shadow py-1 z-50"
           style={{ left: `${contextMenuPosition.x}px`, top: `${contextMenuPosition.y}px` }}
         >
           <button
             onClick={handleAddSubAsset}
             className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
+            <Icon name="add" className="text-base" />
             Adicionar Subativo
           </button>
         </div>
@@ -205,7 +205,7 @@ export function AssetTree({ assets, onSelectAsset, selectedAssetId, onAddSubAsse
           ))
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            <AlertCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+            <Icon name="error" className="text-3xl mx-auto mb-2 text-muted-foreground" />
             <p>Nenhum ativo encontrado</p>
           </div>
         )}

@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function NewTeamPage() {
   const router = useRouter()
@@ -95,7 +95,7 @@ export default function NewTeamPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -103,7 +103,7 @@ export default function NewTeamPage() {
                 <label className="block text-sm font-medium text-foreground mb-3">
                   Membros da Equipe
                 </label>
-                <div className="space-y-2 max-h-64 overflow-y-auto border border-input rounded-md p-3">
+                <div className="space-y-2 max-h-64 overflow-y-auto border border-input rounded-[4px] p-3">
                   {users.map((user) => (
                     <label
                       key={user.id}

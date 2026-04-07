@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/Table';
-import { Button } from '@/components/ui/Button';
-import { PlayCircle, StopCircle, Download, LineChart as LineChartIcon, Table2, Calendar, Clock, ChevronUp, ChevronDown, FileText, User, Tag, Palette, Ruler, Hash } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/Icon'
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { ALL_VARIABLES_LIST, SECTORS } from './variables';
 import { VariableSelector } from '@/components/gep/VariableSelector';
@@ -29,10 +30,10 @@ const SHIFT_NAMES = {
 };
 
 const SHIFT_COLORS = {
-  A: 'bg-gray-50',
-  B: 'bg-gray-50',
-  C: 'bg-gray-50',
-  D: 'bg-gray-50'
+  A: 'bg-surface',
+  B: 'bg-surface',
+  C: 'bg-surface',
+  D: 'bg-surface'
 };
 
 // Identificar variáveis que são TOTALIZADORES (devem usar diferença, não média)
@@ -414,7 +415,7 @@ export default function GEPPage() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
+        <div className="bg-white p-3 rounded ambient-shadow">
           <p className="font-semibold mb-2">{label}</p>
           {payload.map((entry: any, index: number) => {
             const varKey = entry.dataKey;
@@ -464,31 +465,31 @@ export default function GEPPage() {
               443 Variáveis Totais | {gepData.length} horas de dados
             </p>
           </div>
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Exportar</Button>
+          <Button variant="outline" size="sm"><Icon name="download" className="text-base mr-2" />Exportar</Button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              {moagem1Running ? <PlayCircle className="h-8 w-8 text-gray-500" /> : <StopCircle className="h-8 w-8 text-gray-500" />}
+              {moagem1Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
               <div><p className="font-medium">Moagem 1</p><p className="text-sm text-muted-foreground">{moagem1Running ? 'Rodando' : 'Parada'} - 106 vars</p></div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              {moagem2Running ? <PlayCircle className="h-8 w-8 text-gray-500" /> : <StopCircle className="h-8 w-8 text-gray-500" />}
+              {moagem2Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
               <div><p className="font-medium">Moagem 2</p><p className="text-sm text-muted-foreground">{moagem2Running ? 'Rodando' : 'Parada'} - 105 vars</p></div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              {moagem3Running ? <PlayCircle className="h-8 w-8 text-gray-500" /> : <StopCircle className="h-8 w-8 text-gray-500" />}
+              {moagem3Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
               <div><p className="font-medium">Moagem 3</p><p className="text-sm text-muted-foreground">{moagem3Running ? 'Rodando' : 'Parada'} - 97 vars</p></div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              {secadorRunning ? <PlayCircle className="h-8 w-8 text-gray-500" /> : <StopCircle className="h-8 w-8 text-gray-500" />}
+              {secadorRunning ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
               <div><p className="font-medium">Secador</p><p className="text-sm text-muted-foreground">{secadorRunning ? 'Rodando' : 'Parado'} - 77 vars</p></div>
             </CardContent>
           </Card>
@@ -499,14 +500,14 @@ export default function GEPPage() {
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <Icon name="calendar_today" className="text-base" />
                 Data do Relatório:
               </label>
               <input 
                 type="date" 
                 value={selectedDate} 
                 onChange={(e) => setSelectedDate(e.target.value)} 
-                className="w-full md:w-64 px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary" 
+                className="w-full md:w-64 px-3 py-2 border rounded-[4px] focus:ring-2 focus:ring-primary" 
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Serão exibidos os 4 turnos completos (A, B, C, D) com 6 leituras cada
@@ -547,10 +548,10 @@ export default function GEPPage() {
               <label className="text-sm font-medium mb-2 block">Visualização:</label>
               <div className="flex gap-2">
                 <Button variant={viewMode === 'chart' ? 'primary' : 'outline'} size="sm" onClick={() => setViewMode('chart')}>
-                  <LineChartIcon className="h-4 w-4 mr-2" />Gráficos
+                  <Icon name="show_chart" className="text-base mr-2" />Gráficos
                 </Button>
                 <Button variant={viewMode === 'table' ? 'primary' : 'outline'} size="sm" onClick={() => setViewMode('table')}>
-                  <Table2 className="h-4 w-4 mr-2" />Tabela
+                  <Icon name="table" className="text-base mr-2" />Tabela
                 </Button>
               </div>
             </div>
@@ -603,7 +604,7 @@ export default function GEPPage() {
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="text-gray-600">
+                  <div className="text-muted-foreground">
                     <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
@@ -630,7 +631,7 @@ export default function GEPPage() {
                     : `Valores reais - ${selectedVariables.length} variáveis selecionadas`}
                 </p>
                 {chartScaleMode === 'normalized' && (
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     💡 Cada variável é normalizada individualmente. Passe o mouse sobre as linhas para ver os valores reais.
                   </p>
                 )}
@@ -680,7 +681,7 @@ export default function GEPPage() {
               </p>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="rounded-md border overflow-hidden">
+              <div className="rounded-[4px] border overflow-hidden">
                 <div className="overflow-x-auto">
                   <div className="min-w-[800px]">
                     <Table>
@@ -691,13 +692,13 @@ export default function GEPPage() {
                             onClick={() => alternarOrdenacao('time')}
                           >
                             <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-2" />
+                              <Icon name="schedule" className="text-base mr-2" />
                               Hora
                               {ordenacao.campo === 'time' && (
                                 ordenacao.direcao === 'asc' ? (
-                                  <ChevronUp className="ml-1 h-4 w-4" />
+                                  <Icon name="expand_less" className="ml-1 text-base" />
                                 ) : (
-                                  <ChevronDown className="ml-1 h-4 w-4" />
+                                  <Icon name="expand_more" className="ml-1 text-base" />
                                 )
                               )}
                             </div>
@@ -719,9 +720,9 @@ export default function GEPPage() {
                                     {varInfo.name}
                                     {ordenacao.campo === varKey && (
                                       ordenacao.direcao === 'asc' ? (
-                                        <ChevronUp className="ml-1 h-4 w-4 inline" />
+                                        <Icon name="expand_less" className="ml-1 text-base inline" />
                                       ) : (
-                                        <ChevronDown className="ml-1 h-4 w-4 inline" />
+                                        <Icon name="expand_more" className="ml-1 text-base inline" />
                                       )
                                     )}
                                   </div>
@@ -756,7 +757,7 @@ export default function GEPPage() {
                           );
                         })}
                         {/* Linha de Totalizador/Média Geral */}
-                        <TableRow className="border-t-2 border-gray-800 font-bold bg-muted">
+                        <TableRow className="border-t-2 border-on-surface font-bold bg-muted">
                           <TableCell className="px-4 py-3 font-bold text-sm sticky left-0 bg-muted z-10 border-r" colSpan={2}>
                             MÉDIA/TOTAL GERAL DO DIA
                           </TableCell>
@@ -770,7 +771,7 @@ export default function GEPPage() {
                                 : values.reduce((sum: number, v: number) => sum + v, 0) / values.length
                               : 0;
                             return (
-                              <TableCell key={varKey} className={`px-4 py-3 text-right text-sm font-mono font-bold tabular-nums ${isTotalizer ? 'text-gray-700' : 'text-gray-700'}`}>
+                              <TableCell key={varKey} className={`px-4 py-3 text-right text-sm font-mono font-bold tabular-nums ${isTotalizer ? 'text-foreground' : 'text-foreground'}`}>
                                 {result.toFixed(2)}
                               </TableCell>
                             );
@@ -792,19 +793,19 @@ export default function GEPPage() {
               const ordenacaoAtual = ordenacaoTurno[shift] || { campo: 'time', direcao: 'asc' };
               
               return (
-                <Card key={`${date}-${shift}`} className={error ? 'border-gray-500 border-2' : ''}>
+                <Card key={`${date}-${shift}`} className={error ? 'border-on-surface-variant border-2' : ''}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${SHIFT_COLORS[shift].replace('bg-', 'bg-')}`}></div>
                       {SHIFT_NAMES[shift]}
                       <span className="text-sm font-normal text-muted-foreground ml-2">({dateFormatted})</span>
                     </CardTitle>
-                    <p className={`text-sm ${error ? 'text-gray-600 font-semibold' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm ${error ? 'text-muted-foreground font-semibold' : 'text-muted-foreground'}`}>
                       {shiftData.length} leituras {error && `- ${error}`}
                     </p>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="rounded-md border overflow-hidden">
+                    <div className="rounded-[4px] border overflow-hidden">
                       <div className="overflow-x-auto">
                         <div className="min-w-[800px]">
                           <Table>
@@ -815,13 +816,13 @@ export default function GEPPage() {
                                   onClick={() => alternarOrdenacaoTurno(shift, 'time')}
                                 >
                                   <div className="flex items-center">
-                                    <Clock className="h-4 w-4 mr-2" />
+                                    <Icon name="schedule" className="text-base mr-2" />
                                     Hora
                                     {ordenacaoAtual.campo === 'time' && (
                                       ordenacaoAtual.direcao === 'asc' ? (
-                                        <ChevronUp className="ml-1 h-4 w-4" />
+                                        <Icon name="expand_less" className="ml-1 text-base" />
                                       ) : (
-                                        <ChevronDown className="ml-1 h-4 w-4" />
+                                        <Icon name="expand_more" className="ml-1 text-base" />
                                       )
                                     )}
                                   </div>
@@ -840,9 +841,9 @@ export default function GEPPage() {
                                           {varInfo.name}
                                           {ordenacaoAtual.campo === varKey && (
                                             ordenacaoAtual.direcao === 'asc' ? (
-                                              <ChevronUp className="ml-1 h-4 w-4 inline" />
+                                              <Icon name="expand_less" className="ml-1 text-base inline" />
                                             ) : (
-                                              <ChevronDown className="ml-1 h-4 w-4 inline" />
+                                              <Icon name="expand_more" className="ml-1 text-base inline" />
                                             )
                                           )}
                                         </div>
@@ -850,7 +851,7 @@ export default function GEPPage() {
                                       <div className="text-xs font-normal text-muted-foreground mt-0.5 flex items-center justify-end gap-1">
                                         <span>{varInfo.unit}</span>
                                         {varInfo.unit && <span className="text-muted-foreground">•</span>}
-                                        <span className={`font-semibold ${isTotalizer ? 'text-gray-600' : 'text-gray-600'}`}>
+                                        <span className={`font-semibold ${isTotalizer ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                                           {isTotalizer ? 'Total' : 'Média'}
                                         </span>
                                       </div>
@@ -873,7 +874,7 @@ export default function GEPPage() {
                                 </TableRow>
                               ))}
                               {/* Linha de Totalizador/Média */}
-                              <TableRow className={`border-t-2 border-gray-800 font-bold ${SHIFT_COLORS[shift]}`}>
+                              <TableRow className={`border-t-2 border-on-surface font-bold ${SHIFT_COLORS[shift]}`}>
                                 <TableCell className={`px-4 py-3 font-bold text-sm sticky left-0 ${SHIFT_COLORS[shift]} z-10 border-r`}>
                                   MÉDIA/TOTAL
                                 </TableCell>
@@ -890,7 +891,7 @@ export default function GEPPage() {
                                     : 0;
                                   
                                   return (
-                                    <TableCell key={varKey} className={`px-4 py-3 text-right text-sm font-mono font-bold tabular-nums ${isTotalizer ? 'text-gray-700' : 'text-gray-700'}`}>
+                                    <TableCell key={varKey} className={`px-4 py-3 text-right text-sm font-mono font-bold tabular-nums ${isTotalizer ? 'text-foreground' : 'text-foreground'}`}>
                                       {result.toFixed(2)}
                                     </TableCell>
                                   );

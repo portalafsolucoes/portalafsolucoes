@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Plus, MapPin } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
+
 import Link from 'next/link'
 
 interface Location {
@@ -49,7 +50,7 @@ export default function LocationsPage() {
           </div>
           <Link href="/locations/new">
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" className="mr-2 text-base" />
               Nova Localização
             </Button>
           </Link>
@@ -71,7 +72,7 @@ export default function LocationsPage() {
               <Card key={location.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3 mb-3">
-                    <MapPin className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                    <Icon name="location_on" className="text-2xl text-primary flex-shrink-0 mt-1" />
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-foreground">
                         {location.name}

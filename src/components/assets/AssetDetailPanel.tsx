@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Edit, Image as ImageIcon, FileText, Download, Calendar, MapPin, User, Package, QrCode as QrIcon, DollarSign, Maximize2, Wrench, CheckCircle, Trash2, Paperclip, Activity, History, FolderTree } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import AssetAttachments from './AssetAttachments'
 import AssetTimeline from './AssetTimelineEnhanced'
 
@@ -83,9 +83,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   
   const getStatusBadge = (status: string) => {
     const colors = {
-      OPERATIONAL: 'bg-success-light text-success-light-foreground border-gray-200',
-      DOWN: 'bg-danger-light text-danger-light-foreground border-gray-200',
-      MAINTENANCE: 'bg-warning-light text-warning-light-foreground border-gray-200'
+      OPERATIONAL: 'bg-success-light text-success-light-foreground border-border',
+      DOWN: 'bg-danger-light text-danger-light-foreground border-border',
+      MAINTENANCE: 'bg-warning-light text-warning-light-foreground border-border'
     }
     return colors[status as keyof typeof colors] || 'bg-muted text-foreground border-border'
   }
@@ -100,9 +100,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   }
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-on-surface-variant/10">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
+      <div className="flex items-start justify-between p-4 border-b border-on-surface-variant/10">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-xl font-bold text-foreground">{asset.name}</h2>
@@ -110,7 +110,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
               onClick={onClose}
               className="ml-auto p-1 hover:bg-muted rounded transition-colors"
             >
-              <X className="w-5 h-5 text-muted-foreground" />
+              <Icon name="close" className="text-xl text-muted-foreground" />
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -126,43 +126,43 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="w-full justify-start border-b rounded-none px-4">
             <TabsTrigger value="details" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
+              <Icon name="inventory_2" className="text-base" />
               Detalhes
             </TabsTrigger>
             <TabsTrigger value="attachments" className="flex items-center gap-2">
-              <Paperclip className="w-4 h-4" />
+              <Icon name="attach_file" className="text-base" />
               Anexos
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
+              <Icon name="history" className="text-base" />
               Histórico
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
             {/* Ações */}
-            <div className="p-4 border-b border-border space-y-2">
+            <div className="p-4 border-b border-on-surface-variant/10 space-y-2">
               <button 
                 onClick={() => onEdit(asset)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
               >
-                <Edit className="w-4 h-4" />
+                <Icon name="edit" className="text-base" />
                 Editar Ativo
               </button>
               <button 
                 onClick={() => onDelete(asset.id)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
               >
-                <Trash2 className="w-4 h-4" />
+                <Icon name="delete" className="text-base" />
                 Excluir Ativo
               </button>
             </div>
 
         {/* Imagem do Ativo */}
         {asset.image && (
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-on-surface-variant/10">
             <h3 className="text-sm font-semibold text-foreground mb-2">Imagem Principal</h3>
-            <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+            <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
               <img 
                 src={asset.image} 
                 alt={asset.name}
@@ -173,7 +173,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         )}
 
         {/* Identificação */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3">Identificação</h3>
           {asset.description && (
             <div className="mb-3">
@@ -239,7 +239,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* Localização e Organização */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3">Localização</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.location && (
@@ -271,7 +271,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Dados Técnicos */}
         {(asset.manufacturer || asset.modelName || asset.serialNumber || asset.hasCounter) && (
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3">Dados Técnicos</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.manufacturer && (
@@ -322,7 +322,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Financeiro */}
         {(asset.acquisitionCost || asset.purchaseValue || asset.hourlyCost || asset.purchaseDate) && (
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3">Financeiro e Aquisição</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.purchaseValue != null && (
@@ -367,7 +367,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Garantia */}
         {(asset.warrantyPeriod || asset.warrantyDate) && (
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3">Garantia</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.warrantyPeriod != null && (
@@ -387,7 +387,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         )}
 
         {/* Datas */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
               <p className="text-xs text-muted-foreground">Criado em</p>
@@ -409,60 +409,60 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* Matriz GUT - Criticidade */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-primary" />
+            <Icon name="monitoring" className="text-base text-primary" />
             Matriz GUT (Criticidade)
           </h3>
           <div className="grid grid-cols-3 gap-2">
             {/* Gravidade */}
-            <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-xs text-gray-600 font-medium mb-1">Gravidade</p>
+            <div className="p-2 bg-surface rounded-[4px]">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Gravidade</p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <span
                     key={n}
                     className={`w-3 h-3 rounded ${
-                      n <= (asset.gutGravity || 1) ? 'bg-gray-500' : 'bg-gray-200'
+                      n <= (asset.gutGravity || 1) ? 'bg-on-surface-variant' : 'bg-surface-high'
                     }`}
                   />
                 ))}
-                <span className="ml-1 font-bold text-gray-700">{asset.gutGravity || 1}</span>
+                <span className="ml-1 font-bold text-foreground">{asset.gutGravity || 1}</span>
               </div>
             </div>
             {/* Urgência */}
-            <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-xs text-gray-600 font-medium mb-1">Urgência</p>
+            <div className="p-2 bg-surface rounded-[4px]">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Urgência</p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <span
                     key={n}
                     className={`w-3 h-3 rounded ${
-                      n <= (asset.gutUrgency || 1) ? 'bg-gray-500' : 'bg-gray-200'
+                      n <= (asset.gutUrgency || 1) ? 'bg-on-surface-variant' : 'bg-surface-high'
                     }`}
                   />
                 ))}
-                <span className="ml-1 font-bold text-gray-700">{asset.gutUrgency || 1}</span>
+                <span className="ml-1 font-bold text-foreground">{asset.gutUrgency || 1}</span>
               </div>
             </div>
             {/* Tendência */}
-            <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-xs text-gray-600 font-medium mb-1">Tendência</p>
+            <div className="p-2 bg-surface rounded-[4px]">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Tendência</p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <span
                     key={n}
                     className={`w-3 h-3 rounded ${
-                      n <= (asset.gutTendency || 1) ? 'bg-gray-500' : 'bg-gray-200'
+                      n <= (asset.gutTendency || 1) ? 'bg-on-surface-variant' : 'bg-surface-high'
                     }`}
                   />
                 ))}
-                <span className="ml-1 font-bold text-gray-700">{asset.gutTendency || 1}</span>
+                <span className="ml-1 font-bold text-foreground">{asset.gutTendency || 1}</span>
               </div>
             </div>
           </div>
           {/* Score Total */}
-          <div className="mt-3 p-2 bg-muted rounded-lg flex items-center justify-between">
+          <div className="mt-3 p-2 bg-muted rounded-[4px] flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">Score GUT:</span>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-foreground">
@@ -476,9 +476,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* QR Code */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-on-surface-variant/10">
           <h3 className="text-sm font-semibold text-foreground mb-3">QR Code do Ativo</h3>
-          <div className="flex flex-col items-center bg-secondary rounded-lg p-4">
+          <div className="flex flex-col items-center bg-secondary rounded-[4px] p-4">
             <QRCodeSVG 
               value={`${window.location.origin}/assets?id=${asset.id}`}
               size={150}
@@ -493,9 +493,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Arquivos Anexos */}
         {asset.files && asset.files.length > 0 && (
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-on-surface-variant/10">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Paperclip className="w-4 h-4" />
+              <Icon name="attach_file" className="text-base" />
               Arquivos Anexos ({asset.files.length})
             </h3>
             <div className="space-y-2">
@@ -505,13 +505,13 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
                   href={file.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-2 bg-secondary rounded border border-border hover:bg-muted transition-colors"
+                  className="flex items-center justify-between p-2 bg-secondary rounded hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    <Icon name="description" className="text-base text-muted-foreground" />
                     <span className="text-sm text-foreground truncate">{file.name}</span>
                   </div>
-                  <Download className="w-4 h-4 text-muted-foreground" />
+                  <Icon name="download" className="text-base text-muted-foreground" />
                 </a>
               ))}
             </div>
@@ -521,18 +521,18 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         {/* Histórico de Ordens de Serviço */}
         <div className="p-4">
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Wrench className="w-4 h-4" />
+            <Icon name="construction" className="text-base" />
             Histórico de OS
           </h3>
           
           {workOrders.length > 0 ? (
             <div className="space-y-2">
               {workOrders.slice(0, 5).map((wo) => (
-                <div key={wo.id} className="p-2 bg-secondary rounded border border-border">
+                <div key={wo.id} className="p-2 bg-secondary rounded">
                   <div className="flex items-start justify-between mb-1">
                     <p className="text-sm font-medium text-foreground">{wo.title}</p>
                     {wo.status === 'COMPLETED' && (
-                      <CheckCircle className="w-4 h-4 text-success" />
+                      <Icon name="check_circle" className="text-base text-success" />
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">{formatDate(wo.createdAt)}</p>
@@ -553,7 +553,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Arquivos Anexados */}
         {asset.files && asset.files.length > 1 && (
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-on-surface-variant/10">
             <h3 className="text-sm font-semibold text-foreground mb-3">Documentos</h3>
             <div className="space-y-2">
               {asset.files.slice(1).map((file, index) => (
@@ -564,9 +564,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 p-2 bg-secondary rounded hover:bg-muted transition-colors"
                 >
-                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <Icon name="description" className="text-base text-muted-foreground" />
                   <span className="text-sm text-foreground flex-1 truncate">{file.name}</span>
-                  <Download className="w-4 h-4 text-muted-foreground" />
+                  <Icon name="download" className="text-base text-muted-foreground" />
                 </a>
               ))}
             </div>

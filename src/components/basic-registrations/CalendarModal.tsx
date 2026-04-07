@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 const WEEK_DAYS = [
   { day: 'monday', label: 'Segunda-feira' },
@@ -189,7 +189,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
     >
       <div className="p-6 space-y-6">
         {error && (
-          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
+          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
           </div>
         )}
@@ -205,7 +205,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Ex: Calendário Operacional"
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
@@ -213,7 +213,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
             <select
               value={type}
               onChange={e => setType(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="WORK">Mão de Obra</option>
               <option value="EQUIPMENT">Equipamento</option>
@@ -225,7 +225,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
           <div>
@@ -235,21 +235,21 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               value={protheusCode}
               onChange={e => setProtheusCode(e.target.value)}
               placeholder="Ex: M03"
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
 
         {/* Grade semanal */}
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-3 pb-1 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3 pb-1 border-b border-on-surface-variant/10">
             Horários por Dia da Semana
           </h3>
           <div className="space-y-2">
             {workDays.weekDays.map(dayConfig => (
               <div
                 key={dayConfig.day}
-                className={`border rounded-lg p-3 transition-colors ${dayConfig.active ? 'border-border bg-card' : 'border-border/50 bg-muted/30'}`}
+                className={`border rounded-[4px] p-3 transition-colors ${dayConfig.active ? 'border-border bg-card' : 'border-border/50 bg-muted/30'}`}
               >
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -272,7 +272,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
                   {dayConfig.active ? (
                     <div className="flex-1 flex flex-wrap items-center gap-2">
                       {dayConfig.shifts.map((shift, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5 bg-muted rounded-md px-2 py-1">
+                        <div key={idx} className="flex items-center gap-1.5 bg-muted rounded-[4px] px-2 py-1">
                           <input
                             type="time"
                             value={shift.start}
@@ -291,16 +291,16 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
                             className="p-0.5 hover:bg-danger-light rounded transition-colors"
                             title="Remover turno"
                           >
-                            <Trash2 className="h-3.5 w-3.5 text-danger" />
+                            <Icon name="delete" className="text-sm text-danger" />
                           </button>
                         </div>
                       ))}
                       <button
                         onClick={() => addShift(dayConfig.day)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground rounded-md transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground rounded-[4px] transition-colors"
                         title="Adicionar turno"
                       >
-                        <Plus className="h-3 w-3" /> Turno
+                        <Icon name="add" className="text-sm" /> Turno
                       </button>
                     </div>
                   ) : (
@@ -314,7 +314,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
 
         {/* Feriados */}
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-3 pb-1 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3 pb-1 border-b border-on-surface-variant/10">
             Feriados
           </h3>
           <div className="space-y-2">
@@ -322,7 +322,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               <p className="text-xs text-muted-foreground italic">Nenhum feriado cadastrado.</p>
             )}
             {workDays.holidays.map((h, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-lg">
+              <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-[4px]">
                 <span className="text-sm text-foreground font-mono">{h.date}</span>
                 <span className="text-muted-foreground">—</span>
                 <span className="text-sm text-foreground flex-1">{h.name}</span>
@@ -331,7 +331,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
                   className="p-1 hover:bg-danger-light rounded transition-colors"
                   title="Remover feriado"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-danger" />
+                  <Icon name="delete" className="text-sm text-danger" />
                 </button>
               </div>
             ))}
@@ -340,7 +340,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
                 type="date"
                 value={newHolidayDate}
                 onChange={e => setNewHolidayDate(e.target.value)}
-                className="px-2 py-1.5 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                className="px-2 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <input
                 type="text"
@@ -348,21 +348,21 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
                 onChange={e => setNewHolidayName(e.target.value)}
                 placeholder="Nome do feriado"
                 onKeyDown={e => { if (e.key === 'Enter') addHoliday() }}
-                className="flex-1 px-2 py-1.5 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                className="flex-1 px-2 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <button
                 onClick={addHoliday}
                 disabled={!newHolidayDate || !newHolidayName.trim()}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-card hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-[4px] bg-card hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
+                <Icon name="add" className="text-sm" /> Adicionar
               </button>
             </div>
           </div>
         </div>
 
         {/* Rodapé */}
-        <div className="flex justify-end gap-3 pt-2 border-t border-border">
+        <div className="flex justify-end gap-3 pt-2 border-t border-on-surface-variant/10">
           <Button variant="outline" onClick={onClose} size="sm">Cancelar</Button>
           <Button onClick={handleSave} disabled={saving} size="sm">
             {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}

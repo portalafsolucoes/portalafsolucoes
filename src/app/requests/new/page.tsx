@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function NewRequestPage() {
   const router = useRouter()
@@ -100,7 +100,7 @@ export default function NewRequestPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={6}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="Descreva o problema ou necessidade de manutenção..."
                 />
               </div>
@@ -113,7 +113,7 @@ export default function NewRequestPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="NONE">Nenhuma</option>
                     <option value="LOW">Baixa</option>
@@ -130,7 +130,7 @@ export default function NewRequestPage() {
                   <select
                     value={formData.urgency}
                     onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="LOW">Baixa</option>
                     <option value="NORMAL">Normal</option>
@@ -148,7 +148,7 @@ export default function NewRequestPage() {
                   <select
                     value={formData.assetId}
                     onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Selecione um ativo</option>
                     {assets.map((asset) => (
@@ -166,7 +166,7 @@ export default function NewRequestPage() {
                   <select
                     value={formData.locationId}
                     onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Selecione uma localização</option>
                     {locations.map((location) => (
@@ -186,7 +186,7 @@ export default function NewRequestPage() {
                   <select
                     value={formData.teamId}
                     onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                     required
                   >
                     <option value="">Selecione uma equipe</option>

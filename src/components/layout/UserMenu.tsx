@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Settings, LogOut, ChevronDown, Shield, Wrench, UserCog, HardHat, Zap, Cog, Building2, LayoutGrid } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
 
 export function UserMenu() {
@@ -55,43 +55,43 @@ export function UserMenu() {
     }
   }
 
-  const getRoleIcon = () => {
+  const getRoleIcon = (): string => {
     switch (user.role) {
       case 'SUPER_ADMIN':
-        return <Shield className="w-4 h-4" />
+        return 'shield'
       case 'GESTOR':
-        return <UserCog className="w-4 h-4" />
+        return 'manage_accounts'
       case 'PLANEJADOR':
-        return <Cog className="w-4 h-4" />
+        return 'settings'
       case 'MECANICO':
-        return <Wrench className="w-4 h-4" />
+        return 'construction'
       case 'ELETRICISTA':
-        return <Zap className="w-4 h-4" />
+        return 'bolt'
       case 'OPERADOR':
-        return <HardHat className="w-4 h-4" />
+        return 'engineering'
       case 'CONSTRUTOR_CIVIL':
-        return <Building2 className="w-4 h-4" />
+        return 'business'
       default:
-        return <User className="w-4 h-4" />
+        return 'person'
     }
   }
 
   const getRoleColor = () => {
     switch (user.role) {
       case 'SUPER_ADMIN':
-        return 'bg-[hsl(0,0%,10%)]'
+        return 'bg-on-surface'
       case 'GESTOR':
-        return 'bg-primary'
+        return 'bg-primary-graphite'
       case 'PLANEJADOR':
-        return 'bg-[hsl(0,0%,30%)]'
+        return 'bg-primary-dim'
       case 'MECANICO':
-        return 'bg-[hsl(0,0%,40%)]'
+        return 'bg-on-surface-variant'
       case 'ELETRICISTA':
-        return 'bg-[hsl(0,0%,45%)]'
+        return 'bg-on-surface-variant'
       case 'OPERADOR':
-        return 'bg-[hsl(0,0%,50%)]'
+        return 'bg-on-surface-variant'
       case 'CONSTRUTOR_CIVIL':
-        return 'bg-[hsl(0,0%,55%)]'
+        return 'bg-on-surface-variant'
       default:
         return 'bg-muted'
     }
@@ -101,80 +101,83 @@ export function UserMenu() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-2.5 py-1 text-sm transition-all hover:bg-accent/10 hover:border-border"
+        className="flex items-center gap-2 rounded-[4px] bg-surface-low px-2.5 py-1.5 text-sm transition-all hover:bg-surface-container"
       >
-        {/* Avatar */}
-        <div className={`w-6 h-6 rounded-md ${getRoleColor()} flex items-center justify-center text-white text-xs font-semibold`}>
+        <div className={`w-6 h-6 rounded-[4px] ${getRoleColor()} flex items-center justify-center text-white text-xs font-semibold`}>
           {getInitials()}
         </div>
 
-        <span className="hidden md:block font-medium text-foreground text-sm">
+        <span className="hidden md:block font-medium text-on-surface text-sm">
           {user.firstName}
         </span>
 
-        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <Icon name="expand_more" className={`text-lg text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-popover rounded-lg shadow-xl border border-border py-2 z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-card rounded-[4px] ambient-ambient-shadow py-2 z-50">
           {/* User Info Header */}
-          <div className="px-4 py-3 border-b border-border">
+          <div className="px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full ${getRoleColor()} flex items-center justify-center text-white font-semibold`}>
+              <div className={`w-12 h-12 rounded-[4px] ${getRoleColor()} flex items-center justify-center text-white font-semibold`}>
                 {getInitials()}
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium text-popover-foreground">
+                <div className="text-sm font-medium text-on-surface">
                   {user.firstName} {user.lastName}
                 </div>
-                <div className="text-xs text-muted-foreground">{user.email}</div>
+                <div className="text-xs text-on-surface-variant">{user.email}</div>
                 {user.jobTitle && (
-                  <div className="text-xs text-muted-foreground mt-1">{user.jobTitle}</div>
+                  <div className="text-xs text-on-surface-variant mt-1">{user.jobTitle}</div>
                 )}
               </div>
             </div>
-            <div className="mt-2 flex items-center gap-2 px-2 py-1 bg-accent/20 rounded text-xs text-popover-foreground">
-              {getRoleIcon()}
+            <div className="mt-2 flex items-center gap-2 px-2 py-1 bg-surface-low rounded-[4px] text-xs text-on-surface">
+              <Icon name={getRoleIcon()} className="text-base" />
               <span>{getRoleName()}</span>
             </div>
           </div>
+
+          <div className="mx-4 h-px bg-on-surface-variant/10" />
 
           {/* Menu Items */}
           <div className="py-2">
             <Link
               href="/profile"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-popover-foreground hover:bg-accent/10 transition-colors"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-low transition-colors"
               onClick={() => setIsOpen(false)}
             >
-              <User className="w-4 h-4" />
+              <Icon name="person" className="text-lg text-on-surface-variant" />
               Meu Perfil
             </Link>
 
             <Link
               href="/settings"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-popover-foreground hover:bg-accent/10 transition-colors"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-low transition-colors"
               onClick={() => setIsOpen(false)}
             >
-              <Settings className="w-4 h-4" />
+              <Icon name="settings" className="text-lg text-on-surface-variant" />
               Configurações
             </Link>
           </div>
 
+          <div className="mx-4 h-px bg-on-surface-variant/10" />
+
           {/* Portal & Logout */}
-          <div className="border-t border-border pt-2">
+          <div className="pt-2">
             <button
               onClick={() => { setIsOpen(false); router.push('/hub') }}
-              className="flex items-center gap-3 px-4 py-2 text-sm text-popover-foreground hover:bg-accent/10 transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-low transition-colors w-full"
             >
-              <LayoutGrid className="w-4 h-4" />
+              <Icon name="grid_view" className="text-lg text-on-surface-variant" />
               Voltar ao Portal
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-accent/10 transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-surface-low transition-colors w-full"
             >
-              <LogOut className="w-4 h-4" />
+              <Icon name="logout" className="text-lg text-on-surface-variant" />
               Sair do Sistema
             </button>
           </div>

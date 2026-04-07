@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Plus, Search, LayoutGrid, Table2, Filter } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Icon } from '@/components/ui/Icon'
+
 import { getStatusColor } from '@/lib/utils'
 import { AssetTree } from '@/components/assets/AssetTree'
 import { AssetTable } from '@/components/assets/AssetTable'
@@ -164,42 +165,42 @@ export default function AssetsPage() {
             
             {/* Search */}
             <div className="flex-1 max-w-md relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar ativos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {/* View Mode Toggle - Estilo TracOS */}
-            <div className="flex items-center bg-secondary rounded-lg p-1">
+            <div className="flex items-center bg-secondary rounded-[4px] p-1">
               <button
                 onClick={() => setViewMode('tree')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
                   viewMode === 'tree'
-                    ? 'bg-background text-foreground shadow-sm'
+                    ? 'bg-background text-foreground ambient-shadow'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="Visualização em Árvore"
               >
-                <LayoutGrid className="w-4 h-4" />
+                <Icon name="grid_view" className="text-base" />
                 <span className="hidden md:inline">Árvore</span>
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
                   viewMode === 'table'
-                    ? 'bg-background text-foreground shadow-sm'
+                    ? 'bg-background text-foreground ambient-shadow'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="Visualização em Tabela"
               >
-                <Table2 className="w-4 h-4" />
+                <Icon name="table" className="text-base" />
                 <span className="hidden md:inline">Tabela</span>
               </button>
             </div>
@@ -208,7 +209,7 @@ export default function AssetsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 px-3 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">Todos os Status</option>
               <option value="OPERATIONAL">Operacional</option>
@@ -219,7 +220,7 @@ export default function AssetsPage() {
 
             <ExportButton data={filteredAssets} entity="assets" />
             <Button onClick={handleAddNewAsset} className="whitespace-nowrap">
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" className="mr-2 text-base" />
               Adicionar
             </Button>
           </div>

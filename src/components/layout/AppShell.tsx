@@ -21,8 +21,8 @@ function ShellFrame({ children }: { children: ReactNode }) {
     <div className="h-screen overflow-hidden bg-background">
       <Sidebar />
       <Header />
-      <main className={`h-[calc(100vh-44px)] mt-11 overflow-hidden transition-all duration-300 ${isCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <div className="h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
+      <main className={`h-[calc(100vh-64px)] mt-16 overflow-hidden transition-all duration-300 ${isCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+        <div className="h-full overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>

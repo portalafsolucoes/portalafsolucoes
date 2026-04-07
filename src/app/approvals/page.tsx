@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { CheckCircle, XCircle, FileText, Calendar, Users, Paperclip, AlertCircle } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Icon } from '@/components/ui/Icon'
+
 import { formatDate, getStatusColor } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
 import { ApproveRequestModal } from '@/components/approvals/ApproveRequestModal'
@@ -145,7 +146,7 @@ export default function ApprovalsPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <CheckCircle className="w-8 h-8 text-primary" />
+            <Icon name="check_circle" className="text-3xl text-primary" />
             <h1 className="text-3xl font-bold text-foreground">
               Aprovações de Solicitações
             </h1>
@@ -157,7 +158,7 @@ export default function ApprovalsPage() {
           </p>
           {requests.length > 0 && (
             <div className="mt-3 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
+              <Icon name="error" className="text-xl text-orange-600" />
               <span className="text-sm font-medium text-orange-600">
                 {requests.length} solicitação(ões) aguardando aprovação
               </span>
@@ -172,7 +173,7 @@ export default function ApprovalsPage() {
         ) : requests.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <Icon name="check_circle" className="text-6xl text-green-500 mx-auto mb-4" />
               <p className="text-lg font-semibold text-foreground mb-2">
                 Nenhuma solicitação pendente
               </p>
@@ -189,7 +190,7 @@ export default function ApprovalsPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <FileText className="w-6 h-6 text-primary" />
+                        <Icon name="description" className="text-2xl text-primary" />
                         <h3 className="text-xl font-semibold text-foreground">
                           {request.title}
                         </h3>
@@ -214,7 +215,7 @@ export default function ApprovalsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
                         {request.createdBy && (
                           <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
+                            <Icon name="group" className="text-base" />
                             <div>
                               <p className="font-medium text-foreground">Solicitado por:</p>
                               <p>{request.createdBy.firstName} {request.createdBy.lastName}</p>
@@ -225,7 +226,7 @@ export default function ApprovalsPage() {
                         
                         {request.team && (
                           <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
+                            <Icon name="group" className="text-base" />
                             <div>
                               <p className="font-medium text-foreground">Equipe:</p>
                               <p>{request.team.name}</p>
@@ -234,7 +235,7 @@ export default function ApprovalsPage() {
                         )}
                         
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
+                          <Icon name="calendar_today" className="text-base" />
                           <div>
                             <p className="font-medium text-foreground">Criado em:</p>
                             <p>{formatDate(request.createdAt)}</p>
@@ -247,7 +248,7 @@ export default function ApprovalsPage() {
 
                       {request.files && request.files.length > 0 && (
                         <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                          <Paperclip className="w-4 h-4" />
+                          <Icon name="attach_file" className="text-base" />
                           <span>{request.files.length} arquivo(s) anexado(s)</span>
                         </div>
                       )}
@@ -259,7 +260,7 @@ export default function ApprovalsPage() {
                         disabled={processing}
                         className="bg-success hover:bg-green-700 text-white flex items-center gap-2"
                       >
-                        <CheckCircle className="w-4 h-4" />
+                        <Icon name="check_circle" className="text-base" />
                         Aprovar
                       </Button>
                       <Button
@@ -268,7 +269,7 @@ export default function ApprovalsPage() {
                         variant="outline"
                         className="border-red-600 text-danger hover:bg-danger-light flex items-center gap-2"
                       >
-                        <XCircle className="w-4 h-4" />
+                        <Icon name="cancel" className="text-base" />
                         Rejeitar
                       </Button>
                     </div>
@@ -324,7 +325,7 @@ export default function ApprovalsPage() {
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="w-full px-3 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
               placeholder="Explique o motivo da rejeição..."
               disabled={processing}
             />

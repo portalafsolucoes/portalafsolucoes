@@ -3,21 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Calendar, 
-  MapPin, 
-  Box, 
-  User,
-  Clock,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Icon } from '@/components/ui/Icon'
+
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -79,7 +69,7 @@ export default function WorkOrderDetailPage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
       </AppLayout>
     )
@@ -98,24 +88,24 @@ export default function WorkOrderDetailPage() {
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
+            <Icon name="arrow_back" className="text-xl mr-2" />
             Voltar
           </button>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
                   OS {displayId}
                 </h1>
                 {workOrder.systemStatus === 'IN_SYSTEM' ? (
-                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-success-light text-success-light-foreground border border-gray-300">
+                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-success-light text-success-light-foreground">
                     ✅ No Sistema
                   </span>
                 ) : (
-                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-gray-200 text-gray-800 border border-gray-300">
+                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-surface-high text-foreground">
                     📝 Fora do Sistema
                   </span>
                 )}
@@ -126,13 +116,13 @@ export default function WorkOrderDetailPage() {
                   {workOrder.priority}
                 </span>
               </div>
-              <p className="text-lg text-gray-600">{workOrder.title}</p>
+              <p className="text-lg text-muted-foreground">{workOrder.title}</p>
             </div>
 
             <div className="flex gap-3">
               <Link href={`/work-orders/${params.id}/edit`}>
                 <Button variant="outline" className="flex items-center gap-2">
-                  <Edit className="h-4 w-4" />
+                  <Icon name="edit" className="text-base" />
                   Editar
                 </Button>
               </Link>
@@ -141,7 +131,7 @@ export default function WorkOrderDetailPage() {
                 className="flex items-center gap-2 text-danger hover:text-danger hover:bg-danger-light"
                 onClick={() => setShowDeleteModal(true)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Icon name="delete" className="text-base" />
                 Excluir
               </Button>
             </div>
@@ -159,7 +149,7 @@ export default function WorkOrderDetailPage() {
                   <CardTitle>Descrição</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 whitespace-pre-wrap">{workOrder.description}</p>
+                  <p className="text-foreground whitespace-pre-wrap">{workOrder.description}</p>
                 </CardContent>
               </Card>
             )}
@@ -173,18 +163,18 @@ export default function WorkOrderDetailPage() {
                 <CardContent>
                   <div className="space-y-3">
                     {workOrder.tasks.map((task: any) => (
-                      <div key={task.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={task.id} className="flex items-start gap-3 p-3 bg-surface rounded-[4px]">
                         {task.completed ? (
-                          <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                          <Icon name="check_circle" className="text-xl text-success flex-shrink-0 mt-0.5" />
                         ) : (
-                          <div className="h-5 w-5 border-2 border-gray-300 rounded flex-shrink-0 mt-0.5" />
+                          <div className="h-5 w-5 border-2 border-border rounded flex-shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1">
-                          <p className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                          <p className={`font-medium ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                             {task.label}
                           </p>
                           {task.notes && (
-                            <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
+                            <p className="text-sm text-muted-foreground mt-1">{task.notes}</p>
                           )}
                         </div>
                       </div>
@@ -205,58 +195,58 @@ export default function WorkOrderDetailPage() {
               <CardContent className="space-y-4">
                 {workOrder.asset && (
                   <div className="flex items-start gap-3">
-                    <Box className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <Icon name="inventory_2" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Ativo</p>
-                      <p className="font-medium text-gray-900">{workOrder.asset.name}</p>
+                      <p className="text-sm text-muted-foreground">Ativo</p>
+                      <p className="font-medium text-foreground">{workOrder.asset.name}</p>
                     </div>
                   </div>
                 )}
 
                 {workOrder.location && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <Icon name="location_on" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Localização</p>
-                      <p className="font-medium text-gray-900">{workOrder.location.name}</p>
+                      <p className="text-sm text-muted-foreground">Localização</p>
+                      <p className="font-medium text-foreground">{workOrder.location.name}</p>
                     </div>
                   </div>
                 )}
 
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <Icon name="calendar_today" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Criado em</p>
-                    <p className="font-medium text-gray-900">{formatDate(workOrder.createdAt)}</p>
+                    <p className="text-sm text-muted-foreground">Criado em</p>
+                    <p className="font-medium text-foreground">{formatDate(workOrder.createdAt)}</p>
                   </div>
                 </div>
 
                 {workOrder.dueDate && (
                   <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <Icon name="schedule" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Vencimento</p>
-                      <p className="font-medium text-gray-900">{formatDate(workOrder.dueDate)}</p>
+                      <p className="text-sm text-muted-foreground">Vencimento</p>
+                      <p className="font-medium text-foreground">{formatDate(workOrder.dueDate)}</p>
                     </div>
                   </div>
                 )}
 
                 {workOrder.completedOn && (
                   <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <Icon name="check_circle" className="text-xl text-success flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Concluído em</p>
-                      <p className="font-medium text-gray-900">{formatDate(workOrder.completedOn)}</p>
+                      <p className="text-sm text-muted-foreground">Concluído em</p>
+                      <p className="font-medium text-foreground">{formatDate(workOrder.completedOn)}</p>
                     </div>
                   </div>
                 )}
 
                 {workOrder.createdBy && (
                   <div className="flex items-start gap-3">
-                    <User className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <Icon name="person" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Criado por</p>
-                      <p className="font-medium text-gray-900">
+                      <p className="text-sm text-muted-foreground">Criado por</p>
+                      <p className="font-medium text-foreground">
                         {workOrder.createdBy.firstName} {workOrder.createdBy.lastName}
                       </p>
                     </div>
@@ -281,10 +271,10 @@ export default function WorkOrderDetailPage() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-foreground">
                             {user.firstName} {user.lastName}
                           </p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
                     ))}
@@ -299,17 +289,17 @@ export default function WorkOrderDetailPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-card rounded-[4px] ambient-shadow-lg max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-12 w-12 rounded-full bg-danger-light flex items-center justify-center">
-                <AlertCircle className="h-6 w-6 text-danger" />
+                <Icon name="error" className="text-2xl text-danger" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Confirmar Exclusão</h3>
-                <p className="text-sm text-gray-600">Esta ação não pode ser desfeita</p>
+                <h3 className="text-lg font-bold text-foreground">Confirmar Exclusão</h3>
+                <p className="text-sm text-muted-foreground">Esta ação não pode ser desfeita</p>
               </div>
             </div>
-            <p className="text-gray-700 mb-6">
+            <p className="text-foreground mb-6">
               Tem certeza que deseja excluir a ordem de serviço <strong>{displayId}</strong>?
             </p>
             <div className="flex gap-3 justify-end">
@@ -321,7 +311,7 @@ export default function WorkOrderDetailPage() {
                 Cancelar
               </Button>
               <Button
-                className="bg-danger hover:bg-gray-700 text-white"
+                className="bg-danger hover:bg-primary-graphite text-white"
                 onClick={handleDelete}
                 disabled={deleting}
               >

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Save, Image as ImageIcon, Upload, FileText, Trash, ChevronDown, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface AssetCreatePanelProps {
   onClose: () => void
@@ -14,13 +14,13 @@ interface AssetCreatePanelProps {
 function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <div className="rounded-[4px] overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted/50 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
       >
-        {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        {open ? <Icon name="expand_more" className="text-base" /> : <Icon name="chevron_right" className="text-base" />}
         {title}
       </button>
       {open && <div className="p-4 space-y-3">{children}</div>}
@@ -247,17 +247,17 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
     }
   }
 
-  const selectClass = "w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+  const selectClass = "w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring text-sm"
 
   return (
     <div className="h-full flex flex-col bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-on-surface-variant/10">
         <h2 className="text-xl font-bold text-foreground">
           {parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Cadastrar novo Ativo'}
         </h2>
         <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
-          <X className="w-5 h-5 text-muted-foreground" />
+          <Icon name="close" className="text-xl text-muted-foreground" />
         </button>
       </div>
 
@@ -517,7 +517,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
             </label>
           </div>
           {formData.hasCounter && (
-            <div className="grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-lg">
+            <div className="grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-[4px]">
               <Input
                 label="Tipo do Contador"
                 value={formData.counterType}
@@ -685,18 +685,18 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
             <label className="block text-sm font-medium text-foreground mb-1">Foto Principal do Ativo</label>
             {mainImagePreview ? (
               <div className="relative">
-                <img src={mainImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
+                <img src={mainImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-[4px]" />
                 <button
                   type="button"
                   onClick={() => { setMainImage(null); setMainImagePreview('') }}
                   className="absolute top-2 right-2 p-1 bg-danger text-white rounded-full hover:bg-red-700"
                 >
-                  <X className="w-4 h-4" />
+                  <Icon name="close" className="text-base" />
                 </button>
               </div>
             ) : (
-              <div onClick={() => mainImageInputRef.current?.click()} className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-input rounded-lg cursor-pointer hover:bg-secondary">
-                <ImageIcon className="w-8 h-8 text-muted-foreground mb-2" />
+              <div onClick={() => mainImageInputRef.current?.click()} className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-input rounded-[4px] cursor-pointer hover:bg-secondary">
+                <Icon name="image" className="text-3xl text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Clique para adicionar foto principal</p>
                 <input ref={mainImageInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" />
               </div>
@@ -705,8 +705,8 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Arquivos Anexos (até 10)</label>
             <input ref={attachmentsInputRef} type="file" multiple onChange={handleAttachmentsChange} className="hidden" disabled={attachments.length >= 10} />
-            <div onClick={() => attachmentsInputRef.current?.click()} className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-input rounded-lg cursor-pointer hover:bg-secondary">
-              <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+            <div onClick={() => attachmentsInputRef.current?.click()} className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-input rounded-[4px] cursor-pointer hover:bg-secondary">
+              <Icon name="upload" className="text-2xl text-muted-foreground mb-1" />
               <p className="text-xs text-muted-foreground">Adicionar PDFs, fotos, etc.</p>
               <p className="text-xs text-muted-foreground">{attachments.length}/10 arquivos</p>
             </div>
@@ -715,11 +715,11 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
                 {attachments.map((file, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-secondary rounded">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <Icon name="description" className="text-base text-muted-foreground" />
                       <span className="text-sm text-foreground truncate">{file.name}</span>
                     </div>
                     <button type="button" onClick={() => removeAttachment(index)} className="text-danger hover:text-danger">
-                      <Trash className="w-4 h-4" />
+                      <Icon name="delete" className="text-base" />
                     </button>
                   </div>
                 ))}
@@ -729,12 +729,12 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         </Section>
 
         {/* Botões */}
-        <div className="flex gap-3 pt-4 border-t border-border">
+        <div className="flex gap-3 pt-4 border-t border-on-surface-variant/10">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
           <Button type="submit" disabled={loading} className="flex-1">
-            <Save className="w-4 h-4 mr-2" />
+            <Icon name="save" className="text-base mr-2" />
             {loading ? 'Criando...' : 'Criar Ativo'}
           </Button>
         </div>

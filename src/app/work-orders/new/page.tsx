@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function NewWorkOrderPage() {
   const router = useRouter()
@@ -92,7 +92,7 @@ export default function NewWorkOrderPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-primary/5 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="bg-primary/5 border border-blue-200 rounded-[4px] p-4 mb-6">
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">Número da OS</h3>
                 <Input
                   label="Número Proteus (6 dígitos) - Opcional"
@@ -122,7 +122,7 @@ export default function NewWorkOrderPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -134,7 +134,7 @@ export default function NewWorkOrderPage() {
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="CORRECTIVE">Corretiva</option>
                     <option value="PREVENTIVE">Preventiva</option>
@@ -150,7 +150,7 @@ export default function NewWorkOrderPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="NONE">Nenhuma</option>
                     <option value="LOW">Baixa</option>
@@ -169,7 +169,7 @@ export default function NewWorkOrderPage() {
               />
 
               {formData.type === 'PREVENTIVE' && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="bg-purple-50 border border-purple-200 rounded-[4px] p-4">
                   <h3 className="text-sm font-semibold text-purple-900 mb-3">⏰ Periodicidade (Manutenção Preventiva)</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -179,7 +179,7 @@ export default function NewWorkOrderPage() {
                       <select
                         value={formData.maintenanceFrequency}
                         onChange={(e) => setFormData({ ...formData, maintenanceFrequency: e.target.value })}
-                        className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
                         <option value="">Selecione a frequência</option>
                         <option value="DAILY">Diária</option>
@@ -212,7 +212,7 @@ export default function NewWorkOrderPage() {
                   <select
                     value={formData.assetId}
                     onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Selecione um ativo</option>
                     {assets.map((asset) => (
@@ -230,7 +230,7 @@ export default function NewWorkOrderPage() {
                   <select
                     value={formData.locationId}
                     onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Selecione uma localização</option>
                     {locations.map((location) => (
@@ -242,7 +242,7 @@ export default function NewWorkOrderPage() {
                 </div>
               </div>
 
-              <div className="bg-success-light border border-green-200 rounded-lg p-4">
+              <div className="bg-success-light border border-green-200 rounded-[4px] p-4">
                 <h3 className="text-sm font-semibold text-green-900 mb-3">👥 Atribuição</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -252,7 +252,7 @@ export default function NewWorkOrderPage() {
                     <select
                       value={formData.assignedTeamIds[0] || ''}
                       onChange={(e) => setFormData({ ...formData, assignedTeamIds: e.target.value ? [e.target.value] : [] })}
-                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Selecione uma equipe</option>
                       {teams.map((team) => (
@@ -270,7 +270,7 @@ export default function NewWorkOrderPage() {
                     <select
                       value={formData.assignedToId}
                       onChange={(e) => setFormData({ ...formData, assignedToId: e.target.value })}
-                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Nenhum (líder atribuirá)</option>
                       {users.map((user) => (

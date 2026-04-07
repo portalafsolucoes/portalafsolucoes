@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { Location } from '@/types'
 
 export default function NewPersonPage() {
@@ -90,18 +91,18 @@ export default function NewPersonPage() {
           href="/people"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <Icon name="arrow_back" className="text-base" />
           Voltar para Pessoas
         </Link>
 
-        <div className="bg-card rounded-lg shadow-sm p-6">
+        <div className="bg-card rounded-[4px] ambient-shadow p-6">
           <h1 className="text-2xl font-bold text-foreground mb-6">Adicionar Nova Pessoa</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
-                  Nome <span className="text-red-500">*</span>
+                  Nome <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -110,12 +111,12 @@ export default function NewPersonPage() {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
               <div>
                 <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-1">
-                  Sobrenome <span className="text-red-500">*</span>
+                  Sobrenome <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -124,7 +125,7 @@ export default function NewPersonPage() {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -132,7 +133,7 @@ export default function NewPersonPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-                  Email <span className="text-red-500">*</span>
+                  Email <span className="text-danger">*</span>
                 </label>
                 <input
                   type="email"
@@ -141,12 +142,12 @@ export default function NewPersonPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
-                  Senha <span className="text-red-500">*</span>
+                  Senha <span className="text-danger">*</span>
                 </label>
                 <input
                   type="password"
@@ -156,7 +157,7 @@ export default function NewPersonPage() {
                   onChange={handleChange}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -172,7 +173,7 @@ export default function NewPersonPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
               <div>
@@ -185,7 +186,7 @@ export default function NewPersonPage() {
                   name="jobTitle"
                   value={formData.jobTitle}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -193,7 +194,7 @@ export default function NewPersonPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
-                  Papel <span className="text-red-500">*</span>
+                  Papel <span className="text-danger">*</span>
                 </label>
                 <select
                   id="role"
@@ -201,7 +202,7 @@ export default function NewPersonPage() {
                   value={formData.role}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="SUPER_ADMIN">Super Administrador</option>
                   <option value="GESTOR">Gestor</option>
@@ -224,7 +225,7 @@ export default function NewPersonPage() {
                   onChange={handleChange}
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -238,7 +239,7 @@ export default function NewPersonPage() {
                 name="locationId"
                 value={formData.locationId}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
               >
                 <option value="">Selecione uma localização</option>
                 {locations.map(location => (
@@ -266,16 +267,16 @@ export default function NewPersonPage() {
             <div className="flex justify-end gap-3 pt-6 border-t border-border">
               <Link
                 href="/people"
-                className="px-6 py-2 border border-input rounded-lg text-foreground hover:bg-secondary transition-colors"
+                className="px-6 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
               >
                 Cancelar
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
+                <Icon name="save" className="text-base" />
                 {loading ? 'Salvando...' : 'Salvar Pessoa'}
               </button>
             </div>

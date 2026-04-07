@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Edit, Trash2, Users as UsersIcon, Package, Wrench } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface TeamDetailModalProps {
   isOpen: boolean
@@ -79,7 +79,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <UsersIcon className="w-8 h-8 text-primary" />
+              <Icon name="group" className="text-3xl text-primary" />
               {team.name}
             </h2>
             {team.description && (
@@ -90,16 +90,16 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
           <div className="flex gap-2">
             <button
               onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
             >
-              <Edit className="w-4 h-4" />
+              <Icon name="edit" className="text-base" />
               Editar
             </button>
             <button
               onClick={handleDelete}
-              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors"
             >
-              <Trash2 className="w-4 h-4" />
+              <Icon name="delete" className="text-base" />
               Excluir
             </button>
           </div>
@@ -107,9 +107,9 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-primary/5 rounded-lg p-4">
+          <div className="bg-primary/5 rounded-[4px] p-4">
             <div className="flex items-center gap-3">
-              <UsersIcon className="w-8 h-8 text-primary" />
+              <Icon name="group" className="text-3xl text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Membros</p>
                 <p className="text-2xl font-bold text-foreground">{team._count?.members || 0}</p>
@@ -117,9 +117,9 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
             </div>
           </div>
           
-          <div className="bg-success-light rounded-lg p-4">
+          <div className="bg-success-light rounded-[4px] p-4">
             <div className="flex items-center gap-3">
-              <Wrench className="w-8 h-8 text-success" />
+              <Icon name="construction" className="text-3xl text-success" />
               <div>
                 <p className="text-sm text-muted-foreground">Ordens de Serviço</p>
                 <p className="text-2xl font-bold text-foreground">{team._count?.assignedWorkOrders || 0}</p>
@@ -127,9 +127,9 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
             </div>
           </div>
           
-          <div className="bg-purple-50 rounded-lg p-4">
+          <div className="bg-purple-50 rounded-[4px] p-4">
             <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-purple-600" />
+              <Icon name="inventory_2" className="text-3xl text-purple-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Ativos Atribuídos</p>
                 <p className="text-2xl font-bold text-foreground">{team._count?.assignedAssets || 0}</p>
@@ -139,14 +139,14 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
         </div>
 
         {/* Members */}
-        <div className="bg-secondary rounded-lg p-4">
+        <div className="bg-secondary rounded-[4px] p-4">
           <h3 className="text-lg font-semibold text-foreground mb-4">Membros da Equipe</h3>
           {team.members && team.members.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {team.members.map((membership: any) => (
                 <div
                   key={membership.id}
-                  className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-card rounded-[4px]"
                 >
                   {membership.user.image ? (
                     <img

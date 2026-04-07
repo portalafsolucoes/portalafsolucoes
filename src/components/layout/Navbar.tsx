@@ -2,19 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { 
-  Wrench, 
-  Package, 
-  MapPin, 
-  Users, 
-  ClipboardList, 
-  BarChart3,
-  LogOut,
-  Menu,
-  X,
-  CheckCircle,
-  Activity
-} from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { usePendingCount } from '@/hooks/usePendingCount'
@@ -27,20 +15,20 @@ export function Navbar() {
   const pendingCount = usePendingCount()
 
   const baseNavigation = [
-    { name: 'Ordens de Serviço', href: '/work-orders', icon: Wrench },
-    { name: 'Ativos', href: '/assets', icon: Package },
-    { name: 'Localizações', href: '/locations', icon: MapPin },
-    { name: 'Solicitações', href: '/requests', icon: ClipboardList },
-    { name: 'Pessoas/Equipes', href: '/people-teams', icon: Users },
-    { name: 'GEP', href: '/gep', icon: Activity },
-    { name: 'Relatórios', href: '/analytics', icon: BarChart3 }
+    { name: 'Ordens de Serviço', href: '/work-orders', icon: 'construction' },
+    { name: 'Ativos', href: '/assets', icon: 'inventory_2' },
+    { name: 'Localizações', href: '/locations', icon: 'location_on' },
+    { name: 'Solicitações', href: '/requests', icon: 'assignment' },
+    { name: 'Pessoas/Equipes', href: '/people-teams', icon: 'group' },
+    { name: 'GEP', href: '/gep', icon: 'monitoring' },
+    { name: 'Relatórios', href: '/analytics', icon: 'bar_chart' }
   ]
 
   // Adicionar Aprovações para admins
   const navigation = (userRole === 'SUPER_ADMIN' || userRole === 'GESTOR')
     ? [
         ...baseNavigation.slice(0, 5),
-        { name: 'Aprovações', href: '/requests/approvals', icon: CheckCircle, badge: pendingCount },
+        { name: 'Aprovações', href: '/requests/approvals', icon: 'check_circle', badge: pendingCount },
         ...baseNavigation.slice(5)
       ]
     : baseNavigation
@@ -51,7 +39,7 @@ export function Navbar() {
   }
 
   return (
-    <nav className="bg-card border-b border-border shadow-sm">
+    <nav className="bg-card border-b border-on-surface-variant/10 ambient-shadow">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between">
           <div className="flex">
@@ -62,7 +50,6 @@ export function Navbar() {
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navigation.map((item: any) => {
-                const Icon = item.icon
                 const isActive = pathname === item.href
                 return (
                   <Link
@@ -74,7 +61,7 @@ export function Navbar() {
                         : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
                     }`}
                   >
-                    <Icon className="mr-2 h-4 w-4" />
+                    <Icon name={item.icon} className="mr-2 text-base" />
                     {item.name}
                     {item.badge > 0 && (
                       <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-danger-foreground bg-danger rounded-full">
@@ -91,19 +78,19 @@ export function Navbar() {
               onClick={handleLogout}
               className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground hover:text-primary"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <Icon name="logout" className="mr-2 text-base" />
               Sair
             </button>
           </div>
           <div className="flex items-center sm:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+              className="inline-flex items-center justify-center rounded-[4px] p-2 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             >
               {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
+                <Icon name="close" className="text-2xl" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Icon name="menu" className="text-2xl" />
               )}
             </button>
           </div>
@@ -114,7 +101,6 @@ export function Navbar() {
         <div className="sm:hidden">
           <div className="space-y-1 pb-3 pt-2">
             {navigation.map((item) => {
-              const Icon = item.icon
               const isActive = pathname === item.href
               return (
                 <Link
@@ -128,7 +114,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <div className="flex items-center">
-                    <Icon className="mr-3 h-5 w-5" />
+                    <Icon name={item.icon} className="mr-3 text-xl" />
                     {item.name}
                   </div>
                 </Link>
@@ -139,7 +125,7 @@ export function Navbar() {
               className="block w-full border-l-4 border-transparent py-2 pl-3 pr-4 text-left text-base font-medium text-muted-foreground hover:border-border hover:bg-accent/5 hover:text-foreground"
             >
               <div className="flex items-center">
-                <LogOut className="mr-3 h-5 w-5" />
+                <Icon name="logout" className="mr-3 text-xl" />
                 Sair
               </div>
             </button>

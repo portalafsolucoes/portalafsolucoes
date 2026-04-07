@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface WorkOrderEditModalProps {
   isOpen: boolean
@@ -185,7 +185,7 @@ export function WorkOrderEditModal({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={2}
-            className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -198,7 +198,7 @@ export function WorkOrderEditModal({
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="CORRECTIVE">Corretiva</option>
               <option value="PREVENTIVE">Preventiva</option>
@@ -214,7 +214,7 @@ export function WorkOrderEditModal({
             <select
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="NONE">Nenhuma</option>
               <option value="LOW">Baixa</option>
@@ -230,7 +230,7 @@ export function WorkOrderEditModal({
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="PENDING">Pendente</option>
               <option value="RELEASED">Liberada</option>
@@ -275,7 +275,7 @@ export function WorkOrderEditModal({
             <select
               value={formData.assetId}
               onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Nenhum</option>
               {assets.map((asset) => (
@@ -293,7 +293,7 @@ export function WorkOrderEditModal({
             <select
               value={formData.locationId}
               onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Nenhuma</option>
               {locations.map((location) => (
@@ -320,7 +320,7 @@ export function WorkOrderEditModal({
                 setTeamMembers([])
               }
             }}
-            className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Nenhuma equipe</option>
             {teams.map((team) => (
@@ -339,7 +339,7 @@ export function WorkOrderEditModal({
           <select
             value={formData.assignedToId}
             onChange={(e) => setFormData({ ...formData, assignedToId: e.target.value })}
-            className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={teamMembers.length === 0}
           >
             <option value="">

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { GitBranch, ChevronRight, ChevronDown, Building2, MapPin, Wrench, Box, FileText, ClipboardList, AlertTriangle } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
 import { getStatusColor } from '@/lib/utils'
 
 interface TreeNode {
@@ -146,10 +147,10 @@ export default function TreePage() {
 
   const getNodeIcon = (type: string) => {
     switch (type) {
-      case 'unit': return <Building2 className="h-4 w-4 text-foreground" />
-      case 'area': return <MapPin className="h-4 w-4 text-muted-foreground" />
-      case 'workCenter': return <Wrench className="h-4 w-4 text-muted-foreground" />
-      case 'asset': return <Box className="h-4 w-4 text-foreground" />
+      case 'unit': return <Icon name="business" className="text-base text-foreground" />
+      case 'area': return <Icon name="location_on" className="text-base text-muted-foreground" />
+      case 'workCenter': return <Icon name="construction" className="text-base text-muted-foreground" />
+      case 'asset': return <Icon name="inventory_2" className="text-base text-foreground" />
       default: return null
     }
   }
@@ -163,7 +164,7 @@ export default function TreePage() {
     return (
       <div key={node.id}>
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded-md transition-colors text-sm ${
+          className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded-[4px] transition-colors text-sm ${
             isSelected ? 'bg-primary/10 text-foreground font-medium' : 'hover:bg-muted/50'
           }`}
           style={{ paddingLeft: `${12 + depth * 20}px` }}
@@ -173,7 +174,7 @@ export default function TreePage() {
           }}
         >
           {hasChildren ? (
-            isExpanded ? <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+            isExpanded ? <Icon name="expand_more" className=".5 text-sm.5 flex-shrink-0" /> : <Icon name="chevron_right" className=".5 text-sm.5 flex-shrink-0" />
           ) : (
             <span className="w-3.5" />
           )}
@@ -198,7 +199,7 @@ export default function TreePage() {
     <AppLayout>
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <GitBranch className="h-7 w-7 text-foreground" />
+          <Icon name="account_tree" className="text-2xl text-foreground" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">Árvore</h1>
             <p className="text-sm text-muted-foreground">Navegação hierárquica de ativos</p>
@@ -206,12 +207,12 @@ export default function TreePage() {
         </div>
 
         {/* Seletor de Unidade */}
-        <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+        <div className="flex items-center gap-3 p-3 bg-card rounded-[4px]">
           <label className="text-sm font-medium text-foreground">Unidade:</label>
           <select
             value={selectedUnit}
             onChange={e => selectUnit(e.target.value)}
-            className="flex-1 max-w-xs px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="flex-1 max-w-xs px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Selecione a unidade...</option>
             {units.map((u: any) => (
@@ -221,17 +222,17 @@ export default function TreePage() {
         </div>
 
         {!selectedUnit ? (
-          <div className="border border-border rounded-lg bg-card p-12 text-center text-muted-foreground">
+          <div className="rounded-[4px] bg-card p-12 text-center text-muted-foreground">
             Selecione uma unidade para visualizar a árvore de ativos.
           </div>
         ) : loading ? (
           <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Painel Esquerdo: Árvore */}
-            <div className="lg:col-span-1 border border-border rounded-lg bg-card overflow-hidden">
+            <div className="lg:col-span-1 rounded-[4px] bg-card overflow-hidden">
               <div className="p-3 border-b border-border bg-muted/30">
                 <h3 className="text-sm font-medium text-foreground">Estrutura de Ativos</h3>
               </div>
@@ -245,7 +246,7 @@ export default function TreePage() {
             </div>
 
             {/* Painel Direito: Detalhes */}
-            <div className="lg:col-span-2 border border-border rounded-lg bg-card overflow-hidden">
+            <div className="lg:col-span-2 rounded-[4px] bg-card overflow-hidden">
               <div className="p-3 border-b border-border bg-muted/30">
                 <h3 className="text-sm font-medium text-foreground">
                   {selectedAsset ? 'Detalhes do Ativo' : 'Selecione um ativo'}
@@ -256,21 +257,21 @@ export default function TreePage() {
                   <p className="text-center text-muted-foreground py-8">Clique em um ativo na árvore para ver OSs, SSs e ações pendentes.</p>
                 ) : detailLoading ? (
                   <div className="flex justify-center py-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" />
+                    <div className="h-6 w-6 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
                   </div>
                 ) : assetDetail ? (
                   <div className="space-y-6">
                     {/* OSs Abertas */}
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <Wrench className="h-4 w-4" /> Ordens de Serviço ({assetDetail.workOrders.length})
+                        <Icon name="construction" className="text-base" /> Ordens de Serviço ({assetDetail.workOrders.length})
                       </h4>
                       {assetDetail.workOrders.length === 0 ? (
                         <p className="text-xs text-muted-foreground">Nenhuma OS aberta.</p>
                       ) : (
                         <div className="space-y-2">
                           {assetDetail.workOrders.map((wo: any) => (
-                            <div key={wo.id} className="flex items-center justify-between p-2 border border-border rounded-md text-sm">
+                            <div key={wo.id} className="flex items-center justify-between p-2 rounded-[4px] text-sm">
                               <span className="font-medium">{wo.title}</span>
                               <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(wo.status)}`}>{wo.status}</span>
                             </div>
@@ -282,14 +283,14 @@ export default function TreePage() {
                     {/* SSs Abertas */}
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4" /> Solicitações ({assetDetail.requests.length})
+                        <Icon name="assignment" className="text-base" /> Solicitações ({assetDetail.requests.length})
                       </h4>
                       {assetDetail.requests.length === 0 ? (
                         <p className="text-xs text-muted-foreground">Nenhuma SS aberta.</p>
                       ) : (
                         <div className="space-y-2">
                           {assetDetail.requests.map((ss: any) => (
-                            <div key={ss.id} className="flex items-center justify-between p-2 border border-border rounded-md text-sm">
+                            <div key={ss.id} className="flex items-center justify-between p-2 rounded-[4px] text-sm">
                               <span className="font-medium">{ss.title}</span>
                               <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(ss.status)}`}>{ss.status}</span>
                             </div>
@@ -301,14 +302,14 @@ export default function TreePage() {
                     {/* Ações Pendentes RAFs */}
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4" /> Ações Pendentes RAF ({assetDetail.rafs.length})
+                        <Icon name="warning" className="text-base" /> Ações Pendentes RAF ({assetDetail.rafs.length})
                       </h4>
                       {assetDetail.rafs.length === 0 ? (
                         <p className="text-xs text-muted-foreground">Nenhuma ação pendente.</p>
                       ) : (
                         <div className="space-y-2">
                           {assetDetail.rafs.map((raf: any) => (
-                            <div key={raf.id} className="p-2 border border-border rounded-md text-sm">
+                            <div key={raf.id} className="p-2 rounded-[4px] text-sm">
                               <span className="font-medium">{raf.rafNumber}</span>
                               <span className="text-muted-foreground ml-2">{raf.equipment}</span>
                             </div>

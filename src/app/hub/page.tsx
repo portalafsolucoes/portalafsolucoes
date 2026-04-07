@@ -1,9 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Wrench, BarChart3, Camera, LogOut, LogIn, ChevronRight, Shield } from 'lucide-react'
-import { PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
+import { Icon } from '@/components/ui/Icon'
+
+import { APP_LOGO_PATH, PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
 
 interface ModuleCard {
   id: string
@@ -23,10 +25,10 @@ const modules: ModuleCard[] = [
     name: 'Gestão de Manutenção',
     shortName: 'CMMS',
     description: 'Planejamento, execução e controle de manutenção preventiva e corretiva de ativos industriais.',
-    icon: <Wrench className="w-10 h-10" />,
+    icon: <Icon name="construction" className="text-4xl" />,
     href: '/dashboard',
     enabled: true,
-    color: 'from-zinc-800 to-zinc-900',
+    color: 'from-primary-graphite to-on-surface',
     features: ['Ordens de Serviço', 'Planos Preventivos', 'Gestão de Ativos', 'KPIs'],
   },
   {
@@ -34,10 +36,10 @@ const modules: ModuleCard[] = [
     name: 'Gestão de Variáveis de Processo',
     shortName: 'GVP',
     description: 'Monitoramento e análise de variáveis operacionais em tempo real para controle de qualidade.',
-    icon: <BarChart3 className="w-10 h-10" />,
+    icon: <Icon name="bar_chart" className="text-4xl" />,
     href: '/gvp',
     enabled: false,
-    color: 'from-slate-700 to-slate-800',
+    color: 'from-accent-orange to-[#b76012]',
     features: ['Leituras em Tempo Real', 'Alertas Automáticos', 'Relatórios', 'Dashboards'],
   },
   {
@@ -45,10 +47,10 @@ const modules: ModuleCard[] = [
     name: 'Gestão de Portaria e Acesso',
     shortName: 'GPA',
     description: 'Controle inteligente de acesso veicular com leitura automática de placas e gestão de notas fiscais.',
-    icon: <Camera className="w-10 h-10" />,
+    icon: <Icon name="photo_camera" className="text-4xl" />,
     href: '/portaria',
     enabled: false,
-    color: 'from-gray-700 to-gray-800',
+    color: 'from-[#7b8283] to-[#5a6061]',
     features: ['Leitura de Placas (LPR)', 'Controle de Cancelas', 'Notas Fiscais', 'Histórico'],
   },
 ]
@@ -97,19 +99,25 @@ export default function HubPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,220,198,0.35),_transparent_35%),linear-gradient(180deg,#fbfbfb_0%,#f3f5f5_100%)] flex flex-col">
       {/* Header */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+      <header className="glass border-b border-on-surface-variant/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-zinc-900 dark:bg-white flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="relative h-10 w-[164px]">
+              <Image
+                src={APP_LOGO_PATH}
+                alt={PORTAL_NAME}
+                fill
+                priority
+                className="object-contain object-left"
+              />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+              <h1 className="font-headline text-lg font-bold leading-tight text-on-surface">
                 {PORTAL_NAME}
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-tight hidden sm:block">
+              <p className="label-uppercase hidden leading-tight sm:block">
                 {PORTAL_DESCRIPTION}
               </p>
             </div>
@@ -117,28 +125,28 @@ export default function HubPage() {
 
           <div className="flex items-center gap-4">
             {loading ? (
-              <div className="w-16 h-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+              <div className="h-8 w-16 animate-pulse rounded-[4px] bg-surface-container" />
             ) : isAuthenticated ? (
               <>
                 {userName && (
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400 hidden sm:block">
+                  <span className="hidden text-sm text-on-surface-variant sm:block">
                     {userName}
                   </span>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-low hover:text-on-surface"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <Icon name="logout" className="text-base" />
                   <span className="hidden sm:inline">Sair</span>
                 </button>
               </>
             ) : (
               <button
                 onClick={() => router.push('/login')}
-                className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 transition-colors px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="ghost-border flex items-center gap-2 rounded-[4px] px-4 py-2 text-sm font-medium text-on-surface transition-colors hover:bg-surface-low"
               >
-                <LogIn className="w-4 h-4" />
+                <Icon name="login" className="text-base" />
                 <span>Entrar</span>
               </button>
             )}
@@ -151,10 +159,10 @@ export default function HubPage() {
         <div className="max-w-5xl w-full">
           {/* Welcome Section */}
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-3">
+            <h2 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface sm:text-4xl mb-3">
               Selecione um Módulo
             </h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-lg max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-lg text-on-surface-variant">
               Escolha o ambiente que deseja acessar. Novos módulos serão disponibilizados em breve.
             </p>
           </div>
@@ -166,31 +174,31 @@ export default function HubPage() {
                 key={module.id}
                 onClick={() => handleModuleClick(module)}
                 className={`
-                  relative group rounded-2xl border overflow-hidden transition-all duration-300
+                  ambient-shadow relative group overflow-hidden rounded-[4px] transition-all duration-300
                   ${module.enabled
-                    ? 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 cursor-pointer hover:shadow-xl hover:-translate-y-1'
-                    : 'border-zinc-200/60 dark:border-zinc-800 opacity-55 cursor-not-allowed'
+                    ? 'cursor-pointer hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(45,52,53,0.12)]'
+                    : 'cursor-not-allowed opacity-55'
                   }
-                  bg-white dark:bg-zinc-900
+                  bg-card
                 `}
               >
                 {/* Card Top - Colored Band */}
                 <div className={`bg-gradient-to-r ${module.color} px-6 py-8 text-white`}>
                   <div className="flex items-start justify-between">
-                    <div className="p-3 bg-white/15 rounded-xl backdrop-blur-sm">
+                    <div className="p-3 bg-white/15 rounded-[4px] backdrop-blur-sm">
                       {module.icon}
                     </div>
                     {!module.enabled && (
-                      <span className="text-xs font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <span className="rounded-[2px] bg-white/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] backdrop-blur-sm">
                         Em breve
                       </span>
                     )}
                   </div>
                   <div className="mt-4">
-                    <span className="text-xs font-medium tracking-wider uppercase opacity-70">
+                    <span className="text-xs font-medium tracking-[0.2em] uppercase opacity-70">
                       {module.shortName}
                     </span>
-                    <h3 className="text-xl font-bold mt-1 leading-tight">
+                    <h3 className="mt-1 font-headline text-xl font-bold leading-tight">
                       {module.name}
                     </h3>
                   </div>
@@ -198,7 +206,7 @@ export default function HubPage() {
 
                 {/* Card Body */}
                 <div className="px-6 py-5">
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+                  <p className="mb-4 text-sm leading-relaxed text-on-surface-variant">
                     {module.description}
                   </p>
 
@@ -207,7 +215,7 @@ export default function HubPage() {
                     {module.features.map((feature) => (
                       <span
                         key={feature}
-                        className="text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2.5 py-1 rounded-md"
+                        className="rounded-[4px] bg-surface-low px-2.5 py-1 text-xs text-on-surface-variant"
                       >
                         {feature}
                       </span>
@@ -216,12 +224,12 @@ export default function HubPage() {
 
                   {/* Action */}
                   {module.enabled ? (
-                    <div className="flex items-center text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
+                    <div className="flex items-center text-sm font-medium text-on-surface transition-colors group-hover:text-primary-graphite">
                       {isAuthenticated ? 'Acessar módulo' : 'Entrar no módulo'}
-                      <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                      <Icon name="chevron_right" className="text-base ml-1 transition-transform group-hover:translate-x-1" />
                     </div>
                   ) : (
-                    <div className="text-sm text-zinc-400 dark:text-zinc-600">
+                    <div className="text-sm text-on-surface-variant/70">
                       Módulo em desenvolvimento
                     </div>
                   )}
@@ -233,12 +241,12 @@ export default function HubPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 dark:border-zinc-800 py-4">
+      <footer className="border-t border-on-surface-variant/10 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-zinc-400 dark:text-zinc-600">
+          <p className="text-xs text-on-surface-variant/70">
             &copy; {new Date().getFullYear()} AF Soluções. Todos os direitos reservados.
           </p>
-          <p className="text-xs text-zinc-400 dark:text-zinc-600">
+          <p className="text-xs text-on-surface-variant/70">
             v1.0.0
           </p>
         </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Pencil, Trash2, Search, X, Download, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/Modal'
 import { exportToExcel } from '@/lib/exportExcel'
 
@@ -91,18 +91,18 @@ function ComboboxField({ value, onChange, options, placeholder }: {
           }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 pr-8 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 pr-8 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <button
           type="button"
           onClick={() => setOpen(!open)}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
-          <ChevronDown className="h-4 w-4" />
+          <Icon name="expand_more" className="text-base" />
         </button>
       </div>
       {open && (
-        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-card border border-border rounded-lg shadow-lg">
+        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-card rounded-[4px] ambient-shadow">
           {filtered.length > 0 ? filtered.map(opt => (
             <button
               key={opt.value}
@@ -272,20 +272,20 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
   return (
     <div>
       {noUnitSelected && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-warning-light-foreground rounded-[4px] text-sm">
           Selecione uma unidade para visualizar e gerenciar os registros desta aba.
         </div>
       )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="relative flex-1 w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div className="flex gap-2">
@@ -296,14 +296,14 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
               const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
               exportToExcel(filtered, cols, `${entity}_${date}`, title)
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-border rounded-lg bg-card hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-[4px] bg-card hover:bg-muted transition-colors"
             title="Exportar para Excel"
           >
-            <Download className="h-4 w-4" />
+            <Icon name="download" className="text-base" />
             <span className="hidden sm:inline">Excel</span>
           </button>
           <Button onClick={openCreate} size="sm" disabled={noUnitSelected}>
-            <Plus className="h-4 w-4 mr-1" /> Novo
+            <Icon name="add" className="text-base mr-1" /> Novo
           </Button>
         </div>
       </div>
@@ -312,11 +312,11 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
       {noUnitSelected ? null : loading ? (
         <div className="text-center py-8 text-muted-foreground">Carregando...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground border border-border rounded-lg bg-card">
+        <div className="text-center py-8 text-muted-foreground rounded-[4px] bg-card">
           Nenhum registro encontrado.
         </div>
       ) : (
-        <div className="overflow-x-auto border border-border rounded-lg">
+        <div className="overflow-x-auto rounded-[4px]">
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
@@ -343,14 +343,14 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                         className="p-1.5 hover:bg-accent/20 rounded transition-colors"
                         title="Editar"
                       >
-                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                        <Icon name="edit" className="text-base text-muted-foreground" />
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="p-1.5 hover:bg-danger-light rounded transition-colors"
                         title="Excluir"
                       >
-                        <Trash2 className="h-4 w-4 text-danger" />
+                        <Icon name="delete" className="text-base text-danger" />
                       </button>
                     </div>
                   </td>
@@ -377,7 +377,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
         >
           <div className="space-y-4">
             {error && (
-              <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
+              <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
                 {error}
               </div>
             )}
@@ -421,7 +421,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                       })
                       setFormData(updated)
                     }}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
                     disabled={field.readOnly}
                   >
                     <option value="">Selecione...</option>
@@ -435,7 +435,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                     onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
                     placeholder={field.placeholder}
                     rows={3}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
                     readOnly={field.readOnly}
                   />
                 ) : field.type === 'checkbox' ? (
@@ -458,13 +458,13 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                       [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value
                     })}
                     placeholder={field.placeholder}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
                     readOnly={field.readOnly}
                   />
                 )}
               </div>
             ))}
-            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
               <Button variant="outline" onClick={() => setShowModal(false)} size="sm">
                 Cancelar
               </Button>

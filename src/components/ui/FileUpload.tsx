@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
-import { Upload, X, FileImage, FileText, File as FileIcon, Loader2 } from 'lucide-react'
-import { Button } from './Button'
+import { Icon } from './Icon'
+import { Button } from './button'
 
 interface UploadedFile {
   name: string
@@ -16,11 +16,11 @@ interface FileUploadProps {
   maxFiles?: number
 }
 
-export function FileUpload({ 
-  onFilesUploaded, 
-  existingFiles = [], 
+export function FileUpload({
+  onFilesUploaded,
+  existingFiles = [],
   accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx',
-  maxFiles = 10 
+  maxFiles = 10
 }: FileUploadProps) {
   const [files, setFiles] = useState<UploadedFile[]>(existingFiles)
   const [uploading, setUploading] = useState(false)
@@ -93,12 +93,20 @@ export function FileUpload({
     onFilesUploaded(newFiles)
   }
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <FileImage className="h-8 w-8 text-info" />
-    if (type.includes('pdf')) return <FileText className="h-8 w-8 text-danger" />
-    if (type.includes('word') || type.includes('document')) return <FileText className="h-8 w-8 text-primary" />
-    if (type.includes('sheet') || type.includes('excel')) return <FileText className="h-8 w-8 text-success" />
-    return <FileIcon className="h-8 w-8 text-muted-foreground" />
+  const getFileIconName = (type: string): string => {
+    if (type.startsWith('image/')) return 'image'
+    if (type.includes('pdf')) return 'picture_as_pdf'
+    if (type.includes('word') || type.includes('document')) return 'description'
+    if (type.includes('sheet') || type.includes('excel')) return 'table_chart'
+    return 'attach_file'
+  }
+
+  const getFileIconColor = (type: string): string => {
+    if (type.startsWith('image/')) return 'text-info'
+    if (type.includes('pdf')) return 'text-danger'
+    if (type.includes('word') || type.includes('document')) return 'text-primary'
+    if (type.includes('sheet') || type.includes('excel')) return 'text-success'
+    return 'text-muted-foreground'
   }
 
   const formatFileSize = (bytes: number) => {
@@ -110,8 +118,8 @@ export function FileUpload({
   return (
     <div className="w-full">
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center ${
-          dragActive ? 'border-primary bg-primary/5' : 'border-input'
+        className={`border-2 border-dashed rounded-[4px] p-6 text-center ${
+          dragActive ? 'border-primary bg-primary/5' : 'border-on-surface-variant/20'
         } ${uploading ? 'opacity-50' : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -129,12 +137,12 @@ export function FileUpload({
 
         {uploading ? (
           <div className="flex flex-col items-center">
-            <Loader2 className="h-12 w-12 text-primary animate-spin mb-3" />
+            <Icon name="progress_activity" className="text-5xl text-primary animate-spin mb-3" />
             <p className="text-sm text-muted-foreground">Fazendo upload...</p>
           </div>
         ) : (
           <>
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+            <Icon name="cloud_upload" className="text-5xl text-muted-foreground mb-3" />
             <p className="text-sm text-foreground mb-2">
               Arraste arquivos aqui ou clique para selecionar
             </p>
@@ -154,15 +162,15 @@ export function FileUpload({
 
       {files.length > 0 && (
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-medium text-foreground">
+          <h4 className="label-uppercase">
             Arquivos ({files.length}/{maxFiles})
           </h4>
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 p-3 bg-card border border-border rounded-md"
+              className="flex items-center gap-3 p-3 bg-surface-low rounded-[4px]"
             >
-              {getFileIcon(file.type)}
+              <Icon name={getFileIconName(file.type)} className={`text-3xl ${getFileIconColor(file.type)}`} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-card-foreground truncate">
                   {file.name}
@@ -173,15 +181,15 @@ export function FileUpload({
                 <img
                   src={file.url}
                   alt={file.name}
-                  className="h-12 w-12 object-cover rounded"
+                  className="h-12 w-12 object-cover rounded-[4px]"
                 />
               )}
               <button
                 onClick={() => removeFile(index)}
-                className="p-1 hover:bg-muted rounded"
+                className="p-1 hover:bg-surface-container rounded-[4px]"
                 type="button"
               >
-                <X className="h-5 w-5 text-muted-foreground" />
+                <Icon name="close" className="text-xl text-muted-foreground" />
               </button>
             </div>
           ))}

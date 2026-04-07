@@ -1,7 +1,7 @@
 'use client'
 
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function AnalyticsPage() {
   return (

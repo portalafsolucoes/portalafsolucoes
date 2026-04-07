@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { CalendarClock, Plus, Pencil, Trash2, Search, Eye } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
+
+import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/Modal'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
@@ -143,14 +144,14 @@ export default function MaintenancePlanPage() {
   )
 
   if (authLoading || !user) {
-    return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent" /></div></AppLayout>
+    return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></AppLayout>
   }
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <CalendarClock className="h-7 w-7 text-foreground" />
+          <Icon name="event_upcoming" className="text-2xl text-foreground" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">Plano de Manutenção</h1>
             <p className="text-sm text-muted-foreground">Manutenção Padrão por família e Manutenção por Bem</p>
@@ -172,20 +173,20 @@ export default function MaintenancePlanPage() {
         {/* Header com busca e botão */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="relative flex-1 w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
             <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           {canEdit && (
             <Button onClick={openCreate} size="sm">
-              <Plus className="h-4 w-4 mr-1" /> {tab === 'standard' ? 'Novo Plano Padrão' : 'Novo Plano'}
+              <Icon name="add" className="text-base mr-1" /> {tab === 'standard' ? 'Novo Plano Padrão' : 'Novo Plano'}
             </Button>
           )}
         </div>
 
         {/* Tabela */}
         {tab === 'standard' ? (
-          <div className="overflow-x-auto border border-border rounded-lg">
+          <div className="overflow-x-auto rounded-[4px]">
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -213,7 +214,7 @@ export default function MaintenancePlanPage() {
                     <td className="px-4 py-3">{p.period === 'Repetitiva' ? 'Repetitiva' : 'Única'}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Trash2 className="h-4 w-4 text-danger" /></button>
+                        <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Icon name="delete" className="text-base text-danger" /></button>
                       </div>
                     </td>
                   </tr>
@@ -222,7 +223,7 @@ export default function MaintenancePlanPage() {
             </table>
           </div>
         ) : (
-          <div className="overflow-x-auto border border-border rounded-lg">
+          <div className="overflow-x-auto rounded-[4px]">
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -250,7 +251,7 @@ export default function MaintenancePlanPage() {
                     <td className="px-4 py-3">{p.isActive ? 'Sim' : 'Não'}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Trash2 className="h-4 w-4 text-danger" /></button>
+                        <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Icon name="delete" className="text-base text-danger" /></button>
                       </div>
                     </td>
                   </tr>
@@ -264,7 +265,7 @@ export default function MaintenancePlanPage() {
       {/* Modal de Criação */}
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={tab === 'standard' ? 'Novo Plano Padrão' : 'Novo Plano do Bem'} size="lg">
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-          {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">{error}</div>}
+          {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
 
           {tab === 'standard' ? (
             <>
@@ -272,7 +273,7 @@ export default function MaintenancePlanPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Família <span className="text-danger">*</span></label>
                   <select value={formData.familyId || ''} onChange={e => { setFormData({...formData, familyId: e.target.value, familyModelId: ''}); if(e.target.value) loadModels(e.target.value); }}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     {families.map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
                   </select>
@@ -280,7 +281,7 @@ export default function MaintenancePlanPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Tipo Modelo</label>
                   <select value={formData.familyModelId || ''} onChange={e => setFormData({...formData, familyModelId: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Genérico</option>
                     {familyModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
@@ -289,7 +290,7 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-danger">*</span></label>
                 <select value={formData.serviceTypeId || ''} onChange={e => setFormData({...formData, serviceTypeId: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                   <option value="">Selecione...</option>
                   {serviceTypes.map(st => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
                 </select>
@@ -297,18 +298,18 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Nome da Manutenção <span className="text-danger">*</span></label>
                 <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})}
-                  placeholder="Ex: Manutenção Prev. Mec. 28 Dias" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card" />
+                  placeholder="Ex: Manutenção Prev. Mec. 28 Dias" className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Tempo <span className="text-danger">*</span></label>
                   <input type="number" value={formData.maintenanceTime || ''} onChange={e => setFormData({...formData, maintenanceTime: Number(e.target.value)})}
-                    placeholder="Ex: 28" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card" />
+                    placeholder="Ex: 28" className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Unidade <span className="text-danger">*</span></label>
                   <select value={formData.timeUnit || ''} onChange={e => setFormData({...formData, timeUnit: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     <option value="Dia(s)">Dia(s)</option>
                     <option value="Semana(s)">Semana(s)</option>
@@ -319,7 +320,7 @@ export default function MaintenancePlanPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Período <span className="text-danger">*</span></label>
                   <select value={formData.period || ''} onChange={e => setFormData({...formData, period: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     <option value="Repetitiva">Repetitiva</option>
                     <option value="Unica">Única</option>
@@ -329,7 +330,7 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Calendário</label>
                 <select value={formData.calendarId || ''} onChange={e => setFormData({...formData, calendarId: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                   <option value="">Nenhum</option>
                   {calendars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -340,7 +341,7 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Bem/Ativo <span className="text-danger">*</span></label>
                 <select value={formData.assetId || ''} onChange={e => setFormData({...formData, assetId: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                   <option value="">Selecione...</option>
                   {assets.map(a => <option key={a.id} value={a.id}>{a.tag ? `[${a.tag}] ` : ''}{a.name}</option>)}
                 </select>
@@ -348,7 +349,7 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-danger">*</span></label>
                 <select value={formData.serviceTypeId || ''} onChange={e => setFormData({...formData, serviceTypeId: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                   <option value="">Selecione...</option>
                   {serviceTypes.map(st => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
                 </select>
@@ -357,7 +358,7 @@ export default function MaintenancePlanPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Área de Manutenção</label>
                   <select value={formData.maintenanceAreaId || ''} onChange={e => setFormData({...formData, maintenanceAreaId: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     {maintenanceAreas.map(ma => <option key={ma.id} value={ma.id}>{ma.name}</option>)}
                   </select>
@@ -365,7 +366,7 @@ export default function MaintenancePlanPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Tipo de Manutenção</label>
                   <select value={formData.maintenanceTypeId || ''} onChange={e => setFormData({...formData, maintenanceTypeId: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     {maintenanceTypes.map(mt => <option key={mt.id} value={mt.id}>{mt.name}</option>)}
                   </select>
@@ -374,18 +375,18 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Nome da Manutenção</label>
                 <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card" />
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Tempo</label>
                   <input type="number" value={formData.maintenanceTime || ''} onChange={e => setFormData({...formData, maintenanceTime: Number(e.target.value)})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card" />
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Unidade</label>
                   <select value={formData.timeUnit || ''} onChange={e => setFormData({...formData, timeUnit: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     <option value="Dia(s)">Dia(s)</option>
                     <option value="Semana(s)">Semana(s)</option>
@@ -396,7 +397,7 @@ export default function MaintenancePlanPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Período</label>
                   <select value={formData.period || ''} onChange={e => setFormData({...formData, period: e.target.value})}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card">
+                    className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                     <option value="">Selecione...</option>
                     <option value="Repetitiva">Repetitiva</option>
                     <option value="Unica">Única</option>
@@ -406,7 +407,7 @@ export default function MaintenancePlanPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Data da Última Manutenção</label>
                 <input type="date" value={formData.lastMaintenanceDate || ''} onChange={e => setFormData({...formData, lastMaintenanceDate: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card" />
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={formData.isStandard || false} onChange={e => setFormData({...formData, isStandard: e.target.checked})} className="rounded border-border" />

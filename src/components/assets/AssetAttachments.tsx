@@ -3,13 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import {
-  Paperclip, Upload, Trash2, Download, Search, Filter, X,
-  BookOpen, FileCode, FileSpreadsheet, PenTool, Camera, Video,
-  Award, Shield, ClipboardList, FileText, ClipboardCheck, ListOrdered,
-  Lightbulb, AlertTriangle, File, Loader2, Eye, Plus, ChevronDown,
-  Calendar, Tag, ExternalLink
-} from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface AssetAttachment {
   id: string
@@ -37,22 +31,22 @@ interface AssetAttachmentsProps {
 }
 
 // Category configuration
-const categoryConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
-  MANUAL: { icon: BookOpen, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Manual' },
-  TECHNICAL_DOCUMENT: { icon: FileCode, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Documento Técnico' },
-  DATASHEET: { icon: FileSpreadsheet, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Folha de Dados' },
-  DRAWING: { icon: PenTool, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Desenho Técnico' },
-  PHOTO: { icon: Camera, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Foto' },
-  VIDEO: { icon: Video, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Vídeo' },
-  CERTIFICATE: { icon: Award, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Certificado' },
-  WARRANTY: { icon: Shield, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Garantia' },
-  WORK_ORDER_DOC: { icon: ClipboardList, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Documento de OS' },
-  MAINTENANCE_REPORT: { icon: FileText, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Relatório de Manutenção' },
-  INSPECTION_REPORT: { icon: ClipboardCheck, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Relatório de Inspeção' },
-  TIP: { icon: Lightbulb, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Dica' },
-  PROCEDURE: { icon: ListOrdered, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Procedimento' },
-  SAFETY: { icon: AlertTriangle, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Segurança' },
-  OTHER: { icon: File, color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Outro' }
+const categoryConfig: Record<string, { icon: string; color: string; bgColor: string; label: string }> = {
+  MANUAL: { icon: 'menu_book', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Manual' },
+  TECHNICAL_DOCUMENT: { icon: 'code', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Documento Técnico' },
+  DATASHEET: { icon: 'table_chart', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Folha de Dados' },
+  DRAWING: { icon: 'draw', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Desenho Técnico' },
+  PHOTO: { icon: 'photo_camera', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Foto' },
+  VIDEO: { icon: 'videocam', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Vídeo' },
+  CERTIFICATE: { icon: 'workspace_premium', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Certificado' },
+  WARRANTY: { icon: 'shield', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Garantia' },
+  WORK_ORDER_DOC: { icon: 'assignment', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Documento de OS' },
+  MAINTENANCE_REPORT: { icon: 'description', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Relatório de Manutenção' },
+  INSPECTION_REPORT: { icon: 'fact_check', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Relatório de Inspeção' },
+  TIP: { icon: 'lightbulb', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Dica' },
+  PROCEDURE: { icon: 'format_list_numbered', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Procedimento' },
+  SAFETY: { icon: 'warning', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Segurança' },
+  OTHER: { icon: 'attach_file', color: 'text-muted-foreground', bgColor: 'bg-surface-low', label: 'Outro' }
 }
 
 const categoryOptions = Object.entries(categoryConfig).map(([value, config]) => ({
@@ -240,32 +234,32 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
   if (loading && attachments.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
-        <span className="ml-2 text-gray-600">Carregando anexos...</span>
+        <Icon name="progress_activity" className="text-3xl animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando anexos...</span>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-[4px] ambient-shadow">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-on-surface-variant/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Paperclip className="h-5 w-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <Icon name="attach_file" className="text-xl text-muted-foreground" />
+            <h3 className="text-lg font-semibold text-foreground">
               Anexos e Documentos
             </h3>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               ({attachments.length})
             </span>
           </div>
           {!readOnly && (
             <button
               onClick={() => setShowUploadModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-graphite text-white text-sm font-medium rounded-[4px] hover:bg-primary-graphite transition-colors"
             >
-              <Plus className="h-4 w-4" />
+              <Icon name="add" className="text-base" />
               Adicionar Anexo
             </button>
           )}
@@ -275,13 +269,13 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar anexos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+              className="w-full pl-10 pr-4 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
             />
           </div>
 
@@ -289,7 +283,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+            className="px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
           >
             <option value="all">Todas as Categorias</option>
             {categoryOptions.map(opt => (
@@ -303,10 +297,10 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
 
       {/* Error Message */}
       {error && (
-        <div className="mx-6 mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 text-sm">
+        <div className="mx-6 mt-4 p-3 bg-surface rounded-[4px] text-foreground text-sm">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 text-gray-500 hover:text-gray-700">
-            <X className="h-4 w-4 inline" />
+          <button onClick={() => setError(null)} className="ml-2 text-muted-foreground hover:text-foreground">
+            <Icon name="close" className="text-base inline" />
           </button>
         </div>
       )}
@@ -315,8 +309,8 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
       <div className="p-6">
         {filteredAttachments.length === 0 ? (
           <div className="text-center py-12">
-            <Paperclip className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">
+            <Icon name="attach_file" className="text-5xl text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
               {searchQuery || filterCategory !== 'all'
                 ? 'Nenhum anexo encontrado com os filtros aplicados'
                 : 'Nenhum anexo adicionado'
@@ -325,7 +319,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
             {!readOnly && !searchQuery && filterCategory === 'all' && (
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="mt-4 text-gray-600 hover:text-gray-800 text-sm font-medium"
+                className="mt-4 text-muted-foreground hover:text-foreground text-sm font-medium"
               >
                 Adicionar primeiro anexo
               </button>
@@ -335,17 +329,17 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
           <div className="space-y-6">
             {Object.entries(groupedByCategory).map(([category, categoryAttachments]) => {
               const config = getCategoryConfig(category)
-              const Icon = config.icon
+              const iconName = config.icon
 
               return (
                 <div key={category}>
                   {/* Category Header */}
                   <div className="flex items-center gap-2 mb-3">
-                    <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
-                      <Icon className={`h-4 w-4 ${config.color}`} />
+                    <div className={`p-1.5 rounded-[4px] ${config.bgColor}`}>
+                      <Icon name={iconName} className={`text-base ${config.color}`} />
                     </div>
-                    <h4 className="font-medium text-gray-900">{config.label}</h4>
-                    <span className="text-sm text-gray-500">
+                    <h4 className="font-medium text-foreground">{config.label}</h4>
+                    <span className="text-sm text-muted-foreground">
                       ({categoryAttachments.length})
                     </span>
                   </div>
@@ -359,7 +353,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                       return (
                         <div
                           key={attachment.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer"
+                          className="rounded-[4px] p-4 hover:border-border hover:ambient-shadow transition-all cursor-pointer"
                           onClick={() => setSelectedAttachment(attachment)}
                         >
                           {/* Preview or Icon */}
@@ -372,21 +366,21 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                               />
                             ) : (
                               <div className={`w-full h-24 rounded flex items-center justify-center ${config.bgColor}`}>
-                                <Icon className={`h-10 w-10 ${config.color}`} />
+                                <Icon name={iconName} className={`text-4xl ${config.color}`} />
                               </div>
                             )}
                           </div>
 
                           {/* Info */}
-                          <h5 className="font-medium text-gray-900 truncate" title={attachment.name}>
+                          <h5 className="font-medium text-foreground truncate" title={attachment.name}>
                             {attachment.name}
                           </h5>
                           {attachment.version && (
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               Versão: {attachment.version}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                             <span>{formatFileSize(attachment.size)}</span>
                             <span>•</span>
                             <span>{format(new Date(attachment.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</span>
@@ -398,14 +392,14 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                               {attachment.tags.slice(0, 3).map((tag, i) => (
                                 <span
                                   key={i}
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-surface-low text-muted-foreground rounded text-xs"
                                 >
-                                  <Tag className="h-2.5 w-2.5" />
+                                  <Icon name="label" className="text-xs" />
                                   {tag}
                                 </span>
                               ))}
                               {attachment.tags.length > 3 && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-muted-foreground">
                                   +{attachment.tags.length - 3}
                                 </span>
                               )}
@@ -414,8 +408,8 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
 
                           {/* Expiration Warning */}
                           {attachment.expiresAt && new Date(attachment.expiresAt) <= new Date() && (
-                            <div className="mt-2 flex items-center gap-1 text-xs text-gray-600">
-                              <AlertTriangle className="h-3 w-3" />
+                            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                              <Icon name="warning" className="text-sm" />
                               Expirado
                             </div>
                           )}
@@ -433,21 +427,21 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Adicionar Anexo</h3>
+          <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-on-surface-variant/10 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Adicionar Anexo</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-muted-foreground"
               >
-                <X className="h-5 w-5" />
+                <Icon name="close" className="text-xl" />
               </button>
             </div>
 
             <form onSubmit={handleUpload} className="p-6 space-y-4">
               {/* File Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Arquivo
                 </label>
                 <input
@@ -458,20 +452,20 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                 />
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-500 transition-colors"
+                  className="border-2 border-dashed border-border rounded-[4px] p-6 text-center cursor-pointer hover:border-border transition-colors"
                 >
                   {uploadForm.file ? (
                     <div className="flex items-center justify-center gap-2">
-                      <File className="h-8 w-8 text-gray-600" />
+                      <Icon name="attach_file" className="text-3xl text-muted-foreground" />
                       <div className="text-left">
-                        <p className="font-medium text-gray-900">{uploadForm.file.name}</p>
-                        <p className="text-sm text-gray-500">{formatFileSize(uploadForm.file.size)}</p>
+                        <p className="font-medium text-foreground">{uploadForm.file.name}</p>
+                        <p className="text-sm text-muted-foreground">{formatFileSize(uploadForm.file.size)}</p>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">
+                      <Icon name="upload" className="text-3xl text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
                         Clique para selecionar ou arraste um arquivo
                       </p>
                     </>
@@ -481,7 +475,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Nome *
                 </label>
                 <input
@@ -489,21 +483,21 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                   value={uploadForm.name}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
                   placeholder="Nome do documento"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Categoria *
                 </label>
                 <select
                   value={uploadForm.category}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, category: e.target.value }))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
                 >
                   {categoryOptions.map(opt => (
                     <option key={opt.value} value={opt.value}>
@@ -515,14 +509,14 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Descrição
                 </label>
                 <textarea
                   value={uploadForm.description}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
                   placeholder="Descrição do documento..."
                 />
               </div>
@@ -530,66 +524,66 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
               {/* Version & Tags Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Versão
                   </label>
                   <input
                     type="text"
                     value={uploadForm.version}
                     onChange={(e) => setUploadForm(prev => ({ ...prev, version: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                    className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
                     placeholder="ex: 1.0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Data de Expiração
                   </label>
                   <input
                     type="date"
                     value={uploadForm.expiresAt}
                     onChange={(e) => setUploadForm(prev => ({ ...prev, expiresAt: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                    className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
                   />
                 </div>
               </div>
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Tags (separadas por vírgula)
                 </label>
                 <input
                   type="text"
                   value={uploadForm.tags}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
                   placeholder="ex: elétrica, motor, bomba"
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
                 <button
                   type="button"
                   onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium text-foreground bg-white rounded-[4px] hover:bg-surface"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={uploading || !uploadForm.name}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-graphite rounded-[4px] hover:bg-primary-graphite disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Icon name="progress_activity" className="text-base animate-spin" />
                       Enviando...
                     </>
                   ) : (
                     <>
-                      <Upload className="h-4 w-4" />
+                      <Icon name="upload" className="text-base" />
                       Adicionar
                     </>
                   )}
@@ -603,16 +597,16 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
       {/* Attachment Detail Modal */}
       {selectedAttachment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 truncate pr-4">
+          <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-on-surface-variant/10 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground truncate pr-4">
                 {selectedAttachment.name}
               </h3>
               <button
                 onClick={() => setSelectedAttachment(null)}
-                className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                className="text-muted-foreground hover:text-muted-foreground flex-shrink-0"
               >
-                <X className="h-5 w-5" />
+                <Icon name="close" className="text-xl" />
               </button>
             </div>
 
@@ -622,14 +616,11 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                 <img
                   src={selectedAttachment.url}
                   alt={selectedAttachment.name}
-                  className="w-full max-h-96 object-contain rounded-lg bg-gray-100 mb-6"
+                  className="w-full max-h-96 object-contain rounded-[4px] bg-surface-low mb-6"
                 />
               ) : (
-                <div className={`w-full h-48 rounded-lg flex items-center justify-center mb-6 ${getCategoryConfig(selectedAttachment.category).bgColor}`}>
-                  {(() => {
-                    const Icon = getCategoryConfig(selectedAttachment.category).icon
-                    return <Icon className={`h-16 w-16 ${getCategoryConfig(selectedAttachment.category).color}`} />
-                  })()}
+                <div className={`w-full h-48 rounded-[4px] flex items-center justify-center mb-6 ${getCategoryConfig(selectedAttachment.category).bgColor}`}>
+                  <Icon name={getCategoryConfig(selectedAttachment.category).icon} className={`text-5xl ${getCategoryConfig(selectedAttachment.category).color}`} />
                 </div>
               )}
 
@@ -637,26 +628,26 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm text-gray-500">Categoria</label>
-                    <p className="font-medium text-gray-900">
+                    <label className="text-sm text-muted-foreground">Categoria</label>
+                    <p className="font-medium text-foreground">
                       {getCategoryConfig(selectedAttachment.category).label}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-500">Tamanho</label>
-                    <p className="font-medium text-gray-900">
+                    <label className="text-sm text-muted-foreground">Tamanho</label>
+                    <p className="font-medium text-foreground">
                       {formatFileSize(selectedAttachment.size)}
                     </p>
                   </div>
                   {selectedAttachment.version && (
                     <div>
-                      <label className="text-sm text-gray-500">Versão</label>
-                      <p className="font-medium text-gray-900">{selectedAttachment.version}</p>
+                      <label className="text-sm text-muted-foreground">Versão</label>
+                      <p className="font-medium text-foreground">{selectedAttachment.version}</p>
                     </div>
                   )}
                   <div>
-                    <label className="text-sm text-gray-500">Adicionado em</label>
-                    <p className="font-medium text-gray-900">
+                    <label className="text-sm text-muted-foreground">Adicionado em</label>
+                    <p className="font-medium text-foreground">
                       {format(new Date(selectedAttachment.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                     </p>
                   </div>
@@ -664,21 +655,21 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
 
                 {selectedAttachment.description && (
                   <div>
-                    <label className="text-sm text-gray-500">Descrição</label>
-                    <p className="text-gray-900 mt-1">{selectedAttachment.description}</p>
+                    <label className="text-sm text-muted-foreground">Descrição</label>
+                    <p className="text-foreground mt-1">{selectedAttachment.description}</p>
                   </div>
                 )}
 
                 {selectedAttachment.tags.length > 0 && (
                   <div>
-                    <label className="text-sm text-gray-500">Tags</label>
+                    <label className="text-sm text-muted-foreground">Tags</label>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {selectedAttachment.tags.map((tag, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm"
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-surface-low text-foreground rounded text-sm"
                         >
-                          <Tag className="h-3 w-3" />
+                          <Icon name="label" className="text-sm" />
                           {tag}
                         </span>
                       ))}
@@ -688,11 +679,11 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
 
                 {selectedAttachment.expiresAt && (
                   <div>
-                    <label className="text-sm text-gray-500">Expira em</label>
+                    <label className="text-sm text-muted-foreground">Expira em</label>
                     <p className={`font-medium ${
                       new Date(selectedAttachment.expiresAt) <= new Date()
-                        ? 'text-gray-600'
-                        : 'text-gray-900'
+                        ? 'text-muted-foreground'
+                        : 'text-foreground'
                     }`}>
                       {format(new Date(selectedAttachment.expiresAt), 'dd/MM/yyyy', { locale: ptBR })}
                       {new Date(selectedAttachment.expiresAt) <= new Date() && ' (Expirado)'}
@@ -702,14 +693,14 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
               </div>
 
               {/* Actions */}
-              <div className="flex justify-between gap-3 mt-6 pt-4 border-t border-gray-200">
+              <div className="flex justify-between gap-3 mt-6 pt-4 border-t border-on-surface-variant/10">
                 <div>
                   {!readOnly && (
                     <button
                       onClick={() => handleDelete(selectedAttachment.id)}
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground bg-surface rounded-[4px] hover:bg-surface-low"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Icon name="delete" className="text-base" />
                       Excluir
                     </button>
                   )}
@@ -719,17 +710,17 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                     href={selectedAttachment.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-white rounded-[4px] hover:bg-surface"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <Icon name="open_in_new" className="text-base" />
                     Abrir
                   </a>
                   <a
                     href={selectedAttachment.url}
                     download={selectedAttachment.name}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-graphite rounded-[4px] hover:bg-primary-graphite"
                   >
-                    <Download className="h-4 w-4" />
+                    <Icon name="download" className="text-base" />
                     Download
                   </a>
                 </div>

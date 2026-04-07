@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { User } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
 
 interface TeamMember {
   id: string
@@ -83,7 +83,7 @@ export function ApproveRequestModal({
         {request?.team && (
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              <User className="inline w-4 h-4 mr-1" />
+              <Icon name="person" className="inline text-base mr-1" />
               Atribuir Executante (Opcional)
             </label>
             <p className="text-xs text-muted-foreground mb-3">
@@ -98,7 +98,7 @@ export function ApproveRequestModal({
               <select
                 value={selectedExecutor}
                 onChange={(e) => setSelectedExecutor(e.target.value)}
-                className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Selecione um executante...</option>
                 {teamMembers.map((member) => (

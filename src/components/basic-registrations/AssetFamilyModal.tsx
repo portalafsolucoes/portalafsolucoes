@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 interface AssetFamilyModalProps {
   editingItem: any | null
@@ -133,7 +133,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
     >
       <div className="p-6 space-y-4">
         {error && (
-          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
+          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
           </div>
         )}
@@ -148,7 +148,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
               value={code}
               onChange={e => setCode(e.target.value)}
               placeholder="Ex: COMAR"
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
@@ -160,7 +160,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Ex: Compressores de Ar"
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -171,7 +171,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
             <select
               value={familyType}
               onChange={e => setFamilyType(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="BEM">Bem</option>
               <option value="FERRAMENTA">Ferramenta</option>
@@ -184,7 +184,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
               value={protheusCode}
               onChange={e => setProtheusCode(e.target.value)}
               placeholder="Ex: COMAR"
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -197,11 +197,11 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
           {loadingMappings ? (
             <div className="text-sm text-muted-foreground py-2">Carregando...</div>
           ) : assetFamilyModels.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-2 px-3 border border-border rounded-lg bg-muted/30">
+            <div className="text-sm text-muted-foreground py-2 px-3 rounded-[4px] bg-muted/30">
               Nenhum tipo modelo cadastrado. Cadastre tipos modelo na aba &quot;Tipos Modelo&quot; primeiro.
             </div>
           ) : (
-            <div className="border border-border rounded-lg max-h-48 overflow-y-auto divide-y divide-border">
+            <div className="rounded-[4px] max-h-48 overflow-y-auto divide-y divide-border">
               {assetFamilyModels.map(model => (
                 <label
                   key={model.id}
@@ -242,7 +242,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
                       onClick={() => toggleModel(id)}
                       className="hover:text-danger transition-colors"
                     >
-                      <X className="h-3 w-3" />
+                      <Icon name="close" className="text-sm" />
                     </button>
                   </span>
                 )
@@ -251,7 +251,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
           )}
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

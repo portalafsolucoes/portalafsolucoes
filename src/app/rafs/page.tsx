@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/Button'
-import { Plus, FileText, Search, Calendar, User, Trash2, Edit, Eye, Table, Grid } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
+
 import { formatDate } from '@/lib/utils'
 import { RAFFormModal } from '@/components/rafs/RAFFormModal'
 import { RAFViewModal } from '@/components/rafs/RAFViewModal'
@@ -211,8 +212,8 @@ export default function RAFsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 md:gap-3">
-              <FileText className="w-6 h-6 md:w-8 md:h-8" />
+            <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 md:gap-3">
+              <Icon name="description" className="text-2xl md:text-3xl md:" />
               <span className="text-lg md:text-2xl">Relatórios de Análise de Falha (RAF)</span>
             </h1>
             <p className="mt-1 text-xs md:text-sm text-muted-foreground">
@@ -220,7 +221,7 @@ export default function RAFsPage() {
             </p>
           </div>
           <div className="flex gap-2 md:gap-3 flex-wrap">
-            <div className="hidden md:flex gap-1 border rounded-lg p-1">
+            <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
               <button
                 onClick={() => setViewMode('table')}
                 className={`p-2 rounded transition-colors ${
@@ -228,7 +229,7 @@ export default function RAFsPage() {
                 }`}
                 title="Visualização em Tabela"
               >
-                <Table className="w-5 h-5" />
+                <Icon name="table" className="text-xl" />
               </button>
               <button
                 onClick={() => setViewMode('cards')}
@@ -237,7 +238,7 @@ export default function RAFsPage() {
                 }`}
                 title="Visualização em Cartões"
               >
-                <Grid className="w-5 h-5" />
+                <Icon name="grid_view" className="text-xl" />
               </button>
             </div>
             <ExportButton data={filteredRAFs} entity="rafs" />
@@ -245,7 +246,7 @@ export default function RAFsPage() {
               onClick={() => setShowModal(true)}
               className="flex-1 md:flex-none"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" className="mr-2 text-base" />
               <span className="text-sm md:text-base">Novo RAF</span>
             </Button>
           </div>
@@ -254,18 +255,18 @@ export default function RAFsPage() {
         {/* Busca e Filtros */}
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+            <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base md: md:text-xl text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar por número, equipamento ou área..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
 
           <div className="flex gap-2 md:gap-4">
-            <label className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/5">
+            <label className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] cursor-pointer hover:bg-accent/5">
               <input
                 type="checkbox"
                 checked={enableAreaFilter}
@@ -280,11 +281,11 @@ export default function RAFsPage() {
         {/* Content */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
           </div>
         ) : filteredRAFs.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-lg border border-border">
-            <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+          <div className="text-center py-12 bg-card rounded-[4px]">
+            <Icon name="description" className="mx-auto text-5xl text-muted-foreground" />
             <h3 className="mt-2 text-sm font-medium text-foreground">Nenhum RAF encontrado</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {searchTerm ? 'Tente ajustar sua busca' : 'Comece criando um novo RAF'}
@@ -295,12 +296,12 @@ export default function RAFsPage() {
             {filteredRAFs.map((raf) => (
               <div
                 key={raf.id}
-                className="bg-card rounded-lg shadow-sm border border-border p-3 hover:shadow-md transition-all"
+                className="bg-card rounded-[4px] ambient-shadow p-3 hover:shadow-md transition-all"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                      <Icon name="description" className="text-base text-primary flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-bold text-foreground truncate">
                           {raf.rafNumber}
@@ -312,8 +313,8 @@ export default function RAFsPage() {
                     </div>
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${
                       raf.failureType === 'REPETITIVE'
-                        ? 'bg-danger-light text-gray-800'
-                        : 'bg-warning-light text-gray-800'
+                        ? 'bg-danger-light text-foreground'
+                        : 'bg-warning-light text-foreground'
                     }`}>
                       {raf.failureType === 'REPETITIVE' ? 'Rep' : 'Alea'}
                     </span>
@@ -325,11 +326,11 @@ export default function RAFsPage() {
 
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
+                      <Icon name="calendar_today" className="text-sm" />
                       <span>{formatDate(raf.occurrenceDate)}</span>
                     </div>
                     <div className="flex items-center gap-1 truncate">
-                      <User className="w-3 h-3" />
+                      <Icon name="person" className="text-sm" />
                       <span className="truncate">{raf.panelOperator}</span>
                     </div>
                   </div>
@@ -341,7 +342,7 @@ export default function RAFsPage() {
                       onClick={() => handleView(raf.id)}
                       className="flex-1 text-[10px] px-2 py-1 h-7"
                     >
-                      <Eye className="w-3 h-3 mr-1" />
+                      <Icon name="visibility" className="text-sm mr-1" />
                       Ver
                     </Button>
                     <Button
@@ -350,7 +351,7 @@ export default function RAFsPage() {
                       onClick={() => handleEdit(raf.id)}
                       className="flex-1 text-[10px] px-2 py-1 h-7"
                     >
-                      <Edit className="w-3 h-3 mr-1" />
+                      <Icon name="edit" className="text-sm mr-1" />
                       Editar
                     </Button>
                     <Button
@@ -359,7 +360,7 @@ export default function RAFsPage() {
                       onClick={() => handleDelete(raf.id)}
                       className="flex-1 text-[10px] px-2 py-1 h-7 text-danger hover:bg-danger-light"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Icon name="delete" className="text-sm" />
                     </Button>
                   </div>
                 </div>
@@ -367,60 +368,60 @@ export default function RAFsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-card rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-surface border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       RAF
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       Área
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       Equipamento
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       Data
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       Operador
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       Tipo
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-foreground uppercase tracking-wider">
                       Ações
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredRAFs.map((raf) => (
-                    <tr key={raf.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={raf.id} className="hover:bg-surface transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-semibold text-gray-900">{raf.rafNumber}</span>
+                          <Icon name="description" className="text-base text-primary" />
+                          <span className="text-sm font-semibold text-foreground">{raf.rafNumber}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">{raf.area}</span>
+                        <span className="text-sm text-muted-foreground">{raf.area}</span>
                       </td>
                       <td className="px-6 py-4 max-w-xs">
-                        <div className="text-sm text-gray-900 truncate">{raf.equipment}</div>
+                        <div className="text-sm text-foreground truncate">{raf.equipment}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">{formatDate(raf.occurrenceDate)}</span>
+                        <span className="text-sm text-muted-foreground">{formatDate(raf.occurrenceDate)}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">{raf.panelOperator}</span>
+                        <span className="text-sm text-muted-foreground">{raf.panelOperator}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                           raf.failureType === 'REPETITIVE'
-                            ? 'bg-danger-light text-gray-800'
-                            : 'bg-warning-light text-gray-800'
+                            ? 'bg-danger-light text-foreground'
+                            : 'bg-warning-light text-foreground'
                         }`}>
                           {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
                         </span>
@@ -432,21 +433,21 @@ export default function RAFsPage() {
                             className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
                             title="Visualizar"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Icon name="visibility" className="text-base" />
                           </button>
                           <button
                             onClick={() => handleEdit(raf.id)}
-                            className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                            className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
                             title="Editar"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Icon name="edit" className="text-base" />
                           </button>
                           <button
                             onClick={() => handleDelete(raf.id)}
                             className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
                             title="Excluir"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Icon name="delete" className="text-base" />
                           </button>
                         </div>
                       </td>

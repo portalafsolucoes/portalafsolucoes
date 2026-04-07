@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
 
 interface GenericStepModalProps {
   editingItem: any | null
@@ -122,7 +122,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
     >
       <div className="space-y-4">
         {error && (
-          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-lg text-sm">
+          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
           </div>
         )}
@@ -137,7 +137,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Ex: Abastecer redutor com óleo novo"
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -149,7 +149,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
           <select
             value={optionType}
             onChange={e => setOptionType(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="NONE">Nenhuma</option>
             <option value="RESPONSE">Resposta</option>
@@ -164,7 +164,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
 
         {/* Gerenciamento de Opções — só aparece quando OPTION */}
         {optionType === 'OPTION' && (
-          <div className="border border-border rounded-lg p-3 space-y-3">
+          <div className="rounded-[4px] p-3 space-y-3">
             <label className="block text-sm font-medium text-foreground">
               Opções Disponíveis <span className="text-danger">*</span>
             </label>
@@ -173,15 +173,15 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
             {options.length > 0 && (
               <div className="space-y-1">
                 {options.map((opt, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
+                    <Icon name="drag_indicator" className="text-sm text-muted-foreground shrink-0" />
                     <span className="flex-1 text-sm text-foreground">{opt.label}</span>
                     <button
                       onClick={() => removeOption(i)}
                       className="p-1 hover:bg-danger-light rounded transition-colors"
                       title="Remover opção"
                     >
-                      <Trash2 className="h-3.5 w-3.5 text-danger" />
+                      <Icon name="delete" className="text-sm text-danger" />
                     </button>
                   </div>
                 ))}
@@ -196,10 +196,10 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
                 onChange={e => setNewOptionLabel(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOption())}
                 placeholder="Ex: OK, NOK, Normal, Baixo..."
-                className="flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                className="flex-1 px-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <Button size="sm" variant="outline" onClick={addOption} disabled={!newOptionLabel.trim()}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                <Icon name="add" className="text-sm mr-1" /> Adicionar
               </Button>
             </div>
 
@@ -221,12 +221,12 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
             value={protheusCode}
             onChange={e => setProtheusCode(e.target.value)}
             placeholder="Ex: ABA001"
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
         {/* Botões */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useAuth } from '@/hooks/useAuth'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Plus, Search, Calendar, MapPin, Box, LayoutGrid, Table as TableIcon, Eye, Edit, Trash2, Paperclip, FileText, Play, CheckCircle2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Icon } from '@/components/ui/Icon'
+
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { WorkOrderDetailModal } from '@/components/work-orders/WorkOrderDetailModal'
@@ -158,8 +159,8 @@ export default function WorkOrdersPage() {
           <>
         <div className="flex flex-col md:flex-row md:flex-row md:justify-between md:items-start mb-6 gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 md:gap-3">
-              <FileText className="w-6 h-6 md:w-8 md:h-8" />
+            <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 md:gap-3">
+              <Icon name="description" className="text-2xl md:text-3xl md:" />
               <span className="text-lg md:text-2xl">Ordens de Serviço (OS)</span>
             </h1>
             <p className="mt-1 text-xs md:text-sm text-muted-foreground">
@@ -167,7 +168,7 @@ export default function WorkOrdersPage() {
             </p>
           </div>
           <div className="flex gap-2 md:gap-3 flex-wrap">
-            <div className="hidden md:flex gap-1 border rounded-lg p-1">
+            <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
               <button
                 onClick={() => setViewMode('table')}
                 className={`p-2 rounded transition-colors ${
@@ -175,7 +176,7 @@ export default function WorkOrdersPage() {
                 }`}
                 title="Visualização em Tabela"
               >
-                <TableIcon className="w-5 h-5" />
+                <Icon name="table" className="text-xl" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
@@ -184,13 +185,13 @@ export default function WorkOrdersPage() {
                 }`}
                 title="Visualização em Cartões"
               >
-                <LayoutGrid className="w-5 h-5" />
+                <Icon name="grid_view" className="text-xl" />
               </button>
             </div>
             <ExportButton data={filteredWorkOrders} entity="work-orders" />
             <Link href="/work-orders/new" className="flex-1 md:flex-none">
               <Button className="w-full md:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
+                <Icon name="add" className="mr-2 text-base" />
                 <span className="text-sm md:text-base">Nova Ordem</span>
               </Button>
             </Link>
@@ -199,13 +200,13 @@ export default function WorkOrdersPage() {
 
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+            <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base md: md:text-xl text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar ordens..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
 
@@ -213,7 +214,7 @@ export default function WorkOrdersPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 md:flex-none px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="flex-1 md:flex-none px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               <option value="">Status</option>
               <option value="PENDING">Pendente</option>
@@ -226,7 +227,7 @@ export default function WorkOrdersPage() {
             <select
               value={systemStatusFilter}
               onChange={(e) => setSystemStatusFilter(e.target.value)}
-              className="flex-1 md:flex-none px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="flex-1 md:flex-none px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               <option value="">Sistema</option>
               <option value="IN_SYSTEM">✅ Sistema</option>
@@ -237,11 +238,11 @@ export default function WorkOrdersPage() {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
           </div>
         ) : filteredWorkOrders.length === 0 ? (
-          <div className="bg-card rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <p className="text-gray-600">
+          <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+            <p className="text-muted-foreground">
               Nenhuma ordem de serviço encontrada.
             </p>
           </div>
@@ -250,17 +251,17 @@ export default function WorkOrdersPage() {
             {filteredWorkOrders.map((wo) => {
               const displayId = wo.externalId || wo.internalId || wo.customId || wo.id.slice(0, 8)
               return (
-                <div key={wo.id} className="bg-card rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200">
+                <div key={wo.id} className="bg-card rounded-[4px] md:rounded-[4px] ambient-shadow p-4 md:p-6 hover:shadow-md hover:border-border transition-all duration-200">
                   <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-4">
                     <div onClick={() => handleView(wo.id)} className="flex-1 cursor-pointer">
                       <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
-                        <h3 className="text-base md:text-lg font-bold text-gray-900">{displayId}</h3>
+                        <h3 className="text-base md:text-lg font-bold text-foreground">{displayId}</h3>
                         {wo.systemStatus === 'IN_SYSTEM' ? (
-                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-success-light text-success-light-foreground border border-gray-300">
+                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-success-light text-success-light-foreground">
                             ✅ Sistema
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-gray-200 text-gray-800 border border-gray-300">
+                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-surface-high text-foreground">
                             📝 Fora
                           </span>
                         )}
@@ -271,25 +272,25 @@ export default function WorkOrdersPage() {
                           {wo.priority}
                         </span>
                       </div>
-                      <p className="text-gray-900 font-semibold mb-2 text-sm md:text-base">{wo.title}</p>
+                      <p className="text-foreground font-semibold mb-2 text-sm md:text-base">{wo.title}</p>
                       {wo.description && (
-                        <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4 line-clamp-2">{wo.description}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 line-clamp-2">{wo.description}</p>
                       )}
-                      <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
                         {wo.asset && (
                           <span className="flex items-center gap-1 md:gap-1.5">
-                            <Box className="h-3 w-3 md:h-4 md:w-4" />
+                            <Icon name="inventory_2" className="text-sm md: md:text-base" />
                             <span className="truncate max-w-[120px] md:max-w-none">Ativo: {wo.asset.name}</span>
                           </span>
                         )}
                         {wo.location && (
                           <span className="flex items-center gap-1 md:gap-1.5">
-                            <MapPin className="h-3 w-3 md:h-4 md:w-4" />
+                            <Icon name="location_on" className="text-sm md: md:text-base" />
                             <span className="truncate max-w-[100px] md:max-w-none">Local: {wo.location.name}</span>
                           </span>
                         )}
                         <span className="flex items-center gap-1 md:gap-1.5">
-                          <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                          <Icon name="calendar_today" className="text-sm md: md:text-base" />
                           <span className="whitespace-nowrap">{formatDate(wo.createdAt)}</span>
                         </span>
                       </div>
@@ -297,44 +298,44 @@ export default function WorkOrdersPage() {
                     <div className="flex gap-1.5 md:gap-2 flex-shrink-0 justify-end md:justify-start">
                       <button
                         onClick={() => handleView(wo.id)}
-                        className="p-1.5 md:p-2 text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                        className="p-1.5 md:p-2 text-primary hover:bg-primary/5 rounded-[4px] transition-colors"
                         title="Visualizar"
                       >
-                        <Eye className="h-4 w-4 md:h-5 md:w-5" />
+                        <Icon name="visibility" className="text-base md: md:text-xl" />
                       </button>
                       {isAssignedExecutor(wo) && wo.status !== 'COMPLETE' && (
                         <button
                           onClick={() => handleExecute(wo)}
-                          className="p-1.5 md:p-2 text-success hover:bg-success-light rounded-lg transition-colors"
+                          className="p-1.5 md:p-2 text-success hover:bg-success-light rounded-[4px] transition-colors"
                           title="Executar"
                         >
-                          <Play className="h-4 w-4 md:h-5 md:w-5" />
+                          <Icon name="play_arrow" className="text-base md: md:text-xl" />
                         </button>
                       )}
                       {!isTechnician() && wo.status !== 'COMPLETE' && (
                         <button
                           onClick={() => { setWorkOrderToFinalize(wo); setShowFinalizeModal(true); }}
-                          className="p-1.5 md:p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
+                          className="p-1.5 md:p-2 text-foreground hover:bg-muted rounded-[4px] transition-colors"
                           title="Finalizar OS"
                         >
-                          <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
+                          <Icon name="check_circle" className="text-base md: md:text-xl" />
                         </button>
                       )}
                       {!isTechnician() && (
                         <>
                           <button
                             onClick={() => handleEdit(wo)}
-                            className="p-1.5 md:p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            className="p-1.5 md:p-2 text-muted-foreground hover:bg-surface rounded-[4px] transition-colors"
                             title="Editar"
                           >
-                            <Edit className="h-4 w-4 md:h-5 md:w-5" />
+                            <Icon name="edit" className="text-base md: md:text-xl" />
                           </button>
                           <button
                             onClick={() => openDeleteDialog(wo)}
-                            className="p-1.5 md:p-2 text-danger hover:bg-danger-light rounded-lg transition-colors"
+                            className="p-1.5 md:p-2 text-danger hover:bg-danger-light rounded-[4px] transition-colors"
                             title="Excluir"
                           >
-                            <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
+                            <Icon name="delete" className="text-base md: md:text-xl" />
                           </button>
                         </>
                       )}
@@ -345,28 +346,28 @@ export default function WorkOrdersPage() {
             })}
           </div>
         ) : (
-          <div className="hidden md:block bg-card rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="hidden md:block bg-card rounded-[4px] ambient-shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-surface border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Sistema</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Título</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Prioridade</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ativo</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Criado</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ações</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">Sistema</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">Título</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">Prioridade</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">Ativo</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">Criado</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-foreground uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredWorkOrders.map((wo) => {
                     const displayId = wo.externalId || wo.internalId || wo.customId || wo.id.slice(0, 8)
                     return (
-                      <tr key={wo.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={wo.id} className="hover:bg-surface transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-semibold text-gray-900">{displayId}</span>
+                          <span className="text-sm font-semibold text-foreground">{displayId}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {wo.systemStatus === 'IN_SYSTEM' ? (
@@ -374,13 +375,13 @@ export default function WorkOrdersPage() {
                               ✅ No Sistema
                             </span>
                           ) : (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-800">
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-surface-high text-foreground">
                               📝 Fora
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 max-w-xs truncate">{wo.title}</div>
+                          <div className="text-sm font-medium text-foreground max-w-xs truncate">{wo.title}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
@@ -392,10 +393,10 @@ export default function WorkOrdersPage() {
                             {wo.priority}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {wo.asset?.name || '-'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {formatDate(wo.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -405,7 +406,7 @@ export default function WorkOrdersPage() {
                               className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
                               title="Visualizar"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Icon name="visibility" className="text-base" />
                             </button>
                             {isAssignedExecutor(wo) && (
                               <button
@@ -413,24 +414,24 @@ export default function WorkOrdersPage() {
                                 className="p-1.5 text-success hover:bg-success-light rounded transition-colors"
                                 title={wo.status === 'COMPLETE' ? 'Editar Execução' : 'Executar'}
                               >
-                                <Play className="h-4 w-4" />
+                                <Icon name="play_arrow" className="text-base" />
                               </button>
                             )}
                             {!isTechnician() && (
                               <>
                                 <button
                                   onClick={() => handleEdit(wo)}
-                                  className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                  className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
                                   title="Editar"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Icon name="edit" className="text-base" />
                                 </button>
                                 <button
                                   onClick={() => openDeleteDialog(wo)}
                                   className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
                                   title="Excluir"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Icon name="delete" className="text-base" />
                                 </button>
                               </>
                             )}

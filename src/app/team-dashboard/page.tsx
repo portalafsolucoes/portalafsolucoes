@@ -2,17 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { 
-  Users, 
-  Wrench, 
-  ClipboardList, 
-  CheckCircle, 
-  Clock,
-  AlertTriangle,
-  TrendingUp
-} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Icon } from '@/components/ui/Icon'
+
 import Link from 'next/link'
 
 interface DashboardStats {
@@ -106,7 +99,7 @@ export default function TeamDashboardPage() {
         <div className="mx-auto max-w-7xl px-4 py-8">
           <Card>
             <CardContent className="py-12 text-center">
-              <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
+              <Icon name="warning" className="mx-auto text-5xl text-yellow-500 mb-4" />
               <p className="text-muted-foreground">Você não é líder de nenhuma equipe</p>
             </CardContent>
           </Card>
@@ -132,7 +125,7 @@ export default function TeamDashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">Membros</p>
                   <p className="text-3xl font-bold text-foreground">{stats.totalMembers}</p>
                 </div>
-                <Users className="h-12 w-12 text-blue-500" />
+                <Icon name="group" className="text-5xl text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -144,7 +137,7 @@ export default function TeamDashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">OS Abertas</p>
                   <p className="text-3xl font-bold text-foreground">{stats.openWorkOrders}</p>
                 </div>
-                <Wrench className="h-12 w-12 text-orange-500" />
+                <Icon name="construction" className="text-5xl text-orange-500" />
               </div>
             </CardContent>
           </Card>
@@ -156,7 +149,7 @@ export default function TeamDashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">Em Progresso</p>
                   <p className="text-3xl font-bold text-foreground">{stats.inProgressWorkOrders}</p>
                 </div>
-                <Clock className="h-12 w-12 text-blue-500" />
+                <Icon name="schedule" className="text-5xl text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -168,7 +161,7 @@ export default function TeamDashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">SS Pendentes</p>
                   <p className="text-3xl font-bold text-foreground">{stats.pendingRequests}</p>
                 </div>
-                <ClipboardList className="h-12 w-12 text-yellow-500" />
+                <Icon name="assignment" className="text-5xl text-yellow-500" />
               </div>
               {stats.pendingRequests > 0 && (
                 <Link 
@@ -187,7 +180,7 @@ export default function TeamDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5" />
+                <Icon name="construction" className="text-xl" />
                 Ordens de Serviço Ativas
               </CardTitle>
             </CardHeader>
@@ -200,7 +193,7 @@ export default function TeamDashboardPage() {
                     <Link
                       key={wo.id}
                       href={`/work-orders/${wo.id}`}
-                      className="block p-4 border rounded-lg hover:bg-secondary transition-colors"
+                      className="block p-4 border rounded-[4px] hover:bg-secondary transition-colors"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-foreground">{wo.title}</h4>
@@ -240,7 +233,7 @@ export default function TeamDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5" />
+                <Icon name="assignment" className="text-xl" />
                 Solicitações Pendentes
               </CardTitle>
             </CardHeader>
@@ -252,7 +245,7 @@ export default function TeamDashboardPage() {
                   {stats.requests.slice(0, 5).map((req) => (
                     <div
                       key={req.id}
-                      className="p-4 border rounded-lg"
+                      className="p-4 border rounded-[4px]"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-foreground">{req.title}</h4>
@@ -288,13 +281,13 @@ export default function TeamDashboardPage() {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+              <Icon name="trending_up" className="text-xl" />
               Performance do Mês
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <CheckCircle className="h-16 w-16 text-green-500" />
+              <Icon name="check_circle" className="text-6xl text-green-500" />
               <div>
                 <p className="text-4xl font-bold text-foreground">{stats.completedThisMonth}</p>
                 <p className="text-muted-foreground">Ordens de Serviço Concluídas</p>

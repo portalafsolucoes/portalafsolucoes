@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { CheckCircle, XCircle, Clock, User, FileText, Eye } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Icon } from '@/components/ui/Icon'
+
 import { formatDate } from '@/lib/utils'
 import { ApprovalModal } from '@/components/approvals/ApprovalModal'
 
@@ -78,20 +79,20 @@ export default function RequestApprovalsPage() {
 
   const getPriorityBadge = (priority: string) => {
     const colors = {
-      CRITICAL: 'bg-gray-700',
-      HIGH: 'bg-gray-500',
-      MEDIUM: 'bg-gray-500',
-      LOW: 'bg-gray-400',
-      NONE: 'bg-gray-500'
+      CRITICAL: 'bg-primary-graphite',
+      HIGH: 'bg-on-surface-variant',
+      MEDIUM: 'bg-on-surface-variant',
+      LOW: 'bg-on-surface-variant',
+      NONE: 'bg-on-surface-variant'
     }
     return <Badge className={colors[priority as keyof typeof colors] || colors.NONE}>{priority}</Badge>
   }
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      PENDING: 'bg-gray-500',
-      APPROVED: 'bg-gray-400',
-      REJECTED: 'bg-gray-700'
+      PENDING: 'bg-on-surface-variant',
+      APPROVED: 'bg-on-surface-variant',
+      REJECTED: 'bg-primary-graphite'
     }
     return <Badge className={colors[status as keyof typeof colors]}>{status}</Badge>
   }
@@ -99,47 +100,47 @@ export default function RequestApprovalsPage() {
   const renderPendingTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-surface">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prioridade</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Solicitante</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Equipe</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Criado em</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Título</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Prioridade</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Solicitante</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Equipe</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Criado em</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-gray-200">
           {requests.map((request) => (
-            <tr key={request.id} className="hover:bg-gray-50">
+            <tr key={request.id} className="hover:bg-surface">
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">{request.title}</div>
+                <div className="text-sm font-medium text-foreground">{request.title}</div>
                 {request.description && (
-                  <div className="text-sm text-gray-500 truncate max-w-xs">{request.description}</div>
+                  <div className="text-sm text-muted-foreground truncate max-w-xs">{request.description}</div>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {getPriorityBadge(request.priority)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">
+                <div className="text-sm text-foreground">
                   {request.createdBy?.firstName} {request.createdBy?.lastName}
                 </div>
-                <div className="text-sm text-gray-500">{request.createdBy?.email}</div>
+                <div className="text-sm text-muted-foreground">{request.createdBy?.email}</div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                 {request.team?.name || '-'}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                 {formatDate(request.createdAt)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Button
                   size="sm"
                   onClick={() => handleOpenModal(request)}
-                  className="bg-primary hover:bg-gray-700"
+                  className="bg-primary hover:bg-primary-graphite"
                 >
-                  <Eye className="w-4 h-4 mr-1" />
+                  <Icon name="visibility" className="text-base mr-1" />
                   Analisar
                 </Button>
               </td>
@@ -148,8 +149,8 @@ export default function RequestApprovalsPage() {
         </tbody>
       </table>
       {requests.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+        <div className="text-center py-12 text-muted-foreground">
+          <Icon name="schedule" className="text-5xl mx-auto mb-4 text-muted-foreground" />
           <p>Nenhuma solicitação pendente</p>
         </div>
       )}
@@ -159,56 +160,56 @@ export default function RequestApprovalsPage() {
   const renderApprovedTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-surface">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status Execução</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aprovado por</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aprovado em</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Título</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Tipo</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Técnico</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status Execução</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Aprovado por</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Aprovado em</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-gray-200">
           {requests.map((request) => (
-            <tr key={request.id} className="hover:bg-gray-50">
+            <tr key={request.id} className="hover:bg-surface">
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">{request.title}</div>
+                <div className="text-sm font-medium text-foreground">{request.title}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {request.convertToWorkOrder ? (
-                  <Badge className="bg-gray-600">
-                    <FileText className="w-3 h-3 mr-1" />
+                  <Badge className="bg-primary-graphite">
+                    <Icon name="description" className="text-sm mr-1" />
                     OS: {request.generatedWorkOrder?.internalId}
                   </Badge>
                 ) : (
-                  <Badge className="bg-gray-500">SS Aprovada</Badge>
+                  <Badge className="bg-on-surface-variant">SS Aprovada</Badge>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {request.assignedTo ? (
-                  <div className="text-sm text-gray-900">
-                    <User className="w-4 h-4 inline mr-1" />
+                  <div className="text-sm text-foreground">
+                    <Icon name="person" className="text-base inline mr-1" />
                     {request.assignedTo.firstName} {request.assignedTo.lastName}
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500">-</span>
+                  <span className="text-sm text-muted-foreground">-</span>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {request.executionCompletedAt ? (
-                  <Badge className="bg-gray-400">Concluída</Badge>
+                  <Badge className="bg-on-surface-variant">Concluída</Badge>
                 ) : request.executionStartedAt ? (
-                  <Badge className="bg-gray-500">Em Execução</Badge>
+                  <Badge className="bg-on-surface-variant">Em Execução</Badge>
                 ) : (
-                  <Badge className="bg-gray-500">Não Iniciada</Badge>
+                  <Badge className="bg-on-surface-variant">Não Iniciada</Badge>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                 {request.approvedBy?.firstName} {request.approvedBy?.lastName}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                 {request.approvedAt ? formatDate(request.approvedAt) : '-'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -217,7 +218,7 @@ export default function RequestApprovalsPage() {
                   variant="outline"
                   onClick={() => handleOpenModal(request)}
                 >
-                  <Eye className="w-4 h-4 mr-1" />
+                  <Icon name="visibility" className="text-base mr-1" />
                   Ver Detalhes
                 </Button>
               </td>
@@ -226,8 +227,8 @@ export default function RequestApprovalsPage() {
         </tbody>
       </table>
       {requests.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <CheckCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+        <div className="text-center py-12 text-muted-foreground">
+          <Icon name="check_circle" className="text-5xl mx-auto mb-4 text-muted-foreground" />
           <p>Nenhuma solicitação aprovada</p>
         </div>
       )}
@@ -237,29 +238,29 @@ export default function RequestApprovalsPage() {
   const renderRejectedTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-surface">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Solicitante</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rejeitado por</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Título</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Solicitante</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rejeitado por</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Motivo</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-gray-200">
           {requests.map((request) => (
-            <tr key={request.id} className="hover:bg-gray-50">
+            <tr key={request.id} className="hover:bg-surface">
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">{request.title}</div>
+                <div className="text-sm font-medium text-foreground">{request.title}</div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                 {request.createdBy?.firstName} {request.createdBy?.lastName}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                 {request.approvedBy?.firstName} {request.approvedBy?.lastName}
               </td>
               <td className="px-6 py-4">
-                <div className="text-sm text-gray-900 max-w-md">
+                <div className="text-sm text-foreground max-w-md">
                   {request.rejectionReason || 'Sem justificativa'}
                 </div>
               </td>
@@ -269,7 +270,7 @@ export default function RequestApprovalsPage() {
                   variant="outline"
                   onClick={() => handleOpenModal(request)}
                 >
-                  <Eye className="w-4 h-4 mr-1" />
+                  <Icon name="visibility" className="text-base mr-1" />
                   Ver Detalhes
                 </Button>
               </td>
@@ -278,8 +279,8 @@ export default function RequestApprovalsPage() {
         </tbody>
       </table>
       {requests.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <XCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+        <div className="text-center py-12 text-muted-foreground">
+          <Icon name="cancel" className="text-5xl mx-auto mb-4 text-muted-foreground" />
           <p>Nenhuma solicitação rejeitada</p>
         </div>
       )}
@@ -290,12 +291,12 @@ export default function RequestApprovalsPage() {
     <AppLayout>
       <div className="p-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Aprovações de Solicitações</h1>
-          <p className="text-gray-600 mt-1">Gerencie aprovações, rejeições e acompanhe o status</p>
+          <h1 className="text-3xl font-bold text-foreground">Aprovações de Solicitações</h1>
+          <p className="text-muted-foreground mt-1">Gerencie aprovações, rejeições e acompanhe o status</p>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-border mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('pending')}
@@ -303,11 +304,11 @@ export default function RequestApprovalsPage() {
                 py-4 px-1 border-b-2 font-medium text-sm transition-colors
                 ${activeTab === 'pending'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }
               `}
             >
-              <Clock className="w-5 h-5 inline mr-2" />
+              <Icon name="schedule" className="text-xl inline mr-2" />
               Pendentes
               {activeTab === 'pending' && ` (${requests.length})`}
             </button>
@@ -316,12 +317,12 @@ export default function RequestApprovalsPage() {
               className={`
                 py-4 px-1 border-b-2 font-medium text-sm transition-colors
                 ${activeTab === 'approved'
-                  ? 'border-gray-500 text-success'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-on-surface-variant text-success'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }
               `}
             >
-              <CheckCircle className="w-5 h-5 inline mr-2" />
+              <Icon name="check_circle" className="text-xl inline mr-2" />
               Aprovadas
               {activeTab === 'approved' && ` (${requests.length})`}
             </button>
@@ -330,12 +331,12 @@ export default function RequestApprovalsPage() {
               className={`
                 py-4 px-1 border-b-2 font-medium text-sm transition-colors
                 ${activeTab === 'rejected'
-                  ? 'border-gray-700 text-danger'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-on-surface text-danger'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }
               `}
             >
-              <XCircle className="w-5 h-5 inline mr-2" />
+              <Icon name="cancel" className="text-xl inline mr-2" />
               Rejeitadas
               {activeTab === 'rejected' && ` (${requests.length})`}
             </button>
@@ -347,8 +348,8 @@ export default function RequestApprovalsPage() {
           <CardContent className="p-0">
             {loading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto"></div>
-                <p className="text-gray-500 mt-4">Carregando...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-on-surface-variant mx-auto"></div>
+                <p className="text-muted-foreground mt-4">Carregando...</p>
               </div>
             ) : (
               <>

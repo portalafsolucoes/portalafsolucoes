@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Save } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { User } from '@/types'
 
 interface TeamFormModalProps {
@@ -141,7 +141,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
-            Nome da Equipe <span className="text-red-500">*</span>
+            Nome da Equipe <span className="text-danger">*</span>
           </label>
           <input
             type="text"
@@ -150,7 +150,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+            className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
           />
         </div>
 
@@ -164,7 +164,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
             value={formData.description}
             onChange={handleChange}
             rows={3}
-            className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+            className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
           />
         </div>
 
@@ -172,7 +172,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
           <label className="block text-sm font-medium text-foreground mb-3">
             Membros da Equipe ({formData.memberIds.length} selecionados)
           </label>
-          <div className="border border-input rounded-lg p-4 max-h-96 overflow-y-auto">
+          <div className="border border-input rounded-[4px] p-4 max-h-96 overflow-y-auto">
             {users.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">Nenhum usuário disponível</p>
             ) : (
@@ -180,7 +180,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
                 {users.map(user => (
                   <label
                     key={user.id}
-                    className="flex items-center gap-3 p-3 hover:bg-secondary rounded-lg cursor-pointer"
+                    className="flex items-center gap-3 p-3 hover:bg-secondary rounded-[4px] cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -214,20 +214,20 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-6 border-t border-border">
+        <div className="flex justify-end gap-3 pt-6 border-t border-on-surface-variant/10">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border border-input rounded-lg text-foreground hover:bg-secondary transition-colors"
+            className="px-6 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
+            <Icon name="save" className="text-base" />
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>

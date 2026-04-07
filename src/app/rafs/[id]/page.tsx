@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Button } from '@/components/ui/Button'
-import { ArrowLeft, FileText, Calendar, User, Edit, Trash2, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
+
 import { formatDate } from '@/lib/utils'
 
 interface RAF {
@@ -94,7 +95,7 @@ export default function ViewRAFPage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-600 border-r-transparent"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
       </AppLayout>
     )
@@ -111,7 +112,7 @@ export default function ViewRAFPage() {
         <div className="mb-6 pt-16 lg:pt-0">
           <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" onClick={() => router.push('/rafs')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <Icon name="arrow_back" className="text-base mr-2" />
               Voltar
             </Button>
             <div className="flex gap-2 ml-auto">
@@ -119,7 +120,7 @@ export default function ViewRAFPage() {
                 variant="outline"
                 onClick={() => router.push(`/rafs/${raf.id}/edit`)}
               >
-                <Edit className="w-4 h-4 mr-2" />
+                <Icon name="edit" className="text-base mr-2" />
                 Editar
               </Button>
               <Button
@@ -127,18 +128,18 @@ export default function ViewRAFPage() {
                 onClick={handleDelete}
                 className="text-danger hover:bg-danger-light"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Icon name="delete" className="text-base mr-2" />
                 Excluir
               </Button>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <FileText className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
+            <Icon name="description" className="text-3xl text-primary flex-shrink-0 mt-1" />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                 {raf.rafNumber}
               </h1>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Relatório de Análise de Falha
               </p>
             </div>
@@ -146,7 +147,7 @@ export default function ViewRAFPage() {
         </div>
 
         {/* Informações Básicas */}
-        <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+        <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Informações Básicas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
@@ -160,14 +161,14 @@ export default function ViewRAFPage() {
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">Data da Ocorrência</label>
               <p className="text-base text-foreground flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+                <Icon name="calendar_today" className="text-base" />
                 {formatDate(raf.occurrenceDate)} às {raf.occurrenceTime}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">Operador de Painel</label>
               <p className="text-base text-foreground flex items-center gap-2">
-                <User className="w-4 h-4" />
+                <Icon name="person" className="text-base" />
                 {raf.panelOperator}
               </p>
             </div>
@@ -175,8 +176,8 @@ export default function ViewRAFPage() {
               <label className="block text-sm font-medium text-muted-foreground mb-1">Tipo de Falha</label>
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                 raf.failureType === 'REPETITIVE'
-                  ? 'bg-danger-light text-gray-800'
-                  : 'bg-warning-light text-gray-800'
+                  ? 'bg-danger-light text-foreground'
+                  : 'bg-warning-light text-foreground'
               }`}>
                 {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
               </span>
@@ -192,21 +193,21 @@ export default function ViewRAFPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="flex items-center gap-2">
               {raf.stopExtension ? (
-                <CheckCircle className="w-5 h-5 text-success" />
+                <Icon name="check_circle" className="text-xl text-success" />
               ) : (
-                <AlertTriangle className="w-5 h-5 text-muted-foreground" />
+                <Icon name="warning" className="text-xl text-muted-foreground" />
               )}
-              <span className={`text-sm ${raf.stopExtension ? 'text-success font-medium' : 'text-gray-500'}`}>
+              <span className={`text-sm ${raf.stopExtension ? 'text-success font-medium' : 'text-muted-foreground'}`}>
                 Prolongamento de Parada
               </span>
             </div>
             <div className="flex items-center gap-2">
               {raf.failureBreakdown ? (
-                <CheckCircle className="w-5 h-5 text-success" />
+                <Icon name="check_circle" className="text-xl text-success" />
               ) : (
-                <AlertTriangle className="w-5 h-5 text-muted-foreground" />
+                <Icon name="warning" className="text-xl text-muted-foreground" />
               )}
-              <span className={`text-sm ${raf.failureBreakdown ? 'text-success font-medium' : 'text-gray-500'}`}>
+              <span className={`text-sm ${raf.failureBreakdown ? 'text-success font-medium' : 'text-muted-foreground'}`}>
                 Falha/Quebra
               </span>
             </div>
@@ -214,14 +215,14 @@ export default function ViewRAFPage() {
         </div>
 
         {/* Descrição da Falha */}
-        <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+        <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Descrição da Falha</h2>
           <p className="text-foreground whitespace-pre-wrap">{raf.failureDescription}</p>
         </div>
 
         {/* Observações */}
         {raf.observation && (
-          <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Observações</h2>
             <p className="text-foreground whitespace-pre-wrap">{raf.observation}</p>
           </div>
@@ -229,7 +230,7 @@ export default function ViewRAFPage() {
 
         {/* Ação Imediata */}
         {raf.immediateAction && (
-          <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Ação Imediata</h2>
             <p className="text-foreground whitespace-pre-wrap">{raf.immediateAction}</p>
           </div>
@@ -237,7 +238,7 @@ export default function ViewRAFPage() {
 
         {/* 5 Porquês */}
         {raf.fiveWhys && raf.fiveWhys.length > 0 && (
-          <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">5 Porquês</h2>
             <div className="space-y-3">
               {raf.fiveWhys.map((why, index) => (
@@ -254,7 +255,7 @@ export default function ViewRAFPage() {
 
         {/* Teste de Hipóteses */}
         {raf.hypothesisTests && raf.hypothesisTests.length > 0 && (
-          <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Teste de Hipóteses</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -283,7 +284,7 @@ export default function ViewRAFPage() {
 
         {/* Plano de Ação */}
         {raf.actionPlan && raf.actionPlan.length > 0 && (
-          <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+          <div className="bg-card rounded-[4px] ambient-shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Plano de Ação</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -310,7 +311,7 @@ export default function ViewRAFPage() {
 
         {/* Informações de Criação */}
         {raf.createdBy && (
-          <div className="bg-secondary rounded-lg p-4 text-sm text-muted-foreground">
+          <div className="bg-secondary rounded-[4px] p-4 text-sm text-muted-foreground">
             Criado por {raf.createdBy.firstName} {raf.createdBy.lastName} em {formatDate(raf.createdAt)}
           </div>
         )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Download } from 'lucide-react'
+import { Icon } from './Icon'
 import { exportToExcel, EXPORT_CONFIGS } from '@/lib/exportExcel'
 
 interface ExportButtonProps {
@@ -25,10 +25,10 @@ export function ExportButton({ data, entity, className }: ExportButtonProps) {
   return (
     <button
       onClick={handleExport}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-border rounded-lg bg-card hover:bg-muted transition-colors ${className || ''}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-[4px] bg-surface-low hover:bg-surface-container transition-colors ${className || ''}`}
       title="Exportar para Excel"
     >
-      <Download className="h-4 w-4" />
+      <Icon name="download" className="text-lg" />
       <span className="hidden sm:inline">Excel</span>
     </button>
   )

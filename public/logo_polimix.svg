@@ -3,7 +3,7 @@
   <defs>
     <style>
       .st0 {
-        fill: #9c9b9b;
+        fill: #5f5e5e;
         font-size: 43.43px;
       }
 
@@ -17,7 +17,7 @@
       }
 
       .st1 {
-        fill: #fff;
+        fill: #2d3435;
         font-size: 99.53px;
       }
     </style>

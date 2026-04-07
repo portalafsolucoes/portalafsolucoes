@@ -2,8 +2,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
-import { Eye, Edit, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/Icon'
 
 interface RAFActionButtonsProps {
   rafId: string
@@ -26,7 +26,7 @@ export function RAFActionButtons({
         onClick={() => router.push(`/rafs/${rafId}`)}
         className={isCardView ? "flex-1 lg:flex-initial text-xs px-2 py-1" : "text-xs px-2 py-1"}
       >
-        <Eye className={isCardView ? "w-3.5 h-3.5 mr-1" : "w-3.5 h-3.5"} />
+        <Icon name="visibility" className={isCardView ? "text-sm mr-1" : "text-sm"} />
         {isCardView && "Ver"}
       </Button>
       <Button
@@ -35,7 +35,7 @@ export function RAFActionButtons({
         onClick={() => router.push(`/rafs/${rafId}/edit`)}
         className={isCardView ? "flex-1 lg:flex-initial text-xs px-2 py-1" : "text-xs px-2 py-1"}
       >
-        <Edit className={isCardView ? "w-3.5 h-3.5 mr-1" : "w-3.5 h-3.5"} />
+        <Icon name="edit" className={isCardView ? "text-sm mr-1" : "text-sm"} />
         {isCardView && "Editar"}
       </Button>
       <Button
@@ -44,7 +44,7 @@ export function RAFActionButtons({
         onClick={() => handleDelete(rafId)}
         className={isCardView ? "flex-1 lg:flex-initial text-xs px-2 py-1 text-danger hover:bg-danger-light" : "text-xs px-2 py-1 text-danger hover:bg-danger-light"}
       >
-        <Trash2 className={isCardView ? "w-3.5 h-3.5 mr-1" : "w-3.5 h-3.5"} />
+        <Icon name="delete" className={isCardView ? "text-sm mr-1" : "text-sm"} />
         {isCardView && "Excluir"}
       </Button>
     </div>

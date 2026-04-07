@@ -1,12 +1,14 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { APP_DESCRIPTION, APP_NAME } from '@/lib/branding'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { APP_DESCRIPTION, APP_LOGO_PATH, APP_NAME, PORTAL_NAME } from '@/lib/branding'
+import { Icon } from '@/components/ui/Icon'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -52,21 +54,41 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,220,198,0.30),_transparent_30%),linear-gradient(180deg,#fbfbfb_0%,#f1f4f4_100%)] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-md w-full">
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/login')}
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Icon name="arrow_back" className="text-base" />
+            Voltar ao {PORTAL_NAME}
+          </button>
+        </div>
+
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">{APP_NAME}</h1>
+          <div className="relative mx-auto mb-4 h-14 w-[240px]">
+            <Image
+              src={APP_LOGO_PATH}
+              alt={APP_NAME}
+              fill
+              priority
+              className="object-contain"
+            />
+          </div>
+          <p className="label-uppercase mb-2">Novo Cadastro</p>
+          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">{APP_NAME}</h1>
           <p className="text-muted-foreground">{APP_DESCRIPTION}</p>
         </div>
 
-        <Card>
+        <Card className="bg-card/95">
           <CardHeader>
             <CardTitle>Registrar</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-danger-light border border-red-200 text-danger px-4 py-3 rounded">
+                <div className="rounded-[4px] bg-danger-light px-4 py-3 text-danger-light-foreground text-sm">
                   {error}
                 </div>
               )}
@@ -130,7 +152,7 @@ export default function RegisterPage() {
 
               <div className="text-center text-sm text-muted-foreground">
                 Já tem uma conta?{' '}
-                <Link href="/login" className="text-primary hover:text-primary font-medium">
+                <Link href="/login" className="font-medium text-primary hover:text-primary-hover">
                   Entrar
                 </Link>
               </div>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ImageViewerModal } from '@/components/ui/ImageViewerModal'
-import { X, Clock, Camera, Paperclip, FileText, Check, Trash2, AlertCircle, User, Box, MapPin, Printer, Download, Eye } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface WorkOrderExecuteModalProps {
   workOrder: {
@@ -292,13 +292,13 @@ export function WorkOrderExecuteModal({
         {/* Header */}
         <div className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-            <FileText className="w-5 h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
+            <Icon name="description" className="text-xl md:text-2xl text-primary flex-shrink-0" />
             <h2 className="text-base md:text-xl font-bold text-foreground truncate">
               {workOrder.title}
             </h2>
           </div>
-          <button onClick={onClose} className="p-1.5 md:p-2 hover:bg-card/50 rounded-lg transition-colors flex-shrink-0">
-            <X className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+          <button onClick={onClose} className="p-1.5 md:p-2 hover:bg-card/50 rounded-[4px] transition-colors flex-shrink-0">
+            <Icon name="close" className="text-base md:text-xl text-muted-foreground" />
           </button>
         </div>
 
@@ -312,7 +312,7 @@ export function WorkOrderExecuteModal({
                 : 'text-muted-foreground hover:bg-secondary'
             }`}
           >
-            <Check className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+            <Icon name="check" className="text-sm md:text-base inline mr-1 md:mr-2" />
             Executar
           </button>
           <button
@@ -323,14 +323,14 @@ export function WorkOrderExecuteModal({
                 : 'text-muted-foreground hover:bg-secondary'
             }`}
           >
-            <FileText className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+            <Icon name="description" className="text-sm md:text-base inline mr-1 md:mr-2" />
             Detalhes
           </button>
         </div>
 
         {error && (
           <div className="mx-2 md:mx-4 mt-2 md:mt-3 p-2 md:p-3 bg-danger-light border-l-4 border-red-500 rounded-r text-danger text-xs md:text-sm flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" />
+            <Icon name="error" className="text-base md:text-xl flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
@@ -339,9 +339,9 @@ export function WorkOrderExecuteModal({
           {activeTab === 'execution' ? (
             <div className="space-y-2 md:space-y-3">
               {/* Horários */}
-              <div className="bg-primary/5 rounded-lg p-2 md:p-3 border border-blue-200">
+              <div className="bg-primary/5 rounded-[4px] p-2 md:p-3 border border-blue-200">
                 <div className="flex items-center gap-1.5 md:gap-2 mb-2">
-                  <Clock className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+                  <Icon name="schedule" className="text-sm md:text-base text-primary" />
                   <h3 className="text-[10px] md:text-xs font-semibold text-foreground">Horários *</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -367,9 +367,9 @@ export function WorkOrderExecuteModal({
               </div>
 
               {/* Observações - SEGUNDO */}
-              <div className="bg-amber-50 rounded-lg p-2 md:p-3 border border-amber-200">
+              <div className="bg-amber-50 rounded-[4px] p-2 md:p-3 border border-amber-200">
                 <div className="flex items-center gap-1.5 md:gap-2 mb-2">
-                  <FileText className="w-3 h-3 md:w-4 md:h-4 text-amber-600" />
+                  <Icon name="description" className="text-sm md:text-base text-amber-600" />
                   <h3 className="text-[10px] md:text-xs font-semibold text-foreground">Observações * ({observations.length}/20)</h3>
                 </div>
                 <textarea
@@ -381,9 +381,9 @@ export function WorkOrderExecuteModal({
               </div>
 
               {/* Fotos - TERCEIRO */}
-              <div className="bg-success-light rounded-lg p-2 md:p-3 border border-green-200">
+              <div className="bg-success-light rounded-[4px] p-2 md:p-3 border border-green-200">
                 <div className="flex items-center gap-1.5 md:gap-2 mb-2">
-                  <Camera className="w-3 h-3 md:w-4 md:h-4 text-success" />
+                  <Icon name="photo_camera" className="text-sm md:text-base text-success" />
                   <h3 className="text-[10px] md:text-xs font-semibold text-foreground">Fotos Obrigatórias *</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -402,7 +402,7 @@ export function WorkOrderExecuteModal({
                         onClick={() => beforePhotoRef.current?.click()} 
                         className="w-full py-6 md:py-4 border-2 border-dashed border-green-300 rounded hover:border-green-500 hover:bg-success-light bg-card"
                       >
-                        <Camera className="w-8 h-8 md:w-6 md:h-6 mx-auto text-success mb-1" />
+                        <Icon name="photo_camera" className="text-3xl md:text-2xl mx-auto text-success mb-1" />
                         <p className="text-xs md:text-xs font-medium text-success">FOTO ANTES</p>
                         <p className="text-[10px] text-success mt-1">Tirar/Carregar</p>
                       </button>
@@ -410,7 +410,7 @@ export function WorkOrderExecuteModal({
                       <div className="relative">
                         <img src={beforePhoto.preview} alt="Antes" className="w-full h-32 md:h-24 object-cover rounded border-2 border-green-300" />
                         <button type="button" onClick={() => setBeforePhoto(null)} className="absolute top-1 right-1 p-1.5 md:p-1 bg-danger-light0 text-white rounded-full hover:bg-danger">
-                          <Trash2 className="w-4 h-4 md:w-3 md:h-3" />
+                          <Icon name="delete" className="text-base md:text-sm" />
                         </button>
                         <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] p-1 text-center">ANTES</div>
                       </div>
@@ -431,7 +431,7 @@ export function WorkOrderExecuteModal({
                         onClick={() => afterPhotoRef.current?.click()} 
                         className="w-full py-6 md:py-4 border-2 border-dashed border-green-300 rounded hover:border-green-500 hover:bg-success-light bg-card"
                       >
-                        <Camera className="w-8 h-8 md:w-6 md:h-6 mx-auto text-success mb-1" />
+                        <Icon name="photo_camera" className="text-3xl md:text-2xl mx-auto text-success mb-1" />
                         <p className="text-xs md:text-xs font-medium text-success">FOTO DEPOIS</p>
                         <p className="text-[10px] text-success mt-1">Tirar/Carregar</p>
                       </button>
@@ -439,7 +439,7 @@ export function WorkOrderExecuteModal({
                       <div className="relative">
                         <img src={afterPhoto.preview} alt="Depois" className="w-full h-32 md:h-24 object-cover rounded border-2 border-green-300" />
                         <button type="button" onClick={() => setAfterPhoto(null)} className="absolute top-1 right-1 p-1.5 md:p-1 bg-danger-light0 text-white rounded-full hover:bg-danger">
-                          <Trash2 className="w-4 h-4 md:w-3 md:h-3" />
+                          <Icon name="delete" className="text-base md:text-sm" />
                         </button>
                         <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] p-1 text-center">DEPOIS</div>
                       </div>
@@ -449,15 +449,15 @@ export function WorkOrderExecuteModal({
               </div>
 
               {/* Anexos - QUARTO */}
-              <div className="bg-purple-50 rounded-lg p-2 md:p-3 border border-purple-200">
+              <div className="bg-purple-50 rounded-[4px] p-2 md:p-3 border border-purple-200">
                 <div className="flex items-center gap-1.5 md:gap-2 mb-2">
-                  <Paperclip className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
+                  <Icon name="attach_file" className="text-sm md:text-base text-purple-600" />
                   <h3 className="text-[10px] md:text-xs font-semibold text-foreground">Anexos ({attachments.length}/10)</h3>
                 </div>
                 <input ref={attachmentsRef} type="file" multiple accept="image/*,.pdf,.txt,.doc,.docx" capture="environment" onChange={(e) => handleFileSelect(e, 'attachments')} className="hidden" />
                 {attachments.length < 10 && (
                   <button type="button" onClick={() => attachmentsRef.current?.click()} className="w-full py-4 md:py-3 border-2 border-dashed border-purple-300 rounded hover:border-purple-500 hover:bg-purple-100 bg-card mb-2">
-                    <Paperclip className="w-6 h-6 md:w-5 md:h-5 mx-auto text-purple-600 mb-1" />
+                    <Icon name="attach_file" className="text-2xl md:text-xl mx-auto text-purple-600 mb-1" />
                     <p className="text-xs md:text-xs font-medium text-purple-700">Adicionar Anexos (opcional)</p>
                   </button>
                 )}
@@ -469,17 +469,17 @@ export function WorkOrderExecuteModal({
                           <img src={att.preview || att.url} alt={att.name} className="w-12 h-12 md:w-10 md:h-10 object-cover rounded cursor-pointer" onClick={() => att.url && window.open(att.url, '_blank')} />
                         ) : (
                           <div className="w-12 h-12 md:w-10 md:h-10 bg-purple-100 rounded flex items-center justify-center">
-                            <FileText className="w-6 h-6 md:w-5 md:h-5 text-purple-600" />
+                            <Icon name="description" className="text-2xl md:text-xl text-purple-600" />
                           </div>
                         )}
                         <span className="flex-1 truncate text-[10px] md:text-xs font-medium text-foreground">{att.name}</span>
                         {att.url && (
                           <button type="button" onClick={() => window.open(att.url!, '_blank')} className="p-1 text-primary hover:bg-primary/5 rounded" title="Baixar/Visualizar">
-                            <Download className="w-4 h-4 md:w-3 md:h-3" />
+                            <Icon name="download" className="text-base md:text-sm" />
                           </button>
                         )}
                         <button type="button" onClick={() => removeAttachment(att.id)} className="p-1 text-danger hover:bg-danger-light rounded">
-                          <Trash2 className="w-4 h-4 md:w-3 md:h-3" />
+                          <Icon name="delete" className="text-base md:text-sm" />
                         </button>
                       </div>
                     ))}
@@ -509,9 +509,9 @@ export function WorkOrderExecuteModal({
                   </div>
                   <button 
                     onClick={handlePrint} 
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 print:hidden transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 print:hidden transition-colors"
                   >
-                    <Printer className="w-4 h-4" />
+                    <Icon name="print" className="text-base" />
                     Imprimir
                   </button>
                 </div>
@@ -519,11 +519,11 @@ export function WorkOrderExecuteModal({
 
               {/* SEÇÃO 1: SOLICITAÇÃO ORIGINAL (SS) */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-primary">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
                   📋 INFORMAÇÕES DA SOLICITAÇÃO (SS)
                 </h2>
                 
-                <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-lg">
+                <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1">Descrição da Solicitação:</label>
                     <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
@@ -581,7 +581,7 @@ export function WorkOrderExecuteModal({
 
                 {/* Imagens da Solicitação Original */}
                 {workOrderDetails.sourceRequest?.files && workOrderDetails.sourceRequest.files.length > 0 && (
-                  <div className="space-y-2 bg-secondary p-3 rounded-lg mt-3">
+                  <div className="space-y-2 bg-secondary p-3 rounded-[4px] mt-3">
                     <h3 className="text-sm font-semibold text-foreground mb-2">Imagens da Solicitação Original:</h3>
                     <div className="grid grid-cols-3 gap-2">
                       {workOrderDetails.sourceRequest.files.filter((f: any) => f.type?.startsWith('image/')).map((file: any) => (
@@ -589,7 +589,7 @@ export function WorkOrderExecuteModal({
                           <img 
                             src={file.url} 
                             alt={file.name}
-                            className="w-full h-32 object-cover rounded-lg border-2 border-input cursor-pointer hover:border-primary transition-all"
+                            className="w-full h-32 object-cover rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all"
                             onClick={() => setImageViewer({url: file.url, name: file.name})}
                           />
                           <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 rounded-b-lg truncate">
@@ -607,13 +607,13 @@ export function WorkOrderExecuteModal({
 
               {/* SEÇÃO 2: EXECUÇÃO */}
               <div className="mb-4 md:mb-6">
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light px-2 md:px-3 py-1.5 md:py-2 rounded-lg border-l-4 border-green-500">
+                <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-green-500">
                   ✅ INFORMAÇÕES DA EXECUÇÃO
                 </h2>
 
                 {/* Horários */}
                 {workOrderDetails.completedOn && workOrderDetails.actualDuration && (
-                  <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-lg mb-2 md:mb-3">
+                  <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px] mb-2 md:mb-3">
                     <h3 className="text-sm md:text-base font-semibold text-foreground">Horários:</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div>
@@ -652,7 +652,7 @@ export function WorkOrderExecuteModal({
 
                 {/* Descrição do Trabalho */}
                 {workOrderDetails.executionNotes && (
-                  <div className="space-y-2 bg-secondary p-3 rounded-lg mb-3">
+                  <div className="space-y-2 bg-secondary p-3 rounded-[4px] mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Descrição do Trabalho Realizado:</h3>
                     <div className="text-sm text-foreground whitespace-pre-wrap bg-card p-3 rounded border">
                       {workOrderDetails.executionNotes}
@@ -662,7 +662,7 @@ export function WorkOrderExecuteModal({
 
                 {/* Fotos ANTES e DEPOIS */}
                 {(workOrderDetails.beforePhotoUrl || workOrderDetails.afterPhotoUrl) && (
-                  <div className="space-y-2 bg-secondary p-3 rounded-lg mb-3">
+                  <div className="space-y-2 bg-secondary p-3 rounded-[4px] mb-3">
                     <h3 className="text-sm font-semibold text-foreground mb-2">Fotos de Execução:</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {workOrderDetails.beforePhotoUrl && (
@@ -671,7 +671,7 @@ export function WorkOrderExecuteModal({
                           <img 
                             src={workOrderDetails.beforePhotoUrl} 
                             alt="Foto Antes" 
-                            className="w-full h-48 object-contain rounded-lg border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
+                            className="w-full h-48 object-contain rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
                             onClick={() => setImageViewer({url: workOrderDetails.beforePhotoUrl, name: 'Foto ANTES'})}
                           />
                         </div>
@@ -682,7 +682,7 @@ export function WorkOrderExecuteModal({
                           <img 
                             src={workOrderDetails.afterPhotoUrl} 
                             alt="Foto Depois" 
-                            className="w-full h-48 object-contain rounded-lg border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
+                            className="w-full h-48 object-contain rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
                             onClick={() => setImageViewer({url: workOrderDetails.afterPhotoUrl, name: 'Foto DEPOIS'})}
                           />
                         </div>
@@ -698,11 +698,11 @@ export function WorkOrderExecuteModal({
                     !sourceRequestFileIds.includes(file.id)
                   )
                   return executionFiles.length > 0 && (
-                    <div className="space-y-2 bg-secondary p-3 rounded-lg">
+                    <div className="space-y-2 bg-secondary p-3 rounded-[4px]">
                       <h3 className="text-sm font-semibold text-foreground mb-2">Anexos Adicionais da Execução ({executionFiles.length}):</h3>
                       <div className="grid grid-cols-2 gap-2">
                         {executionFiles.map((file: any) => (
-                          <div key={file.id} className="flex items-center gap-2 p-2 bg-card rounded-lg border border-border hover:border-blue-400 transition-all">
+                          <div key={file.id} className="flex items-center gap-2 p-2 bg-card rounded-[4px] hover:border-blue-400 transition-all">
                             {file.type?.startsWith('image/') ? (
                               <img 
                                 src={file.url} 
@@ -712,7 +712,7 @@ export function WorkOrderExecuteModal({
                               />
                             ) : (
                               <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-muted-foreground" />
+                                <Icon name="description" className="text-2xl text-muted-foreground" />
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
@@ -724,7 +724,7 @@ export function WorkOrderExecuteModal({
                               className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
                               title="Baixar/Visualizar"
                             >
-                              <Download className="w-4 h-4" />
+                              <Icon name="download" className="text-base" />
                             </button>
                           </div>
                         ))}
@@ -753,9 +753,9 @@ export function WorkOrderExecuteModal({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-sm rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg transition-all"
+              className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-sm rounded-[4px] hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 ambient-shadow transition-all"
             >
-              <Check className="w-5 h-5" />
+              <Icon name="check" className="text-xl" />
               {isSubmitting ? 'Finalizando...' : 'FINALIZAR ORDEM'}
             </button>
           </div>

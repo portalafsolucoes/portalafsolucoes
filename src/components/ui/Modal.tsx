@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { X } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 interface ModalProps {
   isOpen: boolean
@@ -11,7 +11,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'full'
   hideHeader?: boolean
   noPadding?: boolean
-  inPage?: boolean // Novo: renderizar dentro da página ao invés de fullscreen
+  inPage?: boolean
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeader = false, noPadding = false, inPage = false }: ModalProps) {
@@ -32,11 +32,11 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeade
         onClose()
       }
     }
-    
+
     if (isOpen) {
       window.addEventListener('keydown', handleEscape)
     }
-    
+
     return () => {
       window.removeEventListener('keydown', handleEscape)
     }
@@ -53,18 +53,17 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeade
     full: 'w-full max-w-7xl'
   }
 
-  // Se inPage, renderizar sem overlay fixo
   if (inPage) {
     return (
-      <div className="w-full bg-card rounded-lg shadow-xl border border-border max-h-[85vh] flex flex-col">
+      <div className="w-full bg-card rounded-[4px] ambient-ambient-shadow max-h-[85vh] flex flex-col">
         {!hideHeader && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 className="text-xl font-semibold text-card-foreground">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4">
+            <h2 className="font-headline text-xl font-bold text-card-foreground">{title}</h2>
             <button
               onClick={onClose}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              <X className="w-6 h-6" />
+              <Icon name="close" className="text-xl" />
             </button>
           </div>
         )}
@@ -77,31 +76,31 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeade
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Light overlay - suave e consistente */}
-      <div 
-        className="fixed inset-0 bg-black/20 transition-opacity"
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-on-surface/20 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="flex min-h-screen items-center justify-center p-3 sm:p-4 md:p-6">
-        <div 
-          className={`relative bg-card rounded-lg shadow-2xl border border-border ${sizeClasses[size]} max-h-[92vh] sm:max-h-[90vh] md:max-h-[88vh] flex flex-col`}
+        <div
+          className={`relative bg-card rounded-[4px] ambient-ambient-shadow ${sizeClasses[size]} max-h-[92vh] sm:max-h-[90vh] md:max-h-[88vh] flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {!hideHeader && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-xl font-semibold text-card-foreground">{title}</h2>
+            <div className="flex items-center justify-between px-6 py-4">
+              <h2 className="font-headline text-xl font-bold text-card-foreground">{title}</h2>
               <button
                 onClick={onClose}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                <X className="w-6 h-6" />
+                <Icon name="close" className="text-xl" />
               </button>
             </div>
           )}
-          
+
           {/* Content */}
           <div className={`flex-1 overflow-y-auto ${noPadding ? '' : hideHeader ? 'p-6 sm:p-8' : 'px-0 py-0'}`}>
             {children}
