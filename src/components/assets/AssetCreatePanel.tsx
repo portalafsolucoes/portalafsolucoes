@@ -53,6 +53,8 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
   const [workCenters, setWorkCenters] = useState<any[]>([])
   const [positions, setPositions] = useState<any[]>([])
   const [areas, setAreas] = useState<any[]>([])
+  const [units, setUnits] = useState<any[]>([])
+  const [calendars, setCalendars] = useState<any[]>([])
   const [characteristics, setCharacteristics] = useState<CharacteristicOption[]>([])
   const [characteristicRows, setCharacteristicRows] = useState<CharacteristicRow[]>([])
   const [mainImage, setMainImage] = useState<File | null>(null)
@@ -131,7 +133,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
   const loadData = async () => {
     try {
-      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes] = await Promise.all([
+      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes, calendarsRes, unitsRes] = await Promise.all([
         fetch('/api/locations'),
         fetch('/api/assets'),
         fetch('/api/basic-registrations/asset-families'),
@@ -141,9 +143,11 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         fetch('/api/basic-registrations/positions'),
         fetch('/api/basic-registrations/areas'),
         fetch('/api/basic-registrations/characteristics'),
+        fetch('/api/basic-registrations/calendars'),
+        fetch('/api/units'),
       ])
 
-      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData] = await Promise.all([
+      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData, calendarsData, unitsData] = await Promise.all([
         locationsRes.json(),
         assetsRes.json(),
         familiesRes.json(),
@@ -153,6 +157,8 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         positionsRes.json(),
         areasRes.json(),
         characteristicsRes.json(),
+        calendarsRes.json(),
+        unitsRes.json(),
       ])
 
       setLocations(locationsData.data || [])
@@ -164,6 +170,8 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
       setPositions(positionsData.data || [])
       setAreas(areasData.data || [])
       setCharacteristics(characteristicsData.data || [])
+      setCalendars(calendarsData.data || [])
+      setUnits(unitsData.data || [])
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -197,6 +205,17 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
   const updateField = (field: string, value: string | boolean | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
+
+  const handleUnitChange = (unitId: string) => {
+    setFormData(prev => ({ ...prev, unitId, areaId: '', workCenterId: '' }))
+  }
+
+  const filteredAreas = formData.unitId
+    ? areas.filter((a: any) => a.unitId === formData.unitId)
+    : areas
+  const filteredWorkCenters = formData.unitId
+    ? workCenters.filter((wc: any) => wc.unitId === formData.unitId)
+    : workCenters
 
   // Características
   const addCharacteristicRow = () => {
@@ -397,23 +416,13 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
         {/* === SEÇÃO 1: IDENTIFICAÇÃO === */}
         <Section title="Identificação" defaultOpen={true}>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <Input
-              label="Código do Bem *"
-              value={formData.protheusCode}
-              onChange={(e) => updateField('protheusCode', e.target.value)}
-              placeholder="Ex: A1J01"
-              required
-            />
-            <Input
-              label="Tag"
-              value={formData.tag}
-              onChange={(e) => updateField('tag', e.target.value.slice(0, 6).toUpperCase())}
-              maxLength={6}
-              placeholder="Máx 6 caracteres"
-            />
-            <div className="md:col-span-1" />
-          </div>
+          <Input
+            label="Código do Bem *"
+            value={formData.protheusCode}
+            onChange={(e) => updateField('protheusCode', e.target.value)}
+            placeholder="Ex: A1J01"
+            required
+          />
           <Input
             label="Nome do Ativo *"
             value={formData.name}
@@ -492,10 +501,19 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         <Section title="Localização e Organização" defaultOpen={false}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Unidade</label>
+              <select value={formData.unitId} onChange={(e) => handleUnitChange(e.target.value)} className={selectClass}>
+                <option value="">Selecione</option>
+                {units.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área</label>
               <select value={formData.areaId} onChange={(e) => updateField('areaId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {areas.map((a: any) => (
+                {filteredAreas.map((a: any) => (
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
@@ -504,7 +522,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-sm font-medium text-foreground mb-1">Centro de Trabalho</label>
               <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {workCenters.map((wc: any) => (
+                {filteredWorkCenters.map((wc: any) => (
                   <option key={wc.id} value={wc.id}>{wc.name}</option>
                 ))}
               </select>
@@ -528,12 +546,15 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
           </div>
-          <Input
-            label="Turno"
-            value={formData.shiftCode}
-            onChange={(e) => updateField('shiftCode', e.target.value)}
-            placeholder="Ex: M03"
-          />
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Turno</label>
+            <select value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} className={selectClass}>
+              <option value="">Selecione</option>
+              {calendars.map((cal: any) => (
+                <option key={cal.id} value={cal.name}>{cal.name}</option>
+              ))}
+            </select>
+          </div>
         </Section>
 
         {/* === SEÇÃO 4: DADOS TÉCNICOS === */}
@@ -703,7 +724,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutGravity', value)}
-                    className={`w-10 h-10 rounded-[4px] font-bold transition-all ${formData.gutGravity === value ? 'bg-danger text-white ring-2 ring-red-300' : 'bg-secondary hover:bg-danger-light text-muted-foreground'}`}>
+                    className={`w-10 h-10 rounded-[4px] font-bold transition-all ${formData.gutGravity === value ? 'bg-neutral-800 text-white ring-2 ring-neutral-400' : 'bg-secondary hover:bg-neutral-300 text-muted-foreground'}`}>
                     {value}
                   </button>
                 ))}
@@ -717,7 +738,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutUrgency', value)}
-                    className={`w-10 h-10 rounded-[4px] font-bold transition-all ${formData.gutUrgency === value ? 'bg-orange-500 text-white ring-2 ring-orange-300' : 'bg-secondary hover:bg-orange-100 text-muted-foreground'}`}>
+                    className={`w-10 h-10 rounded-[4px] font-bold transition-all ${formData.gutUrgency === value ? 'bg-neutral-800 text-white ring-2 ring-neutral-400' : 'bg-secondary hover:bg-neutral-300 text-muted-foreground'}`}>
                     {value}
                   </button>
                 ))}
@@ -731,7 +752,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutTendency', value)}
-                    className={`w-10 h-10 rounded-[4px] font-bold transition-all ${formData.gutTendency === value ? 'bg-warning text-white ring-2 ring-yellow-300' : 'bg-secondary hover:bg-warning-light text-muted-foreground'}`}>
+                    className={`w-10 h-10 rounded-[4px] font-bold transition-all ${formData.gutTendency === value ? 'bg-neutral-800 text-white ring-2 ring-neutral-400' : 'bg-secondary hover:bg-neutral-300 text-muted-foreground'}`}>
                     {value}
                   </button>
                 ))}

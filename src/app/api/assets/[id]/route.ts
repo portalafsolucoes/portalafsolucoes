@@ -37,17 +37,22 @@ export async function GET(
       { data: childAssets },
       { data: files },
       { data: parts },
-      { data: workOrders }
+      { data: workOrders },
+      parentResult
     ] = await Promise.all([
       supabase.from('Asset').select('*').eq('parentAssetId', id),
       supabase.from('File').select('*').eq('assetId', id),
       supabase.from('AssetPart').select('*, part:Part(*)').eq('assetId', id),
-      supabase.from('WorkOrder').select('*').eq('assetId', id).order('createdAt', { ascending: false }).limit(10)
+      supabase.from('WorkOrder').select('*').eq('assetId', id).order('createdAt', { ascending: false }).limit(10),
+      asset.parentAssetId
+        ? supabase.from('Asset').select('id, name, protheusCode').eq('id', asset.parentAssetId).single()
+        : Promise.resolve({ data: null })
     ])
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       data: {
         ...asset,
+        parentAsset: parentResult.data || null,
         childAssets: childAssets || [],
         files: files || [],
         parts: parts || [],

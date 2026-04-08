@@ -26,6 +26,7 @@ interface Asset {
   gutTendency?: number
   createdAt: string
   updatedAt: string
+  parentAsset?: { id: string; name: string; protheusCode?: string } | null
   // Campos TOTVS
   protheusCode?: string
   tag?: string
@@ -227,6 +228,12 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
               <div>
                 <p className="text-xs text-muted-foreground">Proprietário</p>
                 <p className="text-sm text-foreground">{asset.ownershipType === 'PROPRIO' ? 'Próprio' : 'Terceiro'}</p>
+              </div>
+            )}
+            {asset.parentAsset?.protheusCode && (
+              <div>
+                <p className="text-xs text-muted-foreground">Cód. Bem Pai</p>
+                <p className="text-sm text-foreground font-mono font-semibold">{asset.parentAsset.protheusCode}</p>
               </div>
             )}
             {asset.maintenanceStatus && (

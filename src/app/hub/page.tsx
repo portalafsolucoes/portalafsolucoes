@@ -39,7 +39,7 @@ const modules: ModuleCard[] = [
     icon: <Icon name="bar_chart" className="text-4xl" />,
     href: '/gvp',
     enabled: false,
-    color: 'from-accent-orange to-[#b76012]',
+    color: 'from-[#7b8283] to-[#5a6061]',
     features: ['Leituras em Tempo Real', 'Alertas Automáticos', 'Relatórios', 'Dashboards'],
   },
   {

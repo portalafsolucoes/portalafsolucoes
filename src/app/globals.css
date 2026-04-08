@@ -18,10 +18,10 @@
   --primary-hover: 0 1% 32%;          /* #535252 */
   --primary-foreground: 15 18% 97%;   /* #faf7f6 */
 
-  /* Secondary (Warm Orange - Accent) */
-  --secondary: 29 100% 30%;           /* #974a00 */
-  --secondary-hover: 29 100% 26%;     /* #854000 */
-  --secondary-foreground: 25 100% 95%;
+  /* Secondary (Neutral Surface) */
+  --secondary: 180 4% 93%;             /* #ebedef */
+  --secondary-hover: 180 4% 89%;       /* #e1e5e6 */
+  --secondary-foreground: 195 10% 19%; /* #2d3435 */
 
   /* Muted & Accents */
   --muted: 180 5% 95%;                /* #f2f4f4 */

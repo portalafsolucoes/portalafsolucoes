@@ -142,7 +142,11 @@
       "Bash(grep -A 10 \"searchParams.get.*unitId\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api/basic-registrations/[entity]/route.ts)",
       "Bash(grep -B 5 -A 15 \"export async function GET\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api/basic-registrations/[entity]/route.ts)",
       "Bash(find /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao -maxdepth 2 -name middleware* -o -name .next*)",
-      "Bash(grep -r \"user\\\\.unitId\\\\|user\\\\.unit\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src --include=*.tsx --include=*.ts)"
+      "Bash(grep -r \"user\\\\.unitId\\\\|user\\\\.unit\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src --include=*.tsx --include=*.ts)",
+      "Bash(find /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src -type f \\\\\\(-name *qr* -o -name *upload* -o -name *foto* -o -name *photo* -o -name *image* -o -name *anexo* -o -name *attachment* \\\\\\))",
+      "Bash(find '/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api/assets' -type f -name *.ts)",
+      "Bash(find \"/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api\" -name \"route.ts\" -exec grep -l \"calendars\" {} \\\\;)",
+      "Bash(find \"C:/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec grep -l \"AssetCreatePanel\" {} \\\\;)"
     ],
     "deny": [],
     "ask": []
