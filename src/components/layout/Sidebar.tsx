@@ -60,10 +60,16 @@ export function Sidebar() {
     { name: 'Ativos', href: '/assets', icon: 'inventory_2', module: 'assets', subItems: [
       { name: 'Bens Padrão', href: '/assets/standard' },
       { name: 'Bens', href: '/assets' },
+      { name: 'Criticidade de Ativos', href: '/criticality' },
     ]},
-    { name: 'Criticidade de Ativos', href: '/criticality', icon: 'warning', module: 'criticality' },
-    { name: 'Plano de Manutenção', href: '/maintenance-plan', icon: 'event_upcoming', module: 'maintenance-plan' },
-    { name: 'Planejamento e Programação', href: '/planning', icon: 'date_range', module: 'planning' },
+    { name: 'Plano de Manutenção', href: '/maintenance-plan', icon: 'event_upcoming', module: 'maintenance-plan', subItems: [
+      { name: 'Manutenção Padrão', href: '/maintenance-plan/standard' },
+      { name: 'Manutenção do Bem', href: '/maintenance-plan/asset' },
+    ]},
+    { name: 'Planejamento e Programação', href: '/planning', icon: 'date_range', module: 'planning', subItems: [
+      { name: 'Plano de Manutenção', href: '/planning/plans' },
+      { name: 'Programação de OSs', href: '/planning/schedules' },
+    ]},
     { name: 'Ordens de Serviço (OS)', href: '/work-orders', icon: 'construction', module: 'work-orders' },
     { name: 'Solicitações (SS)', href: '/requests', icon: 'assignment', module: 'requests' },
     { name: 'Aprovações', href: '/requests/approvals', icon: 'check_circle', module: 'requests', requireApprove: true, badge: pendingCount },
