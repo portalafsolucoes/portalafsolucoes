@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { uploadFile } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -65,32 +63,18 @@ export async function POST(
       )
     }
 
-    // Criar diretório de uploads se não existir
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'work-orders', id)
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
     // Processar foto ANTES (novo upload ou manter existente)
     let finalBeforePhotoUrl = beforePhotoUrl || ''
     if (beforePhoto) {
-      const beforePhotoExt = beforePhoto.name.split('.').pop()
-      const beforePhotoName = `before-${Date.now()}.${beforePhotoExt}`
-      const beforePhotoPath = join(uploadsDir, beforePhotoName)
-      const beforePhotoBuffer = Buffer.from(await beforePhoto.arrayBuffer())
-      await writeFile(beforePhotoPath, beforePhotoBuffer)
-      finalBeforePhotoUrl = `/uploads/work-orders/${id}/${beforePhotoName}`
+      const result = await uploadFile(beforePhoto, `work-orders/${id}`)
+      finalBeforePhotoUrl = result.url
     }
 
     // Processar foto DEPOIS (novo upload ou manter existente)
     let finalAfterPhotoUrl = afterPhotoUrl || ''
     if (afterPhoto) {
-      const afterPhotoExt = afterPhoto.name.split('.').pop()
-      const afterPhotoName = `after-${Date.now()}.${afterPhotoExt}`
-      const afterPhotoPath = join(uploadsDir, afterPhotoName)
-      const afterPhotoBuffer = Buffer.from(await afterPhoto.arrayBuffer())
-      await writeFile(afterPhotoPath, afterPhotoBuffer)
-      finalAfterPhotoUrl = `/uploads/work-orders/${id}/${afterPhotoName}`
+      const result = await uploadFile(afterPhoto, `work-orders/${id}`)
+      finalAfterPhotoUrl = result.url
     }
 
     // Processar anexos adicionais
@@ -98,16 +82,11 @@ export async function POST(
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('attachment_') && value instanceof File) {
         const file = value as File
-        const ext = file.name.split('.').pop()
-        const fileName = `attachment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`
-        const filePath = join(uploadsDir, fileName)
-        const fileBuffer = Buffer.from(await file.arrayBuffer())
-        await writeFile(filePath, fileBuffer)
-        const fileUrl = `/uploads/work-orders/${id}/${fileName}`
+        const result = await uploadFile(file, `work-orders/${id}/attachments`)
 
         attachmentData.push({
           name: file.name,
-          url: fileUrl,
+          url: result.url,
           type: file.type || 'application/octet-stream',
           size: file.size
         })

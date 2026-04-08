@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { uploadFile } from '@/lib/storage'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
 
 export async function GET(request: NextRequest) {
@@ -194,33 +193,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Gerar ID do ativo antes do upload (precisa do ID para o path)
+    const assetId = generateId()
+
     // Processar imagem principal
     let imageUrl: string | undefined
     if (mainImage && mainImage.size > 0) {
-      const uploadsDir = join(process.cwd(), 'public', 'uploads')
-      try {
-        await mkdir(uploadsDir, { recursive: true })
-      } catch (error) {
-        // Diretório já existe
-      }
-
-      const timestamp = Date.now()
-      const randomString = Math.random().toString(36).substring(7)
-      const extension = mainImage.name.split('.').pop()
-      const filename = `${timestamp}-${randomString}.${extension}`
-      const filepath = join(uploadsDir, filename)
-
-      const bytes = await mainImage.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-      await writeFile(filepath, buffer)
-      
-      imageUrl = `/uploads/${filename}`
+      const result = await uploadFile(mainImage, `assets/${assetId}`)
+      imageUrl = result.url
     }
 
     // Criar o ativo
     const now = new Date().toISOString()
     const insertData: Record<string, any> = {
-      id: generateId(),
+      id: assetId,
       name,
       description: description || undefined,
       locationId: locationId || undefined,
@@ -333,21 +319,12 @@ export async function POST(request: NextRequest) {
       if (attachment && attachment.size > 0) {
         attachmentPromises.push(
           (async () => {
-            const uploadsDir = join(process.cwd(), 'public', 'uploads')
-            const timestamp = Date.now()
-            const randomString = Math.random().toString(36).substring(7)
-            const extension = attachment.name.split('.').pop()
-            const filename = `${timestamp}-${randomString}.${extension}`
-            const filepath = join(uploadsDir, filename)
-
-            const bytes = await attachment.arrayBuffer()
-            const buffer = Buffer.from(bytes)
-            await writeFile(filepath, buffer)
+            const uploaded = await uploadFile(attachment, `assets/${asset.id}/attachments`)
 
             return supabase.from('File').insert({
               id: generateId(),
               name: attachment.name,
-              url: `/uploads/${filename}`,
+              url: uploaded.url,
               type: attachment.type,
               size: attachment.size,
               assetId: asset.id,

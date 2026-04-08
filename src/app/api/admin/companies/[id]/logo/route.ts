@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
-import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary'
+import { uploadFile, deleteFileByUrl } from '@/lib/storage'
 
 /**
  * PATCH /api/admin/companies/[id]/logo
@@ -64,29 +64,22 @@ export async function PATCH(
       )
     }
 
-    // Deletar logo anterior do Cloudinary se existir
+    // Deletar logo anterior se existir
     if (company.logo) {
       try {
-        // Extrair publicId da URL do Cloudinary
-        const urlParts = company.logo.split('/upload/')
-        if (urlParts[1]) {
-          // Remove version (v1234567890/) e extensão
-          const pathAfterUpload = urlParts[1].replace(/^v\d+\//, '')
-          const publicId = pathAfterUpload.replace(/\.[^.]+$/, '')
-          await deleteFromCloudinary(publicId)
-        }
+        await deleteFileByUrl(company.logo)
       } catch {
         // Ignora erro ao deletar antiga (pode já ter sido removida)
       }
     }
 
-    // Upload nova logo para Cloudinary
-    const result = await uploadToCloudinary(file, 'logos')
+    // Upload nova logo para Supabase Storage
+    const result = await uploadFile(file, `logos/${companyId}`)
 
     // Atualizar no banco
     const { error: updateError } = await supabase
       .from('Company')
-      .update({ logo: result.secureUrl })
+      .update({ logo: result.url })
       .eq('id', companyId)
 
     if (updateError) {
@@ -95,7 +88,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      logo: result.secureUrl,
+      logo: result.url,
       message: 'Logo atualizada com sucesso',
     })
   } catch (error) {
@@ -140,12 +133,7 @@ export async function DELETE(
 
     if (company?.logo) {
       try {
-        const urlParts = company.logo.split('/upload/')
-        if (urlParts[1]) {
-          const pathAfterUpload = urlParts[1].replace(/^v\d+\//, '')
-          const publicId = pathAfterUpload.replace(/\.[^.]+$/, '')
-          await deleteFromCloudinary(publicId)
-        }
+        await deleteFileByUrl(company.logo)
       } catch {
         // Ignora
       }
