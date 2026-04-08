@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
+import { PageContainer } from '@/components/layout/PageContainer'
 
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
@@ -64,33 +65,30 @@ export default function PersonDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary p-6">
-        <div className="max-w-4xl mx-auto text-center py-12">
+      <PageContainer variant="narrow">
+        <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-secondary p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Pessoa não encontrada</h3>
-            <Link href="/people" className="text-primary hover:underline">
-              Voltar para a lista
-            </Link>
-          </div>
+      <PageContainer variant="narrow">
+        <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-2">Pessoa não encontrada</h3>
+          <Link href="/people" className="text-primary hover:underline">
+            Voltar para a lista
+          </Link>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="min-h-screen bg-secondary p-6">
-      <div className="max-w-4xl mx-auto">
+    <PageContainer variant="narrow">
         {/* Header */}
         <div className="mb-6">
           <Link
@@ -255,7 +253,6 @@ export default function PersonDetailPage() {
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </PageContainer>
   )
 }

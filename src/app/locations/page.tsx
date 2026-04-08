@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
@@ -39,22 +40,19 @@ export default function LocationsPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Localizações</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie os locais físicos
-            </p>
-          </div>
-          <Link href="/locations/new">
-            <Button>
-              <Icon name="add" className="mr-2 text-base" />
-              Nova Localização
-            </Button>
-          </Link>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Localizações"
+          description="Gerencie os locais físicos"
+          actions={
+            <Link href="/locations/new">
+              <Button>
+                <Icon name="add" className="mr-2 text-base" />
+                Nova Localização
+              </Button>
+            </Link>
+          }
+        />
 
         {loading ? (
           <div className="text-center py-12">
@@ -93,7 +91,6 @@ export default function LocationsPage() {
             ))}
           </div>
         )}
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

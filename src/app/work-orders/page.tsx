@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -137,11 +138,10 @@ export default function WorkOrdersPage() {
   )
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+    <PageContainer>
         {/* Se modal está aberto, mostrar apenas ele */}
         {showDetailModal && selectedWorkOrderId ? (
-          <div 
+          <div
             className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
             onClick={() => setShowDetailModal(false)}
           >
@@ -159,48 +159,43 @@ export default function WorkOrdersPage() {
           </div>
         ) : (
           <>
-        <div className="flex flex-col md:flex-row md:flex-row md:justify-between md:items-start mb-6 gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 md:gap-3">
-              <Icon name="description" className="text-2xl md:text-3xl md:" />
-              <span className="text-lg md:text-2xl">Ordens de Serviço (OS)</span>
-            </h1>
-            <p className="mt-1 text-xs md:text-sm text-muted-foreground">
-              Gerencie todas as ordens de manutenção
-            </p>
-          </div>
-          <div className="flex gap-2 md:gap-3 flex-wrap">
-            <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
-                }`}
-                title="Visualização em Tabela"
-              >
-                <Icon name="table" className="text-xl" />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
-                }`}
-                title="Visualização em Cartões"
-              >
-                <Icon name="grid_view" className="text-xl" />
-              </button>
+        <PageHeader
+          title="Ordens de Serviço (OS)"
+          description="Gerencie todas as ordens de manutenção"
+          actions={
+            <div className="flex gap-2 md:gap-3 flex-wrap">
+              <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
+                  }`}
+                  title="Visualização em Tabela"
+                >
+                  <Icon name="table" className="text-xl" />
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
+                  }`}
+                  title="Visualização em Cartões"
+                >
+                  <Icon name="grid_view" className="text-xl" />
+                </button>
+              </div>
+              <ExportButton data={filteredWorkOrders} entity="work-orders" />
+              {canCreateWO('work-orders') && (
+                <Link href="/work-orders/new" className="flex-1 md:flex-none">
+                  <Button className="w-full md:w-auto">
+                    <Icon name="add" className="mr-2 text-base" />
+                    <span className="text-sm md:text-base">Nova Ordem</span>
+                  </Button>
+                </Link>
+              )}
             </div>
-            <ExportButton data={filteredWorkOrders} entity="work-orders" />
-            {canCreateWO('work-orders') && (
-              <Link href="/work-orders/new" className="flex-1 md:flex-none">
-                <Button className="w-full md:w-auto">
-                  <Icon name="add" className="mr-2 text-base" />
-                  <span className="text-sm md:text-base">Nova Ordem</span>
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
+          }
+        />
 
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="flex-1 relative">
@@ -530,7 +525,6 @@ export default function WorkOrdersPage() {
           variant="danger"
           loading={deleting}
         />
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

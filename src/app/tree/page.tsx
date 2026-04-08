@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
@@ -199,15 +200,12 @@ export default function TreePage() {
   }
 
   return (
-    <AppLayout>
+    <PageContainer>
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Icon name="account_tree" className="text-2xl text-foreground" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Árvore</h1>
-            <p className="text-sm text-muted-foreground">Navegação hierárquica de ativos</p>
-          </div>
-        </div>
+        <PageHeader
+          title="Árvore"
+          description="Navegação hierárquica de ativos"
+        />
 
         {/* Seletor de Unidade — apenas para admin com múltiplas unidades */}
         {isAdmin && availableUnits.length > 1 && (
@@ -329,6 +327,6 @@ export default function TreePage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

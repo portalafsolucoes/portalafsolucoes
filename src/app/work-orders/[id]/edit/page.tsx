@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -127,17 +127,16 @@ export default function EditWorkOrderPage() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <PageContainer variant="form">
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8 pt-20 lg:pt-8">
+    <PageContainer variant="form">
         <button
           onClick={() => router.back()}
           className="flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors"
@@ -409,7 +408,6 @@ export default function EditWorkOrderPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

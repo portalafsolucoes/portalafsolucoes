@@ -22,7 +22,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
       <Sidebar />
       <Header />
       <main className={`h-[calc(100vh-64px)] mt-16 overflow-hidden transition-all duration-300 ${isCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <div className="h-full overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="h-full overflow-y-auto">
           {children}
         </div>
       </main>

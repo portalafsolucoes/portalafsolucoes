@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
@@ -297,8 +297,7 @@ export default function StandardAssetsPage() {
   })
 
   return (
-    <AppLayout>
-      <div className="h-full flex flex-col overflow-hidden">
+    <PageContainer>
         {/* Header */}
         <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -374,8 +373,6 @@ export default function StandardAssetsPage() {
             </table>
           )}
         </div>
-      </div>
-
       {/* Modal de Criação/Edição */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-8 overflow-y-auto">
@@ -658,6 +655,6 @@ export default function StandardAssetsPage() {
           </div>
         </div>
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

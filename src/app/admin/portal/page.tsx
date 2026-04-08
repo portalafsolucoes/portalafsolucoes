@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/hooks/useAuth'
@@ -219,30 +220,23 @@ export default function AdminPortalPage() {
   ] : []
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Icon name="admin_panel_settings" className="text-3xl" />
-              Administração do Portal
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie empresas, módulos e visualize estatísticas globais
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setCreateError('')
-              setShowCreateModal(true)
-            }}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-          >
-            <Icon name="add" className="text-xl" />
-            Nova Empresa
-          </button>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Administração do Portal"
+          description="Gerencie empresas, módulos e visualize estatísticas globais"
+          actions={
+            <button
+              onClick={() => {
+                setCreateError('')
+                setShowCreateModal(true)
+              }}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
+            >
+              <Icon name="add" className="text-xl" />
+              Nova Empresa
+            </button>
+          }
+        />
 
         {/* Stats Cards */}
         {statsLoading ? (
@@ -373,7 +367,6 @@ export default function AdminPortalPage() {
             {companies.length} empresa(s) cadastrada(s)
           </div>
         )}
-      </div>
 
       {/* Create Company Modal */}
       <Modal
@@ -599,6 +592,6 @@ export default function AdminPortalPage() {
           )}
         </div>
       </Modal>
-    </AppLayout>
+    </PageContainer>
   )
 }

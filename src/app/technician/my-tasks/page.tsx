@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -287,12 +288,11 @@ export default function MyTasksPage() {
   )
 
   return (
-    <AppLayout>
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Minhas Tarefas</h1>
-          <p className="text-muted-foreground mt-1">Ordens de serviço e solicitações atribuídas a você</p>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Minhas Tarefas"
+          description="Ordens de serviço e solicitações atribuídas a você"
+        />
 
         {/* Tabs */}
         <div className="border-b border-border mb-6">
@@ -344,8 +344,6 @@ export default function MyTasksPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-
       {/* Modal de Execução */}
       {showModal && selectedItem && selectedType && (
         <ExecutionModal
@@ -355,6 +353,6 @@ export default function MyTasksPage() {
           onSuccess={handleExecutionSuccess}
         />
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

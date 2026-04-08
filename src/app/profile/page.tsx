@@ -1,6 +1,7 @@
 'use client'
 
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
@@ -96,34 +97,29 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="p-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-surface-high rounded w-1/4"></div>
-            <div className="h-64 bg-surface-high rounded"></div>
-          </div>
+      <PageContainer variant="narrow">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-surface-high rounded w-1/4"></div>
+          <div className="h-64 bg-surface-high rounded"></div>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   if (!user) {
     return (
-      <AppLayout>
-        <div className="p-8">
+      <PageContainer variant="narrow">
           <p>Erro ao carregar perfil</p>
-        </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Meu Perfil</h1>
-          <p className="text-muted-foreground mt-2">Visualize e gerencie suas informações pessoais</p>
-        </div>
+    <PageContainer variant="narrow">
+        <PageHeader
+          title="Meu Perfil"
+          description="Visualize e gerencie suas informações pessoais"
+        />
 
         {/* Profile Header Card */}
         <Card className="mb-6">
@@ -306,7 +302,6 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

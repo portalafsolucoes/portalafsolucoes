@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
 
@@ -162,38 +163,31 @@ export default function CriticalityPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="h-full overflow-auto p-6">
+    <PageContainer>
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Icon name="monitoring" className="text-2xl text-primary" />
-                Análise de Criticidade de Ativos
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Priorização baseada em Matriz GUT, solicitações, ordens de serviço e falhas
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowInfo(!showInfo)}
-                className="px-3 py-2 rounded-[4px] hover:bg-accent/10 transition-colors"
-                title="Sobre o sistema"
-              >
-                <Icon name="info" className="text-xl" />
-              </button>
-              <button
-                onClick={fetchData}
-                disabled={loading}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors flex items-center gap-2"
-              >
-                <Icon name="refresh" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </button>
-            </div>
-          </div>
+          <PageHeader
+            title="Análise de Criticidade de Ativos"
+            description="Priorização baseada em Matriz GUT, solicitações, ordens de serviço e falhas"
+            actions={
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowInfo(!showInfo)}
+                  className="px-3 py-2 rounded-[4px] hover:bg-accent/10 transition-colors"
+                  title="Sobre o sistema"
+                >
+                  <Icon name="info" className="text-xl" />
+                </button>
+                <button
+                  onClick={fetchData}
+                  disabled={loading}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors flex items-center gap-2"
+                >
+                  <Icon name="refresh" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </button>
+              </div>
+            }
+          />
 
           {/* Info Panel */}
           {showInfo && (
@@ -213,7 +207,6 @@ export default function CriticalityPage() {
               </div>
             </div>
           )}
-        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -462,7 +455,6 @@ export default function CriticalityPage() {
             </table>
           </div>
         </div>
-      </div>
 
       {/* Modal de Edição GUT */}
       {editingAsset && (
@@ -617,6 +609,6 @@ export default function CriticalityPage() {
           </div>
         </div>
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

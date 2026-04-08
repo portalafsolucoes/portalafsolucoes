@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
 import { User } from '@/types'
@@ -108,18 +109,17 @@ export default function EditTeamPage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="max-w-3xl mx-auto p-6 text-center py-12">
+      <PageContainer variant="form">
+        <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-3xl mx-auto p-6">
+    <PageContainer variant="form">
         <Link
           href={`/teams/${params.id}`}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
@@ -129,7 +129,7 @@ export default function EditTeamPage() {
         </Link>
 
         <div className="bg-card rounded-[4px] ambient-shadow p-6">
-          <h1 className="text-2xl font-bold text-foreground mb-6">Editar Equipe</h1>
+          <PageHeader title="Editar Equipe" />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -225,7 +225,6 @@ export default function EditTeamPage() {
             </div>
           </form>
         </div>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

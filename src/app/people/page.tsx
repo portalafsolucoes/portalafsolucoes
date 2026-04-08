@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
-
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { PersonDetailModal } from '@/components/people/PersonDetailModal'
 import { PersonFormModal } from '@/components/people/PersonFormModal'
 import { User } from '@/types'
@@ -75,25 +74,20 @@ export default function PeoplePage() {
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Icon name="group" className="text-3xl" />
-              Pessoas
-            </h1>
-            <p className="text-muted-foreground mt-1">Gerencie as pessoas da organização</p>
-          </div>
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-blue-700 transition-colors"
-          >
-            <Icon name="add" className="text-xl" />
-            Adicionar Pessoa
-          </button>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Pessoas"
+          description="Gerencie as pessoas da organização"
+          actions={
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-blue-700 transition-colors"
+            >
+              <Icon name="add" className="text-xl" />
+              Adicionar Pessoa
+            </button>
+          }
+        />
 
         {/* Filters */}
         <div className="bg-card rounded-[4px] ambient-shadow p-4 mb-6">
@@ -202,8 +196,6 @@ export default function PeoplePage() {
             Mostrando {filteredUsers.length} de {users.length} pessoa(s)
           </div>
         )}
-      </div>
-
       {/* Modals */}
       {selectedUserId && !showEditModal && (
         <PersonDetailModal
@@ -231,6 +223,6 @@ export default function PeoplePage() {
           onSuccess={handleSuccess}
         />
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

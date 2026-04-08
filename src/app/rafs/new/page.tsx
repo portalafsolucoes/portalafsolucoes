@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
@@ -65,18 +66,17 @@ export default function NewRAFPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="mb-6 pt-16 lg:pt-0">
-          <div className="flex items-center gap-4 mb-4">
+    <PageContainer variant="form">
+        <PageHeader
+          title="Novo RAF"
+          description="Preencha os dados do Relatório de Análise de Falha"
+          actions={
             <Button variant="outline" onClick={() => router.back()}>
               <Icon name="arrow_back" className="text-base mr-2" />
               Voltar
             </Button>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Novo RAF</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Preencha os dados do Relatório de Análise de Falha</p>
-        </div>
+          }
+        />
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Cabeçalho */}
@@ -464,7 +464,6 @@ export default function NewRAFPage() {
             </Button>
           </div>
         </form>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

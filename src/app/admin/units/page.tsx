@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/hooks/useAuth'
@@ -122,27 +123,20 @@ export default function AdminUnitsPage() {
   if (authLoading) return null
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Icon name="apartment" className="text-3xl" />
-              Unidades / Filiais
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie as unidades da organização
-            </p>
-          </div>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-          >
-            <Icon name="add" className="text-xl" />
-            Nova Unidade
-          </button>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Unidades / Filiais"
+          description="Gerencie as unidades da organização"
+          actions={
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
+            >
+              <Icon name="add" className="text-xl" />
+              Nova Unidade
+            </button>
+          }
+        />
 
         {/* Content */}
         {loading ? (
@@ -221,7 +215,6 @@ export default function AdminUnitsPage() {
             {units.length} unidade(s) cadastrada(s)
           </div>
         )}
-      </div>
 
       {/* Form Modal */}
       <Modal
@@ -313,6 +306,6 @@ export default function AdminUnitsPage() {
           </div>
         </div>
       </Modal>
-    </AppLayout>
+    </PageContainer>
   )
 }

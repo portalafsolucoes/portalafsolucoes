@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
 import { hasPermission, type UserRole } from '@/lib/permissions'
@@ -74,19 +75,16 @@ export default function KpiPage() {
   }
 
   if (authLoading || !user) {
-    return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></AppLayout>
+    return <PageContainer><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></PageContainer>
   }
 
   return (
-    <AppLayout>
+    <PageContainer>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Icon name="trending_up" className="text-2xl text-foreground" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">KPI - Indicadores Chave de Performance</h1>
-            <p className="text-sm text-muted-foreground">Confiabilidade, Processo e Custo</p>
-          </div>
-        </div>
+        <PageHeader
+          title="KPI - Indicadores Chave de Performance"
+          description="Confiabilidade, Processo e Custo"
+        />
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-3 p-4 bg-card rounded-[4px]">
@@ -185,6 +183,6 @@ export default function KpiPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

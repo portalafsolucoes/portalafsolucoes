@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
@@ -456,17 +457,15 @@ export default function GEPPage() {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Gerenciamento de Variáveis de Processo (GVP)</h1>
-            <p className="text-muted-foreground mt-1">
-              443 Variáveis Totais | {gepData.length} horas de dados
-            </p>
-          </div>
-          <Button variant="outline" size="sm"><Icon name="download" className="text-base mr-2" />Exportar</Button>
-        </div>
+    <PageContainer>
+      <div className="space-y-6">
+        <PageHeader
+          title="Gerenciamento de Variáveis de Processo (GVP)"
+          description={`443 Variáveis Totais | ${gepData.length} horas de dados`}
+          actions={
+            <Button variant="outline" size="sm"><Icon name="download" className="text-base mr-2" />Exportar</Button>
+          }
+        />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -919,6 +918,6 @@ export default function GEPPage() {
         onSelectAll={() => setSelectedVariables(filteredVariables.map(v => v.key))}
         onClearAll={() => setSelectedVariables([])}
       />
-    </AppLayout>
+    </PageContainer>
   );
 }

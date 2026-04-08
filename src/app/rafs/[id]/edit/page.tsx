@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
@@ -125,27 +126,26 @@ export default function EditRAFPage() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <PageContainer variant="form">
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="mb-6 pt-16 lg:pt-0">
-          <div className="flex items-center gap-4 mb-4">
+    <PageContainer variant="form">
+        <PageHeader
+          title="Editar RAF"
+          description="Atualize os dados do Relatório de Análise de Falha"
+          actions={
             <Button variant="outline" onClick={() => router.back()}>
               <Icon name="arrow_back" className="text-base mr-2" />
               Voltar
             </Button>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Editar RAF</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Atualize os dados do Relatório de Análise de Falha</p>
-        </div>
+          }
+        />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cabeçalho */}
@@ -535,7 +535,6 @@ export default function EditRAFPage() {
             </Button>
           </div>
         </form>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

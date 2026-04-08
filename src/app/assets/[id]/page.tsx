@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -142,78 +143,69 @@ export default function AssetDetailPage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
-          </div>
+      <PageContainer variant="narrow">
+        <div className="text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   if (!asset) {
     return (
-      <AppLayout>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <Card>
-            <CardContent className="text-center py-12">
-              <p className="text-muted-foreground">Ativo não encontrado</p>
-              <Button className="mt-4" onClick={() => router.push('/assets')}>
-                Voltar para Ativos
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </AppLayout>
+      <PageContainer variant="narrow">
+        <Card>
+          <CardContent className="text-center py-12">
+            <p className="text-muted-foreground">Ativo não encontrado</p>
+            <Button className="mt-4" onClick={() => router.push('/assets')}>
+              Voltar para Ativos
+            </Button>
+          </CardContent>
+        </Card>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <PageContainer variant="narrow">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-foreground">{asset.name}</h1>
-              <Badge className={getStatusColor(asset.status)}>{asset.status}</Badge>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Criado em {formatDate(asset.createdAt)}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {!editing && (
-              <>
-                <Button variant="outline" onClick={() => setEditing(true)}>
-                  <Icon name="edit" className="mr-2 text-base" />
-                  Editar
-                </Button>
-                <Link href={`/assets/new?parentId=${asset.id}`}>
-                  <Button variant="outline">
-                    <Icon name="add" className="mr-2 text-base" />
-                    Adicionar Subativo
+        <PageHeader
+          title={asset.name}
+          description={`Criado em ${formatDate(asset.createdAt)}`}
+          actions={
+            <>
+              {!editing && (
+                <>
+                  <Badge className={getStatusColor(asset.status)}>{asset.status}</Badge>
+                  <Button variant="outline" onClick={() => setEditing(true)}>
+                    <Icon name="edit" className="mr-2 text-base" />
+                    Editar
                   </Button>
-                </Link>
-                <Button variant="danger" onClick={handleDelete}>
-                  <Icon name="delete" className="mr-2 text-base" />
-                  Deletar
-                </Button>
-              </>
-            )}
-            {editing && (
-              <>
-                <Button variant="outline" onClick={() => setEditing(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
+                  <Link href={`/assets/new?parentId=${asset.id}`}>
+                    <Button variant="outline">
+                      <Icon name="add" className="mr-2 text-base" />
+                      Adicionar Subativo
+                    </Button>
+                  </Link>
+                  <Button variant="danger" onClick={handleDelete}>
+                    <Icon name="delete" className="mr-2 text-base" />
+                    Deletar
+                  </Button>
+                </>
+              )}
+              {editing && (
+                <>
+                  <Button variant="outline" onClick={() => setEditing(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? 'Salvando...' : 'Salvar'}
+                  </Button>
+                </>
+              )}
+            </>
+          }
+        />
 
         {/* Tabs de navegação */}
         <div className="mb-6 border-b border-border">
@@ -565,7 +557,6 @@ export default function AssetDetailPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

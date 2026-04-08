@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { Icon } from '@/components/ui/Icon'
 
@@ -58,23 +59,18 @@ export default function DashboardPage() {
   // SUPER_ADMIN vê dashboard corporativo
   if (isSuperAdmin) {
     return (
-      <AppLayout>
-        <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+      <PageContainer>
           <CorporateDashboard />
-        </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="mb-6 lg:mb-8 pt-16 lg:pt-0">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">Dashboard</h1>
-          <p className="mt-1 lg:mt-2 text-sm lg:text-base text-muted-foreground">
-            Visão geral do sistema de manutenção
-          </p>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Dashboard"
+          description="Visão geral do sistema de manutenção"
+        />
 
         {loading ? (
           <div className="text-center py-12">
@@ -150,7 +146,6 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground">Nenhum alerta no momento.</p>
           </div>
         </div>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { PersonDetailModal } from '@/components/people/PersonDetailModal'
 import { PersonFormModal } from '@/components/people/PersonFormModal'
 import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
@@ -173,14 +174,10 @@ export default function PeopleTeamsPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto p-6">
+    <PageContainer>
         {/* Header with Tabs */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2 mb-4">
-            <Icon name="group" className="text-3xl" />
-            Pessoas e Equipes
-          </h1>
+          <PageHeader title="Pessoas e Equipes" />
           
           {/* Tabs */}
           <div className="border-b border-border">
@@ -572,7 +569,6 @@ export default function PeopleTeamsPage() {
             )}
           </>
         )}
-      </div>
 
       {/* Modals */}
       {selectedUserId && !showEditUserModal && (
@@ -628,6 +624,6 @@ export default function PeopleTeamsPage() {
           onSuccess={handleSuccess}
         />
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

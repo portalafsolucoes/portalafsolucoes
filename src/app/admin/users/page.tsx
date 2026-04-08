@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/hooks/useAuth'
@@ -294,27 +295,20 @@ export default function AdminUsersPage() {
   if (authLoading) return null
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Icon name="manage_accounts" className="text-3xl" />
-              Gestão de Usuários
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Crie usuários, defina papéis e atribua unidades
-            </p>
-          </div>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-          >
-            <Icon name="person_add" className="text-xl" />
-            Novo Usuário
-          </button>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Gestão de Usuários"
+          description="Crie usuários, defina papéis e atribua unidades"
+          actions={
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
+            >
+              <Icon name="person_add" className="text-xl" />
+              Novo Usuário
+            </button>
+          }
+        />
 
         {/* Filters */}
         <div className="bg-card rounded-[4px] ambient-shadow p-4 mb-6">
@@ -469,7 +463,6 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
-      </div>
 
       {/* User Form Modal */}
       <Modal
@@ -737,6 +730,6 @@ export default function AdminUsersPage() {
           </div>
         </div>
       </Modal>
-    </AppLayout>
+    </PageContainer>
   )
 }

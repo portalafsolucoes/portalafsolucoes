@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
+import { PageContainer } from '@/components/layout/PageContainer'
 
 import { Location } from '@/types'
 
@@ -85,8 +86,7 @@ export default function NewPersonPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary p-6">
-      <div className="max-w-3xl mx-auto">
+    <PageContainer variant="form">
         <Link
           href="/people"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
@@ -282,7 +282,6 @@ export default function NewPersonPage() {
             </div>
           </form>
         </div>
-      </div>
-    </div>
+    </PageContainer>
   )
 }

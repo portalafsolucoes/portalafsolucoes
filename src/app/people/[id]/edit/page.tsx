@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
+import { PageContainer } from '@/components/layout/PageContainer'
 
 import { Location } from '@/types'
 
@@ -131,18 +132,17 @@ export default function EditPersonPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary p-6">
-        <div className="max-w-3xl mx-auto text-center py-12">
+      <PageContainer variant="form">
+        <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="min-h-screen bg-secondary p-6">
-      <div className="max-w-3xl mx-auto">
+    <PageContainer variant="form">
         <Link
           href={`/people/${params.id}`}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
@@ -337,7 +337,6 @@ export default function EditPersonPage() {
             </div>
           </form>
         </div>
-      </div>
-    </div>
+    </PageContainer>
   )
 }

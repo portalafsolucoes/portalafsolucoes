@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
@@ -159,8 +160,7 @@ export default function RAFsPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+    <PageContainer>
         {/* Se modal de visualização está aberto, mostrar apenas ele */}
         {showViewModal && selectedRAF ? (
           <div 
@@ -210,47 +210,42 @@ export default function RAFsPage() {
         ) : (
           <>
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 md:gap-3">
-              <Icon name="description" className="text-2xl md:text-3xl md:" />
-              <span className="text-lg md:text-2xl">Relatórios de Análise de Falha (RAF)</span>
-            </h1>
-            <p className="mt-1 text-xs md:text-sm text-muted-foreground">
-              Gerencie os relatórios de análise de falha do sistema
-            </p>
-          </div>
-          <div className="flex gap-2 md:gap-3 flex-wrap">
-            <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
-                }`}
-                title="Visualização em Tabela"
+        <PageHeader
+          title="Relatórios de Análise de Falha (RAF)"
+          description="Gerencie os relatórios de análise de falha do sistema"
+          actions={
+            <>
+              <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
+                  }`}
+                  title="Visualização em Tabela"
+                >
+                  <Icon name="table" className="text-xl" />
+                </button>
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'cards' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
+                  }`}
+                  title="Visualização em Cartões"
+                >
+                  <Icon name="grid_view" className="text-xl" />
+                </button>
+              </div>
+              <ExportButton data={filteredRAFs} entity="rafs" />
+              <Button
+                onClick={() => setShowModal(true)}
+                className="flex-1 md:flex-none"
               >
-                <Icon name="table" className="text-xl" />
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'cards' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
-                }`}
-                title="Visualização em Cartões"
-              >
-                <Icon name="grid_view" className="text-xl" />
-              </button>
-            </div>
-            <ExportButton data={filteredRAFs} entity="rafs" />
-            <Button
-              onClick={() => setShowModal(true)}
-              className="flex-1 md:flex-none"
-            >
-              <Icon name="add" className="mr-2 text-base" />
-              <span className="text-sm md:text-base">Novo RAF</span>
-            </Button>
-          </div>
-        </div>
+                <Icon name="add" className="mr-2 text-base" />
+                <span className="text-sm md:text-base">Novo RAF</span>
+              </Button>
+            </>
+          }
+        />
 
         {/* Busca e Filtros */}
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:gap-4">
@@ -460,7 +455,6 @@ export default function RAFsPage() {
         )}
           </>
         )}
-      </div>
 
       {/* Modal de Criação (sempre disponível) */}
       <RAFFormModal
@@ -479,6 +473,6 @@ export default function RAFsPage() {
         title="Confirmar Exclusão"
         message="Tem certeza que deseja excluir este RAF? Esta ação não pode ser desfeita."
       />
-    </AppLayout>
+    </PageContainer>
   )
 }

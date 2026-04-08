@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -142,29 +143,21 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Icon name="check_circle" className="text-3xl text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">
-              Aprovações de Solicitações
-            </h1>
+    <PageContainer>
+        <PageHeader
+          title="Aprovações de Solicitações"
+          description={userRole === 'SUPER_ADMIN'
+            ? 'Você pode ver e aprovar TODAS as solicitações pendentes'
+            : 'Você pode ver e aprovar solicitações atribuídas à sua equipe'}
+        />
+        {requests.length > 0 && (
+          <div className="mt-3 flex items-center gap-2">
+            <Icon name="error" className="text-xl text-orange-600" />
+            <span className="text-sm font-medium text-orange-600">
+              {requests.length} solicitação(ões) aguardando aprovação
+            </span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {userRole === 'SUPER_ADMIN' 
-              ? 'Você pode ver e aprovar TODAS as solicitações pendentes' 
-              : 'Você pode ver e aprovar solicitações atribuídas à sua equipe'}
-          </p>
-          {requests.length > 0 && (
-            <div className="mt-3 flex items-center gap-2">
-              <Icon name="error" className="text-xl text-orange-600" />
-              <span className="text-sm font-medium text-orange-600">
-                {requests.length} solicitação(ões) aguardando aprovação
-              </span>
-            </div>
-          )}
-        </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12">
@@ -279,7 +272,6 @@ export default function ApprovalsPage() {
             ))}
           </div>
         )}
-      </div>
 
       {/* Modal de Aprovação */}
       <ApproveRequestModal
@@ -353,6 +345,6 @@ export default function ApprovalsPage() {
           </div>
         </div>
       </Modal>
-    </AppLayout>
+    </PageContainer>
   )
 }

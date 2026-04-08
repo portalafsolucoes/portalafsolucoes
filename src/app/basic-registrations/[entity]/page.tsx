@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { CrudTable, FieldConfig } from '@/components/basic-registrations/CrudTable'
 import { CalendarModal } from '@/components/basic-registrations/CalendarModal'
@@ -575,35 +576,31 @@ export default function BasicRegistrationEntityPage() {
 
   if (authLoading || !user) {
     return (
-      <AppLayout>
+      <PageContainer>
         <div className="flex items-center justify-center h-64">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   if (!currentTab) {
     return (
-      <AppLayout>
+      <PageContainer>
         <div className="flex items-center justify-center h-64">
           <p className="text-muted-foreground">Cadastro não encontrado.</p>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
+    <PageContainer>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Icon name="tune" className="text-2xl text-foreground" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{currentTab.label}</h1>
-            <p className="text-sm text-muted-foreground">Cadastros Básicos</p>
-          </div>
-        </div>
+        <PageHeader
+          title={currentTab.label}
+          description="Cadastros Básicos"
+        />
 
         {/* Seção customizada acima do CRUD (ex: resumo de pessoas para recursos) */}
         {currentTab.customSectionRender && currentTab.customSectionRender()}
@@ -650,6 +647,6 @@ export default function BasicRegistrationEntityPage() {
           />
         )}
       </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

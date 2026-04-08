@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
@@ -155,8 +155,7 @@ export default function AssetsPage() {
   })
 
   return (
-    <AppLayout>
-      <div className="h-full flex flex-col overflow-hidden">
+    <PageContainer variant="full" className="overflow-hidden p-0">
       {/* Header - Inspirado no TracOS da Tractian */}
       <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -376,7 +375,6 @@ export default function AssetsPage() {
           parentAsset={parentAssetForNew}
         />
       )}
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

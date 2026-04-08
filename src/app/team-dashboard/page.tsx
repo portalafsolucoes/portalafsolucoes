@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
@@ -85,36 +86,33 @@ export default function TeamDashboardPage() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <PageContainer>
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   if (!stats) {
     return (
-      <AppLayout>
-        <div className="mx-auto max-w-7xl px-4 py-8">
+      <PageContainer>
           <Card>
             <CardContent className="py-12 text-center">
               <Icon name="warning" className="mx-auto text-5xl text-yellow-500 mb-4" />
               <p className="text-muted-foreground">Você não é líder de nenhuma equipe</p>
             </CardContent>
           </Card>
-        </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8 pt-20 lg:pt-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Dashboard da Equipe</h1>
-          <p className="mt-2 text-lg text-muted-foreground">{stats.teamName}</p>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Dashboard da Equipe"
+          description={stats.teamName}
+        />
 
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -295,7 +293,6 @@ export default function TeamDashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -103,19 +104,16 @@ export default function AssetMaintenancePlanPage() {
   )
 
   if (authLoading || !user) {
-    return <AppLayout><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></AppLayout>
+    return <PageContainer><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></PageContainer>
   }
 
   return (
-    <AppLayout>
+    <PageContainer>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Icon name="event_upcoming" className="text-2xl text-foreground" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Manutenção do Bem</h1>
-            <p className="text-sm text-muted-foreground">Planos de manutenção por bem/ativo individual</p>
-          </div>
-        </div>
+        <PageHeader
+          title="Manutenção do Bem"
+          description="Planos de manutenção por bem/ativo individual"
+        />
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="relative flex-1 w-full sm:max-w-xs">
@@ -254,6 +252,6 @@ export default function AssetMaintenancePlanPage() {
           </div>
         </div>
       </Modal>
-    </AppLayout>
+    </PageContainer>
   )
 }

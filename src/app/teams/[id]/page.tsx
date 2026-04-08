@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
 import { Team } from '@/types'
@@ -64,33 +65,30 @@ export default function TeamDetailPage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="max-w-4xl mx-auto p-6 text-center py-12">
+      <PageContainer variant="narrow">
+        <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   if (!team) {
     return (
-      <AppLayout>
-        <div className="max-w-4xl mx-auto p-6">
+      <PageContainer variant="narrow">
           <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
             <h3 className="text-lg font-semibold text-foreground mb-2">Equipe não encontrada</h3>
             <Link href="/teams" className="text-primary hover:underline">
               Voltar para a lista
             </Link>
           </div>
-        </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto p-6">
+    <PageContainer variant="narrow">
         <Link
           href="/teams"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
@@ -98,36 +96,30 @@ export default function TeamDetailPage() {
           <Icon name="arrow_back" className="text-base" />
           Voltar para Equipes
         </Link>
-        
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <Icon name="group" className="text-3xl text-primary" />
-              {team.name}
-            </h1>
-            {team.description && (
-              <p className="text-muted-foreground mt-2">{team.description}</p>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            <Link
-              href={`/teams/${team.id}/edit`}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
-            >
-              <Icon name="edit" className="text-base" />
-              Editar
-            </Link>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors disabled:opacity-50"
-            >
-              <Icon name="delete" className="text-base" />
-              {deleting ? 'Excluindo...' : 'Excluir'}
-            </button>
-          </div>
-        </div>
+
+        <PageHeader
+          title={team.name}
+          description={team.description}
+          actions={
+            <div className="flex gap-2">
+              <Link
+                href={`/teams/${team.id}/edit`}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
+              >
+                <Icon name="edit" className="text-base" />
+                Editar
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                <Icon name="delete" className="text-base" />
+                {deleting ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
+          }
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-card rounded-[4px] ambient-shadow p-6">
@@ -200,7 +192,6 @@ export default function TeamDetailPage() {
             <p className="text-muted-foreground text-center py-8">Nenhum membro nesta equipe ainda.</p>
           )}
         </div>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

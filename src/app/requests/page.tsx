@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -129,11 +130,10 @@ export default function RequestsPage() {
   )
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+    <PageContainer>
         {/* Se modal está aberto, mostrar apenas ele */}
         {showDetailModal && selectedRequestId ? (
-          <div 
+          <div
             className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
             onClick={() => setShowDetailModal(false)}
           >
@@ -153,16 +153,10 @@ export default function RequestsPage() {
           </div>
         ) : (
           <>
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 md:gap-3">
-              <Icon name="description" className="text-2xl md:text-3xl md:" />
-              <span className="text-lg md:text-2xl">Solicitações de Serviço (SC)</span>
-            </h1>
-            <p className="mt-1 text-xs md:text-sm text-muted-foreground">
-              Gerencie solicitações de manutenção e serviços
-            </p>
-          </div>
+        <PageHeader
+          title="Solicitações de Serviço (SC)"
+          description="Gerencie solicitações de manutenção e serviços"
+          actions={
           <div className="flex gap-2 md:gap-3 flex-wrap">
             <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
               <button
@@ -192,7 +186,8 @@ export default function RequestsPage() {
               </Button>
             )}
           </div>
-        </div>
+          }
+        />
 
         {/* Barra de Pesquisa */}
         <div className="mb-6">
@@ -416,7 +411,6 @@ export default function RequestsPage() {
         )}
         </>
         )}
-      </div>
 
       {/* Modais sempre renderizados */}
       {false && showDetailModal && selectedRequestId && (
@@ -463,6 +457,6 @@ export default function RequestsPage() {
         variant="danger"
         loading={deleting}
       />
-    </AppLayout>
+    </PageContainer>
   )
 }

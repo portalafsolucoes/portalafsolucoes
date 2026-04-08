@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -84,8 +84,7 @@ export default function NewWorkOrderPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8 pt-20 lg:pt-8">
+    <PageContainer variant="form">
         <Card>
           <CardHeader>
             <CardTitle>Nova Ordem de Serviço</CardTitle>
@@ -298,7 +297,6 @@ export default function NewWorkOrderPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
-    </AppLayout>
+    </PageContainer>
   )
 }

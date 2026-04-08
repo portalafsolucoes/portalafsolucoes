@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -67,11 +68,11 @@ export default function WorkOrderDetailPage() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <PageContainer variant="narrow">
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
         </div>
-      </AppLayout>
+      </PageContainer>
     )
   }
 
@@ -82,44 +83,36 @@ export default function WorkOrderDetailPage() {
   const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
 
   return (
-    <AppLayout>
-      <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6 pt-20 lg:pt-8">
+    <PageContainer variant="narrow">
         {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors"
-          >
-            <Icon name="arrow_back" className="text-xl mr-2" />
-            Voltar
-          </button>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors"
+        >
+          <Icon name="arrow_back" className="text-xl mr-2" />
+          Voltar
+        </button>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-                  OS {displayId}
-                </h1>
-                {workOrder.systemStatus === 'IN_SYSTEM' ? (
-                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-success-light text-success-light-foreground">
-                    ✅ No Sistema
-                  </span>
-                ) : (
-                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-surface-high text-foreground">
-                    📝 Fora do Sistema
-                  </span>
-                )}
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(workOrder.status)}`}>
-                  {workOrder.status}
+        <PageHeader
+          title={`OS ${displayId}`}
+          description={workOrder.title}
+          actions={
+            <>
+              {workOrder.systemStatus === 'IN_SYSTEM' ? (
+                <span className="px-3 py-1 text-sm font-semibold rounded-full bg-success-light text-success-light-foreground">
+                  No Sistema
                 </span>
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getPriorityColor(workOrder.priority)}`}>
-                  {workOrder.priority}
+              ) : (
+                <span className="px-3 py-1 text-sm font-semibold rounded-full bg-surface-high text-foreground">
+                  Fora do Sistema
                 </span>
-              </div>
-              <p className="text-lg text-muted-foreground">{workOrder.title}</p>
-            </div>
-
-            <div className="flex gap-3">
+              )}
+              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(workOrder.status)}`}>
+                {workOrder.status}
+              </span>
+              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getPriorityColor(workOrder.priority)}`}>
+                {workOrder.priority}
+              </span>
               <Link href={`/work-orders/${params.id}/edit`}>
                 <Button variant="outline" className="flex items-center gap-2">
                   <Icon name="edit" className="text-base" />
@@ -134,9 +127,9 @@ export default function WorkOrderDetailPage() {
                 <Icon name="delete" className="text-base" />
                 Excluir
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -284,8 +277,6 @@ export default function WorkOrderDetailPage() {
             )}
           </div>
         </div>
-      </div>
-
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -321,6 +312,6 @@ export default function WorkOrderDetailPage() {
           </div>
         </div>
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

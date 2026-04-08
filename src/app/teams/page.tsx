@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent } from '@/components/ui/Card'
 import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
 import { TeamFormModal } from '@/components/teams/TeamFormModal'
@@ -72,24 +73,20 @@ export default function TeamsPage() {
   }
 
   return (
-    <AppLayout>
-      
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Equipes</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie equipes de trabalho
-            </p>
-          </div>
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-blue-700 transition-colors"
-          >
-            <Icon name="add" className="text-xl" />
-            Nova Equipe
-          </button>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Equipes"
+          description="Gerencie equipes de trabalho"
+          actions={
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-blue-700 transition-colors"
+            >
+              <Icon name="add" className="text-xl" />
+              Nova Equipe
+            </button>
+          }
+        />
 
         {loading ? (
           <div className="text-center py-12">
@@ -151,7 +148,6 @@ export default function TeamsPage() {
             ))}
           </div>
         )}
-      </div>
 
       {/* Modals */}
       {selectedTeamId && !showEditModal && (
@@ -180,6 +176,6 @@ export default function TeamsPage() {
           onSuccess={handleSuccess}
         />
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }

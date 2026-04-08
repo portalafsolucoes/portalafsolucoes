@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -288,12 +289,11 @@ export default function RequestApprovalsPage() {
   )
 
   return (
-    <AppLayout>
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Aprovações de Solicitações</h1>
-          <p className="text-muted-foreground mt-1">Gerencie aprovações, rejeições e acompanhe o status</p>
-        </div>
+    <PageContainer>
+        <PageHeader
+          title="Aprovações de Solicitações"
+          description="Gerencie aprovações, rejeições e acompanhe o status"
+        />
 
         {/* Tabs */}
         <div className="border-b border-border mb-6">
@@ -360,7 +360,6 @@ export default function RequestApprovalsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Modal */}
       {showModal && selectedRequest && (
@@ -370,6 +369,6 @@ export default function RequestApprovalsPage() {
           onSuccess={handleApprovalSuccess}
         />
       )}
-    </AppLayout>
+    </PageContainer>
   )
 }
