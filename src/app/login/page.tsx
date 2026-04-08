@@ -1,12 +1,11 @@
 'use client'
 
-import Image from 'next/image'
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { APP_DESCRIPTION, PORTAL_LOGO_PATH, PORTAL_NAME } from '@/lib/branding'
+import { APP_DESCRIPTION, PORTAL_NAME } from '@/lib/branding'
 import { Icon } from '@/components/ui/Icon'
 
 
@@ -70,14 +69,8 @@ function LoginForm() {
         </div>
 
         <div className="mb-8 text-center">
-          <div className="relative mx-auto mb-4 h-14 w-[240px]">
-            <Image
-              src={PORTAL_LOGO_PATH}
-              alt={PORTAL_NAME}
-              fill
-              priority
-              className="object-contain"
-            />
+          <div className="mx-auto mb-4 w-14 h-14 rounded-[4px] bg-primary-graphite flex items-center justify-center">
+            <Icon name="hub" className="text-3xl text-white" />
           </div>
           <p className="label-uppercase mb-2">Acesso ao Sistema</p>
           <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">{PORTAL_NAME}</h1>

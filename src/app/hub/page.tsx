@@ -1,11 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 
-import { PORTAL_LOGO_PATH, PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
+import { PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
 
 interface ModuleCard {
   id: string
@@ -104,14 +103,8 @@ export default function HubPage() {
       <header className="glass border-b border-on-surface-variant/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative h-10 w-[164px]">
-              <Image
-                src={PORTAL_LOGO_PATH}
-                alt={PORTAL_NAME}
-                fill
-                priority
-                className="object-contain object-left"
-              />
+            <div className="w-10 h-10 rounded-[4px] bg-primary-graphite flex items-center justify-center flex-shrink-0">
+              <Icon name="hub" className="text-2xl text-white" />
             </div>
             <div>
               <h1 className="font-headline text-lg font-bold leading-tight text-on-surface">

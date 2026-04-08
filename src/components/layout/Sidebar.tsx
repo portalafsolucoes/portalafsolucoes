@@ -10,7 +10,7 @@ import { useSidebar } from '@/contexts/SidebarContext'
 import { useAuth } from '@/hooks/useAuth'
 import { usePendingCount } from '@/hooks/usePendingCount'
 import { useCompanyModules } from '@/hooks/useCompanyModules'
-import { APP_LOGO_PATH, APP_NAME } from '@/lib/branding'
+import { APP_NAME } from '@/lib/branding'
 
 type SidebarSubItem = {
   name: string
@@ -32,7 +32,8 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { isCollapsed, setIsCollapsed } = useSidebar()
-  const { role: userRole } = useAuth()
+  const { role: userRole, user, companyName } = useAuth()
+  const companyLogo = user?.company?.logo || null
   const pendingCount = usePendingCount()
   const { isModuleEnabled } = useCompanyModules()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -79,6 +80,7 @@ export function Sidebar() {
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
     { name: 'Configurações', href: '/admin', icon: 'settings', module: 'settings', adminOnly: true, subItems: [
+      { name: 'Empresa', href: '/admin/settings' },
       { name: 'Unidades / Filiais', href: '/admin/units' },
       { name: 'Gestão de Usuários', href: '/admin/users' },
       ...(userRole === 'SUPER_ADMIN' ? [{ name: 'Administração do Portal', href: '/admin/portal' }] : []),
@@ -152,17 +154,23 @@ export function Sidebar() {
                   <Icon name="menu" className="text-xl text-on-surface" />
                 </button>
 
-                <Link href="/dashboard" className="flex items-center flex-1" onClick={() => setMobileMenuOpen(false)}>
-                  <div className="relative w-full h-10">
-                    <Image
-                      src={APP_LOGO_PATH}
-                      alt={APP_NAME}
-                      fill
-                      className="object-contain object-left"
-                      priority
-                      sizes="(max-width: 1024px) 200px, 160px"
-                    />
-                  </div>
+                <Link href="/dashboard" className="flex items-center flex-1 min-w-0" onClick={() => setMobileMenuOpen(false)}>
+                  {companyLogo ? (
+                    <div className="relative w-full h-10">
+                      <Image
+                        src={companyLogo}
+                        alt={companyName || APP_NAME}
+                        fill
+                        className="object-contain object-left"
+                        priority
+                        sizes="(max-width: 1024px) 200px, 160px"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm font-semibold text-on-surface truncate">
+                      {companyName || APP_NAME}
+                    </span>
+                  )}
                 </Link>
               </div>
             ) : (
@@ -179,16 +187,22 @@ export function Sidebar() {
           {/* Mobile Layout */}
           <div className="lg:hidden">
             <div className="flex items-center">
-              <div className="relative w-full h-10">
-                <Image
-                  src={APP_LOGO_PATH}
-                  alt={APP_NAME}
-                  fill
-                  className="object-contain object-left"
-                  priority
-                  unoptimized
-                />
-              </div>
+              {companyLogo ? (
+                <div className="relative w-full h-10">
+                  <Image
+                    src={companyLogo}
+                    alt={companyName || APP_NAME}
+                    fill
+                    className="object-contain object-left"
+                    priority
+                    sizes="200px"
+                  />
+                </div>
+              ) : (
+                <span className="text-sm font-semibold text-on-surface truncate">
+                  {companyName || APP_NAME}
+                </span>
+              )}
             </div>
           </div>
         </div>

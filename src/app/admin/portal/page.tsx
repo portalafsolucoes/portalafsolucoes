@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import Image from 'next/image'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
@@ -69,6 +70,13 @@ export default function AdminPortalPage() {
   const [modules, setModules] = useState<ModuleConfig[]>([])
   const [modulesLoading, setModulesLoading] = useState(false)
   const [savingModules, setSavingModules] = useState(false)
+
+  // Logo modal
+  const [logoCompany, setLogoCompany] = useState<Company | null>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoError, setLogoError] = useState('')
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!authLoading && role !== 'SUPER_ADMIN') {
@@ -207,6 +215,90 @@ export default function AdminPortalPage() {
     }
   }
 
+  // --- Logo Upload ---
+  const openLogoModal = (company: Company) => {
+    setLogoCompany(company)
+    setLogoError('')
+    setLogoPreview(company.logo)
+  }
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !logoCompany) return
+
+    // Validar tipo
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'].includes(file.type)) {
+      setLogoError('Use JPG, PNG, WebP ou SVG')
+      return
+    }
+
+    // Validar tamanho (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('A logo deve ter no máximo 2MB')
+      return
+    }
+
+    setLogoError('')
+    setUploadingLogo(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('logo', file)
+
+      const res = await fetch(`/api/admin/companies/${logoCompany.id}/logo`, {
+        method: 'PATCH',
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setLogoError(data.error || 'Erro ao enviar logo')
+        return
+      }
+
+      setLogoPreview(data.logo)
+      // Atualizar a lista local
+      setCompanies(prev =>
+        prev.map(c => c.id === logoCompany.id ? { ...c, logo: data.logo } : c)
+      )
+      setLogoCompany(prev => prev ? { ...prev, logo: data.logo } : null)
+    } catch {
+      setLogoError('Erro de conexão')
+    } finally {
+      setUploadingLogo(false)
+      if (logoInputRef.current) logoInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveLogo = async () => {
+    if (!logoCompany) return
+    setUploadingLogo(true)
+    setLogoError('')
+
+    try {
+      const res = await fetch(`/api/admin/companies/${logoCompany.id}/logo`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        setLogoError(data.error || 'Erro ao remover logo')
+        return
+      }
+
+      setLogoPreview(null)
+      setCompanies(prev =>
+        prev.map(c => c.id === logoCompany.id ? { ...c, logo: null } : c)
+      )
+      setLogoCompany(prev => prev ? { ...prev, logo: null } : null)
+    } catch {
+      setLogoError('Erro de conexão')
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
   if (authLoading) return null
 
   const statCards = stats ? [
@@ -315,9 +407,21 @@ export default function AdminPortalPage() {
                   <tr key={company.id} className="hover:bg-secondary/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Icon name="domain" className="text-xl text-primary" />
-                        </div>
+                        {company.logo ? (
+                          <div className="relative w-10 h-10 rounded-[4px] overflow-hidden flex-shrink-0 bg-secondary">
+                            <Image
+                              src={company.logo}
+                              alt={company.name}
+                              fill
+                              className="object-contain"
+                              sizes="40px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="domain" className="text-xl text-primary" />
+                          </div>
+                        )}
                         <div>
                           <div className="font-semibold text-foreground">{company.name}</div>
                           {company.website && (
@@ -346,14 +450,24 @@ export default function AdminPortalPage() {
                       {new Date(company.createdAt).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => openModules(company)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-[4px] transition-colors"
-                        title="Configurar módulos"
-                      >
-                        <Icon name="extension" className="text-base" />
-                        Módulos
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openLogoModal(company)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-[4px] transition-colors"
+                          title="Gerenciar logo"
+                        >
+                          <Icon name="image" className="text-base" />
+                          Logo
+                        </button>
+                        <button
+                          onClick={() => openModules(company)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-[4px] transition-colors"
+                          title="Configurar módulos"
+                        >
+                          <Icon name="extension" className="text-base" />
+                          Módulos
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -514,6 +628,77 @@ export default function AdminPortalPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Logo Upload Modal */}
+      <Modal
+        isOpen={!!logoCompany}
+        onClose={() => { setLogoCompany(null); setLogoPreview(null); setLogoError('') }}
+        title={`Logo — ${logoCompany?.name || ''}`}
+        size="sm"
+      >
+        <div className="p-6 space-y-4">
+          {logoError && (
+            <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
+              {logoError}
+            </div>
+          )}
+
+          {/* Preview */}
+          <div className="flex justify-center">
+            {logoPreview ? (
+              <div className="relative w-48 h-24 bg-secondary rounded-[4px] overflow-hidden">
+                <Image
+                  src={logoPreview}
+                  alt={logoCompany?.name || 'Logo'}
+                  fill
+                  className="object-contain"
+                  sizes="192px"
+                />
+              </div>
+            ) : (
+              <div className="w-48 h-24 bg-secondary rounded-[4px] flex flex-col items-center justify-center text-muted-foreground">
+                <Icon name="image" className="text-3xl mb-1" />
+                <span className="text-xs">Sem logo</span>
+              </div>
+            )}
+          </div>
+
+          {/* Upload input (hidden) */}
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/svg+xml"
+            onChange={handleLogoFileChange}
+            className="hidden"
+          />
+
+          {/* Actions */}
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => logoInputRef.current?.click()}
+              disabled={uploadingLogo}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors disabled:opacity-50"
+            >
+              <Icon name="upload" className="text-base" />
+              {uploadingLogo ? 'Enviando...' : logoPreview ? 'Trocar Logo' : 'Enviar Logo'}
+            </button>
+            {logoPreview && (
+              <button
+                onClick={handleRemoveLogo}
+                disabled={uploadingLogo}
+                className="flex items-center gap-2 px-4 py-2 border border-danger text-danger rounded-[4px] hover:bg-danger/10 transition-colors disabled:opacity-50"
+              >
+                <Icon name="delete" className="text-base" />
+                Remover
+              </button>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center">
+            JPG, PNG, WebP ou SVG. Máximo 2MB.
+          </p>
+        </div>
       </Modal>
 
       {/* Modules Config Modal */}

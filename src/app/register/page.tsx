@@ -1,13 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { APP_DESCRIPTION, APP_LOGO_PATH, APP_NAME, PORTAL_NAME } from '@/lib/branding'
+import { APP_DESCRIPTION, APP_NAME, PORTAL_NAME } from '@/lib/branding'
 import { Icon } from '@/components/ui/Icon'
 
 export default function RegisterPage() {
@@ -67,14 +66,8 @@ export default function RegisterPage() {
         </div>
 
         <div className="text-center mb-8">
-          <div className="relative mx-auto mb-4 h-14 w-[240px]">
-            <Image
-              src={APP_LOGO_PATH}
-              alt={APP_NAME}
-              fill
-              priority
-              className="object-contain"
-            />
+          <div className="mx-auto mb-4 w-14 h-14 rounded-[4px] bg-primary-graphite flex items-center justify-center">
+            <Icon name="hub" className="text-3xl text-white" />
           </div>
           <p className="label-uppercase mb-2">Novo Cadastro</p>
           <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">{APP_NAME}</h1>
