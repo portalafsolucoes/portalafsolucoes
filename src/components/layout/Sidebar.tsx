@@ -80,7 +80,6 @@ export function Sidebar() {
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
     { name: 'Configurações', href: '/admin', icon: 'settings', module: 'settings', adminOnly: true, subItems: [
-      { name: 'Empresa', href: '/admin/settings' },
       { name: 'Unidades / Filiais', href: '/admin/units' },
       { name: 'Gestão de Usuários', href: '/admin/users' },
       ...(userRole === 'SUPER_ADMIN' ? [{ name: 'Administração do Portal', href: '/admin/portal' }] : []),
