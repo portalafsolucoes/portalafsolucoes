@@ -69,7 +69,39 @@ export async function POST(request: NextRequest) {
       .update({ lastLogin: new Date().toISOString() })
       .eq('id', user.id)
 
-    // Create session
+    // Buscar unidades disponíveis para o usuário
+    let unitIds: string[] = []
+    if (user.role === 'SUPER_ADMIN') {
+      // Admin vê todas as unidades da empresa (Location raiz = sem parentId)
+      const { data: units } = await supabase
+        .from('Location')
+        .select('id')
+        .eq('companyId', user.companyId)
+        .is('parentId', null)
+      unitIds = (units || []).map((u: { id: string }) => u.id)
+    } else {
+      // Não-admin: apenas unidades vinculadas via UserUnit
+      const { data: userUnits } = await supabase
+        .from('UserUnit')
+        .select('unitId')
+        .eq('userId', user.id)
+      unitIds = (userUnits || []).map((uu: { unitId: string }) => uu.unitId)
+    }
+
+    // Definir unidade ativa: activeUnitId existente, ou primeira disponível
+    const activeUnitId = user.activeUnitId && unitIds.includes(user.activeUnitId)
+      ? user.activeUnitId
+      : unitIds[0] || null
+
+    // Se mudou, persistir a unidade ativa
+    if (activeUnitId && activeUnitId !== user.activeUnitId) {
+      await supabase
+        .from('User')
+        .update({ activeUnitId })
+        .eq('id', user.id)
+    }
+
+    // Create session com dados expandidos
     console.log('🍪 Creating session...')
     await createSession({
       id: user.id,
@@ -77,7 +109,10 @@ export async function POST(request: NextRequest) {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      companyId: user.companyId
+      companyId: user.companyId,
+      companyName: user.company?.name || '',
+      unitId: activeUnitId,
+      unitIds,
     })
 
     console.log('✅ Login successful!')
@@ -89,7 +124,9 @@ export async function POST(request: NextRequest) {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        company: user.company
+        company: user.company,
+        unitId: activeUnitId,
+        unitIds,
       }
     })
   } catch (error) {

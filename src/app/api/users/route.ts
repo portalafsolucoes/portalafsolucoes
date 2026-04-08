@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate, calendarId, locationId } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, rate, calendarId, locationId, unitIds } = body
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
@@ -125,11 +125,15 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date().toISOString()
+    const userId = generateId()
+
+    // Definir activeUnitId como a primeira unidade se fornecida
+    const activeUnitId = unitIds && unitIds.length > 0 ? unitIds[0] : null
 
     const { data: user, error: createError } = await supabase
       .from('User')
       .insert({
-        id: generateId(),
+        id: userId,
         email,
         password: hashedPassword,
         firstName,
@@ -143,6 +147,7 @@ export async function POST(request: NextRequest) {
         companyId: session.companyId,
         calendarId: calendarId || null,
         locationId: locationId || null,
+        activeUnitId,
         createdAt: now,
         updatedAt: now
       })
@@ -155,6 +160,21 @@ export async function POST(request: NextRequest) {
         { error: 'Erro ao criar usuário: ' + (createError.message || 'erro no banco de dados') },
         { status: 500 }
       )
+    }
+
+    // Criar vínculos UserUnit se unitIds fornecidos
+    if (unitIds && unitIds.length > 0) {
+      const userUnitRows = unitIds.map((unitId: string) => ({
+        id: generateId(),
+        userId,
+        unitId,
+        createdAt: now,
+      }))
+
+      const { error: uuError } = await supabase.from('UserUnit').insert(userUnitRows)
+      if (uuError) {
+        console.error('Error creating UserUnit links:', uuError)
+      }
     }
 
     return NextResponse.json(

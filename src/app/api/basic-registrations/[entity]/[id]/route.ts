@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 const TABLE_MAP: Record<string, string> = {
   calendars: 'Calendar',
@@ -72,6 +73,12 @@ export async function PUT(
     const table = TABLE_MAP[entity]
     if (!table) {
       return NextResponse.json({ error: 'Entidade não encontrada' }, { status: 404 })
+    }
+
+    // Verificar permissão de edição
+    const permError = checkApiPermission(session.role, 'basic-registrations', 'PUT')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const body = await request.json()
@@ -149,6 +156,12 @@ export async function DELETE(
     const table = TABLE_MAP[entity]
     if (!table) {
       return NextResponse.json({ error: 'Entidade não encontrada' }, { status: 404 })
+    }
+
+    // Verificar permissão de exclusão
+    const permError = checkApiPermission(session.role, 'basic-registrations', 'DELETE')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { error } = await supabase

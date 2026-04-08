@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { usePermissions } from '@/hooks/usePermissions'
 import { WorkOrderDetailModal } from '@/components/work-orders/WorkOrderDetailModal'
 import { WorkOrderEditModal } from '@/components/work-orders/WorkOrderEditModal'
 import { WorkOrderExecuteModal } from '@/components/work-orders/WorkOrderExecuteModal'
@@ -50,6 +51,7 @@ export default function WorkOrdersPage() {
   const [workOrderToDelete, setWorkOrderToDelete] = useState<WorkOrder | null>(null)
   const [deleting, setDeleting] = useState(false)
   const { user: currentUser } = useAuth()
+  const { canCreate: canCreateWO, canEdit: canEditWO, canDelete: canDeleteWO } = usePermissions()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<any>(null)
 
@@ -189,12 +191,14 @@ export default function WorkOrdersPage() {
               </button>
             </div>
             <ExportButton data={filteredWorkOrders} entity="work-orders" />
-            <Link href="/work-orders/new" className="flex-1 md:flex-none">
-              <Button className="w-full md:w-auto">
-                <Icon name="add" className="mr-2 text-base" />
-                <span className="text-sm md:text-base">Nova Ordem</span>
-              </Button>
-            </Link>
+            {canCreateWO('work-orders') && (
+              <Link href="/work-orders/new" className="flex-1 md:flex-none">
+                <Button className="w-full md:w-auto">
+                  <Icon name="add" className="mr-2 text-base" />
+                  <span className="text-sm md:text-base">Nova Ordem</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -312,7 +316,7 @@ export default function WorkOrdersPage() {
                           <Icon name="play_arrow" className="text-base md: md:text-xl" />
                         </button>
                       )}
-                      {!isTechnician() && wo.status !== 'COMPLETE' && (
+                      {canEditWO('work-orders') && wo.status !== 'COMPLETE' && (
                         <button
                           onClick={() => { setWorkOrderToFinalize(wo); setShowFinalizeModal(true); }}
                           className="p-1.5 md:p-2 text-foreground hover:bg-muted rounded-[4px] transition-colors"
@@ -321,23 +325,23 @@ export default function WorkOrdersPage() {
                           <Icon name="check_circle" className="text-base md: md:text-xl" />
                         </button>
                       )}
-                      {!isTechnician() && (
-                        <>
-                          <button
-                            onClick={() => handleEdit(wo)}
-                            className="p-1.5 md:p-2 text-muted-foreground hover:bg-surface rounded-[4px] transition-colors"
-                            title="Editar"
-                          >
-                            <Icon name="edit" className="text-base md: md:text-xl" />
-                          </button>
-                          <button
-                            onClick={() => openDeleteDialog(wo)}
-                            className="p-1.5 md:p-2 text-danger hover:bg-danger-light rounded-[4px] transition-colors"
-                            title="Excluir"
-                          >
-                            <Icon name="delete" className="text-base md: md:text-xl" />
-                          </button>
-                        </>
+                      {canEditWO('work-orders') && (
+                        <button
+                          onClick={() => handleEdit(wo)}
+                          className="p-1.5 md:p-2 text-muted-foreground hover:bg-surface rounded-[4px] transition-colors"
+                          title="Editar"
+                        >
+                          <Icon name="edit" className="text-base md: md:text-xl" />
+                        </button>
+                      )}
+                      {canDeleteWO('work-orders') && (
+                        <button
+                          onClick={() => openDeleteDialog(wo)}
+                          className="p-1.5 md:p-2 text-danger hover:bg-danger-light rounded-[4px] transition-colors"
+                          title="Excluir"
+                        >
+                          <Icon name="delete" className="text-base md: md:text-xl" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -417,23 +421,23 @@ export default function WorkOrdersPage() {
                                 <Icon name="play_arrow" className="text-base" />
                               </button>
                             )}
-                            {!isTechnician() && (
-                              <>
-                                <button
-                                  onClick={() => handleEdit(wo)}
-                                  className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
-                                  title="Editar"
-                                >
-                                  <Icon name="edit" className="text-base" />
-                                </button>
-                                <button
-                                  onClick={() => openDeleteDialog(wo)}
-                                  className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Icon name="delete" className="text-base" />
-                                </button>
-                              </>
+                            {canEditWO('work-orders') && (
+                              <button
+                                onClick={() => handleEdit(wo)}
+                                className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
+                                title="Editar"
+                              >
+                                <Icon name="edit" className="text-base" />
+                              </button>
+                            )}
+                            {canDeleteWO('work-orders') && (
+                              <button
+                                onClick={() => openDeleteDialog(wo)}
+                                className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
+                                title="Excluir"
+                              >
+                                <Icon name="delete" className="text-base" />
+                              </button>
                             )}
                           </div>
                         </td>

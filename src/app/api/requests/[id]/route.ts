@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 export async function GET(
   request: NextRequest,
@@ -53,6 +54,13 @@ export async function PUT(
     }
 
     const { id } = await params
+
+    // Verificar permissão de edição
+    const permError = checkApiPermission(session.role, 'requests', 'PUT')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const body = await request.json()
     const { title, description, priority, dueDate, teamId, files = [] } = body
     const now = new Date().toISOString()
@@ -140,6 +148,12 @@ export async function DELETE(
     }
 
     const { id } = await params
+
+    // Verificar permissão de exclusão
+    const permError = checkApiPermission(session.role, 'requests', 'DELETE')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
     // Verificar se existe
     const { data: maintenanceRequest } = await supabase

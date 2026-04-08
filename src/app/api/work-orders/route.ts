@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 import { generateInternalId, isValidExternalId, determineSystemStatus } from '@/lib/workOrderUtils'
 
 // Função para calcular próxima data de execução
@@ -75,6 +76,11 @@ export async function GET(request: NextRequest) {
       .order('createdAt', { ascending: false })
       .range(skip, skip + limit - 1)
 
+    // Filtrar por unidade ativa da session
+    const unitIdParam = searchParams.get('unitId')
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+    if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+
     if (status) query = query.eq('status', status)
     if (systemStatus) query = query.eq('systemStatus', systemStatus)
     if (assetId) query = query.eq('assetId', assetId)
@@ -114,9 +120,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verificar permissão de criação
+    const permError = checkApiPermission(session.role, 'work-orders', 'POST')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const body = await request.json()
-    const { 
-      title, 
+    const {
+      title,
       description,
       type,
       priority, 
@@ -268,6 +280,7 @@ export async function POST(request: NextRequest) {
         internalId,
         systemStatus,
         companyId: session.companyId,
+        unitId: session.unitId || null,
         createdById: session.id,
         assetId: validAssetId || null,
         locationId: validLocationId || null,

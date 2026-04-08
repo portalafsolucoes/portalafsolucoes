@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     const { searchParams } = new URL(request.url)
-    const unitId = searchParams.get('unitId')
+    const unitIdParam = searchParams.get('unitId')
+    const unitId = getEffectiveUnitId(session, unitIdParam)
     const assetId = searchParams.get('assetId')
 
     // Se pediu detalhes de um ativo específico, retornar OSs, SSs e PAs pendentes
@@ -46,15 +47,22 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Buscar unidades (agora são Localizações)
-    const { data: units, error: unitsError } = await supabase
+    // Buscar unidades que o usuário tem acesso
+    let unitsQuery = supabase
       .from('Location')
       .select('id, name, address')
       .eq('companyId', session.companyId)
       .order('name')
+
+    // Non-admins: restringir às unidades do usuário
+    if (session.unitIds && session.unitIds.length > 0 && session.role !== 'SUPER_ADMIN') {
+      unitsQuery = unitsQuery.in('id', session.unitIds)
+    }
+
+    const { data: units, error: unitsError } = await unitsQuery
     if (unitsError) throw unitsError
 
-    // Se especificou unitId, buscar áreas e ativos dessa unidade
+    // Se tem unitId (da session ou override), buscar áreas e ativos dessa unidade
     if (unitId) {
       const [areasRes, workCentersRes, assetsRes] = await Promise.all([
         supabase.from('Area')

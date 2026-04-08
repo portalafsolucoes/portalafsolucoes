@@ -16,6 +16,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [locations, setLocations] = useState<Location[]>([])
+  const [units, setUnits] = useState<{ id: string; name: string }[]>([])
   const [calendars, setCalendars] = useState<any[]>([])
   const [formData, setFormData] = useState({
     firstName: '',
@@ -28,12 +29,14 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
     rate: '0',
     locationId: '',
     calendarId: '',
-    enabled: true
+    enabled: true,
+    unitIds: [] as string[],
   })
 
   useEffect(() => {
     if (isOpen) {
       fetchLocations()
+      fetchUnits()
       fetchCalendars()
       if (userId) {
         fetchUser()
@@ -55,7 +58,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
       rate: '0',
       locationId: '',
       calendarId: '',
-      enabled: true
+      enabled: true,
+      unitIds: [],
     })
   }
 
@@ -67,6 +71,16 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
       
       if (data.data) {
         const user = data.data
+        // Buscar unidades do usuário
+        let userUnitIds: string[] = []
+        try {
+          const unitsRes = await fetch(`/api/admin/users/${userId}/units`)
+          if (unitsRes.ok) {
+            const unitsData = await unitsRes.json()
+            userUnitIds = (unitsData.data || []).map((u: any) => u.id)
+          }
+        } catch { /* ignore - non-admin won't have access */ }
+
         setFormData({
           firstName: user.firstName,
           lastName: user.lastName,
@@ -78,7 +92,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
           rate: user.rate.toString(),
           locationId: user.locationId || '',
           calendarId: user.calendarId || '',
-          enabled: user.enabled
+          enabled: user.enabled,
+          unitIds: userUnitIds,
         })
       }
     } catch (error) {
@@ -98,6 +113,16 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
     } catch (error) {
       console.error('Error fetching locations:', error)
     }
+  }
+
+  const fetchUnits = async () => {
+    try {
+      const response = await fetch('/api/admin/units')
+      if (response.ok) {
+        const data = await response.json()
+        setUnits((data.data || []).map((u: any) => ({ id: u.id, name: u.name })))
+      }
+    } catch { /* ignore - non-admin won't have access */ }
   }
 
   const fetchCalendars = async () => {
@@ -137,7 +162,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
         rate: parseFloat(formData.rate),
         locationId: formData.locationId || null,
         calendarId: formData.calendarId || null,
-        enabled: formData.enabled
+        enabled: formData.enabled,
+        unitIds: formData.unitIds,
       }
 
       if (formData.password) {
@@ -363,6 +389,39 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
             ))}
           </select>
         </div>
+
+        {units.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Unidades de Acesso
+            </label>
+            <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
+              {units.map(unit => (
+                <label key={unit.id} className="flex items-center gap-2 cursor-pointer hover:bg-surface-low px-2 py-1 rounded">
+                  <input
+                    type="checkbox"
+                    checked={formData.unitIds.includes(unit.id)}
+                    onChange={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        unitIds: prev.unitIds.includes(unit.id)
+                          ? prev.unitIds.filter(id => id !== unit.id)
+                          : [...prev.unitIds, unit.id],
+                      }))
+                    }}
+                    className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
+                  />
+                  <span className="text-sm text-foreground">{unit.name}</span>
+                </label>
+              ))}
+            </div>
+            {formData.unitIds.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.unitIds.length} unidade(s) selecionada(s)
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           <input

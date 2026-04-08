@@ -32,8 +32,9 @@ function KpiCard({ label, value, unit, description, highlight }: {
 
 export default function KpiPage() {
   const router = useRouter()
-  const { user, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading, unitId: authUnitId } = useAuth()
   const role = user?.role ?? ''
+  const isAdmin = role === 'SUPER_ADMIN' || role === 'GESTOR'
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
   const [units, setUnits] = useState<any[]>([])
   const [selectedUnit, setSelectedUnit] = useState('')
@@ -47,12 +48,12 @@ export default function KpiPage() {
   }, [authLoading, user, role])
 
   useEffect(() => {
-    if (!authLoading && user) loadUnits()
-  }, [authLoading, user])
+    if (!authLoading && user && isAdmin) loadUnits()
+  }, [authLoading, user, isAdmin])
 
   useEffect(() => {
-    loadKpis()
-  }, [selectedUnit, startDate, endDate])
+    if (!authLoading && user) loadKpis()
+  }, [selectedUnit, startDate, endDate, authLoading, user])
 
   const loadUnits = async () => {
     const res = await fetch('/api/units')
@@ -62,7 +63,8 @@ export default function KpiPage() {
 
   const loadKpis = async () => {
     const params = new URLSearchParams()
-    if (selectedUnit) params.append('unitId', selectedUnit)
+    // Admin pode escolher unidade; non-admin usa a da session (backend força via getEffectiveUnitId)
+    if (isAdmin && selectedUnit) params.append('unitId', selectedUnit)
     if (startDate) params.append('startDate', startDate)
     if (endDate) params.append('endDate', endDate)
     const url = `/api/kpi${params.toString() ? '?' + params.toString() : ''}`
@@ -88,14 +90,16 @@ export default function KpiPage() {
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-3 p-4 bg-card rounded-[4px]">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Unidade</label>
-            <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}
-              className="px-3 py-2 text-sm rounded-[4px] bg-card">
-              <option value="">Todas</option>
-              {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
-          </div>
+          {isAdmin && (
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Unidade</label>
+              <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}
+                className="px-3 py-2 text-sm rounded-[4px] bg-card">
+                <option value="">Todas</option>
+                {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-xs text-muted-foreground mb-1">Data Início</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}

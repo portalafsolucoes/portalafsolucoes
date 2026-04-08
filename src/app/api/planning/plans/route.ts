@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 // GET - Listar planos de manutenção emitidos
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url)
+    const unitIdParam = searchParams.get('unitId')
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+
+    let query = supabase
       .from('MaintenancePlanExecution')
       .select('*')
       .eq('companyId', session.companyId)
       .order('planNumber', { ascending: false })
+
+    if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+
+    const { data, error } = await query
 
     if (error) throw error
     return NextResponse.json({ data: data || [] })
@@ -28,10 +37,19 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+    // Verificar permissão de criação
+    const permError = checkApiPermission(session.role, 'plans', 'POST')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const body = await request.json()
-    const { description, startDate, endDate, unitId,
+    const { description, startDate, endDate, unitId: unitIdBody,
             costCenterFrom, costCenterTo, workCenterFrom, workCenterTo,
             serviceTypeFrom, serviceTypeTo, areaFrom, areaTo, familyFrom, familyTo } = body
+
+    // unitId vem da session (non-admin) ou pode ser override via body (admin)
+    const unitId = getEffectiveUnitId(session, unitIdBody)
 
     if (!description || !startDate || !endDate || !unitId) {
       return NextResponse.json({ error: 'description, startDate, endDate e unitId são obrigatórios' }, { status: 400 })

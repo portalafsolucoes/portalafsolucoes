@@ -13,6 +13,7 @@ import { RequestFormModal } from '@/components/requests/RequestFormModal'
 import { RequestDetailModal } from '@/components/requests/RequestDetailModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface Request {
   id: string
@@ -32,6 +33,7 @@ type ViewMode = 'grid' | 'table'
 
 export default function RequestsPage() {
   const { user: currentUser } = useAuth()
+  const { canCreate: canCreateReq, canEdit: canEditReq, canDelete: canDeleteReq } = usePermissions()
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -44,12 +46,13 @@ export default function RequestsPage() {
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Função para verificar se pode excluir (apenas próprias e não aprovadas)
+  // Função para verificar se pode excluir
+  // Admin/Gestor/Planejador: podem excluir qualquer SS não aprovada
+  // Operacionais: não podem excluir (delete:false para requests)
   const canDeleteRequest = (request: Request) => {
-    if (!currentUser?.id) return false
-    const isOwner = request.createdBy?.id === currentUser.id
+    if (!canDeleteReq('requests')) return false
     const isApproved = request.teamApprovalStatus === 'APPROVED'
-    return isOwner && !isApproved
+    return !isApproved
   }
 
   useEffect(() => {
@@ -182,10 +185,12 @@ export default function RequestsPage() {
               </button>
             </div>
             <ExportButton data={filteredRequests} entity="requests" />
-            <Button onClick={() => setShowNewModal(true)} className="flex-1 md:flex-none">
-              <Icon name="add" className="mr-2 text-base" />
-              Nova Solicitação
-            </Button>
+            {canCreateReq('requests') && (
+              <Button onClick={() => setShowNewModal(true)} className="flex-1 md:flex-none">
+                <Icon name="add" className="mr-2 text-base" />
+                Nova Solicitação
+              </Button>
+            )}
           </div>
         </div>
 
@@ -275,16 +280,18 @@ export default function RequestsPage() {
                     >
                       <Icon name="visibility" className="text-base md: md:text-xl" />
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEdit(request)
-                      }}
-                      className="p-1.5 md:p-2 text-muted-foreground hover:bg-surface rounded-[4px] transition-colors"
-                      title="Editar"
-                    >
-                      <Icon name="edit" className="text-base md: md:text-xl" />
-                    </button>
+                    {canEditReq('requests') && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEdit(request)
+                        }}
+                        className="p-1.5 md:p-2 text-muted-foreground hover:bg-surface rounded-[4px] transition-colors"
+                        title="Editar"
+                      >
+                        <Icon name="edit" className="text-base md: md:text-xl" />
+                      </button>
+                    )}
                     {canDeleteRequest(request) && (
                       <button
                         onClick={(e) => {
@@ -380,18 +387,20 @@ export default function RequestsPage() {
                           >
                             <Icon name="visibility" className="text-base" />
                           </button>
-                          <button
-                            onClick={() => handleEdit(request)}
-                            className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
-                            title="Editar"
-                          >
-                            <Icon name="edit" className="text-base" />
-                          </button>
+                          {canEditReq('requests') && (
+                            <button
+                              onClick={() => handleEdit(request)}
+                              className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
+                              title="Editar"
+                            >
+                              <Icon name="edit" className="text-base" />
+                            </button>
+                          )}
                           {canDeleteRequest(request) && (
                             <button
                               onClick={() => openDeleteDialog(request)}
                               className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
-                              title="Excluir (apenas suas solicitações não aprovadas)"
+                              title="Excluir"
                             >
                               <Icon name="delete" className="text-base" />
                             </button>

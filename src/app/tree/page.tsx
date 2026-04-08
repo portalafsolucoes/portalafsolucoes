@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Icon } from '@/components/ui/Icon'
+import { useAuth } from '@/hooks/useAuth'
+import { useActiveUnit } from '@/hooks/useActiveUnit'
 
 import { getStatusColor } from '@/lib/utils'
 
@@ -23,7 +25,10 @@ interface AssetDetail {
 }
 
 export default function TreePage() {
-  const [units, setUnits] = useState<any[]>([])
+  const { user, unitId: authUnitId } = useAuth()
+  const { activeUnitId, availableUnits } = useActiveUnit()
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'GESTOR'
+
   const [treeData, setTreeData] = useState<TreeNode[]>([])
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [selectedUnit, setSelectedUnit] = useState<string>('')
@@ -32,18 +37,16 @@ export default function TreePage() {
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
 
+  // Auto-selecionar unidade ativa da session
   useEffect(() => {
-    fetchUnits()
-  }, [])
-
-  const fetchUnits = async () => {
-    try {
-      const res = await fetch('/api/tree')
-      const data = await res.json()
-      setUnits(data.data?.units || [])
-    } catch { /* ignore */ }
-    setLoading(false)
-  }
+    const unitToUse = activeUnitId || authUnitId
+    if (unitToUse && !selectedUnit) {
+      setSelectedUnit(unitToUse)
+      fetchUnitTree(unitToUse)
+    } else if (!unitToUse) {
+      setLoading(false)
+    }
+  }, [activeUnitId, authUnitId])
 
   const fetchUnitTree = useCallback(async (unitId: string) => {
     setLoading(true)
@@ -206,20 +209,22 @@ export default function TreePage() {
           </div>
         </div>
 
-        {/* Seletor de Unidade */}
-        <div className="flex items-center gap-3 p-3 bg-card rounded-[4px]">
-          <label className="text-sm font-medium text-foreground">Unidade:</label>
-          <select
-            value={selectedUnit}
-            onChange={e => selectUnit(e.target.value)}
-            className="flex-1 max-w-xs px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="">Selecione a unidade...</option>
-            {units.map((u: any) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
-        </div>
+        {/* Seletor de Unidade — apenas para admin com múltiplas unidades */}
+        {isAdmin && availableUnits.length > 1 && (
+          <div className="flex items-center gap-3 p-3 bg-card rounded-[4px]">
+            <label className="text-sm font-medium text-foreground">Unidade:</label>
+            <select
+              value={selectedUnit}
+              onChange={e => selectUnit(e.target.value)}
+              className="flex-1 max-w-xs px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Selecione a unidade...</option>
+              {availableUnits.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {!selectedUnit ? (
           <div className="rounded-[4px] bg-card p-12 text-center text-muted-foreground">

@@ -9,6 +9,7 @@ import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useAuth } from '@/hooks/useAuth'
 import { usePendingCount } from '@/hooks/usePendingCount'
+import { useCompanyModules } from '@/hooks/useCompanyModules'
 import { APP_LOGO_PATH, APP_NAME } from '@/lib/branding'
 
 type SidebarSubItem = {
@@ -33,6 +34,7 @@ export function Sidebar() {
   const { isCollapsed, setIsCollapsed } = useSidebar()
   const { role: userRole } = useAuth()
   const pendingCount = usePendingCount()
+  const { isModuleEnabled } = useCompanyModules()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
@@ -76,10 +78,17 @@ export function Sidebar() {
     { name: 'RAF', href: '/rafs', icon: 'description', module: 'rafs', adminOnly: true },
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
+    { name: 'Configurações', href: '/admin', icon: 'settings', module: 'settings', adminOnly: true, subItems: [
+      { name: 'Unidades / Filiais', href: '/admin/units' },
+      { name: 'Gestão de Usuários', href: '/admin/users' },
+      ...(userRole === 'SUPER_ADMIN' ? [{ name: 'Administração do Portal', href: '/admin/portal' }] : []),
+    ]},
   ]
 
   const navigation = allMenus.filter(menu => {
     if (!userRole) return false
+    // Filtrar por módulos habilitados para a empresa
+    if (!isModuleEnabled(menu.module)) return false
     if (menu.adminOnly) {
       return userRole === 'GESTOR' || userRole === 'SUPER_ADMIN'
     }

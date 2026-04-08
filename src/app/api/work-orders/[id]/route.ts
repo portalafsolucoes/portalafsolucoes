@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 export async function GET(
   request: NextRequest,
@@ -63,6 +64,13 @@ export async function PATCH(
     }
 
     const { id } = await params
+
+    // Verificar permissão de edição
+    const permError = checkApiPermission(session.role, 'work-orders', 'PATCH')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const body = await request.json()
 
     console.log('=== Update work order body ===')
@@ -273,6 +281,12 @@ export async function DELETE(
     }
 
     const { id } = await params
+
+    // Verificar permissão de exclusão
+    const permError = checkApiPermission(session.role, 'work-orders', 'DELETE')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
     // Verificar se a OS existe e pertence à empresa
     const { data: workOrder, error: findError } = await supabase

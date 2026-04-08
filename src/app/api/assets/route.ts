@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
@@ -46,6 +47,11 @@ export async function GET(request: NextRequest) {
       .order('createdAt', { ascending: false })
       .range(skip, skip + limit - 1)
 
+    // Filtrar por unidade ativa (session) — admin pode fazer override via query param
+    const unitIdParam = searchParams.get('unitId')
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+    if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+
     if (locationId) query = query.eq('locationId', locationId)
     if (status) query = query.eq('status', status)
 
@@ -85,6 +91,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verificar permissão de criação
+    const permError = checkApiPermission(session.role, 'assets', 'POST')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const formData = await request.formData()
     const name = formData.get('name') as string
     const description = formData.get('description') as string | null
@@ -95,7 +107,8 @@ export async function POST(request: NextRequest) {
     // Campos de classificação e organização
     const protheusCode = formData.get('protheusCode') as string | null
     const tag = formData.get('tag') as string | null
-    const unitId = formData.get('unitId') as string | null
+    const unitIdParam = formData.get('unitId') as string | null
+    const unitId = getEffectiveUnitId(session, unitIdParam) || unitIdParam
     const areaId = formData.get('areaId') as string | null
     const workCenterId = formData.get('workCenterId') as string | null
     const costCenterId = formData.get('costCenterId') as string | null

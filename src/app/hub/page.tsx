@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 
-import { APP_LOGO_PATH, PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
+import { PORTAL_LOGO_PATH, PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
 
 interface ModuleCard {
   id: string
@@ -106,7 +106,7 @@ export default function HubPage() {
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-[164px]">
               <Image
-                src={APP_LOGO_PATH}
+                src={PORTAL_LOGO_PATH}
                 alt={PORTAL_NAME}
                 fill
                 priority

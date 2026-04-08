@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     const { searchParams } = new URL(request.url)
-    const unitId = searchParams.get('unitId')
+    const unitIdParam = searchParams.get('unitId')
+    const unitId = getEffectiveUnitId(session, unitIdParam)
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 

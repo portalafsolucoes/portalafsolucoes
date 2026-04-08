@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 import { parseWorkDays, getWeeklyHours } from '@/lib/calendarUtils'
 
 // Mapeamento de entidades para tabelas Supabase e configurações
@@ -132,11 +133,12 @@ export async function GET(
       query = query.eq('companyId', session.companyId)
     }
 
-    // Filtro por unitId via query param (para entidades de unidade)
+    // Filtro por unitId (para entidades de unidade) — usa session, admin pode fazer override via query param
     const url = new URL(request.url)
-    const unitId = url.searchParams.get('unitId')
-    if (config.scope === 'unit' && unitId) {
-      query = query.eq('unitId', unitId)
+    const unitIdParam = url.searchParams.get('unitId')
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+    if (config.scope === 'unit' && effectiveUnitId) {
+      query = query.eq('unitId', effectiveUnitId)
     }
 
     // Filtro por familyId via query param (para entidades filhas)
@@ -215,6 +217,12 @@ export async function POST(
     const config = ENTITY_CONFIG[entity]
     if (!config) {
       return NextResponse.json({ error: 'Entidade não encontrada' }, { status: 404 })
+    }
+
+    // Verificar permissão de criação
+    const permError = checkApiPermission(session.role, 'basic-registrations', 'POST')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const body = await request.json()

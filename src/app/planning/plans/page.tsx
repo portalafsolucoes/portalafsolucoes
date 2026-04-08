@@ -17,7 +17,6 @@ export default function PlansPage() {
 
   const [plans, setPlans] = useState<any[]>([])
   const [search, setSearch] = useState('')
-  const [units, setUnits] = useState<any[]>([])
 
   // Modal
   const [showModal, setShowModal] = useState(false)
@@ -29,12 +28,6 @@ export default function PlansPage() {
   useEffect(() => {
     if (authLoading || !user) return
     if (!hasPermission(role as UserRole, 'planning', 'view')) { router.push('/dashboard'); return }
-    const loadUnits = async () => {
-      const unitsRes = await fetch('/api/units')
-      const unitsData = await unitsRes.json()
-      setUnits(unitsData.data || [])
-    }
-    loadUnits()
   }, [authLoading, user, role])
 
   useEffect(() => { if (role) loadData() }, [role])
@@ -145,15 +138,6 @@ export default function PlansPage() {
             <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
               placeholder="Ex: Plano Lubrificação Abril 2026"
               className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Unidade <span className="text-danger">*</span></label>
-            <select value={formData.unitId || ''} onChange={e => setFormData({...formData, unitId: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-              <option value="">Selecione...</option>
-              {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

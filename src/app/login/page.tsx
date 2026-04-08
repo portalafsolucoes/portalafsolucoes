@@ -3,11 +3,10 @@
 import Image from 'next/image'
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { APP_DESCRIPTION, APP_LOGO_PATH, APP_NAME, PORTAL_NAME } from '@/lib/branding'
+import { APP_DESCRIPTION, PORTAL_LOGO_PATH, PORTAL_NAME } from '@/lib/branding'
 import { Icon } from '@/components/ui/Icon'
 
 
@@ -73,15 +72,15 @@ function LoginForm() {
         <div className="mb-8 text-center">
           <div className="relative mx-auto mb-4 h-14 w-[240px]">
             <Image
-              src={APP_LOGO_PATH}
-              alt={APP_NAME}
+              src={PORTAL_LOGO_PATH}
+              alt={PORTAL_NAME}
               fill
               priority
               className="object-contain"
             />
           </div>
           <p className="label-uppercase mb-2">Acesso ao Sistema</p>
-          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">{APP_NAME}</h1>
+          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">{PORTAL_NAME}</h1>
           <p className="text-muted-foreground">{APP_DESCRIPTION}</p>
         </div>
 
@@ -123,11 +122,8 @@ function LoginForm() {
                 {loading ? 'Entrando...' : 'Entrar'}
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
-                Não tem uma conta?{' '}
-                <Link href="/register" className="font-medium text-primary hover:text-primary-hover">
-                  Registre-se
-                </Link>
+              <div className="text-center text-xs text-muted-foreground/60">
+                Acesso restrito. Contate o administrador da sua empresa.
               </div>
             </form>
           </CardContent>

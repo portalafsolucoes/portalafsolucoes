@@ -5,6 +5,28 @@ const prisma = new PrismaClient()
 
 const DEFAULT_PASSWORD = 'Teste@123'
 
+// ============================================
+// MÓDULOS DO PORTAL
+// ============================================
+const PORTAL_MODULES = [
+  { slug: 'dashboard', name: 'Dashboard', icon: 'LayoutDashboard', order: 1 },
+  { slug: 'tree', name: 'Árvore de Ativos', icon: 'Network', order: 2 },
+  { slug: 'people-teams', name: 'Pessoas e Equipes', icon: 'Users', order: 3 },
+  { slug: 'basic-registrations', name: 'Cadastros Básicos', icon: 'Database', order: 4 },
+  { slug: 'assets', name: 'Ativos', icon: 'Package', order: 5 },
+  { slug: 'maintenance-plan', name: 'Plano de Manutenção', icon: 'ClipboardList', order: 6 },
+  { slug: 'planning', name: 'Planejamento e Programação', icon: 'CalendarRange', order: 7 },
+  { slug: 'work-orders', name: 'Ordens de Serviço', icon: 'Wrench', order: 8 },
+  { slug: 'requests', name: 'Solicitações de Serviço', icon: 'FileText', order: 9 },
+  { slug: 'approvals', name: 'Aprovações', icon: 'CheckCircle', order: 10 },
+  { slug: 'rafs', name: 'RAF - Análise de Falhas', icon: 'AlertTriangle', order: 11 },
+  { slug: 'locations', name: 'Localizações', icon: 'MapPin', order: 12 },
+  { slug: 'kpi', name: 'KPI - Indicadores', icon: 'BarChart3', order: 13 },
+  { slug: 'gep', name: 'GEP - Variáveis de Processo', icon: 'Activity', order: 14 },
+  { slug: 'analytics', name: 'Análises', icon: 'TrendingUp', order: 15 },
+  { slug: 'settings', name: 'Configurações', icon: 'Settings', order: 16 },
+]
+
 type SeedUser = {
   email: string
   firstName: string
@@ -168,7 +190,7 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
   })
 
   for (const user of companyData.users) {
-    await prisma.user.upsert({
+    const createdUser = await prisma.user.upsert({
       where: { email: user.email },
       update: {
         firstName: user.firstName,
@@ -179,6 +201,7 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
         enabled: true,
         companyId: company.id,
         locationId: location.id,
+        activeUnitId: location.id,
       },
       create: {
         email: user.email,
@@ -191,6 +214,22 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
         enabled: true,
         companyId: company.id,
         locationId: location.id,
+        activeUnitId: location.id,
+      },
+    })
+
+    // Criar relação UserUnit (N:N) para que o usuário tenha acesso à unidade
+    await prisma.userUnit.upsert({
+      where: {
+        userId_unitId: {
+          userId: createdUser.id,
+          unitId: location.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: createdUser.id,
+        unitId: location.id,
       },
     })
   }
@@ -198,14 +237,67 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
   return { company, location }
 }
 
+async function seedModules() {
+  console.log('Seeding portal modules...')
+  const modules: { id: string; slug: string }[] = []
+
+  for (const mod of PORTAL_MODULES) {
+    const created = await prisma.module.upsert({
+      where: { slug: mod.slug },
+      update: {
+        name: mod.name,
+        icon: mod.icon,
+        order: mod.order,
+      },
+      create: {
+        name: mod.name,
+        slug: mod.slug,
+        icon: mod.icon,
+        order: mod.order,
+      },
+    })
+    modules.push({ id: created.id, slug: created.slug })
+  }
+
+  console.log(`  ✓ ${modules.length} modules seeded`)
+  return modules
+}
+
+async function enableAllModulesForCompany(companyId: string, modules: { id: string; slug: string }[]) {
+  for (const mod of modules) {
+    await prisma.companyModule.upsert({
+      where: {
+        companyId_moduleId: {
+          companyId,
+          moduleId: mod.id,
+        },
+      },
+      update: { enabled: true },
+      create: {
+        companyId,
+        moduleId: mod.id,
+        enabled: true,
+      },
+    })
+  }
+}
+
 async function main() {
-  console.log('Seeding database with current test companies and users...')
+  console.log('Seeding database with portal modules, companies and users...')
 
   const passwordHash = await hash(DEFAULT_PASSWORD, 12)
 
+  // 1. Criar módulos do portal
+  const modules = await seedModules()
+
+  // 2. Criar empresas e usuários
   for (const companyData of seedCompanies) {
     const { company } = await seedCompany(companyData, passwordHash)
     console.log(`✓ Company seeded: ${company.name}`)
+
+    // 3. Habilitar todos os módulos para cada empresa
+    await enableAllModulesForCompany(company.id, modules)
+    console.log(`  ✓ All modules enabled for ${company.name}`)
   }
 
   console.log('\n✅ Seed completed successfully!')

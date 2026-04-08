@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashPassword } from '@/lib/auth'
 
@@ -87,7 +87,7 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, locationId, calendarId } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, locationId, calendarId, unitIds } = body
 
     // Verificar se o usuário existe e pertence à empresa
     const { data: existingUser, error: findError } = await supabase
@@ -148,6 +148,38 @@ export async function PUT(
       .single()
 
     if (updateError) throw updateError
+
+    // Atualizar vínculos UserUnit se unitIds fornecidos
+    if (Array.isArray(unitIds)) {
+      await supabase.from('UserUnit').delete().eq('userId', id)
+
+      if (unitIds.length > 0) {
+        const now = new Date().toISOString()
+        const rows = unitIds.map((unitId: string) => ({
+          id: generateId(),
+          userId: id,
+          unitId,
+          createdAt: now,
+        }))
+        await supabase.from('UserUnit').insert(rows)
+      }
+
+      // Atualizar activeUnitId se necessário
+      if (unitIds.length > 0) {
+        const { data: currentUser } = await supabase
+          .from('User')
+          .select('activeUnitId')
+          .eq('id', id)
+          .single()
+
+        if (currentUser && (!currentUser.activeUnitId || !unitIds.includes(currentUser.activeUnitId))) {
+          await supabase
+            .from('User')
+            .update({ activeUnitId: unitIds[0] })
+            .eq('id', id)
+        }
+      }
+    }
 
     return NextResponse.json(
       { data: user, message: 'User updated successfully' }

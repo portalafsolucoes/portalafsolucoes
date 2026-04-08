@@ -1,32 +1,38 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
 
 // GET - Retorna contagens agregadas para o dashboard (sem carregar registros inteiros)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     const companyId = session.companyId
+    const { searchParams } = new URL(request.url)
+    const unitIdParam = searchParams.get('unitId')
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+
+    // Helper para aplicar filtro de unidade
+    const withUnit = (q: any) => effectiveUnitId ? q.eq('unitId', effectiveUnitId) : q
 
     // Serializar em 3 batches para evitar rate limit do Supabase
     const [woTotal, woOpen, woInProgress] = await Promise.all([
-      supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId),
-      supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'PENDING'),
-      supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'IN_PROGRESS'),
+      withUnit(supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId)),
+      withUnit(supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'PENDING')),
+      withUnit(supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'IN_PROGRESS')),
     ])
 
     const [woCompleted, assetsTotal, assetsOperational] = await Promise.all([
-      supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'COMPLETE'),
-      supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false),
-      supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false).eq('status', 'OPERATIONAL'),
+      withUnit(supabase.from('WorkOrder').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'COMPLETE')),
+      withUnit(supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false)),
+      withUnit(supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false).eq('status', 'OPERATIONAL')),
     ])
 
     const [assetsDown, reqTotal, reqPending] = await Promise.all([
-      supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false).eq('status', 'DOWN'),
-      supabase.from('Request').select('id', { count: 'exact', head: true }).eq('companyId', companyId),
-      supabase.from('Request').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'PENDING'),
+      withUnit(supabase.from('Asset').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('archived', false).eq('status', 'DOWN')),
+      withUnit(supabase.from('Request').select('id', { count: 'exact', head: true }).eq('companyId', companyId)),
+      withUnit(supabase.from('Request').select('id', { count: 'exact', head: true }).eq('companyId', companyId).eq('status', 'PENDING')),
     ])
 
     const response = NextResponse.json({

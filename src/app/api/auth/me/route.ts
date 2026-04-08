@@ -38,7 +38,15 @@ export async function GET() {
       )
     }
 
-    const response = NextResponse.json({ user })
+    // Enriquecer com dados da session (unitId, unitIds, companyName)
+    const enrichedUser = {
+      ...user,
+      activeUnitId: session.unitId || user.activeUnitId,
+      unitIds: session.unitIds || [],
+      companyName: session.companyName || user.company?.name || '',
+    }
+
+    const response = NextResponse.json({ user: enrichedUser })
     response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=300')
     return response
   } catch (error) {

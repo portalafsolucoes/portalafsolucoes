@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,6 +39,11 @@ export async function GET(request: NextRequest) {
       .order('createdAt', { ascending: false })
       .range(skip, skip + limit - 1)
 
+    // Filtrar por unidade ativa da session
+    const unitIdParam = searchParams.get('unitId')
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+    if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+
     if (status) query = query.eq('status', status)
 
     const { data: requests, error, count: total } = await query
@@ -72,6 +78,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verificar permissão de criação
+    const permError = checkApiPermission(session.role, 'requests', 'POST')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const body = await request.json()
     const { title, description, priority, dueDate, teamId, files = [] } = body
     const now = new Date().toISOString()
@@ -96,6 +108,7 @@ export async function POST(request: NextRequest) {
         teamApprovalStatus: 'PENDING',
         convertToWorkOrder: false,
         companyId: session.companyId,
+        unitId: session.unitId || null,
         createdById: session.id,
         createdAt: now,
         updatedAt: now

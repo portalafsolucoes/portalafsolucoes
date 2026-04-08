@@ -7,6 +7,9 @@ export interface SessionUser {
   lastName: string
   role: string
   companyId: string
+  companyName: string
+  unitId: string | null       // unidade ativa (activeUnitId)
+  unitIds: string[]           // unidades que o usuário tem acesso
 }
 
 const SESSION_COOKIE_NAME = 'session'
@@ -47,4 +50,20 @@ export async function getSession(): Promise<SessionUser | null> {
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.delete(SESSION_COOKIE_NAME)
+}
+
+/**
+ * Retorna o unitId efetivo para filtrar dados nas APIs.
+ * - Admin (SUPER_ADMIN/GESTOR): pode usar override (query param ou body), senão usa session.unitId
+ * - Demais roles: sempre usa session.unitId (não permite override)
+ */
+export function getEffectiveUnitId(
+  session: SessionUser,
+  override?: string | null
+): string | null {
+  const isAdmin = session.role === 'SUPER_ADMIN' || session.role === 'GESTOR'
+  if (isAdmin && override) {
+    return override
+  }
+  return session.unitId
 }

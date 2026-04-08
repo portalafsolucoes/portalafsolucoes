@@ -10,11 +10,15 @@ export interface AuthUser {
   role: string
   jobTitle?: string
   companyId: string
+  companyName: string
   unitId?: string
+  activeUnitId?: string | null
+  unitIds: string[]
   company?: {
     id: string
     name: string
     tradeName?: string
+    logo?: string
   }
   location?: {
     id: string
@@ -47,5 +51,8 @@ export function useAuth() {
     isAuthenticated: !!user,
     error,
     role: user?.role ?? '',
+    unitId: user?.activeUnitId ?? user?.unitId ?? null,
+    unitIds: user?.unitIds ?? [],
+    companyName: user?.companyName ?? user?.company?.name ?? '',
   }
 }

@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useAuth } from '@/hooks/useAuth'
+import { useActiveUnit } from '@/hooks/useActiveUnit'
 
 interface AssetCreatePanelProps {
   onClose: () => void
@@ -42,6 +44,11 @@ function Section({ title, defaultOpen = true, children }: { title: string; defau
 }
 
 export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreatePanelProps) {
+  const { unitId: authUnitId } = useAuth()
+  const { activeUnitId, availableUnits } = useActiveUnit()
+  const effectiveUnitId = activeUnitId || authUnitId || ''
+  const unitName = availableUnits.find(u => u.id === effectiveUnitId)?.name || ''
+
   const mainImageInputRef = useRef<HTMLInputElement>(null)
   const attachmentsInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -53,7 +60,6 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
   const [workCenters, setWorkCenters] = useState<any[]>([])
   const [positions, setPositions] = useState<any[]>([])
   const [areas, setAreas] = useState<any[]>([])
-  const [units, setUnits] = useState<any[]>([])
   const [calendars, setCalendars] = useState<any[]>([])
   const [characteristics, setCharacteristics] = useState<CharacteristicOption[]>([])
   const [characteristicRows, setCharacteristicRows] = useState<CharacteristicRow[]>([])
@@ -78,8 +84,8 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
     assetCategoryType: 'BEM',
     assetPriority: '',
     ownershipType: 'PROPRIO',
-    // Localização
-    unitId: '',
+    // Localização (unitId preenchido automaticamente pela session)
+    unitId: effectiveUnitId,
     locationId: '',
     areaId: '',
     workCenterId: '',
@@ -133,7 +139,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
   const loadData = async () => {
     try {
-      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes, calendarsRes, unitsRes] = await Promise.all([
+      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes, calendarsRes] = await Promise.all([
         fetch('/api/locations'),
         fetch('/api/assets'),
         fetch('/api/basic-registrations/asset-families'),
@@ -144,10 +150,9 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         fetch('/api/basic-registrations/areas'),
         fetch('/api/basic-registrations/characteristics'),
         fetch('/api/basic-registrations/calendars'),
-        fetch('/api/units'),
       ])
 
-      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData, calendarsData, unitsData] = await Promise.all([
+      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData, calendarsData] = await Promise.all([
         locationsRes.json(),
         assetsRes.json(),
         familiesRes.json(),
@@ -158,7 +163,6 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         areasRes.json(),
         characteristicsRes.json(),
         calendarsRes.json(),
-        unitsRes.json(),
       ])
 
       setLocations(locationsData.data || [])
@@ -171,7 +175,6 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
       setAreas(areasData.data || [])
       setCharacteristics(characteristicsData.data || [])
       setCalendars(calendarsData.data || [])
-      setUnits(unitsData.data || [])
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -206,16 +209,9 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleUnitChange = (unitId: string) => {
-    setFormData(prev => ({ ...prev, unitId, areaId: '', workCenterId: '' }))
-  }
-
-  const filteredAreas = formData.unitId
-    ? areas.filter((a: any) => a.unitId === formData.unitId)
-    : areas
-  const filteredWorkCenters = formData.unitId
-    ? workCenters.filter((wc: any) => wc.unitId === formData.unitId)
-    : workCenters
+  // Áreas e centros de trabalho já vêm filtrados pela unidade ativa via API
+  const filteredAreas = areas
+  const filteredWorkCenters = workCenters
 
   // Características
   const addCharacteristicRow = () => {
@@ -502,12 +498,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Unidade</label>
-              <select value={formData.unitId} onChange={(e) => handleUnitChange(e.target.value)} className={selectClass}>
-                <option value="">Selecione</option>
-                {units.map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </select>
+              <input type="text" value={unitName} disabled className={`${selectClass} opacity-70 cursor-not-allowed`} />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área</label>

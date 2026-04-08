@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { hashPassword, validateEmail, validatePassword } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 
+/**
+ * POST /api/auth/register
+ * Registro público DESABILITADO.
+ * Apenas SUPER_ADMIN pode criar empresas (via /api/admin/companies).
+ * Mantido para uso interno futuro (admin cria empresas com usuário inicial).
+ */
 export async function POST(request: NextRequest) {
   try {
+    // Bloquear registro público - apenas admin autenticado pode registrar
+    const session = await getSession()
+    if (!session || session.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Public registration is disabled. Contact your administrator.' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { email, password, firstName, lastName, companyName } = body
 

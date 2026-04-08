@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { exportToExcel } from '@/lib/exportExcel'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const crudDataCache = new Map<string, any[]>()
 const crudPromiseCache = new Map<string, Promise<any[]>>()
@@ -140,12 +141,17 @@ interface CrudTableProps {
   fields: FieldConfig[]
   columns: { key: string; label: string; render?: (value: any, row: any) => React.ReactNode }[]
   unitScoped?: boolean // Se precisa de unitId
-  selectedUnitId?: string
+  activeUnitId?: string | null
   apiQueryParams?: string // Query params extras para a API (ex: "types=MATERIAL,TOOL")
   customModalRender?: (props: { editingItem: any | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
 }
 
-export function CrudTable({ entity, title, fields, columns, unitScoped, selectedUnitId, apiQueryParams, customModalRender }: CrudTableProps) {
+export function CrudTable({ entity, title, fields, columns, unitScoped, activeUnitId, apiQueryParams, customModalRender }: CrudTableProps) {
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const allowCreate = canCreate('basic-registrations')
+  const allowEdit = canEdit('basic-registrations')
+  const allowDelete = canDelete('basic-registrations')
+
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -160,8 +166,8 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
     setLoading(true)
     let url = `/api/basic-registrations/${entity}`
     const params: string[] = []
-    if (unitScoped && selectedUnitId) {
-      params.push(`unitId=${selectedUnitId}`)
+    if (unitScoped && activeUnitId) {
+      params.push(`unitId=${activeUnitId}`)
     }
     if (apiQueryParams) {
       params.push(apiQueryParams)
@@ -177,7 +183,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
       setItems([])
     }
     setLoading(false)
-  }, [entity, unitScoped, selectedUnitId, apiQueryParams])
+  }, [entity, unitScoped, activeUnitId, apiQueryParams])
 
   useEffect(() => {
     fetchItems()
@@ -191,8 +197,8 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
       else if (f.type === 'number') defaults[f.key] = 0
       else defaults[f.key] = ''
     })
-    if (unitScoped && selectedUnitId) {
-      defaults.unitId = selectedUnitId
+    if (unitScoped && activeUnitId) {
+      defaults.unitId = activeUnitId
     }
     setFormData(defaults)
     setEditingItem(null)
@@ -267,7 +273,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
     })
   })
 
-  const noUnitSelected = unitScoped && !selectedUnitId
+  const noUnitSelected = unitScoped && !activeUnitId
 
   return (
     <div>
@@ -302,9 +308,11 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
             <Icon name="download" className="text-base" />
             <span className="hidden sm:inline">Excel</span>
           </button>
-          <Button onClick={openCreate} size="sm" disabled={noUnitSelected}>
-            <Icon name="add" className="text-base mr-1" /> Novo
-          </Button>
+          {allowCreate && (
+            <Button onClick={openCreate} size="sm" disabled={noUnitSelected}>
+              <Icon name="add" className="text-base mr-1" /> Novo
+            </Button>
+          )}
         </div>
       </div>
 
@@ -325,7 +333,9 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                     {col.label}
                   </th>
                 ))}
-                <th className="text-right px-4 py-3 font-medium text-foreground w-24">Ações</th>
+                {(allowEdit || allowDelete) && (
+                  <th className="text-right px-4 py-3 font-medium text-foreground w-24">Ações</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -336,24 +346,30 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, selected
                       {col.render ? col.render(item[col.key], item) : (item[col.key] ?? '-')}
                     </td>
                   ))}
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEdit(item)}
-                        className="p-1.5 hover:bg-accent/20 rounded transition-colors"
-                        title="Editar"
-                      >
-                        <Icon name="edit" className="text-base text-muted-foreground" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="p-1.5 hover:bg-danger-light rounded transition-colors"
-                        title="Excluir"
-                      >
-                        <Icon name="delete" className="text-base text-danger" />
-                      </button>
-                    </div>
-                  </td>
+                  {(allowEdit || allowDelete) && (
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {allowEdit && (
+                          <button
+                            onClick={() => openEdit(item)}
+                            className="p-1.5 hover:bg-accent/20 rounded transition-colors"
+                            title="Editar"
+                          >
+                            <Icon name="edit" className="text-base text-muted-foreground" />
+                          </button>
+                        )}
+                        {allowDelete && (
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-1.5 hover:bg-danger-light rounded transition-colors"
+                            title="Excluir"
+                          >
+                            <Icon name="delete" className="text-base text-danger" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

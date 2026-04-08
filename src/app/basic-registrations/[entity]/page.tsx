@@ -208,10 +208,8 @@ export default function BasicRegistrationEntityPage() {
   const router = useRouter()
   const entity = params.entity as string
 
-  const { user, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading, unitId: activeUnitId } = useAuth()
   const role = user?.role ?? ''
-  const [units, setUnits] = useState<any[]>([])
-  const [selectedUnitId, setSelectedUnitId] = useState<string>('')
 
   // Listas para selects dinâmicos
   const [maintenanceTypes, setMaintenanceTypes] = useState<any[]>([])
@@ -243,17 +241,10 @@ export default function BasicRegistrationEntityPage() {
       }
     }
 
-    const needsUnits = new Set(['areas', 'work-centers'])
     const needsMaintenanceRefs = currentEntity === 'service-types'
     const needsAssetFamilyModels = currentEntity === 'asset-families'
     const needsCalendars = new Set(['work-centers', 'resources'])
     const needsUsers = currentEntity === 'resources'
-
-    if (needsUnits.has(currentEntity)) {
-      loaders.push(runLoader(() => fetchCachedList('/api/units'), setUnits))
-    } else {
-      setUnits([])
-    }
 
     if (needsMaintenanceRefs) {
       loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/maintenance-types'), setMaintenanceTypes))
@@ -614,23 +605,6 @@ export default function BasicRegistrationEntityPage() {
           </div>
         </div>
 
-        {/* Seletor de Unidade (para entidades com escopo de unidade) */}
-        {currentTab.unitScoped && (
-          <div className="flex items-center gap-3 p-3 bg-card rounded-[4px]">
-            <label className="text-sm font-medium text-foreground">Unidade:</label>
-            <select
-              value={selectedUnitId}
-              onChange={e => setSelectedUnitId(e.target.value)}
-              className="flex-1 max-w-xs px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Selecione a unidade...</option>
-              {units.map((u: any) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
         {/* Seção customizada acima do CRUD (ex: resumo de pessoas para recursos) */}
         {currentTab.customSectionRender && currentTab.customSectionRender()}
 
@@ -649,13 +623,13 @@ export default function BasicRegistrationEntityPage() {
             {resourcesTableExpanded && (
               <div className="border-t border-border p-4">
                 <CrudTable
-                  key={`${currentTab.key}-${selectedUnitId}`}
+                  key={`${currentTab.key}-${activeUnitId}`}
                   entity={currentTab.entity}
                   title={currentTab.label}
                   fields={currentTab.fields}
                   columns={currentTab.columns}
                   unitScoped={currentTab.unitScoped}
-                  selectedUnitId={selectedUnitId}
+                  activeUnitId={activeUnitId}
                   apiQueryParams={currentTab.apiQueryParams}
                   customModalRender={currentTab.customModalRender}
                 />
@@ -664,13 +638,13 @@ export default function BasicRegistrationEntityPage() {
           </div>
         ) : (
           <CrudTable
-            key={`${currentTab.key}-${selectedUnitId}`}
+            key={`${currentTab.key}-${activeUnitId}`}
             entity={currentTab.entity}
             title={currentTab.label}
             fields={currentTab.fields}
             columns={currentTab.columns}
             unitScoped={currentTab.unitScoped}
-            selectedUnitId={selectedUnitId}
+            activeUnitId={activeUnitId}
             apiQueryParams={currentTab.apiQueryParams}
             customModalRender={currentTab.customModalRender}
           />

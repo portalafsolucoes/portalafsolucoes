@@ -171,6 +171,40 @@ enum AssetAttachmentCategory {
 }
 
 // ============================================
+// MÓDULOS DO PORTAL
+// ============================================
+
+model Module {
+  id          String   @id @default(cuid())
+  name        String   // Nome de exibição (ex: "Ordens de Serviço")
+  slug        String   @unique // Identificador único (ex: "work-orders")
+  description String?
+  icon        String?  // Nome do ícone (Lucide)
+  order       Int      @default(0) // Ordem no menu
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyModules CompanyModule[]
+}
+
+model CompanyModule {
+  id        String   @id @default(cuid())
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  moduleId String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, moduleId])
+  @@index([companyId])
+  @@index([moduleId])
+}
+
+// ============================================
 // CORE MODELS
 // ============================================
 
@@ -184,6 +218,9 @@ model Company {
   logo      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Módulos habilitados para esta empresa
+  companyModules         CompanyModule[]
 
   // units removido — Location agora serve como unidade
   users                  User[]
@@ -235,6 +272,21 @@ model Company {
 // Unit foi removido — Localizações (Location) agora servem como unidades organizacionais.
 // As colunas unitId em todas as tabelas agora referenciam Location(id).
 
+model UserUnit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  unitId String
+  unit   Location @relation("UnitMembers", fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, unitId])
+  @@index([userId])
+  @@index([unitId])
+}
+
 model User {
   id                String   @id @default(cuid())
   email             String   @unique
@@ -261,6 +313,13 @@ model User {
 
   unitId String?
   unit   Location? @relation("UnitUsers", fields: [unitId], references: [id])
+
+  // Unidade ativa do usuário (última selecionada)
+  activeUnitId String?
+  activeUnit   Location? @relation("ActiveUnitUsers", fields: [activeUnitId], references: [id])
+
+  // Relação N:N — unidades a que o usuário tem acesso
+  userUnits UserUnit[]
 
   assignedWorkOrders         WorkOrder[]  @relation("WorkOrderAssignedUsers")
   directlyAssignedWorkOrders WorkOrder[]  @relation("AssignedToUser")
@@ -350,6 +409,8 @@ model Location {
   unitWorkOrders         WorkOrder[]               @relation("UnitWorkOrders")
   unitRequests           Request[]                 @relation("UnitRequests")
   unitUsers              User[]                    @relation("UnitUsers")
+  activeUnitUsers        User[]                    @relation("ActiveUnitUsers")
+  unitMembers            UserUnit[]                @relation("UnitMembers")
   areas                  Area[]
   workCenters            WorkCenter[]
   rafs                   FailureAnalysisReport[]

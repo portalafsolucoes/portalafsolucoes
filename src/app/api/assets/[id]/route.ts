@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
@@ -79,6 +80,13 @@ export async function PATCH(
     }
 
     const { id } = await params
+
+    // Verificar permissão de edição
+    const permError = checkApiPermission(session.role, 'assets', 'PATCH')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const formData = await request.formData()
 
     const name = formData.get('name') as string
@@ -346,6 +354,12 @@ export async function DELETE(
     }
 
     const { id } = await params
+
+    // Verificar permissão de exclusão
+    const permError = checkApiPermission(session.role, 'assets', 'DELETE')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
     // Verificar se o ativo existe
     const { data: asset, error: findError } = await supabase

@@ -123,3 +123,59 @@ export function getRoleDescription(role: UserRole): string {
 export function isOperationalRole(role: UserRole): boolean {
   return OPERATIONAL_ROLES.includes(role)
 }
+
+/**
+ * Mapeia módulo da URL para módulo do sistema de permissões.
+ */
+const API_MODULE_MAP: Record<string, string> = {
+  'work-orders': 'work-orders',
+  'requests': 'requests',
+  'assets': 'assets',
+  'basic-registrations': 'basic-registrations',
+  'planning': 'planning',
+  'plans': 'maintenance-plan',
+  'schedules': 'planning',
+  'rafs': 'rafs',
+  'kpi': 'kpi',
+  'gep': 'gep',
+  'tree': 'tree',
+  'locations': 'locations',
+  'people-teams': 'people-teams',
+}
+
+/**
+ * Mapeia método HTTP para ação de permissão.
+ */
+function httpMethodToAction(method: string): keyof Permission['actions'] {
+  switch (method.toUpperCase()) {
+    case 'POST': return 'create'
+    case 'PUT':
+    case 'PATCH': return 'edit'
+    case 'DELETE': return 'delete'
+    default: return 'view'
+  }
+}
+
+/**
+ * Verifica se o role tem permissão para executar a ação no módulo.
+ * Retorna null se permitido, ou uma mensagem de erro se negado.
+ */
+export function checkApiPermission(
+  role: string,
+  module: string,
+  method: string
+): string | null {
+  const userRole = role as UserRole
+  if (!PERMISSIONS[userRole]) {
+    return 'Perfil de acesso inválido'
+  }
+
+  const mappedModule = API_MODULE_MAP[module] || module
+  const action = httpMethodToAction(method)
+
+  if (!hasPermission(userRole, mappedModule, action)) {
+    return `Sem permissão para ${action} em ${mappedModule}`
+  }
+
+  return null
+}
