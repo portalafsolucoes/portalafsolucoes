@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Especificação Completa – Portal AF Soluções (CMMS)</title>
+<style>
+:root {
+  --bg:#f5f4f0;--card:#ffffff;--card-hover:#fafaf8;
+  --text-primary:#1a1a18;--text-secondary:#5f5e5a;--text-hint:#888780;
+  --border:rgba(0,0,0,0.12);--border-mid:rgba(0,0,0,0.22);
+  --purple-50:#EEEDFE;--purple-200:#AFA9EC;--purple-600:#534AB7;--purple-800:#3C3489;
+  --teal-50:#E1F5EE;--teal-200:#5DCAA5;--teal-600:#0F6E56;--teal-800:#085041;
+  --blue-50:#E6F1FB;--blue-200:#85B7EB;--blue-600:#185FA5;--blue-800:#0C447C;
+  --amber-50:#FAEEDA;--amber-200:#EF9F27;--amber-600:#854F0B;--amber-800:#633806;
+  --coral-50:#FAECE7;--coral-200:#F0997B;--coral-600:#993C1D;--coral-800:#712B13;
+  --pink-50:#FBEAF0;--pink-200:#ED93B1;--pink-600:#993556;--pink-800:#72243E;
+  --green-50:#EAF3DE;--green-200:#97C459;--green-600:#3B6D11;--green-800:#27500A;
+  --red-50:#FCEBEB;--red-200:#F09595;--red-600:#A32D2D;--red-800:#791F1F;
+  --gray-50:#F1EFE8;--gray-200:#B4B2A9;--gray-600:#5F5E5A;--gray-800:#444441;
+  --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1e1e1c;--card:#2a2a28;--card-hover:#333331;
+  --text-primary:#e8e6de;--text-secondary:#b4b2a9;--text-hint:#888780;
+  --border:rgba(255,255,255,0.1);--border-mid:rgba(255,255,255,0.2);
+  --purple-50:#26215C;--purple-200:#AFA9EC;--purple-600:#C5C1F2;--purple-800:#EEEDFE;
+  --teal-50:#04342C;--teal-200:#5DCAA5;--teal-600:#9FE1CB;--teal-800:#E1F5EE;
+  --blue-50:#042C53;--blue-200:#85B7EB;--blue-600:#B5D4F4;--blue-800:#E6F1FB;
+  --amber-50:#412402;--amber-200:#EF9F27;--amber-600:#FAC775;--amber-800:#FAEEDA;
+  --coral-50:#4A1B0C;--coral-200:#F0997B;--coral-600:#F5C4B3;--coral-800:#FAECE7;
+  --pink-50:#4B1528;--pink-200:#ED93B1;--pink-600:#F4C0D1;--pink-800:#FBEAF0;
+  --green-50:#173404;--green-200:#97C459;--green-600:#C0DD97;--green-800:#EAF3DE;
+  --red-50:#501313;--red-200:#F09595;--red-600:#F7C1C1;--red-800:#FCEBEB;
+  --gray-50:#2C2C2A;--gray-200:#B4B2A9;--gray-600:#D3D1C7;--gray-800:#F1EFE8;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding:32px 16px 64px;line-height:1.55}
+h1{font-size:22px;font-weight:500;text-align:center;margin-bottom:4px}
+.subtitle{text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:8px}
+.diagram{max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:0}
+
+/* Controls */
+.ctrls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
+.ctrls button{padding:7px 16px;border-radius:8px;border:1px solid var(--border-mid);background:var(--card);color:var(--text-secondary);font-size:12px;font-weight:500;cursor:pointer;transition:.15s;font-family:var(--font)}
+.ctrls button:hover{background:var(--purple-50);color:var(--purple-600);border-color:var(--purple-200)}
+.ctrls .be{background:var(--purple-50);color:var(--purple-600);border-color:var(--purple-200)}
+.ctrls .be.on{background:var(--purple-600);color:#fff;border-color:var(--purple-600)}
+.ctrls .bx{background:var(--teal-50);color:var(--teal-600);border-color:var(--teal-200)}
+.ctrls input{padding:7px 14px;border-radius:8px;border:1px solid var(--border-mid);background:var(--card);color:var(--text-primary);font-size:13px;font-family:var(--font);min-width:200px;outline:none}
+.ctrls input:focus{border-color:var(--purple-200);box-shadow:0 0 0 3px var(--purple-50)}
+.ctrls input::placeholder{color:var(--text-hint)}
+
+/* Arrows */
+.ad{width:2px;height:32px;background:var(--border-mid);position:relative;flex-shrink:0}
+.ad::after{content:'';position:absolute;bottom:-6px;left:-4px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--border-mid)}
+.ar{height:2px;flex:1;background:var(--border-mid);position:relative}
+.ar::after{content:'';position:absolute;right:-6px;top:-4px;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:7px solid var(--border-mid)}
+.asm{width:2px;height:16px;background:var(--border-mid);flex-shrink:0}
+
+/* Section header */
+.sh{width:100%;max-width:860px;display:flex;align-items:center;gap:12px;margin:36px 0 20px}
+.sl{flex:1;height:1px;background:var(--border-mid)}
+.slb{font-size:12px;font-weight:500;color:var(--text-hint);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;padding:0 8px}
+
+/* Row/Col */
+.row{display:flex;align-items:flex-start;justify-content:center;gap:16px;width:100%;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;align-items:center;gap:0;flex:1;min-width:220px;max-width:280px}
+
+/* Node */
+.node{border-radius:10px;padding:12px 20px;border:1.5px solid;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;min-width:180px;position:relative;transition:.15s}
+.node .title{font-size:14px;font-weight:500}
+.node .sub{font-size:12px;opacity:.8}
+.np{background:var(--purple-50);border-color:var(--purple-200);color:var(--purple-800)}
+.nt{background:var(--teal-50);border-color:var(--teal-200);color:var(--teal-800)}
+.nb{background:var(--blue-50);border-color:var(--blue-200);color:var(--blue-800)}
+.na{background:var(--amber-50);border-color:var(--amber-200);color:var(--amber-800)}
+.nc{background:var(--coral-50);border-color:var(--coral-200);color:var(--coral-800)}
+.nk{background:var(--pink-50);border-color:var(--pink-200);color:var(--pink-800)}
+.ng{background:var(--green-50);border-color:var(--green-200);color:var(--green-800)}
+.nr{background:var(--red-50);border-color:var(--red-200);color:var(--red-800)}
+.ny{background:var(--gray-50);border-color:var(--gray-200);color:var(--gray-800)}
+
+/* Clickable */
+.node.ck{cursor:pointer}
+.node.ck:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.node .tg{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.4;transition:transform .2s}
+.node.ex .tg{transform:translateY(-50%) rotate(90deg)}
+
+/* Spec detail */
+.sd{width:100%;background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;max-height:0;transition:max-height .35s ease,padding .35s ease;padding:0 18px}
+.sd.op{max-height:5000px;padding:18px;border-top:1px dashed var(--border-mid)}
+.sd h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-hint);margin:14px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border)}
+.sd h4:first-child{margin-top:0}
+.sd p{font-size:13px;color:var(--text-secondary);margin:4px 0}
+.sd ul{padding-left:18px;font-size:13px;color:var(--text-secondary)}
+.sd li{margin:3px 0}
+.sd li strong{color:var(--text-primary)}
+.sd table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}
+.sd th{text-align:left;color:var(--text-hint);font-weight:600;padding:5px 8px;border-bottom:1.5px solid var(--border-mid)}
+.sd td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text-secondary)}
+.sd td strong{color:var(--text-primary)}
+.sd .cl{list-style:none;padding-left:4px}
+.sd .cl li{padding-left:22px;position:relative}
+.sd .cl li::before{content:'☐';position:absolute;left:0;color:var(--text-hint)}
+
+/* Edit mode */
+.sd[contenteditable="true"]{outline:2px dashed var(--purple-200);outline-offset:-2px;cursor:text}
+.sd[contenteditable="true"]:focus{outline-color:var(--purple-600);background:var(--card-hover)}
+.em .sd.op::before{content:'✏️ Editando';display:block;font-size:11px;color:var(--purple-600);margin-bottom:8px;font-weight:600}
+
+/* Flow box */
+.fb{background:var(--gray-50);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px}
+.fs{font-size:12px;color:var(--text-secondary);padding:2px 0;text-align:center}
+.fa{color:var(--text-hint);font-size:14px}
+.ft{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600}
+
+/* Subflow */
+.sf{margin-top:14px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:0;width:100%}
+.sft{font-size:11px;font-weight:500;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.mn{width:100%;padding:8px 12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;font-size:12px;text-align:center;color:var(--text-secondary)}
+.mn strong{color:var(--text-primary)}
+
+/* Diamond */
+.dw{display:flex;flex-direction:column;align-items:center}
+.dm{width:120px;height:58px;background:var(--blue-50);border:1.5px solid var(--blue-200);color:var(--blue-800);transform:rotate(45deg) scale(.82);display:flex;align-items:center;justify-content:center;border-radius:6px}
+.dm span{transform:rotate(-45deg);font-size:12px;font-weight:500;text-align:center;width:100px}
+.dr{display:flex;align-items:flex-start;justify-content:center;gap:16px;margin:8px 0}
+.db{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bl{font-size:10px;color:var(--text-hint);font-weight:600;text-transform:uppercase}
+
+/* Pills */
+.pr{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;max-width:860px;margin-top:8px}
+.pill{background:var(--gray-50);border:1px solid var(--gray-200);color:var(--gray-800);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500}
+
+/* Status */
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:8px;width:100%;max-width:860px;margin-top:12px}
+.si{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);background:var(--card);padding:8px 12px;border-radius:8px;border:1px solid var(--border)}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dg{background:var(--green-200)}.da{background:var(--amber-200)}.drd{background:var(--red-200)}
+.lg{display:flex;gap:20px;font-size:12px;color:var(--text-secondary);margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+.li{display:flex;align-items:center;gap:6px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--teal-600);color:#fff;padding:10px 24px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* Search */
+.search-hidden{display:none!important}
+
+@media(max-width:700px){.row{flex-direction:column;align-items:center}.col{max-width:100%;width:100%}.node{min-width:0;width:100%}body{padding:16px 10px 60px}}
+@media print{.ctrls{display:none}.sd{max-height:none!important;padding:16px 18px!important;border-top:1px dashed var(--border-mid)!important}}
+</style>
+</head>
+<body>
+
+<h1>Portal AF Soluções — CMMS</h1>
+<p class="subtitle">Especificação funcional interativa · v1.0 · 08/04/2026</p>
+<p class="subtitle" style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Clique nos módulos para ver/editar a spec completa</p>
+
+<div class="ctrls">
+  <input type="text" placeholder="Buscar na especificação..." oninput="doSearch(this.value)">
+  <button onclick="openAll()">Abrir Tudo</button>
+  <button onclick="closeAll()">Fechar Tudo</button>
+  <button class="be" id="ebtn" onclick="toggleEdit()">✏️ Editar</button>
+  <button class="bx" onclick="exportMd()">📄 Exportar .md</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="diagram">
+
+<!-- ====== ENTRY ====== -->
+<div class="node ny" style="min-width:220px"><span class="title">Acesso ao sistema</span></div>
+<div class="ad"></div>
+
+<!-- ====== LOGIN ====== -->
+<div class="node np ck" onclick="tog(this)" style="min-width:280px">
+  <span class="tg">▶</span>
+  <span class="title">Login e autenticação</span>
+  <span class="sub">Email + senha · Sessão 7 dias</span>
+</div>
+<div class="sd" data-title="Login e Autenticação" data-section="">
+  <h4>O que é</h4>
+  <p>Tela de acesso ao sistema. Não existe cadastro público.</p>
+  <h4>O que aparece na tela</h4>
+  <ul>
+    <li>Logo do sistema</li>
+    <li>Campo de email e senha</li>
+    <li>Botão "Entrar"</li>
+    <li>Mensagem: "Acesso restrito. Contate o administrador da sua empresa"</li>
+  </ul>
+  <h4>Regras</h4>
+  <ul>
+    <li><strong>Sem cadastro público</strong> — somente o admin cria usuários</li>
+    <li>Email/senha errados → mensagem de erro</li>
+    <li>Usuário desativado → bloqueado</li>
+    <li>Após login → vai para o Hub</li>
+    <li>Sessão dura <strong>7 dias</strong></li>
+  </ul>
+  <h4>Critérios de aceite</h4>
+  <ul class="cl">
+    <li>Login correto leva ao Hub</li>
+    <li>Credenciais erradas mostra erro</li>
+    <li>Usuário desativado não loga</li>
+    <li>Sessão expira após 7 dias</li>
+  </ul>
+</div>
+<div class="ad"></div>
+
+<!-- ====== HUB ====== -->
+<div class="node np ck" onclick="tog(this)" style="min-width:340px">
+  <span class="tg">▶</span>
+  <span class="title">Hub — Portal de entrada</span>
+  <span class="sub">CMMS (ativo) · GVP (em breve) · GPA (em breve)</span>
+</div>
+<div class="sd" data-title="Hub — Portal de Entrada" data-section="">
+  <h4>O que é</h4>
+  <p>Primeira tela após login. Mostra módulos disponíveis como cartões.</p>
+  <h4>O que aparece</h4>
+  <ul>
+    <li>Logo do Portal AF Soluções</li>
+    <li>Nome do usuário logado + botão logout</li>
+    <li>Cartão <strong>CMMS</strong> (ativo, clicável)</li>
+    <li>Cartão <strong>GVP</strong> — "Em breve"</li>
+    <li>Cartão <strong>GPA</strong> — "Em breve"</li>
+  </ul>
+  <h4>Regras</h4>
+  <ul>
+    <li>Módulos desabilitados não são clicáveis</li>
+    <li>Cada empresa pode ter módulos diferentes</li>
+    <li><strong>Perfis operacionais</strong> → direto para OS</li>
+    <li><strong>Gestores/Planejadores</strong> → Dashboard</li>
+  </ul>
+  <h4>Critérios de aceite</h4>
+  <ul class="cl">
+    <li>Usuário logado vê nome e logout</li>
+    <li>CMMS leva ao dashboard ou OS conforme perfil</li>
+    <li>Módulos desabilitados não clicáveis</li>
+  </ul>
+</div>
+
+<!-- Branch: perfis vs dashboard -->
+<div style="display:flex;align-items:flex-start;gap:0;width:100%;max-width:680px;margin:0">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center">
+    <div class="ad"></div>
+    <div class="node ny ck" onclick="tog(this)" style="font-size:12px;padding:8px 14px;min-width:0">
+      <span class="tg">▶</span>
+      <span class="title" style="font-size:12px">Perfis operacionais</span>
+      <span class="sub">→ direto para lista de OS</span>
+    </div>
+    <div class="sd" data-title="Redirecionamento Operacional" data-section="">
+      <p>Mecânico, Eletricista, Operador e Construtor Civil são redirecionados automaticamente para a lista de Ordens de Serviço ao entrar no CMMS, sem passar pelo Dashboard.</p>
+    </div>
+  </div>
+  <div style="flex:2;display:flex;flex-direction:column;align-items:center">
+    <div class="ad"></div>
+    <!-- DASHBOARD -->
+    <div class="node nt ck" onclick="tog(this)" style="min-width:300px">
+      <span class="tg">▶</span>
+      <span class="title">Dashboard</span>
+      <span class="sub">Operacional (gestor) · Corporativo (super admin)</span>
+    </div>
+    <div class="sd" data-title="Dashboard" data-section="">
+      <h4>Dashboard Operacional</h4>
+      <p>Painel com resumo numérico da unidade ativa:</p>
+      <ul>
+        <li><strong>Ordens de Serviço:</strong> Total, abertas, em andamento</li>
+        <li><strong>Ativos:</strong> Total, operacionais, parados</li>
+        <li><strong>Solicitações:</strong> Total, pendentes</li>
+      </ul>
+      <h4>Dashboard Corporativo (Super Admin)</h4>
+      <ul>
+        <li>Total de unidades, ativos, usuários, OS</li>
+        <li>OS completas vs pendentes</li>
+        <li>Solicitações pendentes por unidade</li>
+        <li>Tabela comparativa entre unidades</li>
+        <li>Tipos de OS: corretiva vs preventiva</li>
+      </ul>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>Números refletem o banco de dados</li>
+        <li>Troca de unidade atualiza números</li>
+        <li>Perfis operacionais redirecionados</li>
+        <li>Corporativo mostra todas as unidades</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PERFIS ====== -->
+<div class="node np ck" onclick="tog(this)" style="min-width:0;width:100%;max-width:660px;border-style:dashed;margin-top:20px">
+  <span class="tg">▶</span>
+  <span class="title">7 Perfis de usuário (controle de acesso)</span>
+  <span class="sub">Cada perfil vê e faz coisas diferentes</span>
+</div>
+<div class="sd" data-title="Perfis de Usuário" data-section="" style="max-width:660px">
+  <h4>Perfis</h4>
+  <table>
+    <tr><th>Perfil</th><th>Descrição</th><th>Exemplo</th></tr>
+    <tr><td><strong>Super Admin</strong></td><td>Controle total, todas empresas</td><td>Dono do Portal AF</td></tr>
+    <tr><td><strong>Gestor</strong></td><td>Tudo dentro da empresa/unidade</td><td>Gerente manut.</td></tr>
+    <tr><td><strong>Planejador</strong></td><td>Planos e programações</td><td>PCM</td></tr>
+    <tr><td><strong>Mecânico</strong></td><td>Executa OS mecânicas</td><td>Mecânico</td></tr>
+    <tr><td><strong>Eletricista</strong></td><td>Executa OS elétricas</td><td>Eletricista</td></tr>
+    <tr><td><strong>Operador</strong></td><td>Abre SS e visualiza</td><td>Operador</td></tr>
+    <tr><td><strong>Construtor Civil</strong></td><td>Executa OS civis</td><td>Pedreiro</td></tr>
+  </table>
+  <h4>Permissões</h4>
+  <table>
+    <tr><th>Funcionalidade</th><th>S.Admin</th><th>Gestor</th><th>Planej.</th><th>Operac.</th></tr>
+    <tr><td>Dashboard</td><td>✅ Corp.</td><td>✅</td><td>✅</td><td>❌→OS</td></tr>
+    <tr><td>Criar/editar usuários</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td>Criar/editar ativos</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td>Criar OS</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>Executar OS</td><td>✅</td><td>✅</td><td>✅</td><td>✅ suas</td></tr>
+    <tr><td>Aprovar SS</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td>RAF</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td>Admin</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+    <tr><td>Trocar unidade</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<!-- ====== MÓDULOS PRINCIPAIS ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Módulos principais</span><div class="sl"></div></div>
+
+<div class="row">
+  <!-- OS -->
+  <div class="col">
+    <div class="node nb ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Ordens de serviço (OS)</span>
+      <span class="sub">MAN-XXXXXX · 5 status · 4 tipos</span>
+    </div>
+    <div class="sd" data-title="Ordens de Serviço (OS)" data-section="Módulos Principais">
+      <h4>Lista de OS</h4>
+      <ul>
+        <li>Visualização em <strong>cartões ou tabela</strong></li>
+        <li>Busca, filtros por status e situação</li>
+        <li>Status: Pendente, Liberada, Em Andamento, Parada, Concluída</li>
+        <li>Situação: No Sistema / Fora do Sistema</li>
+        <li>Número interno: <strong>MAN-XXXXXX</strong></li>
+      </ul>
+      <h4>Criar / Editar OS</h4>
+      <ul>
+        <li><strong>Título</strong> (obrigatório), descrição</li>
+        <li><strong>Tipo:</strong> Reativa, Preventiva, Corretiva, Preditiva</li>
+        <li><strong>Subtipo:</strong> Prev. Manual, Corr. Planejada, Corr. Imediata</li>
+        <li><strong>Prioridade:</strong> Nenhuma, Baixa, Média, Alta, Crítica</li>
+        <li>Ativo, localização, data prevista, duração</li>
+        <li>Responsável (usuário e/ou equipe)</li>
+        <li><strong>Tarefas</strong> (checklist)</li>
+      </ul>
+      <h4>Executar OS</h4>
+      <ul>
+        <li>Checklist de tarefas (marcar concluído)</li>
+        <li>Foto <strong>antes</strong> e <strong>depois</strong></li>
+        <li>Tempo de parada e manutenção</li>
+        <li>Custos: mão de obra, peças, terceiros, ferramentas</li>
+        <li>Recursos e feedback</li>
+      </ul>
+      <h4>Fluxo de vida</h4>
+      <div class="fb">
+        <div class="fs"><span class="ft" style="background:var(--amber-50);color:var(--amber-600);border:1px solid var(--amber-200)">PENDENTE</span> Criada</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs"><span class="ft" style="background:var(--blue-50);color:var(--blue-600);border:1px solid var(--blue-200)">LIBERADA</span> Gestor autoriza</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs"><span class="ft" style="background:var(--coral-50);color:var(--coral-600);border:1px solid var(--coral-200)">EM ANDAMENTO</span> Técnico inicia</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs"><span class="ft" style="background:var(--green-50);color:var(--green-600);border:1px solid var(--green-200)">CONCLUÍDA</span> Técnico termina</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs"><span class="ft" style="background:var(--purple-50);color:var(--purple-600);border:1px solid var(--purple-200)">FINALIZADA</span> Gestor encerra</div>
+      </div>
+      <p style="font-size:11px">Pode ficar <span class="ft" style="background:var(--red-50);color:var(--red-600);border:1px solid var(--red-200)">PARADA</span> aguardando peça/info.</p>
+      <h4>Detalhes da OS</h4>
+      <ul>
+        <li>Todos os campos, histórico, tarefas com status</li>
+        <li>Custos detalhados por categoria</li>
+        <li>Fotos antes/depois e arquivos anexados</li>
+      </ul>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>Lista mostra OS da unidade ativa</li>
+        <li>Filtros e busca funcionam</li>
+        <li>Número interno gerado automaticamente</li>
+        <li>Status inicial "Pendente"</li>
+        <li>Iniciar → "Em Andamento"</li>
+        <li>Tarefas marcáveis individualmente</li>
+        <li>Fotos salvas corretamente</li>
+        <li>Custos registrados e somados</li>
+      </ul>
+    </div>
+    <div class="sf">
+      <div class="sft">Ciclo de vida</div>
+      <div class="mn"><strong>Pendente</strong></div><div class="asm"></div>
+      <div class="mn"><strong>Liberada</strong></div><div class="asm"></div>
+      <div class="mn"><strong>Em Andamento</strong></div><div class="asm"></div>
+      <div class="mn"><strong>Concluída</strong></div><div class="asm"></div>
+      <div class="mn" style="background:var(--green-50);border-color:var(--green-200);color:var(--green-800)"><strong>Finalizada</strong></div>
+    </div>
+  </div>
+
+  <!-- SS -->
+  <div class="col">
+    <div class="node nb ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Solicitações (SS)</span>
+      <span class="sub">Chamados → aprovação → OS</span>
+    </div>
+    <div class="sd" data-title="Solicitações de Serviço (SS)" data-section="Módulos Principais">
+      <h4>Lista de Solicitações</h4>
+      <ul>
+        <li>Cartões ou tabela, busca por texto</li>
+        <li>Status: Pendente, Aprovada, Rejeitada, Cancelada</li>
+        <li>Prioridade, urgência, criador, equipe</li>
+        <li>Não pode excluir SS já aprovadas</li>
+      </ul>
+      <h4>Criar Solicitação</h4>
+      <ul>
+        <li><strong>Título</strong> (obrigatório), descrição</li>
+        <li><strong>Prioridade:</strong> Baixa, Média, Alta, Crítica</li>
+        <li>Ativo relacionado, localização, data desejada</li>
+        <li>Arquivos/fotos (anexos)</li>
+        <li><em>Qualquer usuário pode criar</em></li>
+      </ul>
+      <h4>Aprovação (Gestor / Super Admin)</h4>
+      <ul>
+        <li><strong>Aprovar:</strong> pode converter em OS automaticamente</li>
+        <li><strong>Rejeitar:</strong> obriga motivo</li>
+        <li>Badge no menu mostra pendências</li>
+      </ul>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>Aprovação muda para "Aprovada"</li>
+        <li>Rejeição exige motivo</li>
+        <li>Conversão gera OS automaticamente</li>
+        <li>Badge mostra pendências</li>
+      </ul>
+    </div>
+    <div class="sf">
+      <div class="sft">Fluxo de aprovação</div>
+      <div class="mn"><strong>Criar SS</strong></div><div class="asm"></div>
+      <div class="dw"><div class="dm"><span>Aprovar?</span></div></div>
+      <div class="dr" style="margin-top:10px">
+        <div class="db">
+          <span class="bl">sim</span>
+          <div class="mn" style="background:var(--green-50);border-color:var(--green-200);color:var(--green-800)"><strong>Gera OS</strong></div>
+        </div>
+        <div style="width:16px"></div>
+        <div class="db">
+          <span class="bl">não</span>
+          <div class="mn" style="background:var(--red-50);border-color:var(--red-200);color:var(--red-800)"><strong>Rejeitada</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATIVOS -->
+  <div class="col">
+    <div class="node nb ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Gestão de ativos</span>
+      <span class="sub">Tag · GUT · hierarquia · 25+ campos</span>
+    </div>
+    <div class="sd" data-title="Gestão de Ativos" data-section="Módulos Principais">
+      <h4>Lista de Ativos</h4>
+      <ul>
+        <li><strong>Visão árvore:</strong> hierarquia pai → sub-equipamentos</li>
+        <li><strong>Visão tabela:</strong> lista plana</li>
+        <li>Busca, filtro por status: Operacional, Parado, Em Reparo, Inativo</li>
+      </ul>
+      <h4>Cadastro / Edição (25+ campos)</h4>
+      <ul>
+        <li><strong>Nome</strong>, <strong>Tag</strong> (max 6 chars, única/unidade)</li>
+        <li>Código Protheus, código barras, NFC, nº série</li>
+        <li>Fabricante e modelo</li>
+        <li>Localização, área, centro trabalho, centro custo</li>
+        <li>Família e modelo (classificação padrão)</li>
+        <li>Custos: aquisição, compra, custo/hora</li>
+        <li>Garantia: período e data</li>
+        <li><strong>Criticidade GUT:</strong> G(1-5) × U(1-5) × T(1-5) = 1 a 125</li>
+        <li>Estrutura, contador, imagem</li>
+      </ul>
+      <h4>Detalhes do Ativo</h4>
+      <ul>
+        <li><strong>Linha do tempo:</strong> histórico completo</li>
+        <li><strong>Anexos:</strong> 16 categorias (manual, foto, desenho, certificado...)</li>
+        <li><strong>Peças sobressalentes</strong> associadas</li>
+        <li><strong>Sub-ativos</strong> e <strong>OS relacionadas</strong></li>
+      </ul>
+      <h4>Ativos Padrão (Template TOTVS)</h4>
+      <p>Templates pré-cadastrados do ERP para criar ativos rapidamente.</p>
+      <h4>Criticidade GUT</h4>
+      <ul>
+        <li><strong>G:</strong> Gravidade (1-5) — impacto se quebrar</li>
+        <li><strong>U:</strong> Urgência (1-5) — rapidez necessária</li>
+        <li><strong>T:</strong> Tendência (1-5) — piora se não agir?</li>
+        <li><strong>GUT = G × U × T</strong> (1 a 125)</li>
+      </ul>
+      <h4>Árvore Hierárquica</h4>
+      <p>Navegação visual: Unidade → Área → Equipamento → Sub-equipamento.</p>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>Tag única por unidade</li>
+        <li>GUT calculado automaticamente</li>
+        <li>Hierarquia pai/filhos funciona</li>
+        <li>Linha do tempo cronológica</li>
+        <li>Anexos podem ser enviados/baixados</li>
+      </ul>
+    </div>
+    <div class="sf">
+      <div class="sft">Cadastro de ativo</div>
+      <div class="mn"><strong>Criar ativo</strong></div><div class="asm"></div>
+      <div class="mn">Hierarquia / sub-ativos</div><div class="asm"></div>
+      <div class="mn">Criticidade GUT (G×U×T)</div><div class="asm"></div>
+      <div class="mn">Anexos · linha do tempo</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PLANOS ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Planos e Planejamento</span><div class="sl"></div></div>
+
+<div class="row">
+  <div class="col">
+    <div class="node na ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Planos padrão</span>
+      <span class="sub">Por família de ativo</span>
+    </div>
+    <div class="sd" data-title="Planos Padrão" data-section="Planos e Planejamento">
+      <h4>O que é</h4>
+      <p>Modelos de preventiva por família de equipamentos.</p>
+      <h4>Campos</h4>
+      <ul>
+        <li>Sequência, nome, tempo, unidade de tempo</li>
+        <li>Período (frequência), prioridade</li>
+        <li>Para a máquina? (sim/não), tolerância em dias</li>
+        <li><strong>Tarefas</strong> com código, descrição, ordem, tempo</li>
+        <li>Cada tarefa: <strong>passos</strong> e <strong>recursos</strong></li>
+      </ul>
+      <h4>Regras</h4>
+      <ul>
+        <li>Vinculados a família de ativos</li>
+        <li>Podem ser copiados para ativos específicos</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col" style="align-items:center;justify-content:center;padding-top:14px">
+    <div class="ar" style="width:100%;margin-bottom:28px"></div>
+  </div>
+  <div class="col">
+    <div class="node na ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Planos do ativo</span>
+      <span class="sub">Específico por equipamento</span>
+    </div>
+    <div class="sd" data-title="Planos do Ativo" data-section="Planos e Planejamento">
+      <h4>O que é</h4>
+      <p>Preventiva customizada por equipamento específico.</p>
+      <h4>Campos</h4>
+      <ul>
+        <li>Ativo vinculado</li>
+        <li>Baseado em plano padrão ou do zero</li>
+        <li>Data última manutenção, ativo/inativo</li>
+        <li>Tipo serviço, área e tipo manutenção</li>
+      </ul>
+      <h4>Regras</h4>
+      <ul>
+        <li>Cada ativo pode ter vários planos</li>
+        <li><strong>Geram OS automaticamente</strong> quando chega a data</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col" style="align-items:center;justify-content:center;padding-top:14px">
+    <div class="ar" style="width:100%;margin-bottom:28px"></div>
+  </div>
+  <div class="col">
+    <div class="node na ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Planejamento</span>
+      <span class="sub">Gerar OS em lote · Schedules</span>
+    </div>
+    <div class="sd" data-title="Planejamento" data-section="Planos e Planejamento">
+      <h4>Planos de Execução</h4>
+      <div class="fb">
+        <div class="fs">1. Define período (início e fim)</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">2. Define filtros (C.custo, C.trabalho, serviço, família)</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">3. Sistema calcula manutenções vencidas</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">4. <strong>Gera OS preventivas automaticamente</strong></div>
+      </div>
+      <h4>Programação (Schedules)</h4>
+      <div class="fb">
+        <div class="fs">1. Cria programação com período</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">2. Adiciona OS existentes</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">3. Define data programada</div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">4. Confirma (Pendente → Confirmada)</div>
+      </div>
+    </div>
+    <div class="ad"></div>
+    <div class="node ng" style="width:100%;font-size:12px;padding:10px">
+      <span class="title" style="font-size:13px">Gera OS preventivas (cron)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====== GESTÃO ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Gestão e Configuração</span><div class="sl"></div></div>
+
+<div class="row">
+  <div class="col">
+    <div class="node nc ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Pessoas e equipes</span>
+      <span class="sub">7 perfis · grupos de trabalho</span>
+    </div>
+    <div class="sd" data-title="Pessoas e Equipes" data-section="Gestão e Configuração">
+      <h4>Lista de Pessoas</h4>
+      <ul>
+        <li>Cartões com foto/iniciais, nome, cargo, email, telefone</li>
+        <li>Perfil (badge colorido), status ativo/inativo</li>
+        <li>Busca e filtro por perfil</li>
+      </ul>
+      <h4>Ações</h4>
+      <ul>
+        <li>Cadastrar (email, senha, perfil, unidades)</li>
+        <li>Editar, desativar/ativar</li>
+        <li>Atribuir unidades de acesso</li>
+      </ul>
+      <h4>Equipes</h4>
+      <ul>
+        <li>Nome, descrição, líder</li>
+        <li>Membros (preview 3 + contagem)</li>
+        <li>OS e ativos atribuídos</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node nc ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Localizações</span>
+      <span class="sub">Hierarquia unidade / área</span>
+    </div>
+    <div class="sd" data-title="Localizações" data-section="Gestão e Configuração">
+      <h4>O que aparece</h4>
+      <ul>
+        <li>Cartões com nome, endereço</li>
+        <li>Quantidade de ativos e OS no local</li>
+      </ul>
+      <h4>Ações</h4>
+      <ul><li>Criar, editar, excluir</li><li>Criar filhas (hierarquia)</li></ul>
+      <h4>Regras</h4>
+      <ul>
+        <li>Hierárquicas: fábrica → setor → área</li>
+        <li><strong>Nível raiz = "unidades"</strong> (filtro principal)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node nc ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Cadastros básicos</span>
+      <span class="sub">15 tabelas auxiliares</span>
+    </div>
+    <div class="sd" data-title="Cadastros Básicos" data-section="Gestão e Configuração">
+      <h4>O que são</h4>
+      <p>Dados de referência que alimentam todo o sistema.</p>
+      <h4>15 cadastros</h4>
+      <table>
+        <tr><th>Cadastro</th><th>Exemplo</th></tr>
+        <tr><td><strong>Tipos Manutenção</strong></td><td>Corretiva, Preventiva, Preditiva</td></tr>
+        <tr><td><strong>Áreas Manutenção</strong></td><td>Mecânica, Elétrica, Civil</td></tr>
+        <tr><td><strong>Tipos Serviço</strong></td><td>Lubrificação, Troca rolamento</td></tr>
+        <tr><td><strong>Famílias Ativo</strong></td><td>Bombas, Motores, Esteiras</td></tr>
+        <tr><td><strong>Modelos Família</strong></td><td>Bomba centrífuga KSB</td></tr>
+        <tr><td><strong>Centros Custo</strong></td><td>Produção, Manutenção</td></tr>
+        <tr><td><strong>Centros Trabalho</strong></td><td>Moagem 1, Ensaque</td></tr>
+        <tr><td><strong>Áreas</strong></td><td>Setor A, Setor B</td></tr>
+        <tr><td><strong>Posições</strong></td><td>Posição na estrutura</td></tr>
+        <tr><td><strong>Características</strong></td><td>Potência, Vazão, RPM</td></tr>
+        <tr><td><strong>Recursos</strong></td><td>Chave torque, Guindaste</td></tr>
+        <tr><td><strong>Calendários</strong></td><td>Industrial, Administrativo</td></tr>
+        <tr><td><strong>Tarefas Genéricas</strong></td><td>Inspecionar, Lubrificar</td></tr>
+        <tr><td><strong>Passos Genéricos</strong></td><td>Medir temp., Verificar nível</td></tr>
+        <tr><td><strong>Tipos Contador</strong></td><td>Horímetro, Hodômetro</td></tr>
+      </table>
+      <h4>Padrão de cada cadastro</h4>
+      <ul><li>Listar, buscar, criar, editar, excluir</li></ul>
+      <p><strong>Regra:</strong> Alguns por empresa (compartilhados), outros por unidade.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ANÁLISES ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Análises e Indicadores</span><div class="sl"></div></div>
+
+<div class="row">
+  <div class="col">
+    <div class="node nt ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">KPI — Indicadores</span>
+      <span class="sub">MTBF · MTTR · disponibilidade · PMC</span>
+    </div>
+    <div class="sd" data-title="KPI — Indicadores" data-section="Análises e Indicadores">
+      <h4>Indicadores</h4>
+      <table>
+        <tr><th>Indicador</th><th>O que mede</th></tr>
+        <tr><td><strong>Total OS</strong></td><td>Quantidade total</td></tr>
+        <tr><td><strong>Concluídas</strong></td><td>Finalizadas</td></tr>
+        <tr><td><strong>Pendentes</strong></td><td>Esperando</td></tr>
+        <tr><td><strong>Preventivas</strong></td><td>Qtd preventivas</td></tr>
+        <tr><td><strong>Corretivas</strong></td><td>Qtd corretivas</td></tr>
+        <tr><td><strong>MTBF</strong></td><td>Tempo médio entre falhas</td></tr>
+        <tr><td><strong>MTTR</strong></td><td>Tempo médio de reparo</td></tr>
+        <tr><td><strong>Disponibilidade</strong></td><td>% operacional</td></tr>
+        <tr><td><strong>PMC</strong></td><td>Cobertura preventiva %</td></tr>
+        <tr><td><strong>Custo/ativo</strong></td><td>Custo manutenção/equip.</td></tr>
+        <tr><td><strong>Redução custo</strong></td><td>Economia obtida</td></tr>
+      </table>
+      <h4>Filtros</h4>
+      <ul><li>Unidade (admin)</li><li>Período (início/fim)</li></ul>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>Indicadores calculam corretamente</li>
+        <li>Filtro período funciona</li>
+        <li>Valores formatados (R$ X.XXX,XX)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node nt ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">RAF — Análise de falha</span>
+      <span class="sub">5 porquês · plano de ação</span>
+    </div>
+    <div class="sd" data-title="RAF — Análise de Falha" data-section="Análises e Indicadores">
+      <h4>Quem usa</h4>
+      <p>Super Admin e Gestor.</p>
+      <h4>Campos</h4>
+      <ul>
+        <li><strong>Identificação:</strong> Nº, área, equipamento</li>
+        <li><strong>Ocorrência:</strong> Data, hora, operador</li>
+        <li><strong>Impacto:</strong> Parada, quebra, produção perdida</li>
+        <li>Descrição da falha e ação imediata</li>
+      </ul>
+      <h4>5 Porquês (exemplo)</h4>
+      <div class="fb">
+        <div class="fs">1: Bomba parou? → <em>Rolamento travou</em></div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">2: Travou? → <em>Sem lubrificação</em></div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">3: Sem lubrificação? → <em>Preventiva não executada</em></div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">4: Não executada? → <em>Sem peças</em></div>
+        <div class="fs"><span class="fa">↓</span></div>
+        <div class="fs">5: Sem peças? → <em>Estoque não reposto</em></div>
+      </div>
+      <h4>Plano de Ação</h4>
+      <p>Cada ação: descrição, responsável e prazo.</p>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>5 Porquês em cascata</li>
+        <li>Plano de ação com responsável e prazo</li>
+        <li>Nº RAF único</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node nt ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">GEP — Variáveis de processo</span>
+      <span class="sub">443 variáveis · gráficos · 4 turnos</span>
+    </div>
+    <div class="sd" data-title="GEP — Variáveis de Processo" data-section="Análises e Indicadores">
+      <h4>O que é</h4>
+      <p>Monitoramento de produção (temperatura, pressão, vazão...).</p>
+      <h4>Setores</h4>
+      <ul><li>Moagem 1, 2, 3</li><li>Secador</li><li>Expedição 1, 2</li><li>Ensacadeira</li><li>Energia</li></ul>
+      <h4>Turnos</h4>
+      <table>
+        <tr><th>Turno</th><th>Horário</th></tr>
+        <tr><td>A</td><td>01h-07h</td></tr>
+        <tr><td>B</td><td>07h-13h</td></tr>
+        <tr><td>C</td><td>13h-19h</td></tr>
+        <tr><td>D</td><td>19h-01h</td></tr>
+      </table>
+      <h4>Visualizações</h4>
+      <ul>
+        <li><strong>Gráfico:</strong> tendência com áreas dos turnos</li>
+        <li><strong>Tabela:</strong> valores hora a hora</li>
+        <li>Escala: normal ou normalizada (0-100%)</li>
+      </ul>
+      <h4>Critérios de aceite</h4>
+      <ul class="cl">
+        <li>Gráfico mostra dados corretos</li>
+        <li>Turnos destacados visualmente</li>
+        <li>Tabela hora a hora</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ADMIN ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Administração (Super Admin)</span><div class="sl"></div></div>
+
+<div class="row">
+  <div class="col">
+    <div class="node nk ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Portal admin</span>
+      <span class="sub">Empresas · módulos · estatísticas</span>
+    </div>
+    <div class="sd" data-title="Portal Admin" data-section="Administração">
+      <h4>O que aparece</h4>
+      <ul>
+        <li>Estatísticas: empresas, usuários, unidades, ativos, OS, SS</li>
+        <li>Lista empresas com nome, email, usuários, módulos, data</li>
+      </ul>
+      <h4>Ações</h4>
+      <ul>
+        <li>Criar empresa (com admin inicial)</li>
+        <li>Habilitar/desabilitar módulos (CMMS, GVP, GPA)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node nk ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Gestão de unidades</span>
+      <span class="sub">Criar/editar filiais</span>
+    </div>
+    <div class="sd" data-title="Gestão de Unidades (Admin)" data-section="Administração">
+      <ul><li>Criar, editar, excluir unidades</li><li>Ver membros e ativos por unidade</li><li>Hierarquia de localizações</li></ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node nk ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Gestão de usuários</span>
+      <span class="sub">Criar · perfis · unidades</span>
+    </div>
+    <div class="sd" data-title="Gestão de Usuários (Admin)" data-section="Administração">
+      <ul>
+        <li>Criar usuário com email, senha, perfil</li>
+        <li>Atribuir a uma ou mais unidades</li>
+        <li>Ativar/desativar</li>
+        <li>Alterar perfil</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== FERRAMENTAS ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Ferramentas e Integrações</span><div class="sl"></div></div>
+
+<div class="row">
+  <div class="col">
+    <div class="node ny ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Exportação Excel</span>
+      <span class="sub">OS · ativos · SS · usuários · RAFs</span>
+    </div>
+    <div class="sd" data-title="Exportação Excel" data-section="Ferramentas">
+      <ul><li>Ordens de Serviço</li><li>Ativos</li><li>Solicitações</li><li>Usuários</li><li>RAFs</li></ul>
+      <p>Formato: .xlsx com colunas formatadas e largura automática.</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node ny ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Upload de arquivos</span>
+      <span class="sub">Drag & drop · Cloudinary</span>
+    </div>
+    <div class="sd" data-title="Upload de Arquivos" data-section="Ferramentas">
+      <h4>Onde é usado</h4>
+      <ul><li>Anexos em OS e SS</li><li>Documentos de ativos (16 categorias)</li><li>Fotos antes/depois</li></ul>
+      <h4>Funcionalidades</h4>
+      <ul><li>Arrastar e soltar</li><li>Validação tipo e limite</li><li>Pré-visualização</li><li>Upload Cloudinary</li></ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node ny ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Integração TOTVS</span>
+      <span class="sub">Importar · exportar Protheus</span>
+    </div>
+    <div class="sd" data-title="Integração TOTVS" data-section="Ferramentas">
+      <ul>
+        <li><strong>Importar:</strong> dados do Protheus (ativos, famílias, planos)</li>
+        <li><strong>Exportar:</strong> dados para o Protheus</li>
+      </ul>
+      <p>Campos "protheusCode" em todo o sistema.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-top:16px">
+  <div class="col">
+    <div class="node ny ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Notificações</span>
+      <span class="sub">Badge pendências · histórico</span>
+    </div>
+    <div class="sd" data-title="Notificações" data-section="Ferramentas">
+      <ul><li>Badge no menu com SS pendentes</li><li>Histórico: título, mensagem, lido/não lido</li></ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node ny ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Perfil do usuário</span>
+      <span class="sub">Somente visualização</span>
+    </div>
+    <div class="sd" data-title="Perfil do Usuário" data-section="Ferramentas">
+      <ul><li>Avatar, nome, email, cargo, perfil</li><li>Empresa e data de entrada</li><li>Permissões do perfil</li></ul>
+      <p><strong>Regra:</strong> Somente visualização. Admin edita.</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="node ny ck" onclick="tog(this)" style="width:100%">
+      <span class="tg">▶</span>
+      <span class="title">Troca de unidade</span>
+      <span class="sub">Seletor no cabeçalho</span>
+    </div>
+    <div class="sd" data-title="Troca de Unidade" data-section="Ferramentas">
+      <ul>
+        <li>Dropdown no cabeçalho</li>
+        <li>Lista unidades do usuário</li>
+        <li>Ao trocar, <strong>TODOS</strong> dados recarregam</li>
+      </ul>
+      <p><strong>Regra:</strong> Só para quem tem acesso a mais de 1 unidade.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== TRANSVERSAIS ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Funcionalidades transversais</span><div class="sl"></div></div>
+
+<div class="pr">
+  <div class="pill">Multi-empresa (dados isolados)</div>
+  <div class="pill">Multi-unidade (filtro por unidade)</div>
+  <div class="pill">Controle de acesso (7 perfis)</div>
+  <div class="pill">Design responsivo</div>
+  <div class="pill">Busca e filtros</div>
+  <div class="pill">Notificações</div>
+  <div class="pill">Troca de unidade</div>
+  <div class="pill">Skeleton loading</div>
+  <div class="pill">Árvore hierárquica</div>
+  <div class="pill">Geração auto OS preventiva</div>
+</div>
+
+<!-- ====== STATUS ====== -->
+<div class="sh"><div class="sl"></div><span class="slb">Status dos módulos</span><div class="sl"></div></div>
+
+<div class="lg">
+  <div class="li"><div class="dot dg"></div>Funcionando</div>
+  <div class="li"><div class="dot da"></div>Em desenvolvimento</div>
+  <div class="li"><div class="dot drd"></div>Desativado</div>
+</div>
+
+<div class="sg">
+  <div class="si"><div class="dot dg"></div>Hub / Portal</div>
+  <div class="si"><div class="dot dg"></div>Login / Autenticação</div>
+  <div class="si"><div class="dot dg"></div>Dashboard</div>
+  <div class="si"><div class="dot dg"></div>Ordens de serviço</div>
+  <div class="si"><div class="dot dg"></div>Solicitações (SS)</div>
+  <div class="si"><div class="dot dg"></div>Gestão de ativos</div>
+  <div class="si"><div class="dot dg"></div>Localizações</div>
+  <div class="si"><div class="dot dg"></div>Pessoas e equipes</div>
+  <div class="si"><div class="dot dg"></div>Planos de manutenção</div>
+  <div class="si"><div class="dot dg"></div>Planejamento</div>
+  <div class="si"><div class="dot dg"></div>Cadastros básicos (15)</div>
+  <div class="si"><div class="dot dg"></div>Criticidade (GUT)</div>
+  <div class="si"><div class="dot dg"></div>RAF — Análise de falha</div>
+  <div class="si"><div class="dot dg"></div>KPI — Indicadores</div>
+  <div class="si"><div class="dot dg"></div>GEP — Variáveis</div>
+  <div class="si"><div class="dot dg"></div>Painel admin</div>
+  <div class="si"><div class="dot dg"></div>Perfil do usuário</div>
+  <div class="si"><div class="dot dg"></div>Árvore hierárquica</div>
+  <div class="si"><div class="dot dg"></div>TOTVS (parcial)</div>
+  <div class="si"><div class="dot dg"></div>Exportação Excel</div>
+  <div class="si"><div class="dot dg"></div>Notificações (básico)</div>
+  <div class="si"><div class="dot da"></div>Relatórios</div>
+  <div class="si"><div class="dot drd"></div>Peças / estoque</div>
+</div>
+
+</div><!-- /diagram -->
+
+<script>
+function tog(n){const d=n.nextElementSibling;if(!d||!d.classList.contains('sd'))return;d.classList.toggle('op');n.classList.toggle('ex')}
+function openAll(){document.querySelectorAll('.sd').forEach(d=>d.classList.add('op'));document.querySelectorAll('.node.ck').forEach(n=>n.classList.add('ex'))}
+function closeAll(){document.querySelectorAll('.sd').forEach(d=>d.classList.remove('op'));document.querySelectorAll('.node.ck').forEach(n=>n.classList.remove('ex'))}
+
+let editOn=false;
+function toggleEdit(){
+  editOn=!editOn;
+  const b=document.getElementById('ebtn');
+  document.querySelectorAll('.sd').forEach(d=>d.contentEditable=editOn?'true':'false');
+  if(editOn){b.classList.add('on');b.textContent='✏️ Editando...';document.body.classList.add('em');toast('Modo edição ativado — clique no texto para alterar')}
+  else{b.classList.remove('on');b.textContent='✏️ Editar';document.body.classList.remove('em');toast('Edições salvas')}
+}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+function doSearch(q){
+  q=q.toLowerCase().trim();
+  document.querySelectorAll('.search-hidden').forEach(e=>e.classList.remove('search-hidden'));
+  if(!q)return;
+  document.querySelectorAll('.node.ck').forEach(n=>{
+    const d=n.nextElementSibling;
+    const txt=(n.textContent+(d?d.textContent:'')).toLowerCase();
+    if(!txt.includes(q)){const w=n.closest('.col')||n.parentElement;if(w)w.classList.add('search-hidden')}
+    else if(d&&d.classList.contains('sd')){d.classList.add('op');n.classList.add('ex')}
+  });
+}
+
+function exportMd(){
+  let md='# Especificação Funcional — Portal AF Soluções (CMMS)\n\n';
+  md+='**Versão:** 1.0 | **Data:** 08/04/2026 | **Exportado do fluxograma interativo**\n\n---\n\n';
+  let curSec='';
+  document.querySelectorAll('.sd').forEach(d=>{
+    const sec=d.dataset.section||'';
+    const title=d.dataset.title||'';
+    if(sec&&sec!==curSec){curSec=sec;md+='---\n\n## '+sec+'\n\n'}
+    if(title)md+='### '+title+'\n\n';
+    md+=htmlToMd(d)+'\n';
+  });
+  // Pills
+  const pills=document.querySelectorAll('.pill');
+  if(pills.length){md+='---\n\n## Funcionalidades Transversais\n\n';pills.forEach(p=>md+='- '+p.textContent.trim()+'\n');md+='\n'}
+  // Status
+  const si=document.querySelectorAll('.si');
+  if(si.length){md+='---\n\n## Status dos Módulos\n\n| Módulo | Status |\n|--------|--------|\n';
+    si.forEach(i=>{const dot=i.querySelector('.dot');let s='Funcionando';if(dot.classList.contains('da'))s='Em desenvolvimento';if(dot.classList.contains('drd'))s='Desativado';md+='| '+i.textContent.trim()+' | '+s+' |\n'});md+='\n'}
+  const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='spec-portal-af-solucoes.md';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('spec-portal-af-solucoes.md exportado!');
+}
+
+function htmlToMd(el){
+  let md='';
+  for(const c of el.childNodes){
+    if(c.nodeType===3){const t=c.textContent.trim();if(t)md+=t+'\n';continue}
+    if(c.nodeType!==1)continue;
+    const tag=c.tagName.toLowerCase();
+    if(tag==='h4')md+='#### '+c.textContent.trim()+'\n\n';
+    else if(tag==='p')md+=inline(c)+'\n\n';
+    else if(tag==='ul'){const cl=c.classList.contains('cl');c.querySelectorAll(':scope>li').forEach(li=>md+=(cl?'- [ ] ':'- ')+inline(li)+'\n');md+='\n'}
+    else if(tag==='table'){const rows=c.querySelectorAll('tr');rows.forEach((r,i)=>{const cells=r.querySelectorAll('th,td');md+='| ';cells.forEach(x=>md+=inline(x)+' | ');md+='\n';if(i===0){md+='| ';cells.forEach(()=>md+='--- | ');md+='\n'}});md+='\n'}
+    else if(tag==='div'&&c.classList.contains('fb')){md+='```\n';c.querySelectorAll('.fs').forEach(s=>{const t=s.textContent.trim();md+=(t==='↓'?'  ↓':'  '+t)+'\n'});md+='```\n\n'}
+  }
+  return md;
+}
+function inline(el){let t='';el.childNodes.forEach(n=>{if(n.nodeType===3)t+=n.textContent;else if(n.nodeType===1){const tag=n.tagName.toLowerCase();if(tag==='strong'||tag==='b')t+='**'+n.textContent+'**';else if(tag==='em'||tag==='i')t+='*'+n.textContent+'*';else t+=n.textContent}});return t.trim()}
+</script>
+</body>
+</html>
