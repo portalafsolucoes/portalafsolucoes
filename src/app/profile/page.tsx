@@ -189,7 +189,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <PageContainer variant="narrow">
+      <PageContainer>
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-surface-high rounded w-1/4"></div>
           <div className="h-64 bg-surface-high rounded"></div>
@@ -200,14 +200,14 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <PageContainer variant="narrow">
+      <PageContainer>
           <p>Erro ao carregar perfil</p>
       </PageContainer>
     )
   }
 
   return (
-    <PageContainer variant="narrow">
+    <PageContainer>
         <PageHeader
           title="Meu Perfil"
           description="Visualize e gerencie suas informações pessoais"
