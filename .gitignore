@@ -55,11 +55,13 @@ test-results/
 # AI Tools
 # ========================================
 .claude/worktrees/
+.kiro/
 
 # ========================================
 # OS & Misc
 # ========================================
 .DS_Store
+.devserver*.log
 *.pem
 nul
 npm-debug.log*
