@@ -17,7 +17,6 @@ interface Asset {
   gutGravity?: number
   gutUrgency?: number
   gutTendency?: number
-  // Campos TOTVS
   protheusCode?: string
   tag?: string
   barCode?: string
@@ -67,6 +66,20 @@ interface AssetEditPanelProps {
   onSuccess: () => void
 }
 
+interface CharacteristicOption {
+  id: string
+  name: string
+  unit?: string | null
+  infoType?: string
+}
+
+interface CharacteristicRow {
+  characteristicId: string
+  value: string
+  unit: string
+  isExisting?: boolean
+}
+
 function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
@@ -101,6 +114,9 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
   const [workCenters, setWorkCenters] = useState<any[]>([])
   const [positions, setPositions] = useState<any[]>([])
   const [areas, setAreas] = useState<any[]>([])
+  const [characteristics, setCharacteristics] = useState<CharacteristicOption[]>([])
+  const [characteristicRows, setCharacteristicRows] = useState<CharacteristicRow[]>([])
+  const [originalCharacteristicIds, setOriginalCharacteristicIds] = useState<string[]>([])
   const [mainImage, setMainImage] = useState<File | null>(null)
   const [mainImagePreview, setMainImagePreview] = useState<string>(asset.image || '')
   const [attachments, setAttachments] = useState<File[]>([])
@@ -143,7 +159,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
     dailyVariation: asset.dailyVariation?.toString() || '',
     lifeValue: asset.lifeValue?.toString() || '',
     lifeUnit: asset.lifeUnit || '',
-    // Financeiro
+    // Financeiro (mantidos no state para API)
     purchaseValue: asset.purchaseValue?.toString() || '',
     acquisitionCost: asset.acquisitionCost?.toString() || '',
     hourlyCost: asset.hourlyCost?.toString() || '',
@@ -151,7 +167,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
     installationDate: formatDate(asset.installationDate),
     supplierCode: asset.supplierCode || '',
     supplierStore: asset.supplierStore || '',
-    // Garantia
+    // Garantia (mantidos no state para API)
     warrantyPeriod: asset.warrantyPeriod?.toString() || '',
     warrantyUnit: asset.warrantyUnit || '',
     warrantyDate: formatDate(asset.warrantyDate),
@@ -171,7 +187,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
 
   const loadData = async () => {
     try {
-      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes] = await Promise.all([
+      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes] = await Promise.all([
         fetch('/api/locations'),
         fetch('/api/assets'),
         fetch('/api/basic-registrations/asset-families'),
@@ -180,11 +196,13 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         fetch('/api/basic-registrations/work-centers'),
         fetch('/api/basic-registrations/positions'),
         fetch('/api/basic-registrations/areas'),
+        fetch('/api/basic-registrations/characteristics'),
       ])
 
-      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData] = await Promise.all([
+      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData] = await Promise.all([
         locationsRes.json(), assetsRes.json(), familiesRes.json(), familyModelsRes.json(),
         costCentersRes.json(), workCentersRes.json(), positionsRes.json(), areasRes.json(),
+        characteristicsRes.json(),
       ])
 
       setLocations(locationsData.data || [])
@@ -195,6 +213,23 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
       setWorkCenters(workCentersData.data || [])
       setPositions(positionsData.data || [])
       setAreas(areasData.data || [])
+      setCharacteristics(characteristicsData.data || [])
+
+      // Carregar características existentes do ativo
+      if (asset.id) {
+        const charRes = await fetch(`/api/assets/${asset.id}/characteristics`)
+        const charData = await charRes.json()
+        if (charData.data && charData.data.length > 0) {
+          const rows: CharacteristicRow[] = charData.data.map((cv: any) => ({
+            characteristicId: cv.characteristicId,
+            value: cv.value || '',
+            unit: cv.unit || cv.characteristic?.unit || '',
+            isExisting: true,
+          }))
+          setCharacteristicRows(rows)
+          setOriginalCharacteristicIds(rows.map(r => r.characteristicId))
+        }
+      }
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -239,10 +274,35 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  // Características
+  const addCharacteristicRow = () => {
+    setCharacteristicRows(prev => [...prev, { characteristicId: '', value: '', unit: '' }])
+  }
+
+  const removeCharacteristicRow = (index: number) => {
+    setCharacteristicRows(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateCharacteristicRow = (index: number, field: keyof CharacteristicRow, value: string) => {
+    setCharacteristicRows(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      if (field === 'characteristicId') {
+        const char = characteristics.find(c => c.id === value)
+        if (char?.unit) {
+          updated[index].unit = char.unit
+        }
+      }
+      return updated
+    })
+  }
+
+  const usedCharacteristicIds = characteristicRows.map(r => r.characteristicId)
+
   const filteredModels = formData.familyId
     ? familyModels.filter((m: any) => {
         const family = families.find((f: any) => f.id === formData.familyId)
-        if (!family?.modelMappings) return true
+        if (!family?.modelMappings || family.modelMappings.length === 0) return true
         return family.modelMappings.some((mm: any) => mm.modelId === m.id)
       })
     : familyModels
@@ -295,6 +355,36 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
       })
 
       if (res.ok) {
+        // Sincronizar características
+        if (asset.id) {
+          const currentCharIds = characteristicRows.filter(r => r.characteristicId).map(r => r.characteristicId)
+
+          // Deletar características removidas
+          const deletedIds = originalCharacteristicIds.filter(id => !currentCharIds.includes(id))
+          await Promise.all(
+            deletedIds.map(charId =>
+              fetch(`/api/assets/${asset.id}/characteristics?characteristicId=${charId}`, { method: 'DELETE' })
+            )
+          )
+
+          // Upsert características atuais
+          await Promise.all(
+            characteristicRows
+              .filter(r => r.characteristicId && r.value)
+              .map(r =>
+                fetch(`/api/assets/${asset.id}/characteristics`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    characteristicId: r.characteristicId,
+                    value: r.value,
+                    unit: r.unit || null,
+                  }),
+                })
+              )
+          )
+        }
+
         onSuccess()
       } else {
         const data = await res.json()
@@ -346,21 +436,6 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
             required
             placeholder="Digite o nome do Ativo"
           />
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Descrição</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              rows={2}
-              className={selectClass}
-              placeholder="Adicione mais informações"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Código de Barras" value={formData.barCode} onChange={(e) => updateField('barCode', e.target.value)} placeholder="Código de barras" />
-            <Input label="Cód. Imobilizado" value={formData.fixedAssetCode} onChange={(e) => updateField('fixedAssetCode', e.target.value)} placeholder="Código contábil" />
-          </div>
-          <Input label="Chapa Imobilizado" value={formData.assetPlate} onChange={(e) => updateField('assetPlate', e.target.value)} placeholder="Chapa do imobilizado" />
         </Section>
 
         {/* === CLASSIFICAÇÃO === */}
@@ -394,15 +469,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Categoria</label>
-              <select value={formData.assetCategoryType} onChange={(e) => updateField('assetCategoryType', e.target.value)} className={selectClass}>
-                <option value="BEM">Bem</option>
-                <option value="RECURSO">Recurso</option>
-                <option value="FERRAMENTA">Ferramenta</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Prioridade</label>
               <select value={formData.assetPriority} onChange={(e) => updateField('assetPriority', e.target.value)} className={selectClass}>
@@ -427,26 +494,6 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
 
         {/* === LOCALIZAÇÃO === */}
         <Section title="Localização e Organização" defaultOpen={false}>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Unidade</label>
-              <select value={formData.unitId} onChange={(e) => updateField('unitId', e.target.value)} className={selectClass}>
-                <option value="">Selecione</option>
-                {locations.filter((l: any) => !l.parentId).map((loc) => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Localização</label>
-              <select value={formData.locationId} onChange={(e) => updateField('locationId', e.target.value)} className={selectClass}>
-                <option value="">Selecione</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área</label>
@@ -479,10 +526,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Almoxarifado" value={formData.warehouse} onChange={(e) => updateField('warehouse', e.target.value)} placeholder="Código do almoxarifado" />
-            <Input label="Turno" value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} placeholder="Ex: M03" />
-          </div>
+          <Input label="Turno" value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} placeholder="Ex: M03" />
         </Section>
 
         {/* === DADOS TÉCNICOS === */}
@@ -525,39 +569,64 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
           </div>
-        </Section>
 
-        {/* === FINANCEIRO === */}
-        <Section title="Financeiro e Aquisição" defaultOpen={false}>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Valor de Compra (R$)" value={formData.purchaseValue} onChange={(e) => updateField('purchaseValue', e.target.value)} placeholder="0,00" type="number" step="0.01" />
-            <Input label="Custo de Aquisição (R$)" value={formData.acquisitionCost} onChange={(e) => updateField('acquisitionCost', e.target.value)} placeholder="0,00" type="number" step="0.01" />
-          </div>
-          <Input label="Custo Hora (R$)" value={formData.hourlyCost} onChange={(e) => updateField('hourlyCost', e.target.value)} placeholder="0,00" type="number" step="0.01" />
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Data de Compra" value={formData.purchaseDate} onChange={(e) => updateField('purchaseDate', e.target.value)} type="date" />
-            <Input label="Data de Instalação" value={formData.installationDate} onChange={(e) => updateField('installationDate', e.target.value)} type="date" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Código Fornecedor" value={formData.supplierCode} onChange={(e) => updateField('supplierCode', e.target.value)} placeholder="Código do fornecedor" />
-            <Input label="Loja Fornecedor" value={formData.supplierStore} onChange={(e) => updateField('supplierStore', e.target.value)} placeholder="Loja" />
-          </div>
-        </Section>
-
-        {/* === GARANTIA === */}
-        <Section title="Garantia" defaultOpen={false}>
-          <div className="grid grid-cols-3 gap-3">
-            <Input label="Prazo" value={formData.warrantyPeriod} onChange={(e) => updateField('warrantyPeriod', e.target.value)} placeholder="0" type="number" />
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Unidade</label>
-              <select value={formData.warrantyUnit} onChange={(e) => updateField('warrantyUnit', e.target.value)} className={selectClass}>
-                <option value="">Selecione</option>
-                <option value="DIAS">Dias</option>
-                <option value="MESES">Meses</option>
-                <option value="ANOS">Anos</option>
-              </select>
+          {/* Características Dinâmicas */}
+          <div className="pt-3 border-t border-on-surface-variant/10">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-foreground">Características</label>
+              <button type="button" onClick={addCharacteristicRow} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium">
+                <Icon name="add_circle" className="text-base" />
+                Adicionar
+              </button>
             </div>
-            <Input label="Data Garantia" value={formData.warrantyDate} onChange={(e) => updateField('warrantyDate', e.target.value)} type="date" />
+            {characteristicRows.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Nenhuma característica adicionada. Clique em "Adicionar" para incluir.</p>
+            ) : (
+              <div className="space-y-2">
+                {characteristicRows.map((row, index) => (
+                  <div key={index} className="flex items-end gap-2 p-2 bg-muted/30 rounded-[4px]">
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Característica</label>
+                      <select
+                        value={row.characteristicId}
+                        onChange={(e) => updateCharacteristicRow(index, 'characteristicId', e.target.value)}
+                        className={selectClass}
+                      >
+                        <option value="">Selecione</option>
+                        {characteristics
+                          .filter(c => c.id === row.characteristicId || !usedCharacteristicIds.includes(c.id))
+                          .map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="w-28">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Valor</label>
+                      <input
+                        type="text"
+                        value={row.value}
+                        onChange={(e) => updateCharacteristicRow(index, 'value', e.target.value)}
+                        className={selectClass}
+                        placeholder="Ex: 50"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Unidade</label>
+                      <input
+                        type="text"
+                        value={row.unit}
+                        onChange={(e) => updateCharacteristicRow(index, 'unit', e.target.value)}
+                        className={selectClass}
+                        placeholder="Ex: KW"
+                      />
+                    </div>
+                    <button type="button" onClick={() => removeCharacteristicRow(index)} className="p-2 text-danger hover:bg-red-50 rounded transition-colors">
+                      <Icon name="delete" className="text-base" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Section>
 
@@ -568,7 +637,6 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
             <p className="text-xs text-muted-foreground">Avalie de 1 (baixo) a 5 (alto) cada critério.</p>
           </div>
           <div className="space-y-4">
-            {/* Gravidade */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Gravidade (G) - Impacto se falhar</label>
               <div className="flex items-center gap-2">
@@ -583,7 +651,6 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
                 </span>
               </div>
             </div>
-            {/* Urgência */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Urgência (U) - Tempo disponível para resolver</label>
               <div className="flex items-center gap-2">
@@ -598,7 +665,6 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
                 </span>
               </div>
             </div>
-            {/* Tendência */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Tendência (T) - Piora se não tratado</label>
               <div className="flex items-center gap-2">

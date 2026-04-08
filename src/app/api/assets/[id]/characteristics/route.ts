@@ -76,3 +76,35 @@ export async function POST(
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
+
+// DELETE - Remover característica do ativo
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+    const { id } = await params
+    const { searchParams } = new URL(request.url)
+    const characteristicId = searchParams.get('characteristicId')
+
+    if (!characteristicId) {
+      return NextResponse.json({ error: 'characteristicId é obrigatório' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('AssetCharacteristicValue')
+      .delete()
+      .eq('assetId', id)
+      .eq('characteristicId', characteristicId)
+
+    if (error) throw error
+
+    return NextResponse.json({ message: 'Característica removida' })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  }
+}

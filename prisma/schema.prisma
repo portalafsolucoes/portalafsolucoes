@@ -207,6 +207,7 @@ model Company {
   processAlarms          ProcessAlarm[]
   processAlarmTriggers   ProcessAlarmTrigger[]
   processDataFiles       ProcessDataFile[]
+  standardAssets         StandardAsset[]
   // Cadastros Básicos (compartilhados entre unidades)
   calendars              Calendar[]
   workCenters            WorkCenter[]
@@ -221,6 +222,7 @@ model Company {
   serviceTypes           ServiceType[]
   genericTasks           GenericTask[]
   genericSteps           GenericStep[]
+  counterTypes           CounterType[]
   // Planos e KPIs
   standardMaintenancePlans StandardMaintenancePlan[]
   assetMaintenancePlans    AssetMaintenancePlan[]
@@ -463,6 +465,7 @@ model AssetFamily {
   modelMappings            AssetFamilyModelMapping[]
   assets                   Asset[]
   standardMaintenancePlans StandardMaintenancePlan[]
+  standardAssets           StandardAsset[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -532,6 +535,7 @@ model Characteristic {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   values AssetCharacteristicValue[]
+  standardAssetValues StandardAssetCharacteristic[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -595,6 +599,21 @@ model MaintenanceArea {
 
   serviceTypes          ServiceType[]
   assetMaintenancePlans AssetMaintenancePlan[]
+
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model CounterType {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -1819,4 +1838,65 @@ model ProcessDataFile {
   @@index([companyId])
   @@index([sector])
   @@index([fileDate])
+}
+
+model StandardAsset {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relação com Família (chave de ligação)
+  familyId String   @unique
+  family   AssetFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  // Campos padrão (26 campos da tabela TP9 do Protheus)
+  name            String?  // Nome
+  costCenterCode  String?  // Centro Custo
+  costCenterName  String?  // Nome C.Custo
+  shiftCode       String?  // Turno
+  workCenterCode  String?  // C.Trabalho
+  workCenterName  String?  // Nome C. Tr.
+  supplierCode    String?  // Fornecedor
+  supplierStore   String?  // Loja
+  modelType       String?  // Tipo Modelo
+  manufacturer    String?  // Fabricante
+  modelName       String?  // Modelo
+  serialNumber    String?  // Serie
+  warehouse       String?  // Estoque
+  priority        String?  // Prioridade
+  hourlyCost      Float?   // Custo Hora
+  hasCounter      Boolean  @default(false) // Tem Contador
+  assetMovement   String?  // Movim. Bem
+  trackingPeriod  String?  // Per. Acomp.
+  unitOfMeasure   String?  // Unid. Medida
+  imageUrl        String?  // Imagem
+  counterType     String?  // Tp. Contador
+  coupling        String?  // Acoplamento
+  annualCoupValue Float?   // Val. Ac. Ano
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  characteristics StandardAssetCharacteristic[]
+
+  @@index([companyId])
+  @@index([familyId])
+}
+
+model StandardAssetCharacteristic {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  standardAssetId  String
+  standardAsset    StandardAsset @relation(fields: [standardAssetId], references: [id], onDelete: Cascade)
+
+  characteristicId String
+  characteristic   Characteristic @relation(fields: [characteristicId], references: [id], onDelete: Cascade)
+
+  value            String
+  unit             String?
+
+  @@unique([standardAssetId, characteristicId])
+  @@index([standardAssetId])
 }

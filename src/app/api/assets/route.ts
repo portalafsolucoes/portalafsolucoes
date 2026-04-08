@@ -269,6 +269,23 @@ export async function POST(request: NextRequest) {
     if (lifeValue) insertData.lifeValue = parseFloat(lifeValue)
     if (lifeUnit) insertData.lifeUnit = lifeUnit
 
+    // Campos GUT (Gravidade, Urgência, Tendência)
+    const gutGravityStr = formData.get('gutGravity') as string | null
+    const gutUrgencyStr = formData.get('gutUrgency') as string | null
+    const gutTendencyStr = formData.get('gutTendency') as string | null
+    if (gutGravityStr) {
+      const v = parseInt(gutGravityStr, 10)
+      if (v >= 1 && v <= 5) insertData.gutGravity = v
+    }
+    if (gutUrgencyStr) {
+      const v = parseInt(gutUrgencyStr, 10)
+      if (v >= 1 && v <= 5) insertData.gutUrgency = v
+    }
+    if (gutTendencyStr) {
+      const v = parseInt(gutTendencyStr, 10)
+      if (v >= 1 && v <= 5) insertData.gutTendency = v
+    }
+
     if (parentAssetId) insertData.hasStructure = false
 
     const { data: asset, error: createError } = await supabase

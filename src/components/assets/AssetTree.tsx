@@ -7,6 +7,7 @@ interface Asset {
   id: string
   name: string
   status: string
+  protheusCode?: string
   barCode?: string
   description?: string
   acquisitionCost?: number
@@ -110,7 +111,7 @@ function AssetTreeNode({ asset, level, onSelect, selectedId, onAddSubAsset }: As
         <div className="flex items-center gap-2 flex-1">
           {getIcon()}
           <span className={`text-sm ${isSelected ? 'font-semibold text-blue-900' : 'text-foreground'}`}>
-            {asset.name}
+            {asset.protheusCode ? `${asset.protheusCode} - ${asset.name}` : asset.name}
           </span>
           {getStatusIndicator()}
         </div>

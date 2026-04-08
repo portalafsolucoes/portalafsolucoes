@@ -99,6 +99,12 @@ const ENTITY_CONFIG: Record<string, {
     orderBy: 'name',
     selectQuery: '*, options:GenericStepOption(id, label, order)',
   },
+  'counter-types': {
+    table: 'CounterType',
+    scope: 'company',
+    requiredFields: ['name'],
+    orderBy: 'name',
+  },
 }
 
 // GET - Listar todos

@@ -164,7 +164,7 @@ export function AssetTable({
       {/* Tabela */}
       <div className="flex-1 overflow-auto min-h-0">
         <table className="w-full">
-          <thead className="sticky top-0 bg-secondary/80 backdrop-blur-sm z-10">
+          <thead className="sticky top-0 bg-surface border-b border-border backdrop-blur-sm z-10">
             <tr className="border-b border-border">
               {/* Checkbox */}
               <th className="w-12 px-4 py-3 text-left">
@@ -394,7 +394,7 @@ export function AssetTable({
       </div>
       
       {/* Footer com contagem */}
-      <div className="px-4 py-2 border-t border-on-surface-variant/10 bg-secondary/50 flex-shrink-0">
+      <div className="px-4 py-2 border-t border-border bg-surface flex-shrink-0">
         <p className="text-xs text-muted-foreground">
           {assets.length} ativo(s) no total
         </p>

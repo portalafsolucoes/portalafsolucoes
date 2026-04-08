@@ -17,6 +17,7 @@ const TABLE_MAP: Record<string, string> = {
   'service-types': 'ServiceType',
   'generic-tasks': 'GenericTask',
   'generic-steps': 'GenericStep',
+  'counter-types': 'CounterType',
 }
 
 // GET - Buscar por ID

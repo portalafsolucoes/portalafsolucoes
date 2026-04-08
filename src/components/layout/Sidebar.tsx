@@ -55,8 +55,12 @@ export function Sidebar() {
       { name: 'Tarefas Genéricas', href: '/basic-registrations/generic-tasks' },
       { name: 'Etapas Genéricas', href: '/basic-registrations/generic-steps' },
       { name: 'Características', href: '/basic-registrations/characteristics' },
+      { name: 'Tipos de Contador', href: '/basic-registrations/counter-types' },
     ]},
-    { name: 'Ativos', href: '/assets', icon: 'inventory_2', module: 'assets' },
+    { name: 'Ativos', href: '/assets', icon: 'inventory_2', module: 'assets', subItems: [
+      { name: 'Bens Padrão', href: '/assets/standard' },
+      { name: 'Bens', href: '/assets' },
+    ]},
     { name: 'Criticidade de Ativos', href: '/criticality', icon: 'warning', module: 'criticality' },
     { name: 'Plano de Manutenção', href: '/maintenance-plan', icon: 'event_upcoming', module: 'maintenance-plan' },
     { name: 'Planejamento e Programação', href: '/planning', icon: 'date_range', module: 'planning' },

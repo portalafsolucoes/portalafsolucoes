@@ -178,7 +178,7 @@ export default function AssetsPage() {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {/* View Mode Toggle - Estilo TracOS */}
-            <div className="flex items-center bg-secondary rounded-[4px] p-1">
+            <div className="flex items-center bg-muted rounded-[4px] p-1">
               <button
                 onClick={() => setViewMode('tree')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
@@ -241,22 +241,22 @@ export default function AssetsPage() {
                 {/* Left Panel - Asset Tree ou Table baseado no viewMode */}
                 <div className={`${selectedAsset && !isCreating ? 'w-1/2' : 'w-full'} border-r border-border bg-card transition-all overflow-hidden`}>
                   <div className="h-full flex flex-col overflow-hidden">
-                    <div className="p-3 border-b border-border bg-secondary flex-shrink-0">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+                      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
                         {viewMode === 'tree' ? 'Hierarquia de Ativos' : 'Lista de Ativos'}
                       </p>
                     </div>
                     <div className={`flex-1 min-h-0 ${viewMode === 'tree' ? 'overflow-auto' : ''}`}>
                       {viewMode === 'tree' ? (
-                        <AssetTree 
-                          assets={filteredAssets} 
+                        <AssetTree
+                          assets={filteredAssets}
                           onSelectAsset={handleAssetSelect}
                           selectedAssetId={selectedAsset?.id}
                           onAddSubAsset={handleAddSubAsset}
                         />
                       ) : (
-                        <AssetTable 
-                          assets={filteredAssets} 
+                        <AssetTable
+                          assets={filteredAssets}
                           onSelectAsset={handleAssetSelect}
                           selectedAssetId={selectedAsset?.id}
                           onEdit={handleEdit}
@@ -296,8 +296,8 @@ export default function AssetsPage() {
             {isMobile && (
               <div className="w-full border-r border-border bg-card overflow-hidden">
                 <div className="h-full flex flex-col overflow-hidden">
-                  <div className="p-3 border-b border-border bg-secondary flex-shrink-0">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
                       {viewMode === 'tree' ? 'Hierarquia de Ativos' : 'Lista de Ativos'}
                     </p>
                   </div>

@@ -129,7 +129,20 @@
       "Bash(curl -s http://localhost:3000/assets)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/assets)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" -L http://localhost:3001/assets)",
-      "Bash(curl -s -L -c /tmp/cookies.txt http://localhost:3001/assets)"
+      "Bash(curl -s -L -c /tmp/cookies.txt http://localhost:3001/assets)",
+      "Bash(find '/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/components' -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Read(//c/Users/felip/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/4c0a36a5-d676-4449-899c-13dd58e763b7/1bc5c235-f558-4974-b31b-90cf9b295d73/skills/xlsx/**)",
+      "Bash(find /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/components -name *standard* -o -name *bem*padrão*)",
+      "Bash(find '/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao' -type f \\\\\\(-name *tree* -o -name *Tree* \\\\\\))",
+      "Bash(grep -r \"useUnit\\\\|useCurrentUnit\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r .unitId /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"createSession\\\\|SessionUser\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"user\\\\.unitId\\\\|session\\\\.unitId\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api --include=*.ts)",
+      "Bash(grep -r .eq.*unitId /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api --include=*.ts)",
+      "Bash(grep -A 10 \"searchParams.get.*unitId\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api/basic-registrations/[entity]/route.ts)",
+      "Bash(grep -B 5 -A 15 \"export async function GET\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api/basic-registrations/[entity]/route.ts)",
+      "Bash(find /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao -maxdepth 2 -name middleware* -o -name .next*)",
+      "Bash(grep -r \"user\\\\.unitId\\\\|user\\\\.unit\" /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src --include=*.tsx --include=*.ts)"
     ],
     "deny": [],
     "ask": []

@@ -565,6 +565,19 @@ export default function BasicRegistrationEntityPage() {
         { key: 'protheusCode', label: 'Cód. Protheus' },
       ],
     },
+    {
+      key: 'counter-types', label: 'Tipos de Contador', entity: 'counter-types',
+      fields: [
+        { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Horímetro' },
+        { key: 'description', label: 'Descrição', type: 'text', placeholder: 'Descrição do tipo de contador' },
+        { key: 'protheusCode', label: 'Código Protheus', type: 'text', placeholder: 'Ex: HOR' },
+      ],
+      columns: [
+        { key: 'name', label: 'Nome' },
+        { key: 'description', label: 'Descrição' },
+        { key: 'protheusCode', label: 'Cód. Protheus' },
+      ],
+    },
   ]
 
   const currentTab = tabs.find(t => t.key === entity)
