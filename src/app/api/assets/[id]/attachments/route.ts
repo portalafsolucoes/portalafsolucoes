@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { uploadFile, deleteFileByUrl } from '@/lib/storage'
 
 // Valid attachment categories
 const VALID_CATEGORIES = [
@@ -151,24 +150,8 @@ export async function POST(
     let fileSize: number | undefined
 
     if (file && file.size > 0) {
-      const uploadsDir = join(process.cwd(), 'public', 'uploads', 'attachments')
-      try {
-        await mkdir(uploadsDir, { recursive: true })
-      } catch {
-        // Directory already exists
-      }
-
-      const timestamp = Date.now()
-      const randomString = Math.random().toString(36).substring(7)
-      const extension = file.name.split('.').pop()
-      const filename = `${timestamp}-${randomString}.${extension}`
-      const filepath = join(uploadsDir, filename)
-
-      const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-      await writeFile(filepath, buffer)
-
-      fileUrl = `/uploads/attachments/${filename}`
+      const uploaded = await uploadFile(file, `assets/${id}/attachments`)
+      fileUrl = uploaded.url
       mimeType = file.type
       fileSize = file.size
     }
@@ -289,6 +272,15 @@ export async function DELETE(
 
     if (fetchError || !attachment) {
       return NextResponse.json({ error: 'Attachment not found' }, { status: 404 })
+    }
+
+    // Deletar arquivo físico do storage
+    if (attachment.url) {
+      try {
+        await deleteFileByUrl(attachment.url)
+      } catch {
+        // Continua mesmo se falhar (arquivo pode já ter sido removido)
+      }
     }
 
     // Delete attachment

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { unlink } from 'fs/promises'
-import { join } from 'path'
+import { deleteFileByUrl } from '@/lib/storage'
 
 export async function DELETE(
   request: NextRequest,
@@ -29,12 +28,11 @@ export async function DELETE(
       )
     }
 
-    // Deletar arquivo físico
+    // Deletar arquivo do storage (ignora URLs legadas silenciosamente)
     try {
-      const filepath = join(process.cwd(), 'public', file.url)
-      await unlink(filepath)
+      await deleteFileByUrl(file.url)
     } catch (error) {
-      console.error('Error deleting physical file:', error)
+      console.error('Error deleting file from storage:', error)
       // Continua mesmo se falhar ao deletar o arquivo físico
     }
 
