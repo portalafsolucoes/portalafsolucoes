@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 interface ModalProps {
   isOpen: boolean
@@ -15,6 +16,8 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHeader = false, noPadding = false, inPage = false }: ModalProps) {
+  const { isCollapsed } = useSidebar()
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -44,6 +47,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
 
   if (!isOpen) return null
 
+  // Sidebar: 256px open, 64px collapsed
+  const sidebarWidth = isCollapsed ? 64 : 256
+
   const sizeClasses = {
     sm: 'w-full max-w-md',
     md: 'w-full max-w-2xl',
@@ -51,7 +57,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
     xl: 'w-full max-w-5xl',
     xxl: 'w-full max-w-6xl',
     full: 'w-full max-w-7xl',
-    wide: 'w-[calc(100vw-200px)] max-w-[1400px]'
+    wide: '' // handled via inline style
   }
 
   if (inPage) {
@@ -75,18 +81,29 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
     )
   }
 
+  // For "wide" size: fill the content area (viewport minus sidebar) with 100px margin each side
+  const isWide = size === 'wide'
+  const wideStyle = isWide ? {
+    width: `calc(100vw - ${sidebarWidth}px - 200px)`,
+    maxWidth: '1400px'
+  } : undefined
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Overlay */}
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto transition-[padding] duration-300 lg:pl-0"
+      style={{ paddingLeft: `${sidebarWidth}px` }}
+    >
+      {/* Overlay - covers only the content area */}
       <div
         className="fixed inset-0 bg-on-surface/20 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {/* Modal - centered within the content area */}
       <div className="flex min-h-screen items-start justify-center pt-8 pb-8 px-3 sm:px-4 md:px-6">
         <div
-          className={`relative bg-card rounded-[4px] ambient-ambient-shadow ${sizeClasses[size]} max-h-[88vh] flex flex-col`}
+          className={`relative bg-card rounded-[4px] ambient-ambient-shadow ${isWide ? '' : sizeClasses[size]} max-h-[88vh] flex flex-col`}
+          style={wideStyle}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
