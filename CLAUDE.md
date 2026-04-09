@@ -461,6 +461,7 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
 - Grid: `grid grid-cols-2 md:grid-cols-3 gap-3`
 - Footer: `flex justify-end gap-3 px-4 py-4 border-t border-border`
 - Botoes: Cancelar (outline) a esquerda, Salvar (primary) a direita
+- O modal `Analisar Solicitação` em Aprovações deve usar `title` no `Modal`, `size="wide"` e `ModalSection`; nao pode ter header manual.
 
 ### Excecoes
 - Ativos (Criar/Editar/Detalhe): usam modo `inPage` como painel lateral na arvore

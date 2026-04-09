@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '../ui/Modal'
+import { ModalSection } from '../ui/ModalSection'
 import { Button } from '../ui/Button'
 import { ImageViewerModal } from '../ui/ImageViewerModal'
 import { formatDate } from '@/lib/utils'
@@ -48,35 +49,38 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
   const [requestDetails, setRequestDetails] = useState<Request | null>(null)
   const [imageViewer, setImageViewer] = useState<{url: string; name: string} | null>(null)
 
-  useEffect(() => {
-    loadTechnicians()
-    loadRequestDetails()
-  }, [])
-
-  const loadRequestDetails = async () => {
+  const loadRequestDetails = useCallback(async () => {
     try {
       const res = await fetch(`/api/requests/${request.id}`)
       const data = await res.json()
       if (data.data) {
         setRequestDetails(data.data)
       }
-    } catch (error) {
-      console.error('Error loading request details:', error)
+    } catch {
+      console.error('Error loading request details')
     }
-  }
+  }, [request.id])
 
-  const loadTechnicians = async () => {
+  const loadTechnicians = useCallback(async () => {
     setLoadingTechs(true)
     try {
       const res = await fetch('/api/users?role=MECANICO,ELETRICISTA,OPERADOR,CONSTRUTOR_CIVIL')
       const data = await res.json()
       setTechnicians(data.data || [])
-    } catch (error) {
-      console.error('Error loading technicians:', error)
+    } catch {
+      console.error('Error loading technicians')
     } finally {
       setLoadingTechs(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    async function bootstrapModal() {
+      await Promise.all([loadTechnicians(), loadRequestDetails()])
+    }
+
+    void bootstrapModal()
+  }, [loadRequestDetails, loadTechnicians])
 
   const handleSubmit = async () => {
     if (!action) return
@@ -112,7 +116,7 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
         const data = await res.json()
         setError(data.error || 'Erro ao processar solicitação')
       }
-    } catch (error) {
+    } catch {
       setError('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)
@@ -137,138 +141,114 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
     }
   }
 
+  const currentRequest = requestDetails || request
+
   return (
-    <Modal isOpen={true} onClose={onClose} size="xl" hideHeader>
-      <div className="flex flex-col h-full max-h-[90vh]">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-on-surface-variant/10">
-          <div className="flex-1 w-full">
-            <div className="flex items-start gap-3 mb-3">
-              <Icon name="description" className="text-2xl sm:text-3xl text-primary flex-shrink-0 mt-1" />
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground leading-tight break-words">{request.title}</h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
-                {getPriorityLabel(request.priority)}
-              </span>
-              <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-info-light-foreground">
-                {request.status}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-[4px] transition-colors self-start sm:self-auto"
-          >
-            <Icon name="close" className="text-2xl text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto py-6 px-1 space-y-8">
-          {/* Descrição */}
-          {request.description && (
+    <Modal isOpen={true} onClose={onClose} title="Analisar Solicitação" size="wide">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          handleSubmit()
+        }}
+      >
+        <div className="p-4 space-y-3">
+          <ModalSection title="Identificação">
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Descrição</h3>
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed bg-secondary p-4 rounded-[4px]">{request.description}</p>
-            </div>
-          )}
-
-          {/* Informações */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            {request.createdBy && (
-              <div className="flex items-start gap-3">
-                <Icon name="person" className="text-xl text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Solicitado por</p>
-                  <p className="text-sm text-muted-foreground">
-                    {request.createdBy.firstName} {request.createdBy.lastName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{request.createdBy.email}</p>
+              <div className="rounded-[4px] border border-border bg-surface-low p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-lg font-semibold text-foreground">{request.title}</p>
+                    {currentRequest.description && (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                        {currentRequest.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`rounded-full px-3 py-1.5 text-xs font-medium ${getPriorityColor(request.priority)}`}>
+                      {getPriorityLabel(request.priority)}
+                    </span>
+                    <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-info-light-foreground">
+                      {request.status}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {request.team && (
-              <div className="flex items-start gap-3">
-                <Icon name="group" className="text-xl text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Equipe Atribuída</p>
-                  <p className="text-sm text-muted-foreground">{request.team.name}</p>
-                </div>
-              </div>
-            )}
-
-            {requestDetails?.asset && (
-              <div className="flex items-start gap-3">
-                <Icon name="inventory_2" className="text-xl text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Ativo</p>
-                  <p className="text-sm text-muted-foreground">{requestDetails.asset.name}</p>
-                </div>
-              </div>
-            )}
-
-            {requestDetails?.location && (
-              <div className="flex items-start gap-3">
-                <Icon name="location_on" className="text-xl text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Localização</p>
-                  <p className="text-sm text-muted-foreground">{requestDetails.location.name}</p>
-                </div>
-              </div>
-            )}
-
-            {request.dueDate && (
-              <div className="flex items-start gap-3">
-                <Icon name="calendar_today" className="text-xl text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Data Desejada</p>
-                  <p className="text-sm text-muted-foreground">{formatDate(request.dueDate)}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3">
-              <Icon name="schedule" className="text-xl text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Criado em</p>
-                <p className="text-sm text-muted-foreground">{formatDate(request.createdAt)}</p>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {request.createdBy && (
+                  <InfoCard
+                    icon="person"
+                    label="Solicitado por"
+                    value={`${request.createdBy.firstName} ${request.createdBy.lastName}`}
+                    extra={request.createdBy.email}
+                  />
+                )}
+                {request.team && (
+                  <InfoCard
+                    icon="group"
+                    label="Equipe atribuída"
+                    value={request.team.name}
+                  />
+                )}
+                {currentRequest.asset && (
+                  <InfoCard
+                    icon="inventory_2"
+                    label="Ativo"
+                    value={currentRequest.asset.name}
+                  />
+                )}
+                {currentRequest.location && (
+                  <InfoCard
+                    icon="location_on"
+                    label="Localização"
+                    value={currentRequest.location.name}
+                  />
+                )}
+                {request.dueDate && (
+                  <InfoCard
+                    icon="calendar_today"
+                    label="Data desejada"
+                    value={formatDate(request.dueDate)}
+                  />
+                )}
+                <InfoCard
+                  icon="schedule"
+                  label="Criado em"
+                  value={formatDate(request.createdAt)}
+                />
               </div>
             </div>
-          </div>
+          </ModalSection>
 
-          {/* Imagens e Anexos */}
-          {requestDetails?.files && requestDetails.files.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Icon name="attach_file" className="text-xl text-muted-foreground" />
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Anexos ({requestDetails.files.length})</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {requestDetails.files.map((file) => (
-                  <div key={file.id} className="relative group">
+          {currentRequest.files && currentRequest.files.length > 0 && (
+            <ModalSection title={`Anexos (${currentRequest.files.length})`} defaultOpen={false}>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {currentRequest.files.map((file) => (
+                  <div key={file.id} className="rounded-[4px] border border-border bg-card p-3">
                     {file.type?.startsWith('image/') ? (
-                      <div className="relative">
-                        <img 
-                          src={file.url} 
+                      <button
+                        type="button"
+                        onClick={() => setImageViewer({ url: file.url, name: file.name })}
+                        className="block w-full text-left"
+                      >
+                        <img
+                          src={file.url}
                           alt={file.name}
-                          className="w-full h-32 object-cover rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all"
-                          onClick={() => setImageViewer({url: file.url, name: file.name})}
+                          className="h-32 w-full rounded-[4px] border border-input object-cover"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 rounded-b-lg truncate">
-                          {file.name}
-                        </div>
-                      </div>
+                        <p className="mt-2 truncate text-sm font-medium text-foreground">{file.name}</p>
+                      </button>
                     ) : (
-                      <div className="flex items-center gap-2 p-3 bg-secondary rounded-[4px] hover:border-blue-400 transition-all">
-                        <Icon name="description" className="text-2xl text-muted-foreground flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
+                      <div className="flex items-center gap-3">
+                        <Icon name="description" className="text-2xl text-muted-foreground" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
                         </div>
-                        <button 
+                        <button
+                          type="button"
                           onClick={() => window.open(file.url, '_blank')}
-                          className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
+                          className="rounded-[4px] p-1.5 text-primary transition-colors hover:bg-primary/5"
                           title="Baixar"
                         >
                           <Icon name="download" className="text-base" />
@@ -278,169 +258,149 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
                   </div>
                 ))}
               </div>
-            </div>
+            </ModalSection>
           )}
 
-          {/* Divisor */}
-          <div className="border-t border-border pt-8 space-y-6">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Decisão de Aprovação</h3>
-            
-            {/* Erro */}
-            {error && (
-              <div className="p-4 bg-danger-light border border-red-200 rounded-[4px]">
-                <p className="text-sm text-danger font-medium">{error}</p>
+          <ModalSection title="Decisão">
+            <div className="space-y-3">
+              {error && (
+                <div className="rounded-[4px] border border-red-200 bg-danger-light p-3 text-sm text-danger">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAction('approve')
+                    setRejectionReason('')
+                    setError(null)
+                  }}
+                  className={`rounded-[4px] border p-4 text-left transition-colors ${
+                    action === 'approve'
+                      ? 'border-green-500 bg-success-light'
+                      : 'border-input hover:bg-surface-low'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Icon name="check_circle" className={`text-2xl ${action === 'approve' ? 'text-success' : 'text-muted-foreground'}`} />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Aprovar solicitação</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Libera a solicitação e permite atribuir execução imediatamente.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAction('reject')
+                    setConvertToWorkOrder(false)
+                    setAssignedToId('')
+                    setError(null)
+                  }}
+                  className={`rounded-[4px] border p-4 text-left transition-colors ${
+                    action === 'reject'
+                      ? 'border-red-500 bg-danger-light'
+                      : 'border-input hover:bg-surface-low'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Icon name="cancel" className={`text-2xl ${action === 'reject' ? 'text-danger' : 'text-muted-foreground'}`} />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Rejeitar solicitação</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Exige justificativa para encerrar a análise sem aprovação.
+                      </p>
+                    </div>
+                  </div>
+                </button>
               </div>
-            )}
 
-            {/* Botões de Ação */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <button
-                onClick={() => {
-                  setAction('approve')
-                  setRejectionReason('')
-                  setError(null)
-                }}
-                className={`p-8 sm:p-6 border-2 rounded-[4px] transition-all ambient-shadow hover:ambient-shadow ${
-                  action === 'approve'
-                    ? 'border-green-500 bg-success-light shadow-green-100'
-                    : 'border-input hover:border-green-400 hover:bg-success-light/30'
-                }`}
-              >
-                <Icon name="check_circle" className={`text-5xl sm:text-4xl mx-auto mb-4 transition-colors ${
-                  action === 'approve' ? 'text-success' : 'text-muted-foreground'
-                }`} />
-                <p className={`font-semibold text-center text-base sm:text-sm ${
-                  action === 'approve' ? 'text-success' : 'text-foreground'
-                }`}>
-                  Aprovar Solicitação
-                </p>
-              </button>
-              <button
-                onClick={() => {
-                  setAction('reject')
-                  setConvertToWorkOrder(false)
-                  setAssignedToId('')
-                  setError(null)
-                }}
-                className={`p-8 sm:p-6 border-2 rounded-[4px] transition-all ambient-shadow hover:ambient-shadow ${
-                  action === 'reject'
-                    ? 'border-red-500 bg-danger-light shadow-red-100'
-                    : 'border-input hover:border-red-400 hover:bg-danger-light/30'
-                }`}
-              >
-                <Icon name="cancel" className={`text-5xl sm:text-4xl mx-auto mb-4 transition-colors ${
-                  action === 'reject' ? 'text-danger' : 'text-muted-foreground'
-                }`} />
-                <p className={`font-semibold text-center text-base sm:text-sm ${
-                  action === 'reject' ? 'text-danger' : 'text-foreground'
-                }`}>
-                  Rejeitar Solicitação
-                </p>
-              </button>
-            </div>
-
-            {/* Opções de Aprovação */}
-            {action === 'approve' && (
-              <div className="space-y-5 p-5 sm:p-6 bg-success-light border-2 border-green-200 rounded-[4px]">
-                <div>
-                  <label className="flex items-start space-x-3 cursor-pointer group">
+              {action === 'approve' && (
+                <div className="space-y-3 rounded-[4px] border border-green-200 bg-success-light p-4">
+                  <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={convertToWorkOrder}
                       onChange={(e) => {
                         setConvertToWorkOrder(e.target.checked)
-                        if (e.target.checked) {
-                          setAssignedToId('')
-                        }
+                        if (e.target.checked) setAssignedToId('')
                       }}
-                      className="w-5 h-5 mt-0.5 text-success rounded focus:ring-green-500 cursor-pointer"
+                      className="mt-0.5 h-4 w-4 rounded border-input text-success focus:ring-ring"
                     />
-                    <div className="flex-1">
-                      <span className="text-sm font-semibold text-foreground group-hover:text-success transition-colors flex items-center gap-2">
-                        <Icon name="description" className="text-base" />
-                        Converter em Ordem de Serviço (OS)
-                      </span>
-                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                        Ao marcar esta opção, uma OS será criada automaticamente
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Converter em Ordem de Serviço (OS)</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Ao marcar esta opção, o sistema cria automaticamente uma OS.
                       </p>
                     </div>
                   </label>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Icon name="person" className="text-base" />
-                    {convertToWorkOrder ? 'Atribuir Técnico à OS (opcional)' : 'Atribuir Técnico *'}
-                  </label>
-                  <select
-                    value={assignedToId}
-                    onChange={(e) => setAssignedToId(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-input rounded-[4px] focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all bg-card text-foreground"
-                    disabled={loadingTechs}
-                  >
-                    <option value="">{convertToWorkOrder ? 'Atribuir depois...' : 'Selecione um técnico...'}</option>
-                    {technicians.map((tech) => (
-                      <option key={tech.id} value={tech.id}>
-                        {tech.firstName} {tech.lastName} - {tech.email}
-                      </option>
-                    ))}
-                  </select>
-                  {!convertToWorkOrder && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Técnico responsável por executar esta solicitação
-                    </p>
-                  )}
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {convertToWorkOrder ? 'Atribuir Técnico à OS (opcional)' : 'Atribuir Técnico *'}
+                    </label>
+                    <select
+                      value={assignedToId}
+                      onChange={(e) => setAssignedToId(e.target.value)}
+                      className="w-full rounded-[4px] border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={loadingTechs}
+                    >
+                      <option value="">{convertToWorkOrder ? 'Atribuir depois...' : 'Selecione um técnico...'}</option>
+                      {technicians.map((tech) => (
+                        <option key={tech.id} value={tech.id}>
+                          {tech.firstName} {tech.lastName} - {tech.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Motivo de Rejeição */}
-            {action === 'reject' && (
-              <div className="space-y-3 p-5 sm:p-6 bg-danger-light border-2 border-red-200 rounded-[4px]">
-                <label className="block text-sm font-semibold text-foreground">
-                  Motivo da Rejeição *
-                </label>
-                <textarea
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  rows={5}
-                  className="w-full px-4 py-3 border-2 border-red-300 rounded-[4px] focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none transition-all bg-card text-foreground"
-                  placeholder="Descreva o motivo da rejeição..."
-                />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Explique de forma clara o motivo da rejeição desta solicitação
-                </p>
-              </div>
-            )}
-          </div>
+              {action === 'reject' && (
+                <div className="space-y-3 rounded-[4px] border border-red-200 bg-danger-light p-4">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Motivo da Rejeição *
+                    </label>
+                    <textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      rows={5}
+                      className="w-full rounded-[4px] border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="Descreva o motivo da rejeição..."
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </ModalSection>
         </div>
 
-        {/* Footer */}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-on-surface-variant/10">
-          <Button 
-            variant="outline" 
-            onClick={onClose} 
-            disabled={loading}
-            className="w-full sm:w-auto px-6 py-3"
-          >
+        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
           <Button
-            onClick={handleSubmit}
+            type="submit"
             disabled={!action || loading}
-            className={`w-full sm:w-auto px-6 py-3 font-semibold ${
+            className={
               action === 'approve'
-                ? 'bg-success hover:bg-green-700 text-white'
+                ? 'bg-success text-white hover:bg-green-700'
                 : action === 'reject'
-                ? 'bg-danger hover:bg-red-700 text-white'
+                ? 'bg-danger text-white hover:bg-red-700'
                 : ''
-            }`}
+            }
           >
             {loading ? 'Processando...' : action === 'approve' ? 'Confirmar Aprovação' : 'Confirmar Rejeição'}
           </Button>
         </div>
-      </div>
-      
+      </form>
+
       {imageViewer && (
         <ImageViewerModal
           isOpen={!!imageViewer}
@@ -450,5 +410,30 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
         />
       )}
     </Modal>
+  )
+}
+
+function InfoCard({
+  icon,
+  label,
+  value,
+  extra,
+}: {
+  icon: string
+  label: string
+  value: string
+  extra?: string
+}) {
+  return (
+    <div className="rounded-[4px] border border-border bg-card p-3">
+      <div className="flex items-start gap-3">
+        <Icon name={icon} className="mt-0.5 text-xl text-muted-foreground" />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+          <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
+          {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
+        </div>
+      </div>
+    </div>
   )
 }
