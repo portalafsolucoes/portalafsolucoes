@@ -922,22 +922,27 @@ O sistema tem 7 perfis. Cada um ve e faz coisas diferentes:
 - Menus, botoes e acoes aparecem/somem conforme o perfil
 - APIs tambem validam permissoes (nao so a tela)
 
-### F4. Design Responsivo
+### F4. Cabecalho Interno Limpo
+- Em todas as telas internas do sistema, o lado esquerdo do header superior deve permanecer vazio
+- O texto fixo `CMMS` nao deve aparecer no header principal
+- O nome da empresa logada tambem nao deve ser exibido nessa area do topo
+
+### F5. Design Responsivo
 - Funciona em computador, tablet e celular
 - Menu lateral colapsa em telas pequenas
 - Modais viram tela cheia em celular
 - Visualizacoes alternam entre grade e tabela
 
-### F5. Busca e Filtros
+### F6. Busca e Filtros
 - Todas as listas principais tem campo de busca
 - Filtros por status, tipo, prioridade, etc.
 - Busca com delay de 500ms (nao busca a cada tecla)
 
-### F6. Carregamento Visual
+### F7. Carregamento Visual
 - Todas as paginas tem animacao de carregamento (skeleton)
 - Evita que o usuario veja tela em branco
 
-### F7. Geracao Automatica de OS Preventiva
+### F8. Geracao Automatica de OS Preventiva
 - Sistema pode gerar OS automaticamente com base nos planos de manutencao
 - Execucao via endpoint programado (cron)
 

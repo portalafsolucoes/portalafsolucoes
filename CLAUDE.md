@@ -375,6 +375,13 @@ Padrao visual:
 - Durante a hidratacao/carregamento inicial, **NAO** exibir o texto fallback `Portal AF Solucoes` no lugar da logo; use placeholder neutro ate os dados do usuario carregarem.
 - O fallback textual com nome da empresa ou app so pode aparecer quando realmente nao existir logo configurada no banco.
 
+### Header Superior Limpo (OBRIGATORIO)
+
+- O lado esquerdo do header superior de todas as telas internas deve permanecer vazio.
+- **NAO** exibir o texto fixo `CMMS` no header principal.
+- **NAO** exibir o nome da empresa logada nessa area do topo.
+- O header deve manter apenas os controles funcionais do lado direito.
+
 ## Modais e Popups (OBRIGATORIO)
 
 Todo modal do sistema DEVE seguir o padrao abaixo. Referencia visual: modal "Adicionar Pessoa".
