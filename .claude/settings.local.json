@@ -146,7 +146,15 @@
       "Bash(find /c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src -type f \\\\\\(-name *qr* -o -name *upload* -o -name *foto* -o -name *photo* -o -name *image* -o -name *anexo* -o -name *attachment* \\\\\\))",
       "Bash(find '/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api/assets' -type f -name *.ts)",
       "Bash(find \"/c/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src/app/api\" -name \"route.ts\" -exec grep -l \"calendars\" {} \\\\;)",
-      "Bash(find \"C:/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec grep -l \"AssetCreatePanel\" {} \\\\;)"
+      "Bash(find \"C:/Users/felip/OneDrive/Área de Trabalho/Sistema Portal/Portal Gestão de Manutenção/cmm_gestor_manutencao/src\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec grep -l \"AssetCreatePanel\" {} \\\\;)",
+      "Read(//c/Users/adw73/.claude/skills/playwright-skill/**)",
+      "Bash(node -e \"require\\('./lib/helpers'\\).detectDevServers\\(\\).then\\(servers => console.log\\(JSON.stringify\\(servers\\)\\)\\)\")",
+      "Bash(node run.js /tmp/playwright-test-screenshots.js)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_run_code"
     ],
     "deny": [],
     "ask": []

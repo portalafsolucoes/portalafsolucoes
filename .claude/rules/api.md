@@ -1,0 +1,50 @@
+---
+globs: src/app/api/**,src/actions/**
+---
+
+# API Routes e Server Actions
+
+## Contrato Geral
+- Toda rota e toda server action devem validar permissao no servidor; esconder item de menu nao substitui seguranca
+- Validacoes de permissao devem sempre considerar `perfil + empresa + unidade ativa`
+- A UI e a API devem compartilhar a mesma regra central de permissao; nao manter matriz divergente
+- O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
+- Se o banco ou legado ainda possuir perfis antigos, a camada de auth/API deve normalizar esses valores antes de decidir acesso, sidebar, redirects, badges e permissoes
+- A normalizacao de papel deve considerar contexto confiavel do usuario, como `email`, `username`, `jobTitle` e papel canonico de sessao; nao depender apenas do valor legado bruto
+
+## Autenticacao e Sessao
+- O endpoint `/api/auth/me` e a leitura de modulos da empresa devem ser tratados como dados dinamicos de sessao, sem cache compartilhado entre usuarios
+- Login, logout e troca de contexto autenticado devem invalidar ou limpar cache de autenticacao e de modulos habilitados no cliente
+- Chaves de cache no cliente que dependem do usuario devem considerar ao menos empresa e contexto autenticado para evitar vazamento visual de sessao anterior
+- O retorno de autenticacao para a UI deve expor o papel canonico como `role`
+- Se necessario, o papel legado pode ser exposto apenas como apoio tecnico, por exemplo em `legacyRole`
+- Redirects padrao do CMMS devem respeitar o perfil: perfis operacionais entram por `Ordens de Servico`; os demais entram por `Dashboard`
+- Quando um perfil nao tiver acesso a uma pagina, o sistema deve redirecionar para o destino padrao permitido do perfil, e nao deixar a tela quebrada ou parcialmente carregada
+
+## Padrões de API Routes
+- Em handlers do App Router, usar `NextRequest` e `NextResponse` quando houver leitura de corpo, query string ou resposta customizada
+- Resolver a sessao logo no inicio e retornar `401` quando nao houver sessao e `403` quando a sessao nao tiver permissao
+- Em consultas sensiveis, validar primeiro o escopo da empresa e da unidade ativa e so depois executar a query
+- Em sucesso, preferir respostas JSON consistentes; neste repo os consumidores frequentemente esperam `{ data: ... }`
+- Em falhas, retornar JSON com `error` e status HTTP coerente (`400`, `401`, `403`, `404`, `409`, `500`)
+- Toda acao que altera dados deve validar payload, status permitidos e relacoes obrigatorias antes de persistir
+
+## Tratamento de Erros e Validacao
+- Formularios e APIs devem garantir validacoes de negocio e status inicial correto
+- Rejeicao de solicitacao exige motivo
+- Criacao de empresa deve criar o primeiro usuario admin
+- Modulos habilitados por empresa devem refletir na navegacao real do sistema
+- Acoes, menus e badges devem respeitar perfil e tambem ser validados na API
+- Quando a API expuser dados de upload, anexos, fotos ou logo, usar somente URLs vindas da fonte configurada, sem fallback hardcoded
+
+## Server Actions
+- Aplicar as mesmas validacoes de sessao, empresa, unidade e papel usadas nas API routes
+- Nao mover regra de seguranca apenas para o cliente ao migrar um fluxo para server action
+- Reutilizar a logica central de permissao e normalizacao de papel em vez de reimplementar regras dentro de cada action
+
+## Casos Especificos do Produto
+- `Aprovacoes` e `RAF` sao exclusivos de `SUPER_ADMIN` e `ADMIN`
+- `Configuracoes` do portal sao exclusivas de `SUPER_ADMIN`
+- `TECHNICIAN` e `LIMITED_TECHNICIAN` nao devem cair no `Dashboard`; o destino inicial e `Ordens de Servico`
+- A troca de unidade so pode ser oferecida a `SUPER_ADMIN` e `ADMIN`, e somente quando houver mais de uma unidade acessivel
+- O menu do usuario em `Configuracoes` deve expor apenas as abas `Perfil` e `Seguranca`

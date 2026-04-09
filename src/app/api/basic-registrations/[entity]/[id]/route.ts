@@ -76,7 +76,7 @@ export async function PUT(
     }
 
     // Verificar permissão de edição
-    const permError = checkApiPermission(session.role, 'basic-registrations', 'PUT')
+    const permError = checkApiPermission(session, 'basic-registrations', 'PUT')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
@@ -159,7 +159,7 @@ export async function DELETE(
     }
 
     // Verificar permissão de exclusão
-    const permError = checkApiPermission(session.role, 'basic-registrations', 'DELETE')
+    const permError = checkApiPermission(session, 'basic-registrations', 'DELETE')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

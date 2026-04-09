@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateInternalId, isValidExternalId, determineSystemStatus } from '@/lib/workOrderUtils'
+import { isOperationalRole } from '@/lib/user-roles'
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number): Date {
@@ -53,6 +54,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
     const summary = searchParams.get('summary') === 'true'
 
+    const permError = checkApiPermission(session, 'work-orders', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     // Build query
     let query = supabase
       .from('WorkOrder')
@@ -80,6 +86,7 @@ export async function GET(request: NextRequest) {
     const unitIdParam = searchParams.get('unitId')
     const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
     if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+    if (isOperationalRole(session)) query = query.eq('assignedToId', session.id)
 
     if (status) query = query.eq('status', status)
     if (systemStatus) query = query.eq('systemStatus', systemStatus)
@@ -121,7 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissão de criação
-    const permError = checkApiPermission(session.role, 'work-orders', 'POST')
+    const permError = checkApiPermission(session, 'work-orders', 'POST')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

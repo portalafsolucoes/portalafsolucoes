@@ -1,6 +1,6 @@
 import { type UserRole } from './permissions'
+import { getDefaultCmmsPath } from './user-roles'
 
-export function getDefaultRedirectPath(_role: UserRole): string {
-  // Após login, sempre vai para o hub de seleção de módulos
-  return '/hub'
+export function getDefaultRedirectPath(role: UserRole): string {
+  return getDefaultCmmsPath(role)
 }

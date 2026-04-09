@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyPassword } from '@/lib/auth'
 import { createSession } from '@/lib/session'
+import { normalizeUserRole } from '@/lib/user-roles'
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,6 +70,13 @@ export async function POST(request: NextRequest) {
       .update({ lastLogin: new Date().toISOString() })
       .eq('id', user.id)
 
+    const canonicalRole = normalizeUserRole({
+      role: user.role,
+      email: user.email,
+      username: user.username,
+      jobTitle: user.jobTitle,
+    })
+
     // Buscar unidades disponíveis para o usuário
     let unitIds: string[] = []
     if (user.role === 'SUPER_ADMIN') {
@@ -109,6 +117,7 @@ export async function POST(request: NextRequest) {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      canonicalRole,
       companyId: user.companyId,
       companyName: user.company?.name || '',
       unitId: activeUnitId,
@@ -123,7 +132,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
+        role: canonicalRole,
+        legacyRole: user.role,
         company: user.company,
         unitId: activeUnitId,
         unitIds,

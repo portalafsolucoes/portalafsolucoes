@@ -308,7 +308,7 @@ export function WorkOrderExecuteModal({
             onClick={() => setActiveTab('execution')}
             className={`flex-1 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-semibold transition-colors ${
               activeTab === 'execution'
-                ? 'border-b-2 border-blue-600 text-primary bg-primary/5'
+                ? 'border-b-2 border-on-surface-variant text-primary bg-primary/5'
                 : 'text-muted-foreground hover:bg-secondary'
             }`}
           >
@@ -319,7 +319,7 @@ export function WorkOrderExecuteModal({
             onClick={() => setActiveTab('details')}
             className={`flex-1 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-semibold transition-colors ${
               activeTab === 'details'
-                ? 'border-b-2 border-blue-600 text-primary bg-primary/5'
+                ? 'border-b-2 border-on-surface-variant text-primary bg-primary/5'
                 : 'text-muted-foreground hover:bg-secondary'
             }`}
           >
@@ -741,7 +741,7 @@ export function WorkOrderExecuteModal({
             </div>
           ) : (
             <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-4 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
         </div>

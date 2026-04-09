@@ -16,6 +16,10 @@ export async function GET(
     }
 
     const { id } = await params
+    const permError = checkApiPermission(session, 'assets', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
     // Buscar ativo principal
     const { data: asset, error } = await supabase
@@ -81,7 +85,7 @@ export async function PATCH(
     const { id } = await params
 
     // Verificar permissão de edição
-    const permError = checkApiPermission(session.role, 'assets', 'PATCH')
+    const permError = checkApiPermission(session, 'assets', 'PATCH')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
@@ -330,7 +334,7 @@ export async function DELETE(
     const { id } = await params
 
     // Verificar permissão de exclusão
-    const permError = checkApiPermission(session.role, 'assets', 'DELETE')
+    const permError = checkApiPermission(session, 'assets', 'DELETE')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

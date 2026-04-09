@@ -576,9 +576,12 @@ export default function BasicRegistrationEntityPage() {
 
   if (authLoading || !user) {
     return (
-      <PageContainer>
-        <div className="flex items-center justify-center h-64">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
+      <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+            <p className="mt-2 text-muted-foreground">Carregando...</p>
+          </div>
         </div>
       </PageContainer>
     )
@@ -586,8 +589,8 @@ export default function BasicRegistrationEntityPage() {
 
   if (!currentTab) {
     return (
-      <PageContainer>
-        <div className="flex items-center justify-center h-64">
+      <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">Cadastro não encontrado.</p>
         </div>
       </PageContainer>
@@ -595,57 +598,66 @@ export default function BasicRegistrationEntityPage() {
   }
 
   return (
-    <PageContainer>
-      <div className="space-y-6">
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      {/* Header */}
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           title={currentTab.label}
           description="Cadastros Básicos"
+          className="mb-0"
         />
+      </div>
 
-        {/* Seção customizada acima do CRUD (ex: resumo de pessoas para recursos) */}
-        {currentTab.customSectionRender && currentTab.customSectionRender()}
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card flex-col">
+          <div className="overflow-auto flex-1 p-4 md:p-6 space-y-6">
+            {/* Seção customizada acima do CRUD (ex: resumo de pessoas para recursos) */}
+            {currentTab.customSectionRender && currentTab.customSectionRender()}
 
-        {/* Conteúdo */}
-        {currentTab.key === 'resources' ? (
-          <div className="rounded-[4px] bg-card overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setResourcesTableExpanded(!resourcesTableExpanded)}
-              className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-            >
-              {resourcesTableExpanded ? <Icon name="expand_more" className="text-base text-muted-foreground" /> : <Icon name="chevron_right" className="text-base text-muted-foreground" />}
-              <Icon name="construction" className="text-xl text-muted-foreground" />
-              <h2 className="text-base font-semibold text-foreground">Materiais & Ferramentas</h2>
-            </button>
-            {resourcesTableExpanded && (
-              <div className="border-t border-border p-4">
-                <CrudTable
-                  key={`${currentTab.key}-${activeUnitId}`}
-                  entity={currentTab.entity}
-                  title={currentTab.label}
-                  fields={currentTab.fields}
-                  columns={currentTab.columns}
-                  unitScoped={currentTab.unitScoped}
-                  activeUnitId={activeUnitId}
-                  apiQueryParams={currentTab.apiQueryParams}
-                  customModalRender={currentTab.customModalRender}
-                />
+            {/* Conteúdo */}
+            {currentTab.key === 'resources' ? (
+              <div className="rounded-[4px] bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setResourcesTableExpanded(!resourcesTableExpanded)}
+                  className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                >
+                  {resourcesTableExpanded ? <Icon name="expand_more" className="text-base text-muted-foreground" /> : <Icon name="chevron_right" className="text-base text-muted-foreground" />}
+                  <Icon name="construction" className="text-xl text-muted-foreground" />
+                  <h2 className="text-base font-semibold text-foreground">Materiais & Ferramentas</h2>
+                </button>
+                {resourcesTableExpanded && (
+                  <div className="border-t border-border p-4">
+                    <CrudTable
+                      key={`${currentTab.key}-${activeUnitId}`}
+                      entity={currentTab.entity}
+                      title={currentTab.label}
+                      fields={currentTab.fields}
+                      columns={currentTab.columns}
+                      unitScoped={currentTab.unitScoped}
+                      activeUnitId={activeUnitId}
+                      apiQueryParams={currentTab.apiQueryParams}
+                      customModalRender={currentTab.customModalRender}
+                    />
+                  </div>
+                )}
               </div>
+            ) : (
+              <CrudTable
+                key={`${currentTab.key}-${activeUnitId}`}
+                entity={currentTab.entity}
+                title={currentTab.label}
+                fields={currentTab.fields}
+                columns={currentTab.columns}
+                unitScoped={currentTab.unitScoped}
+                activeUnitId={activeUnitId}
+                apiQueryParams={currentTab.apiQueryParams}
+                customModalRender={currentTab.customModalRender}
+              />
             )}
           </div>
-        ) : (
-          <CrudTable
-            key={`${currentTab.key}-${activeUnitId}`}
-            entity={currentTab.entity}
-            title={currentTab.label}
-            fields={currentTab.fields}
-            columns={currentTab.columns}
-            unitScoped={currentTab.unitScoped}
-            activeUnitId={activeUnitId}
-            apiQueryParams={currentTab.apiQueryParams}
-            customModalRender={currentTab.customModalRender}
-          />
-        )}
+        </div>
       </div>
     </PageContainer>
   )

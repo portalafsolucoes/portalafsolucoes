@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { canSwitchUnits, type CanonicalUserRole } from './user-roles'
 
 export interface SessionUser {
   id: string
@@ -6,6 +7,7 @@ export interface SessionUser {
   firstName: string
   lastName: string
   role: string
+  canonicalRole: CanonicalUserRole
   companyId: string
   companyName: string
   unitId: string | null       // unidade ativa (activeUnitId)
@@ -54,15 +56,14 @@ export async function destroySession(): Promise<void> {
 
 /**
  * Retorna o unitId efetivo para filtrar dados nas APIs.
- * - Admin (SUPER_ADMIN/GESTOR): pode usar override (query param ou body), senão usa session.unitId
+ * - Admin (SUPER_ADMIN/ADMIN): pode usar override (query param ou body), senão usa session.unitId
  * - Demais roles: sempre usa session.unitId (não permite override)
  */
 export function getEffectiveUnitId(
   session: SessionUser,
   override?: string | null
 ): string | null {
-  const isAdmin = session.role === 'SUPER_ADMIN' || session.role === 'GESTOR'
-  if (isAdmin && override) {
+  if (canSwitchUnits(session) && override) {
     return override
   }
   return session.unitId

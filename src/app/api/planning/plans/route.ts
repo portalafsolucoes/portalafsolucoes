@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     // Verificar permissão de criação
-    const permError = checkApiPermission(session.role, 'plans', 'POST')
+    const permError = checkApiPermission(session, 'plans', 'POST')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

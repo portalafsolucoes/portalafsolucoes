@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashPassword } from '@/lib/auth'
+import { checkApiPermission } from '@/lib/permissions'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'people-teams', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -77,6 +83,11 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'people-teams', 'POST')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const body = await request.json()

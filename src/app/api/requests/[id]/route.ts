@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeUserRole } from '@/lib/user-roles'
 
 export async function GET(
   request: NextRequest,
@@ -14,8 +15,14 @@ export async function GET(
     }
 
     const { id } = await params
+    const canonicalRole = normalizeUserRole(session)
 
-    const { data: maintenanceRequest, error } = await supabase
+    const permError = checkApiPermission(session, 'requests', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
+    let query = supabase
       .from('Request')
       .select(`
         *,
@@ -26,7 +33,9 @@ export async function GET(
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
-      .single()
+    if (canonicalRole === 'REQUESTER') query = query.eq('createdById', session.id)
+
+    const { data: maintenanceRequest, error } = await query.single()
 
     if (error || !maintenanceRequest) {
       console.error('Get request error:', error)
@@ -56,7 +65,7 @@ export async function PUT(
     const { id } = await params
 
     // Verificar permissão de edição
-    const permError = checkApiPermission(session.role, 'requests', 'PUT')
+    const permError = checkApiPermission(session, 'requests', 'PUT')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
@@ -64,6 +73,7 @@ export async function PUT(
     const body = await request.json()
     const { title, description, priority, dueDate, teamId, files = [] } = body
     const now = new Date().toISOString()
+    const canonicalRole = normalizeUserRole(session)
 
     if (!title) {
       return NextResponse.json(
@@ -73,12 +83,13 @@ export async function PUT(
     }
 
     // Verificar se existe
-    const { data: existingRequest } = await supabase
+    let existingQuery = supabase
       .from('Request')
       .select('id')
       .eq('id', id)
       .eq('companyId', session.companyId)
-      .single()
+    if (canonicalRole === 'REQUESTER') existingQuery = existingQuery.eq('createdById', session.id)
+    const { data: existingRequest } = await existingQuery.single()
 
     if (!existingRequest) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })
@@ -150,18 +161,20 @@ export async function DELETE(
     const { id } = await params
 
     // Verificar permissão de exclusão
-    const permError = checkApiPermission(session.role, 'requests', 'DELETE')
+    const permError = checkApiPermission(session, 'requests', 'DELETE')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
+    const canonicalRole = normalizeUserRole(session)
 
     // Verificar se existe
-    const { data: maintenanceRequest } = await supabase
+    let existingQuery = supabase
       .from('Request')
       .select('id')
       .eq('id', id)
       .eq('companyId', session.companyId)
-      .single()
+    if (canonicalRole === 'REQUESTER') existingQuery = existingQuery.eq('createdById', session.id)
+    const { data: maintenanceRequest } = await existingQuery.single()
 
     if (!maintenanceRequest) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })

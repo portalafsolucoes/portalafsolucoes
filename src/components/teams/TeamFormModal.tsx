@@ -131,7 +131,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={teamId ? 'Editar Equipe' : 'Nova Equipe'}>
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
       </Modal>

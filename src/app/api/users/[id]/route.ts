@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashPassword } from '@/lib/auth'
+import { checkApiPermission } from '@/lib/permissions'
 
 export async function GET(
   request: NextRequest,
@@ -11,6 +12,11 @@ export async function GET(
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'people-teams', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     // Next.js 15+ requires awaiting params
@@ -83,6 +89,11 @@ export async function PUT(
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'people-teams', 'PUT')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { id } = await params
@@ -201,6 +212,11 @@ export async function DELETE(
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'people-teams', 'DELETE')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { id } = await params

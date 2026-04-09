@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const session = await getSession()
@@ -41,13 +43,18 @@ export async function GET() {
     // Enriquecer com dados da session (unitId, unitIds, companyName)
     const enrichedUser = {
       ...user,
+      role: session.canonicalRole,
+      legacyRole: user.role,
       activeUnitId: session.unitId || user.activeUnitId,
       unitIds: session.unitIds || [],
       companyName: session.companyName || user.company?.name || '',
+      canonicalRole: session.canonicalRole,
     }
 
     const response = NextResponse.json({ user: enrichedUser })
-    response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=300')
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
     return response
   } catch (error) {
     console.error('Get user error:', error)

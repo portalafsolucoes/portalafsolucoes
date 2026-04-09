@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
+import { isApproverRole } from '@/lib/user-roles'
 
 async function fetchPendingCount(): Promise<number> {
   const res = await fetch('/api/requests/pending-count')
@@ -11,8 +12,8 @@ async function fetchPendingCount(): Promise<number> {
 }
 
 export function usePendingCount() {
-  const { role } = useAuth()
-  const canSeeApprovals = role === 'SUPER_ADMIN' || role === 'GESTOR'
+  const { user, role } = useAuth()
+  const canSeeApprovals = isApproverRole(user ?? role)
 
   const { data: count = 0 } = useQuery({
     queryKey: ['requests', 'pending-count'],

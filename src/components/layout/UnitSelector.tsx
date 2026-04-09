@@ -4,15 +4,16 @@ import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
 import { useAuth } from '@/hooks/useAuth'
+import { canSwitchUnits } from '@/lib/user-roles'
 
 export function UnitSelector() {
-  const { role } = useAuth()
+  const { user, role } = useAuth()
   const { activeUnitId, availableUnits, isLoading, switchUnit, isSwitching } = useActiveUnit()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Apenas SUPER_ADMIN e GESTOR com múltiplas unidades veem o seletor
-  const canSwitch = role === 'SUPER_ADMIN' || role === 'GESTOR'
+  const canSwitch = canSwitchUnits(user ?? role)
   const hasMultipleUnits = availableUnits.length > 1
 
   useEffect(() => {

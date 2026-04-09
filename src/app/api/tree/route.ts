@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+    const permError = checkApiPermission(session, 'tree', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
     const unitIdParam = searchParams.get('unitId')

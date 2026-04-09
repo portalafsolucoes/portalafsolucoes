@@ -323,23 +323,30 @@ export default function AdminPortalPage() {
   ] : []
 
   return (
-    <PageContainer>
-        <PageHeader
-          title="Administração do Portal"
-          description="Gerencie empresas, módulos e visualize estatísticas globais"
-          actions={
-            <button
-              onClick={() => {
-                setCreateError('')
-                setShowCreateModal(true)
-              }}
-              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-            >
-              <Icon name="add" className="text-xl" />
-              Nova Empresa
-            </button>
-          }
-        />
+    <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
+          <PageHeader
+            title="Administração do Portal"
+            description="Gerencie empresas, módulos e visualize estatísticas globais"
+            className="mb-0"
+            actions={
+              <button
+                onClick={() => {
+                  setCreateError('')
+                  setShowCreateModal(true)
+                }}
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
+              >
+                <Icon name="add" className="text-xl" />
+                Nova Empresa
+              </button>
+            }
+          />
+        </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+            <div className="w-full overflow-auto p-4 md:p-6">
 
         {/* Stats Cards */}
         {statsLoading ? (
@@ -372,7 +379,7 @@ export default function AdminPortalPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
+          <div className="flex items-center justify-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
           </div>
         ) : companies.length === 0 ? (
@@ -389,10 +396,10 @@ export default function AdminPortalPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-on-surface-variant/10">
+          <div className="overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="sticky top-0 bg-secondary z-10">
+                <tr>
                   <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Empresa
                   </th>
@@ -413,9 +420,9 @@ export default function AdminPortalPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-on-surface-variant/10">
+              <tbody className="bg-card divide-y divide-gray-200">
                 {companies.map((company) => (
-                  <tr key={company.id} className="hover:bg-secondary/50 transition-colors">
+                  <tr key={company.id} className="hover:bg-secondary cursor-pointer transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {company.logo ? (
@@ -484,14 +491,18 @@ export default function AdminPortalPage() {
                 ))}
               </tbody>
             </table>
+
+            {companies.length > 0 && (
+              <div className="px-6 py-3 text-sm text-muted-foreground border-t border-border">
+                {companies.length} empresa(s) cadastrada(s)
+              </div>
+            )}
           </div>
         )}
 
-        {companies.length > 0 && (
-          <div className="mt-4 text-center text-muted-foreground text-sm">
-            {companies.length} empresa(s) cadastrada(s)
+            </div>
           </div>
-        )}
+        </div>
 
       {/* Create Company Modal */}
       <Modal

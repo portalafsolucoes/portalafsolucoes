@@ -1,15 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
+import { getRoleColor, getRoleDisplayName, getRoleIcon } from '@/lib/user-roles'
 
 export function UserMenu() {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
+  const queryClient = useQueryClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -25,7 +28,10 @@ export function UserMenu() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
+    queryClient.removeQueries({ queryKey: ['auth', 'me'] })
+    queryClient.removeQueries({ queryKey: ['company-modules'] })
+    router.replace('/login')
+    router.refresh()
   }
 
   if (!user) return null
@@ -34,76 +40,13 @@ export function UserMenu() {
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
   }
 
-  const getRoleName = () => {
-    switch (user.role) {
-      case 'SUPER_ADMIN':
-        return 'Super Administrador'
-      case 'GESTOR':
-        return 'Gestor de Manutenção'
-      case 'PLANEJADOR':
-        return 'Planejador de Manutenção'
-      case 'MECANICO':
-        return 'Mecânico'
-      case 'ELETRICISTA':
-        return 'Eletricista / Instrumentista'
-      case 'OPERADOR':
-        return 'Operador de Máquinas'
-      case 'CONSTRUTOR_CIVIL':
-        return 'Construtor Civil'
-      default:
-        return user.role
-    }
-  }
-
-  const getRoleIcon = (): string => {
-    switch (user.role) {
-      case 'SUPER_ADMIN':
-        return 'shield'
-      case 'GESTOR':
-        return 'manage_accounts'
-      case 'PLANEJADOR':
-        return 'settings'
-      case 'MECANICO':
-        return 'construction'
-      case 'ELETRICISTA':
-        return 'bolt'
-      case 'OPERADOR':
-        return 'engineering'
-      case 'CONSTRUTOR_CIVIL':
-        return 'business'
-      default:
-        return 'person'
-    }
-  }
-
-  const getRoleColor = () => {
-    switch (user.role) {
-      case 'SUPER_ADMIN':
-        return 'bg-on-surface'
-      case 'GESTOR':
-        return 'bg-primary-graphite'
-      case 'PLANEJADOR':
-        return 'bg-primary-dim'
-      case 'MECANICO':
-        return 'bg-on-surface-variant'
-      case 'ELETRICISTA':
-        return 'bg-on-surface-variant'
-      case 'OPERADOR':
-        return 'bg-on-surface-variant'
-      case 'CONSTRUTOR_CIVIL':
-        return 'bg-on-surface-variant'
-      default:
-        return 'bg-muted'
-    }
-  }
-
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-[4px] bg-surface-low px-2.5 py-1.5 text-sm transition-all hover:bg-surface-container"
       >
-        <div className={`w-6 h-6 rounded-[4px] ${getRoleColor()} flex items-center justify-center text-white text-xs font-semibold`}>
+        <div className={`w-6 h-6 rounded-[4px] ${getRoleColor(user)} flex items-center justify-center text-white text-xs font-semibold`}>
           {getInitials()}
         </div>
 
@@ -120,7 +63,7 @@ export function UserMenu() {
           {/* User Info Header */}
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-[4px] ${getRoleColor()} flex items-center justify-center text-white font-semibold`}>
+              <div className={`w-12 h-12 rounded-[4px] ${getRoleColor(user)} flex items-center justify-center text-white font-semibold`}>
                 {getInitials()}
               </div>
               <div className="flex-1">
@@ -134,8 +77,8 @@ export function UserMenu() {
               </div>
             </div>
             <div className="mt-2 flex items-center gap-2 px-2 py-1 bg-surface-low rounded-[4px] text-xs text-on-surface">
-              <Icon name={getRoleIcon()} className="text-base" />
-              <span>{getRoleName()}</span>
+              <Icon name={getRoleIcon(user)} className="text-base" />
+              <span>{getRoleDisplayName(user)}</span>
             </div>
           </div>
 

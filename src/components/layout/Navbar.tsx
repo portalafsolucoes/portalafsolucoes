@@ -1,18 +1,22 @@
 'use client'
 
 import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { usePendingCount } from '@/hooks/usePendingCount'
+import { getDefaultCmmsPath, isApproverRole } from '@/lib/user-roles'
 
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { role: userRole } = useAuth()
+  const { user, role: userRole } = useAuth()
   const pendingCount = usePendingCount()
+  const defaultCmmsPath = getDefaultCmmsPath(user ?? userRole)
 
   const baseNavigation = [
     { name: 'Ordens de Serviço', href: '/work-orders', icon: 'construction' },
@@ -20,12 +24,11 @@ export function Navbar() {
     { name: 'Localizações', href: '/locations', icon: 'location_on' },
     { name: 'Solicitações', href: '/requests', icon: 'assignment' },
     { name: 'Pessoas/Equipes', href: '/people-teams', icon: 'group' },
-    { name: 'GEP', href: '/gep', icon: 'monitoring' },
     { name: 'Relatórios', href: '/analytics', icon: 'bar_chart' }
   ]
 
   // Adicionar Aprovações para admins
-  const navigation = (userRole === 'SUPER_ADMIN' || userRole === 'GESTOR')
+  const navigation = isApproverRole(user ?? userRole)
     ? [
         ...baseNavigation.slice(0, 5),
         { name: 'Aprovações', href: '/requests/approvals', icon: 'check_circle', badge: pendingCount },
@@ -35,7 +38,10 @@ export function Navbar() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
+    queryClient.removeQueries({ queryKey: ['auth', 'me'] })
+    queryClient.removeQueries({ queryKey: ['company-modules'] })
+    router.replace('/login')
+    router.refresh()
   }
 
   return (
@@ -44,7 +50,7 @@ export function Navbar() {
         <div className="flex h-16 justify-between">
           <div className="flex">
             <div className="flex flex-shrink-0 items-center">
-              <Link href="/dashboard" className="text-2xl font-bold text-primary">
+              <Link href={defaultCmmsPath} className="text-2xl font-bold text-primary">
                 GMM - MIZU
               </Link>
             </div>

@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const permError = checkApiPermission(session, 'assets', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const locationId = searchParams.get('locationId')
     const status = searchParams.get('status')
@@ -93,9 +98,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissão de criação
-    const permError = checkApiPermission(session.role, 'assets', 'POST')
-    if (permError) {
-      return NextResponse.json({ error: permError }, { status: 403 })
+    const createPermError = checkApiPermission(session, 'assets', 'POST')
+    if (createPermError) {
+      return NextResponse.json({ error: createPermError }, { status: 403 })
     }
 
     const formData = await request.formData()

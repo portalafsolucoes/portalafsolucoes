@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
+import { hasPermission } from '@/lib/permissions'
+import { canSwitchUnits, getDefaultCmmsPath } from '@/lib/user-roles'
 
 import { getStatusColor } from '@/lib/utils'
 
@@ -26,9 +29,10 @@ interface AssetDetail {
 }
 
 export default function TreePage() {
+  const router = useRouter()
   const { user, unitId: authUnitId } = useAuth()
   const { activeUnitId, availableUnits } = useActiveUnit()
-  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'GESTOR'
+  const isAdmin = canSwitchUnits(user)
 
   const [treeData, setTreeData] = useState<TreeNode[]>([])
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -37,17 +41,6 @@ export default function TreePage() {
   const [assetDetail, setAssetDetail] = useState<AssetDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
-
-  // Auto-selecionar unidade ativa da session
-  useEffect(() => {
-    const unitToUse = activeUnitId || authUnitId
-    if (unitToUse && !selectedUnit) {
-      setSelectedUnit(unitToUse)
-      fetchUnitTree(unitToUse)
-    } else if (!unitToUse) {
-      setLoading(false)
-    }
-  }, [activeUnitId, authUnitId])
 
   const fetchUnitTree = useCallback(async (unitId: string) => {
     setLoading(true)
@@ -120,6 +113,25 @@ export default function TreePage() {
     } catch { setTreeData([]) }
     setLoading(false)
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    if (!hasPermission(user, 'tree', 'view')) {
+      router.replace(getDefaultCmmsPath(user))
+    }
+  }, [router, user])
+
+  // Auto-selecionar unidade ativa da session
+  useEffect(() => {
+    if (!user || !hasPermission(user, 'tree', 'view')) return
+    const unitToUse = activeUnitId || authUnitId
+    if (unitToUse && !selectedUnit) {
+      setSelectedUnit(unitToUse)
+      fetchUnitTree(unitToUse)
+    } else if (!unitToUse) {
+      setLoading(false)
+    }
+  }, [activeUnitId, authUnitId, fetchUnitTree, selectedUnit, user])
 
   const fetchAssetDetail = async (assetId: string) => {
     setDetailLoading(true)

@@ -92,7 +92,7 @@ export function ApproveRequestModal({
             
             {loading ? (
               <div className="text-center py-4">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
               </div>
             ) : (
               <select

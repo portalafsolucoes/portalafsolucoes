@@ -13,7 +13,10 @@ export interface CompanyModule {
 }
 
 async function fetchCompanyModules(): Promise<CompanyModule[]> {
-  const res = await fetch('/api/modules')
+  const res = await fetch('/api/modules', {
+    cache: 'no-store',
+    credentials: 'same-origin',
+  })
   if (!res.ok) return []
   return res.json()
 }
@@ -26,9 +29,9 @@ export function useCompanyModules() {
   const { user } = useAuth()
 
   const { data: modules, isLoading } = useQuery({
-    queryKey: ['company-modules'],
+    queryKey: ['company-modules', user?.companyId],
     queryFn: fetchCompanyModules,
-    enabled: !!user,
+    enabled: !!user?.companyId,
     staleTime: 10 * 60 * 1000, // 10 min - módulos mudam raramente
   })
 

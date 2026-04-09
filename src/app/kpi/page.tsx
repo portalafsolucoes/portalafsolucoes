@@ -5,10 +5,11 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
-import { hasPermission, type UserRole } from '@/lib/permissions'
+import { hasPermission } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { formatCurrency } from '@/lib/utils'
+import { canSwitchUnits } from '@/lib/user-roles'
 
 interface KpiData {
   summary: { totalWorkOrders: number; completed: number; pending: number; correctives: number; preventives: number }
@@ -34,8 +35,7 @@ function KpiCard({ label, value, unit, description, highlight }: {
 export default function KpiPage() {
   const router = useRouter()
   const { user, isLoading: authLoading, unitId: authUnitId } = useAuth()
-  const role = user?.role ?? ''
-  const isAdmin = role === 'SUPER_ADMIN' || role === 'GESTOR'
+  const isAdmin = canSwitchUnits(user)
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
   const [units, setUnits] = useState<any[]>([])
   const [selectedUnit, setSelectedUnit] = useState('')
@@ -45,8 +45,8 @@ export default function KpiPage() {
   // Redirect if not authenticated or no permission
   useEffect(() => {
     if (authLoading || !user) return
-    if (!hasPermission(role as UserRole, 'kpi', 'view')) { router.push('/dashboard'); return }
-  }, [authLoading, user, role])
+    if (!hasPermission(user, 'kpi', 'view')) { router.push('/dashboard'); return }
+  }, [authLoading, user, router])
 
   useEffect(() => {
     if (!authLoading && user && isAdmin) loadUnits()
@@ -75,113 +75,119 @@ export default function KpiPage() {
   }
 
   if (authLoading || !user) {
-    return <PageContainer><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></PageContainer>
+    return (
+      <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="flex items-center justify-center flex-1">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
+        </div>
+      </PageContainer>
+    )
   }
 
   return (
-    <PageContainer>
-      <div className="space-y-6">
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           title="KPI - Indicadores Chave de Performance"
           description="Confiabilidade, Processo e Custo"
+          className="mb-0"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap">
+              {isAdmin && (
+                <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}
+                  className="px-3 py-2 text-sm rounded-[4px] border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Todas as unidades</option>
+                  {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              )}
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                className="px-3 py-2 text-sm rounded-[4px] border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                className="px-3 py-2 text-sm rounded-[4px] border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+          }
         />
+      </div>
 
-        {/* Filtros */}
-        <div className="flex flex-wrap gap-3 p-4 bg-card rounded-[4px]">
-          {isAdmin && (
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Unidade</label>
-              <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}
-                className="px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Todas</option>
-                {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          <div className="w-full overflow-auto p-4 md:p-6">
+            <div className="space-y-6">
+              {/* Resumo */}
+              {kpiData && (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  <div className="p-3 bg-card rounded-[4px] border border-border text-center">
+                    <p className="text-2xl font-bold">{kpiData.summary.totalWorkOrders}</p>
+                    <p className="text-xs text-muted-foreground">Total OSs</p>
+                  </div>
+                  <div className="p-3 bg-card rounded-[4px] border border-border text-center">
+                    <p className="text-2xl font-bold">{kpiData.summary.completed}</p>
+                    <p className="text-xs text-muted-foreground">Concluídas</p>
+                  </div>
+                  <div className="p-3 bg-card rounded-[4px] border border-border text-center">
+                    <p className="text-2xl font-bold">{kpiData.summary.pending}</p>
+                    <p className="text-xs text-muted-foreground">Pendentes</p>
+                  </div>
+                  <div className="p-3 bg-card rounded-[4px] border border-border text-center">
+                    <p className="text-2xl font-bold">{kpiData.summary.preventives}</p>
+                    <p className="text-xs text-muted-foreground">Preventivas</p>
+                  </div>
+                  <div className="p-3 bg-card rounded-[4px] border border-border text-center">
+                    <p className="text-2xl font-bold">{kpiData.summary.correctives}</p>
+                    <p className="text-xs text-muted-foreground">Corretivas</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Grupo 1: Confiabilidade e Desempenho */}
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Icon name="monitoring" className="text-xl" /> Confiabilidade e Desempenho
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {kpiData && Object.values(kpiData.reliability).map((kpi, i) => (
+                    <KpiCard key={i} {...kpi} highlight={kpi.label.includes('Disponibilidade')} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Grupo 2: Processo e Planejamento */}
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Icon name="bar_chart" className="text-xl" /> Processo e Planejamento
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {kpiData && Object.values(kpiData.process).map((kpi, i) => (
+                    <KpiCard key={i} {...kpi} highlight={kpi.label.includes('PMC')} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Grupo 3: Custo e Qualidade */}
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Icon name="attach_money" className="text-xl" /> Custo e Qualidade
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {kpiData && Object.values(kpiData.cost).map((kpi, i) => (
+                    <KpiCard key={i} {...kpi} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Referência de boa gestão */}
+              {kpiData && (
+                <div className="p-4 bg-muted/50 rounded-[4px] flex items-start gap-3">
+                  <Icon name="info" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-1">Parâmetros de Referência</p>
+                    <p className="text-sm text-muted-foreground">{kpiData.reference.text}</p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Data Início</label>
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              className="px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Data Fim</label>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-              className="px-3 py-2 text-sm rounded-[4px] bg-card" />
           </div>
         </div>
-
-        {/* Resumo */}
-        {kpiData && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="p-3 bg-card rounded-[4px] text-center">
-              <p className="text-2xl font-bold">{kpiData.summary.totalWorkOrders}</p>
-              <p className="text-xs text-muted-foreground">Total OSs</p>
-            </div>
-            <div className="p-3 bg-card rounded-[4px] text-center">
-              <p className="text-2xl font-bold">{kpiData.summary.completed}</p>
-              <p className="text-xs text-muted-foreground">Concluídas</p>
-            </div>
-            <div className="p-3 bg-card rounded-[4px] text-center">
-              <p className="text-2xl font-bold">{kpiData.summary.pending}</p>
-              <p className="text-xs text-muted-foreground">Pendentes</p>
-            </div>
-            <div className="p-3 bg-card rounded-[4px] text-center">
-              <p className="text-2xl font-bold">{kpiData.summary.preventives}</p>
-              <p className="text-xs text-muted-foreground">Preventivas</p>
-            </div>
-            <div className="p-3 bg-card rounded-[4px] text-center">
-              <p className="text-2xl font-bold">{kpiData.summary.correctives}</p>
-              <p className="text-xs text-muted-foreground">Corretivas</p>
-            </div>
-          </div>
-        )}
-
-        {/* Grupo 1: Confiabilidade e Desempenho */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Icon name="monitoring" className="text-xl" /> Confiabilidade e Desempenho
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {kpiData && Object.values(kpiData.reliability).map((kpi, i) => (
-              <KpiCard key={i} {...kpi} highlight={kpi.label.includes('Disponibilidade')} />
-            ))}
-          </div>
-        </div>
-
-        {/* Grupo 2: Processo e Planejamento */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Icon name="bar_chart" className="text-xl" /> Processo e Planejamento
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {kpiData && Object.values(kpiData.process).map((kpi, i) => (
-              <KpiCard key={i} {...kpi} highlight={kpi.label.includes('PMC')} />
-            ))}
-          </div>
-        </div>
-
-        {/* Grupo 3: Custo e Qualidade */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Icon name="attach_money" className="text-xl" /> Custo e Qualidade
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {kpiData && Object.values(kpiData.cost).map((kpi, i) => (
-              <KpiCard key={i} {...kpi} />
-            ))}
-          </div>
-        </div>
-
-        {/* Referência de boa gestão */}
-        {kpiData && (
-          <div className="p-4 bg-muted/50 rounded-[4px] flex items-start gap-3">
-            <Icon name="info" className="text-xl text-muted-foreground flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1">Parâmetros de Referência</p>
-              <p className="text-sm text-muted-foreground">{kpiData.reference.text}</p>
-            </div>
-          </div>
-        )}
       </div>
     </PageContainer>
   )

@@ -1,4 +1,13 @@
-export type UserRole = 'SUPER_ADMIN' | 'GESTOR' | 'PLANEJADOR' | 'MECANICO' | 'ELETRICISTA' | 'OPERADOR' | 'CONSTRUTOR_CIVIL'
+import {
+  type CanonicalUserRole,
+  type RoleContext,
+  type UserRole,
+  getRoleDisplayName as getCanonicalRoleDisplayName,
+  isOperationalRole as isOperationalCanonicalRole,
+  normalizeUserRole,
+} from './user-roles'
+
+export type { CanonicalUserRole, UserRole } from './user-roles'
 
 export interface Permission {
   module: string
@@ -12,33 +21,11 @@ export interface Permission {
   }
 }
 
-// Roles operacionais que só visualizam e editam SSs/OSs
-const OPERATIONAL_ROLES: UserRole[] = ['MECANICO', 'ELETRICISTA', 'OPERADOR', 'CONSTRUTOR_CIVIL']
+type PermissionAction = keyof Permission['actions']
+type PermissionInput = RoleContext | string | null | undefined
 
-function buildOperationalPermissions(): Permission[] {
-  return [
-    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'tree', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'people-teams', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'basic-registrations', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'assets', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'criticality', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'maintenance-plan', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'planning', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'work-orders', actions: { view: true, create: true, edit: true, delete: false, approve: false, execute: true } },
-    { module: 'requests', actions: { view: true, create: true, edit: true, delete: false, approve: false } },
-    { module: 'approvals', actions: { view: false, create: false, edit: false, delete: false } },
-    { module: 'rafs', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'locations', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'kpi', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'gep', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'analytics', actions: { view: true, create: false, edit: false, delete: false } },
-    { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
-  ]
-}
-
-function buildFullAccessPermissions(): Permission[] {
-  return [
+const PERMISSIONS: Record<CanonicalUserRole, Permission[]> = {
+  SUPER_ADMIN: [
     { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
     { module: 'tree', actions: { view: true, create: false, edit: false, delete: false } },
     { module: 'people-teams', actions: { view: true, create: true, edit: true, delete: true } },
@@ -52,128 +39,186 @@ function buildFullAccessPermissions(): Permission[] {
     { module: 'approvals', actions: { view: true, create: false, edit: false, delete: false, approve: true } },
     { module: 'rafs', actions: { view: true, create: true, edit: true, delete: true } },
     { module: 'locations', actions: { view: true, create: true, edit: true, delete: true } },
-    { module: 'kpi', actions: { view: true, create: true, edit: true, delete: true } },
-    { module: 'gep', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'kpi', actions: { view: true, create: false, edit: false, delete: false } },
     { module: 'analytics', actions: { view: true, create: false, edit: false, delete: false } },
     { module: 'settings', actions: { view: true, create: true, edit: true, delete: true } },
-  ]
-}
-
-export const PERMISSIONS: Record<UserRole, Permission[]> = {
-  SUPER_ADMIN: buildFullAccessPermissions(),
-  GESTOR: buildFullAccessPermissions(),
-  PLANEJADOR: buildFullAccessPermissions().map(p =>
-    p.module === 'people-teams' || p.module === 'settings'
-      ? { ...p, actions: { ...p.actions, create: false, edit: false, delete: false } }
-      : p
-  ),
-  MECANICO: buildOperationalPermissions(),
-  ELETRICISTA: buildOperationalPermissions(),
-  OPERADOR: buildOperationalPermissions(),
-  CONSTRUTOR_CIVIL: buildOperationalPermissions(),
+  ],
+  ADMIN: [
+    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'tree', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'people-teams', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'basic-registrations', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'assets', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'criticality', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'maintenance-plan', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'planning', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'work-orders', actions: { view: true, create: true, edit: true, delete: true, approve: true, execute: true } },
+    { module: 'requests', actions: { view: true, create: true, edit: true, delete: true, approve: true } },
+    { module: 'approvals', actions: { view: true, create: false, edit: false, delete: false, approve: true } },
+    { module: 'rafs', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'locations', actions: { view: true, create: true, edit: true, delete: true } },
+    { module: 'kpi', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'analytics', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
+  ],
+  TECHNICIAN: [
+    { module: 'dashboard', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'tree', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'people-teams', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'basic-registrations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'assets', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'criticality', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'maintenance-plan', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'planning', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'work-orders', actions: { view: true, create: false, edit: true, delete: false, approve: false, execute: true } },
+    { module: 'requests', actions: { view: true, create: true, edit: true, delete: false, approve: false } },
+    { module: 'approvals', actions: { view: false, create: false, edit: false, delete: false, approve: false } },
+    { module: 'rafs', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'locations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'kpi', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'analytics', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
+  ],
+  LIMITED_TECHNICIAN: [
+    { module: 'dashboard', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'tree', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'people-teams', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'basic-registrations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'assets', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'criticality', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'maintenance-plan', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'planning', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'work-orders', actions: { view: true, create: false, edit: true, delete: false, approve: false, execute: true } },
+    { module: 'requests', actions: { view: true, create: true, edit: true, delete: false, approve: false } },
+    { module: 'approvals', actions: { view: false, create: false, edit: false, delete: false, approve: false } },
+    { module: 'rafs', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'locations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'kpi', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'analytics', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
+  ],
+  REQUESTER: [
+    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'tree', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'people-teams', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'basic-registrations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'assets', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'criticality', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'maintenance-plan', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'planning', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'work-orders', actions: { view: false, create: false, edit: false, delete: false, approve: false, execute: false } },
+    { module: 'requests', actions: { view: true, create: true, edit: true, delete: false, approve: false } },
+    { module: 'approvals', actions: { view: false, create: false, edit: false, delete: false, approve: false } },
+    { module: 'rafs', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'locations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'kpi', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'analytics', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
+  ],
+  VIEW_ONLY: [
+    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'tree', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'people-teams', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'basic-registrations', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'assets', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'criticality', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'maintenance-plan', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'planning', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'work-orders', actions: { view: true, create: false, edit: false, delete: false, approve: false, execute: false } },
+    { module: 'requests', actions: { view: true, create: false, edit: false, delete: false, approve: false } },
+    { module: 'approvals', actions: { view: false, create: false, edit: false, delete: false, approve: false } },
+    { module: 'rafs', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'locations', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'kpi', actions: { view: true, create: false, edit: false, delete: false } },
+    { module: 'analytics', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
+  ],
 }
 
 export function hasPermission(
-  role: UserRole,
+  subject: PermissionInput,
   module: string,
-  action: keyof Permission['actions']
+  action: PermissionAction
 ): boolean {
+  const role = normalizeUserRole(subject)
   const rolePermissions = PERMISSIONS[role]
-  const modulePermission = rolePermissions.find(p => p.module === module)
+  const modulePermission = rolePermissions.find((permission) => permission.module === module)
   if (!modulePermission) return false
   return modulePermission.actions[action] === true
 }
 
-export function canAccessModule(role: UserRole, module: string): boolean {
-  return hasPermission(role, module, 'view')
+export function canAccessModule(subject: PermissionInput, module: string): boolean {
+  return hasPermission(subject, module, 'view')
 }
 
-export function getModulePermissions(role: UserRole, module: string): Permission['actions'] | null {
+export function getModulePermissions(subject: PermissionInput, module: string): Permission['actions'] | null {
+  const role = normalizeUserRole(subject)
   const rolePermissions = PERMISSIONS[role]
-  const modulePermission = rolePermissions.find(p => p.module === module)
+  const modulePermission = rolePermissions.find((permission) => permission.module === module)
   return modulePermission ? modulePermission.actions : null
 }
 
-export function getRoleDisplayName(role: UserRole): string {
-  const names: Record<UserRole, string> = {
-    SUPER_ADMIN: 'Super Administrador',
-    GESTOR: 'Gestor de Manutenção',
-    PLANEJADOR: 'Planejador de Manutenção',
-    MECANICO: 'Mecânico',
-    ELETRICISTA: 'Eletricista / Instrumentista',
-    OPERADOR: 'Operador de Máquinas',
-    CONSTRUTOR_CIVIL: 'Construtor Civil',
+export function getRoleDisplayName(subject: PermissionInput): string {
+  return getCanonicalRoleDisplayName(subject)
+}
+
+export function getRoleDescription(subject: PermissionInput): string {
+  const descriptions: Record<CanonicalUserRole, string> = {
+    SUPER_ADMIN: 'Controle total do sistema, empresas, usuários, unidades e dashboard corporativo.',
+    ADMIN: 'Gerencia a operação da empresa, aprova solicitações e mantém os cadastros operacionais.',
+    TECHNICIAN: 'Executa ordens de serviço, abre solicitações e consulta ativos necessários ao trabalho.',
+    LIMITED_TECHNICIAN: 'Perfil operacional restrito, focado em ordens de serviço e abertura básica de solicitações.',
+    REQUESTER: 'Abre solicitações e acompanha apenas suas próprias demandas.',
+    VIEW_ONLY: 'Acesso somente leitura aos módulos liberados pela empresa.',
   }
-  return names[role] || role
+  return descriptions[normalizeUserRole(subject)]
 }
 
-export function getRoleDescription(role: UserRole): string {
-  const descriptions: Record<UserRole, string> = {
-    SUPER_ADMIN: 'Acesso total ao sistema com dashboard corporativo de todas as unidades',
-    GESTOR: 'Gestor de Manutenção com acesso total à unidade',
-    PLANEJADOR: 'Planejador de Manutenção com acesso total exceto gestão de usuários',
-    MECANICO: 'Visualiza tudo, edita somente Solicitações e Ordens de Serviço',
-    ELETRICISTA: 'Visualiza tudo, edita somente Solicitações e Ordens de Serviço',
-    OPERADOR: 'Visualiza tudo, edita somente Solicitações e Ordens de Serviço',
-    CONSTRUTOR_CIVIL: 'Visualiza tudo, edita somente Solicitações e Ordens de Serviço',
-  }
-  return descriptions[role] || ''
+export function isOperationalRole(subject: PermissionInput): boolean {
+  return isOperationalCanonicalRole(subject)
 }
 
-export function isOperationalRole(role: UserRole): boolean {
-  return OPERATIONAL_ROLES.includes(role)
-}
-
-/**
- * Mapeia módulo da URL para módulo do sistema de permissões.
- */
 const API_MODULE_MAP: Record<string, string> = {
   'work-orders': 'work-orders',
-  'requests': 'requests',
-  'assets': 'assets',
+  requests: 'requests',
+  assets: 'assets',
   'basic-registrations': 'basic-registrations',
-  'planning': 'planning',
-  'plans': 'maintenance-plan',
-  'schedules': 'planning',
-  'rafs': 'rafs',
-  'kpi': 'kpi',
-  'gep': 'gep',
-  'tree': 'tree',
-  'locations': 'locations',
+  planning: 'planning',
+  plans: 'maintenance-plan',
+  schedules: 'planning',
+  rafs: 'rafs',
+  approvals: 'approvals',
+  kpi: 'kpi',
+  tree: 'tree',
+  locations: 'locations',
   'people-teams': 'people-teams',
+  criticality: 'criticality',
+  settings: 'settings',
 }
 
-/**
- * Mapeia método HTTP para ação de permissão.
- */
-function httpMethodToAction(method: string): keyof Permission['actions'] {
+function httpMethodToAction(method: string): PermissionAction {
   switch (method.toUpperCase()) {
-    case 'POST': return 'create'
+    case 'POST':
+      return 'create'
     case 'PUT':
-    case 'PATCH': return 'edit'
-    case 'DELETE': return 'delete'
-    default: return 'view'
+    case 'PATCH':
+      return 'edit'
+    case 'DELETE':
+      return 'delete'
+    default:
+      return 'view'
   }
 }
 
-/**
- * Verifica se o role tem permissão para executar a ação no módulo.
- * Retorna null se permitido, ou uma mensagem de erro se negado.
- */
 export function checkApiPermission(
-  role: string,
+  subject: PermissionInput,
   module: string,
   method: string
 ): string | null {
-  const userRole = role as UserRole
-  if (!PERMISSIONS[userRole]) {
-    return 'Perfil de acesso inválido'
-  }
-
   const mappedModule = API_MODULE_MAP[module] || module
   const action = httpMethodToAction(method)
 
-  if (!hasPermission(userRole, mappedModule, action)) {
+  if (!hasPermission(subject, mappedModule, action)) {
     return `Sem permissão para ${action} em ${mappedModule}`
   }
 

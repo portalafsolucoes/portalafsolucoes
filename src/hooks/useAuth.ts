@@ -8,6 +8,8 @@ export interface AuthUser {
   firstName: string
   lastName: string
   role: string
+  canonicalRole?: string
+  legacyRole?: string
   jobTitle?: string
   companyId: string
   companyName: string
@@ -27,7 +29,10 @@ export interface AuthUser {
 }
 
 async function fetchCurrentUser(): Promise<AuthUser | null> {
-  const res = await fetch('/api/auth/me')
+  const res = await fetch('/api/auth/me', {
+    cache: 'no-store',
+    credentials: 'same-origin',
+  })
   if (!res.ok) return null
   const data = await res.json()
   return data.user || null
@@ -37,12 +42,12 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: fetchCurrentUser,
-    staleTime: 5 * 60 * 1000, // 5 minutos - auth muda raramente
-    gcTime: 10 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
     retry: 1,
-    refetchOnMount: false,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
   })
 
   return {

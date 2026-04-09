@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeUserRole } from '@/lib/user-roles'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,6 +17,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = (page - 1) * limit
+    const canonicalRole = normalizeUserRole(session)
+
+    const permError = checkApiPermission(session, 'requests', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
     let query = supabase
       .from('Request')
@@ -45,6 +52,7 @@ export async function GET(request: NextRequest) {
     if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
 
     if (status) query = query.eq('status', status)
+    if (canonicalRole === 'REQUESTER') query = query.eq('createdById', session.id)
 
     const { data: requests, error, count: total } = await query
 
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissão de criação
-    const permError = checkApiPermission(session.role, 'requests', 'POST')
+    const permError = checkApiPermission(session, 'requests', 'POST')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

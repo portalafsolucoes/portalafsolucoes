@@ -170,7 +170,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto bg-card p-3 md:p-6">

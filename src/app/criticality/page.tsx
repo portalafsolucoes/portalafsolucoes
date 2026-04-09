@@ -207,321 +207,322 @@ export default function CriticalityPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        <div className="px-4 py-4 md:px-6 flex-shrink-0">
-          <PageHeader
-            title="Análise de Criticidade de Ativos"
-            description="Priorização baseada em Matriz GUT, solicitações, ordens de serviço e falhas"
-            actions={
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative">
-                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Buscar ativos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value as typeof filter)}
-                  className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="all">Todas as Faixas</option>
-                  <option value="critical">Críticos</option>
-                  <option value="warning">Em Alerta</option>
-                  <option value="ok">OK</option>
-                </select>
-                <ExportButton data={visibleAssets} entity="asset-criticality" />
-                <button
-                  onClick={() => setShowInfo(!showInfo)}
-                  className="px-3 py-2 rounded-[4px] hover:bg-accent/10 transition-colors"
-                  title="Sobre o sistema"
-                >
-                  <Icon name="info" className="text-xl" />
-                </button>
-                <button
-                  onClick={fetchData}
-                  disabled={loading}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors flex items-center gap-2"
-                >
-                  <Icon name="refresh" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  Atualizar
-                </button>
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
+        <PageHeader
+          className="mb-0"
+          title="Análise de Criticidade de Ativos"
+          description="Priorização baseada em Matriz GUT, solicitações, ordens de serviço e falhas"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-64">
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar ativos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
               </div>
-            }
-          />
-        </div>
-
-      <div className="px-4 pb-4 pt-1 md:px-6 md:pb-6 overflow-auto">
-          {showInfo && (
-            <div className="mb-4 p-4 bg-surface rounded-[4px]">
-              <h3 className="font-semibold text-foreground mb-2">Como funciona a análise de criticidade?</h3>
-              <div className="text-sm text-foreground space-y-2">
-                <p><strong>Matriz GUT (35% do score):</strong> Gravidade × Urgência × Tendência (1-5 cada)</p>
-                <p><strong>Solicitações Abertas (20%):</strong> Quantidade de SS pendentes/aprovadas</p>
-                <p><strong>Ordens de Serviço (20%):</strong> Quantidade de OS em aberto/andamento</p>
-                <p><strong>Relatórios de Falha (15%):</strong> Quantidade de RAFs registradas</p>
-                <p><strong>Status do Ativo (10%):</strong> DOWN = crítico, OPERATIONAL = ok</p>
-                <div className="flex gap-4 mt-3 pt-3 border-t border-border">
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary-graphite"></span> Crítico: ≥70 pontos</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-on-surface-variant"></span> Alerta: 40-69 pontos</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-on-surface-variant"></span> OK: &lt;40 pontos</span>
-                </div>
-              </div>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as typeof filter)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">Todas as Faixas</option>
+                <option value="critical">Críticos</option>
+                <option value="warning">Em Alerta</option>
+                <option value="ok">OK</option>
+              </select>
+              <ExportButton data={visibleAssets} entity="asset-criticality" />
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className="px-3 py-2 rounded-[4px] hover:bg-accent/10 transition-colors"
+                title="Sobre o sistema"
+              >
+                <Icon name="info" className="text-xl" />
+              </button>
+              <button
+                onClick={fetchData}
+                disabled={loading}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors flex items-center gap-2"
+              >
+                <Icon name="refresh" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </button>
             </div>
-          )}
+          }
+        />
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-4">
-          <button
-            onClick={() => setFilter('all')}
-            className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Total de Ativos</span>
-              <Icon name="monitoring" className="text-xl text-primary" />
-            </div>
-            <p className="text-3xl font-bold text-foreground mt-2">{summary.total}</p>
-          </button>
-
-          <button
-            onClick={() => setFilter('critical')}
-            className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'critical' ? 'border-on-surface bg-surface-low' : 'border-border hover:border-border'}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">Críticos</span>
-              <Icon name="warning" className="text-xl text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold text-foreground mt-2">{summary.critical}</p>
-            <p className="text-xs text-muted-foreground mt-1">Requer ação imediata</p>
-          </button>
-
-          <button
-            onClick={() => setFilter('warning')}
-            className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'warning' ? 'border-on-surface-variant bg-surface' : 'border-border hover:border-border'}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Em Alerta</span>
-              <Icon name="error" className="text-xl text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.warning}</p>
-            <p className="text-xs text-muted-foreground mt-1">Monitorar de perto</p>
-          </button>
-
-          <button
-            onClick={() => setFilter('ok')}
-            className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'ok' ? 'border-border bg-surface' : 'border-border hover:border-border'}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">OK</span>
-              <Icon name="check_circle" className="text-xl text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.ok}</p>
-            <p className="text-xs text-muted-foreground mt-1">Operação normal</p>
-          </button>
-        </div>
-
-        <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-secondary">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    <button type="button" onClick={() => toggleSort('status')} className="flex items-center gap-1">
-                      Status
-                      <SortIcon field="status" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    <button type="button" onClick={() => toggleSort('name')} className="flex items-center gap-1">
-                      Ativo
-                      <SortIcon field="name" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    <button type="button" onClick={() => toggleSort('location')} className="flex items-center gap-1">
-                      Localização
-                      <SortIcon field="location" />
-                    </button>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    <button type="button" onClick={() => toggleSort('gutScore')} className="flex items-center justify-center gap-1 w-full">
-                      GUT <SortIcon field="gutScore" />
-                    </button>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    <button type="button" onClick={() => toggleSort('openRequestsCount')} className="flex items-center justify-center gap-1 w-full">
-                      <Icon name="assignment" className="text-base" /> SS <SortIcon field="openRequestsCount" />
-                    </button>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    <button type="button" onClick={() => toggleSort('openWorkOrdersCount')} className="flex items-center justify-center gap-1 w-full">
-                      <Icon name="construction" className="text-base" /> OS <SortIcon field="openWorkOrdersCount" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    <button type="button" onClick={() => toggleSort('rafCount')} className="flex items-center justify-center gap-1 w-full">
-                      <Icon name="warning" className="text-base" /> RAF
-                      <SortIcon field="rafCount" />
-                    </button>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    <button type="button" onClick={() => toggleSort('totalScore')} className="flex items-center justify-center gap-1 w-full">
-                      Score <SortIcon field="totalScore" />
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-card divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
-                      <Icon name="refresh" className="text-3xl animate-spin mx-auto text-muted-foreground" />
-                      <p className="mt-2 text-muted-foreground">Carregando dados...</p>
-                    </td>
-                  </tr>
-                ) : sortedAssets.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
-                      Nenhum ativo encontrado
-                    </td>
-                  </tr>
-                ) : (
-                  sortedAssets.map((asset) => {
-                    const config = classificationConfig[asset.classification]
-                    const iconName = config.icon
-                    const isExpanded = expandedId === asset.id
-
-                    return (
-                      <React.Fragment key={asset.id}>
-                        <tr 
-                          className={`hover:bg-secondary cursor-pointer transition-colors ${config.bgLight}`}
-                          onClick={() => setExpandedId(isExpanded ? null : asset.id)}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className={`w-3 h-3 rounded-full ${config.color}`}></span>
-                              <Icon name={iconName} className={`text-xl ${config.textColor}`} />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="font-medium text-foreground">{asset.name}</p>
-                              {asset.customId && (
-                                <p className="text-xs text-muted-foreground">{asset.customId}</p>
-                              )}
-                              {asset.status === 'DOWN' && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-high text-foreground mt-1">
-                                  PARADO
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                            {asset.location?.name || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex flex-col items-center group relative">
-                              <span className="font-bold text-foreground">{asset.gutScore}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {asset.gutGravity}×{asset.gutUrgency}×{asset.gutTendency}
-                              </span>
-                              <button
-                                onClick={(e) => openGutEditor(asset, e)}
-                                className="absolute -top-1 -right-1 p-1 bg-primary text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/90"
-                                title="Editar valores GUT"
-                              >
-                                <Icon name="edit" className="text-sm" />
-                              </button>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openRequestsCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
-                              {asset.openRequestsCount}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openWorkOrdersCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
-                              {asset.openWorkOrdersCount}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.rafCount > 0 ? 'bg-surface-high text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
-                              {asset.rafCount}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className={`inline-flex items-center justify-center w-12 h-12 rounded-[4px] ${config.color} text-white font-bold text-lg`}>
-                              {asset.totalScore}
-                            </div>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr key={`${asset.id}-expanded`} className={config.bgLight}>
-                            <td colSpan={8} className="px-6 py-4">
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="p-3 bg-white rounded-[4px] border">
-                                  <p className="text-xs text-muted-foreground mb-1">Área</p>
-                                  <p className="font-medium">{asset.area || 'Não definida'}</p>
-                                </div>
-                                <div className="p-3 bg-white rounded-[4px] border">
-                                  <p className="text-xs text-muted-foreground mb-1">Categoria</p>
-                                  <p className="font-medium">{asset.category?.name || 'Não definida'}</p>
-                                </div>
-                                <div className="p-3 bg-white rounded-[4px] border">
-                                  <p className="text-xs text-muted-foreground mb-1">Gravidade (G)</p>
-                                  <div className="flex items-center gap-1">
-                                    {[1,2,3,4,5].map(n => (
-                                      <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutGravity ? 'bg-primary-graphite' : 'bg-surface-high'}`}></span>
-                                    ))}
-                                    <span className="ml-2 font-bold">{asset.gutGravity}</span>
-                                  </div>
-                                </div>
-                                <div className="p-3 bg-white rounded-[4px] border">
-                                  <p className="text-xs text-muted-foreground mb-1">Urgência (U)</p>
-                                  <div className="flex items-center gap-1">
-                                    {[1,2,3,4,5].map(n => (
-                                      <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutUrgency ? 'bg-on-surface-variant' : 'bg-surface-high'}`}></span>
-                                    ))}
-                                    <span className="ml-2 font-bold">{asset.gutUrgency}</span>
-                                  </div>
-                                </div>
-                                <div className="p-3 bg-white rounded-[4px] border">
-                                  <p className="text-xs text-muted-foreground mb-1">Tendência (T)</p>
-                                  <div className="flex items-center gap-1">
-                                    {[1,2,3,4,5].map(n => (
-                                      <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutTendency ? 'bg-on-surface-variant' : 'bg-surface-high'}`}></span>
-                                    ))}
-                                    <span className="ml-2 font-bold">{asset.gutTendency}</span>
-                                  </div>
-                                </div>
-                                <div className="p-3 bg-white rounded-[4px] border col-span-3">
-                                  <p className="text-xs text-muted-foreground mb-1">Recomendação</p>
-                                  <p className="font-medium">
-                                    {asset.classification === 'critical' && 'Ação imediata necessária. Priorizar manutenção corretiva ou preventiva.'}
-                                    {asset.classification === 'warning' && 'Monitorar de perto. Agendar manutenção preventiva em breve.'}
-                                    {asset.classification === 'ok' && 'Manter rotina de manutenção preventiva programada.'}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    )
-                  })
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          <div className="w-full transition-all overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto min-h-0">
+              <div className="px-4 py-4 md:px-6">
+                {showInfo && (
+                  <div className="mb-4 p-4 bg-surface rounded-[4px]">
+                    <h3 className="font-semibold text-foreground mb-2">Como funciona a análise de criticidade?</h3>
+                    <div className="text-sm text-foreground space-y-2">
+                      <p><strong>Matriz GUT (35% do score):</strong> Gravidade × Urgência × Tendência (1-5 cada)</p>
+                      <p><strong>Solicitações Abertas (20%):</strong> Quantidade de SS pendentes/aprovadas</p>
+                      <p><strong>Ordens de Serviço (20%):</strong> Quantidade de OS em aberto/andamento</p>
+                      <p><strong>Relatórios de Falha (15%):</strong> Quantidade de RAFs registradas</p>
+                      <p><strong>Status do Ativo (10%):</strong> DOWN = crítico, OPERATIONAL = ok</p>
+                      <div className="flex gap-4 mt-3 pt-3 border-t border-border">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary-graphite"></span> Crítico: ≥70 pontos</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-on-surface-variant"></span> Alerta: 40-69 pontos</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-on-surface-variant"></span> OK: &lt;40 pontos</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
+
+                <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-4">
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Total de Ativos</span>
+                      <Icon name="monitoring" className="text-xl text-primary" />
+                    </div>
+                    <p className="text-3xl font-bold text-foreground mt-2">{summary.total}</p>
+                  </button>
+
+                  <button
+                    onClick={() => setFilter('critical')}
+                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'critical' ? 'border-on-surface bg-surface-low' : 'border-border hover:border-border'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">Críticos</span>
+                      <Icon name="warning" className="text-xl text-muted-foreground" />
+                    </div>
+                    <p className="text-3xl font-bold text-foreground mt-2">{summary.critical}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Requer ação imediata</p>
+                  </button>
+
+                  <button
+                    onClick={() => setFilter('warning')}
+                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'warning' ? 'border-on-surface-variant bg-surface' : 'border-border hover:border-border'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Em Alerta</span>
+                      <Icon name="error" className="text-xl text-muted-foreground" />
+                    </div>
+                    <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.warning}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Monitorar de perto</p>
+                  </button>
+
+                  <button
+                    onClick={() => setFilter('ok')}
+                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'ok' ? 'border-border bg-surface' : 'border-border hover:border-border'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">OK</span>
+                      <Icon name="check_circle" className="text-xl text-muted-foreground" />
+                    </div>
+                    <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.ok}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Operação normal</p>
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-full flex flex-col bg-card overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="sticky top-0 bg-secondary z-10">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('status')} className="flex items-center gap-1">
+                          Status
+                          <SortIcon field="status" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('name')} className="flex items-center gap-1">
+                          Ativo
+                          <SortIcon field="name" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('location')} className="flex items-center gap-1">
+                          Localização
+                          <SortIcon field="location" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('gutScore')} className="flex items-center justify-center gap-1 w-full">
+                          GUT <SortIcon field="gutScore" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('openRequestsCount')} className="flex items-center justify-center gap-1 w-full">
+                          <Icon name="assignment" className="text-base" /> SS <SortIcon field="openRequestsCount" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('openWorkOrdersCount')} className="flex items-center justify-center gap-1 w-full">
+                          <Icon name="construction" className="text-base" /> OS <SortIcon field="openWorkOrdersCount" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('rafCount')} className="flex items-center justify-center gap-1 w-full">
+                          <Icon name="warning" className="text-base" /> RAF
+                          <SortIcon field="rafCount" />
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <button type="button" onClick={() => toggleSort('totalScore')} className="flex items-center justify-center gap-1 w-full">
+                          Score <SortIcon field="totalScore" />
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-card divide-y divide-gray-200">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-b-2 border-b-on-surface-variant" />
+                            <p className="mt-2 text-muted-foreground">Carregando...</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : sortedAssets.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
+                          Nenhum ativo encontrado
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedAssets.map((asset) => {
+                        const config = classificationConfig[asset.classification]
+                        const iconName = config.icon
+                        const isExpanded = expandedId === asset.id
+
+                        return (
+                          <React.Fragment key={asset.id}>
+                            <tr
+                              className={`hover:bg-secondary cursor-pointer transition-colors ${config.bgLight}`}
+                              onClick={() => setExpandedId(isExpanded ? null : asset.id)}
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-3 h-3 rounded-full ${config.color}`}></span>
+                                  <Icon name={iconName} className={`text-xl ${config.textColor}`} />
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="font-medium text-foreground">{asset.name}</p>
+                                  {asset.customId && (
+                                    <p className="text-xs text-muted-foreground">{asset.customId}</p>
+                                  )}
+                                  {asset.status === 'DOWN' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-high text-foreground mt-1">
+                                      PARADO
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                {asset.location?.name || '-'}
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <div className="flex flex-col items-center group relative">
+                                  <span className="font-bold text-foreground">{asset.gutScore}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {asset.gutGravity}×{asset.gutUrgency}×{asset.gutTendency}
+                                  </span>
+                                  <button
+                                    onClick={(e) => openGutEditor(asset, e)}
+                                    className="absolute -top-1 -right-1 p-1 bg-primary text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/90"
+                                    title="Editar valores GUT"
+                                  >
+                                    <Icon name="edit" className="text-sm" />
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openRequestsCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                                  {asset.openRequestsCount}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openWorkOrdersCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                                  {asset.openWorkOrdersCount}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.rafCount > 0 ? 'bg-surface-high text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                                  {asset.rafCount}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-[4px] ${config.color} text-white font-bold text-lg`}>
+                                  {asset.totalScore}
+                                </div>
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr key={`${asset.id}-expanded`} className={config.bgLight}>
+                                <td colSpan={8} className="px-6 py-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="p-3 bg-white rounded-[4px] border border-border">
+                                      <p className="text-xs text-muted-foreground mb-1">Área</p>
+                                      <p className="font-medium">{asset.area || 'Não definida'}</p>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-[4px] border border-border">
+                                      <p className="text-xs text-muted-foreground mb-1">Categoria</p>
+                                      <p className="font-medium">{asset.category?.name || 'Não definida'}</p>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-[4px] border border-border">
+                                      <p className="text-xs text-muted-foreground mb-1">Gravidade (G)</p>
+                                      <div className="flex items-center gap-1">
+                                        {[1,2,3,4,5].map(n => (
+                                          <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutGravity ? 'bg-primary-graphite' : 'bg-surface-high'}`}></span>
+                                        ))}
+                                        <span className="ml-2 font-bold">{asset.gutGravity}</span>
+                                      </div>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-[4px] border border-border">
+                                      <p className="text-xs text-muted-foreground mb-1">Urgência (U)</p>
+                                      <div className="flex items-center gap-1">
+                                        {[1,2,3,4,5].map(n => (
+                                          <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutUrgency ? 'bg-on-surface-variant' : 'bg-surface-high'}`}></span>
+                                        ))}
+                                        <span className="ml-2 font-bold">{asset.gutUrgency}</span>
+                                      </div>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-[4px] border border-border">
+                                      <p className="text-xs text-muted-foreground mb-1">Tendência (T)</p>
+                                      <div className="flex items-center gap-1">
+                                        {[1,2,3,4,5].map(n => (
+                                          <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutTendency ? 'bg-on-surface-variant' : 'bg-surface-high'}`}></span>
+                                        ))}
+                                        <span className="ml-2 font-bold">{asset.gutTendency}</span>
+                                      </div>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-[4px] border border-border col-span-3">
+                                      <p className="text-xs text-muted-foreground mb-1">Recomendação</p>
+                                      <p className="font-medium">
+                                        {asset.classification === 'critical' && 'Ação imediata necessária. Priorizar manutenção corretiva ou preventiva.'}
+                                        {asset.classification === 'warning' && 'Monitorar de perto. Agendar manutenção preventiva em breve.'}
+                                        {asset.classification === 'ok' && 'Manter rotina de manutenção preventiva programada.'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

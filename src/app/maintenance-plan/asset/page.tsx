@@ -104,65 +104,79 @@ export default function AssetMaintenancePlanPage() {
   )
 
   if (authLoading || !user) {
-    return <PageContainer><div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" /></div></PageContainer>
+    return (
+      <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="flex items-center justify-center flex-1">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" />
+        </div>
+      </PageContainer>
+    )
   }
 
   return (
-    <PageContainer>
-      <div className="space-y-6">
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
+          className="mb-0"
           title="Manutenção do Bem"
           description="Planos de manutenção por bem/ativo individual"
+          actions={
+            <div className="flex items-center gap-3">
+              <div className="relative w-64">
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
+                <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              {canEdit && (
+                <Button onClick={openCreate} size="sm">
+                  <Icon name="add" className="text-base mr-1" /> Novo Plano
+                </Button>
+              )}
+            </div>
+          }
         />
+      </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="relative flex-1 w-full sm:max-w-xs">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
-            <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          <div className="w-full transition-all overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="sticky top-0 bg-secondary z-10">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Bem (TAG)</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do Bem</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo Serviço</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Seq.</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome Manutenção</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Frequência</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativa?</th>
+                    <th className="text-right px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider w-24">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-card divide-y divide-gray-200">
+                  {filteredAsset.length === 0 ? (
+                    <tr><td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">Nenhum plano de manutenção do bem cadastrado.</td></tr>
+                  ) : filteredAsset.map(p => (
+                    <tr key={p.id} className="hover:bg-secondary cursor-pointer">
+                      <td className="px-6 py-3 text-sm font-mono">{p.asset?.tag || '-'}</td>
+                      <td className="px-6 py-3 text-sm">{p.asset?.name}</td>
+                      <td className="px-6 py-3 text-sm">{p.serviceType?.name}</td>
+                      <td className="px-6 py-3 text-sm">{p.sequence}</td>
+                      <td className="px-6 py-3 text-sm font-medium">{p.name || '-'}</td>
+                      <td className="px-6 py-3 text-sm">{p.maintenanceTime ? `${p.maintenanceTime} ${p.timeUnit}` : '-'}</td>
+                      <td className="px-6 py-3 text-sm">{p.isActive ? 'Sim' : 'Não'}</td>
+                      <td className="px-6 py-3 text-sm text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Icon name="delete" className="text-base text-danger" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          {canEdit && (
-            <Button onClick={openCreate} size="sm">
-              <Icon name="add" className="text-base mr-1" /> Novo Plano
-            </Button>
-          )}
-        </div>
-
-        <div className="overflow-x-auto rounded-[4px]">
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Bem (TAG)</th>
-                <th className="text-left px-4 py-3 font-medium">Nome do Bem</th>
-                <th className="text-left px-4 py-3 font-medium">Tipo Serviço</th>
-                <th className="text-left px-4 py-3 font-medium">Seq.</th>
-                <th className="text-left px-4 py-3 font-medium">Nome Manutenção</th>
-                <th className="text-left px-4 py-3 font-medium">Frequência</th>
-                <th className="text-left px-4 py-3 font-medium">Ativa?</th>
-                <th className="text-right px-4 py-3 font-medium w-24">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredAsset.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Nenhum plano de manutenção do bem cadastrado.</td></tr>
-              ) : filteredAsset.map(p => (
-                <tr key={p.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-mono">{p.asset?.tag || '-'}</td>
-                  <td className="px-4 py-3">{p.asset?.name}</td>
-                  <td className="px-4 py-3">{p.serviceType?.name}</td>
-                  <td className="px-4 py-3">{p.sequence}</td>
-                  <td className="px-4 py-3 font-medium">{p.name || '-'}</td>
-                  <td className="px-4 py-3">{p.maintenanceTime ? `${p.maintenanceTime} ${p.timeUnit}` : '-'}</td>
-                  <td className="px-4 py-3">{p.isActive ? 'Sim' : 'Não'}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Icon name="delete" className="text-base text-danger" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 

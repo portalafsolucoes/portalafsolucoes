@@ -147,7 +147,7 @@ export function WorkOrderDetailModal({
     <Modal isOpen={isOpen} onClose={onClose} size="xl" hideHeader inPage={inPage}>
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : error ? (
         <div className="text-center py-12">

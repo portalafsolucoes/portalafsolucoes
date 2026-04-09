@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { isOperationalRole } from '@/lib/user-roles'
 
 export async function GET(
   request: NextRequest,
@@ -14,8 +15,12 @@ export async function GET(
     }
 
     const { id } = await params
+    const permError = checkApiPermission(session, 'work-orders', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
+    }
 
-    const { data: workOrder, error } = await supabase
+    let query = supabase
       .from('WorkOrder')
       .select(`
         *,
@@ -33,7 +38,9 @@ export async function GET(
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
-      .single()
+    if (isOperationalRole(session)) query = query.eq('assignedToId', session.id)
+
+    const { data: workOrder, error } = await query.single()
 
     if (error || !workOrder) {
       console.error('Get work order error:', error)
@@ -66,7 +73,7 @@ export async function PATCH(
     const { id } = await params
 
     // Verificar permissão de edição
-    const permError = checkApiPermission(session.role, 'work-orders', 'PATCH')
+    const permError = checkApiPermission(session, 'work-orders', 'PATCH')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
@@ -77,12 +84,13 @@ export async function PATCH(
     console.log(JSON.stringify(body, null, 2))
 
     // Verificar se a OS existe e pertence à empresa
-    const { data: workOrder, error: findError } = await supabase
+    let existingQuery = supabase
       .from('WorkOrder')
       .select('id')
       .eq('id', id)
       .eq('companyId', session.companyId)
-      .single()
+    if (isOperationalRole(session)) existingQuery = existingQuery.eq('assignedToId', session.id)
+    const { data: workOrder, error: findError } = await existingQuery.single()
 
     if (findError || !workOrder) {
       return NextResponse.json(
@@ -283,7 +291,7 @@ export async function DELETE(
     const { id } = await params
 
     // Verificar permissão de exclusão
-    const permError = checkApiPermission(session.role, 'work-orders', 'DELETE')
+    const permError = checkApiPermission(session, 'work-orders', 'DELETE')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

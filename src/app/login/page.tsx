@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -45,6 +46,7 @@ export default function LoginPage() {
 
 function LoginForm() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get('returnUrl')
   const [email, setEmail] = useState('')
@@ -71,8 +73,12 @@ function LoginForm() {
         return
       }
 
-      // Redirecionar: returnUrl (módulo clicado) ou hub
-      router.push(returnUrl || '/hub')
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] })
+      queryClient.removeQueries({ queryKey: ['company-modules'] })
+
+      // Redirecionar: returnUrl (módulo clicado) ou entrada padrão do CMMS
+      router.replace(returnUrl || '/cmms')
+      router.refresh()
     } catch {
       setError('Erro ao conectar ao servidor')
       setLoading(false)

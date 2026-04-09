@@ -85,7 +85,7 @@ function AssetTreeNode({ asset, level, onSelect, selectedId, onAddSubAsset }: As
     <div>
       <div
         className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-primary/5 rounded transition-colors relative ${
-          isSelected ? 'bg-primary/10 border-l-2 border-blue-600' : ''
+          isSelected ? 'bg-primary/10 border-l-2 border-on-surface-variant' : ''
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={() => onSelect(asset)}

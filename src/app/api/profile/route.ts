@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hashPassword, validateEmail, validatePassword, verifyPassword } from '@/lib/auth'
 import { createSession, getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
+import { normalizeUserRole } from '@/lib/user-roles'
 
 export async function GET() {
   try {
@@ -171,6 +172,10 @@ export async function PATCH(request: NextRequest) {
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
       role: updatedUser.role,
+      canonicalRole: normalizeUserRole({
+        role: updatedUser.role,
+        email: updatedUser.email,
+      }),
       companyId: session.companyId,
       companyName: session.companyName,
       unitId: updatedUser.activeUnitId || session.unitId,

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
 import { PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
 
@@ -57,11 +58,15 @@ const modules: ModuleCard[] = [
 export default function HubPage() {
   const router = useRouter()
   const [userName, setUserName] = useState('')
+  const [userRole, setUserRole] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    })
       .then(res => {
         if (!res.ok) throw new Error('Not authenticated')
         return res.json()
@@ -69,6 +74,7 @@ export default function HubPage() {
       .then(data => {
         if (data.data?.name || data.user?.firstName) {
           setUserName(data.data?.name || `${data.user?.firstName} ${data.user?.lastName}`)
+          setUserRole(data.user?.role || '')
           setIsAuthenticated(true)
         }
         setLoading(false)
@@ -90,10 +96,11 @@ export default function HubPage() {
 
     if (isAuthenticated) {
       // Já logado, vai direto pro módulo
-      router.push(module.href)
+      router.push(module.id === 'cmms' ? getDefaultCmmsPath(userRole) : module.href)
     } else {
       // Não logado, manda pro login com returnUrl
-      router.push(`/login?returnUrl=${encodeURIComponent(module.href)}`)
+      const target = module.id === 'cmms' ? '/cmms' : module.href
+      router.push(`/login?returnUrl=${encodeURIComponent(target)}`)
     }
   }
 
@@ -136,7 +143,7 @@ export default function HubPage() {
               </>
             ) : (
               <button
-                onClick={() => router.push('/login')}
+                onClick={() => router.push('/login?returnUrl=/cmms')}
                 className="ghost-border flex items-center gap-2 rounded-[4px] px-4 py-2 text-sm font-medium text-on-surface transition-colors hover:bg-surface-low"
               >
                 <Icon name="login" className="text-base" />

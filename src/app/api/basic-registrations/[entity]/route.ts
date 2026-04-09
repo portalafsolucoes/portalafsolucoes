@@ -220,7 +220,7 @@ export async function POST(
     }
 
     // Verificar permissão de criação
-    const permError = checkApiPermission(session.role, 'basic-registrations', 'POST')
+    const permError = checkApiPermission(session, 'basic-registrations', 'POST')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }

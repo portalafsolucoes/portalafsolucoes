@@ -5,12 +5,13 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
 import { useState, useEffect } from 'react'
-import { hasPermission, type UserRole } from '@/lib/permissions'
+import { hasPermission } from '@/lib/permissions'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useAuth } from '@/hooks/useAuth'
 import { usePendingCount } from '@/hooks/usePendingCount'
 import { useCompanyModules } from '@/hooks/useCompanyModules'
 import { APP_NAME } from '@/lib/branding'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
 type SidebarSubItem = {
   name: string
@@ -22,9 +23,7 @@ type SidebarMenuItem = {
   href: string
   icon: string // Material Symbols name
   module: string
-  requireApprove?: boolean
   badge?: number
-  adminOnly?: boolean
   subItems?: SidebarSubItem[]
 }
 
@@ -34,6 +33,7 @@ export function Sidebar() {
   const { isCollapsed, setIsCollapsed } = useSidebar()
   const { role: userRole, user, companyName, isLoading: authLoading } = useAuth()
   const companyLogo = user?.company?.logo || null
+  const defaultCmmsPath = getDefaultCmmsPath(user ?? userRole)
   const pendingCount = usePendingCount()
   const { isModuleEnabled } = useCompanyModules()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -75,26 +75,19 @@ export function Sidebar() {
     ]},
     { name: 'Ordens de Serviço (OS)', href: '/work-orders', icon: 'construction', module: 'work-orders' },
     { name: 'Solicitações (SS)', href: '/requests', icon: 'assignment', module: 'requests' },
-    { name: 'Aprovações', href: '/requests/approvals', icon: 'check_circle', module: 'requests', requireApprove: true, badge: pendingCount },
-    { name: 'RAF', href: '/rafs', icon: 'description', module: 'rafs', adminOnly: true },
+    { name: 'Aprovações', href: '/requests/approvals', icon: 'check_circle', module: 'approvals', badge: pendingCount },
+    { name: 'RAF', href: '/rafs', icon: 'description', module: 'rafs' },
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
-    ...(userRole === 'SUPER_ADMIN'
-      ? [{ name: 'Configurações', href: '/admin/portal', icon: 'settings', module: 'settings', adminOnly: true }]
-      : []),
+    { name: 'Configurações', href: '/admin/portal', icon: 'settings', module: 'settings' },
   ]
 
   const navigation = allMenus.filter(menu => {
     if (!userRole) return false
+    const permissionSubject = user ?? userRole
     // Filtrar por módulos habilitados para a empresa
     if (!isModuleEnabled(menu.module)) return false
-    if (menu.adminOnly) {
-      return userRole === 'SUPER_ADMIN'
-    }
-    if (menu.requireApprove) {
-      return hasPermission(userRole as UserRole, menu.module, 'approve')
-    }
-    return hasPermission(userRole as UserRole, menu.module, 'view')
+    return hasPermission(permissionSubject, menu.module, 'view')
   })
 
   useEffect(() => {
@@ -151,7 +144,7 @@ export function Sidebar() {
                   <Icon name="menu" className="text-xl text-on-surface" />
                 </button>
                 <Link
-                  href="/dashboard"
+                  href={defaultCmmsPath}
                   className="flex h-14 min-w-0 flex-1 items-center rounded-[4px] px-2 hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -187,7 +180,7 @@ export function Sidebar() {
                 </button>
 
                 <Link
-                  href="/dashboard"
+                  href={defaultCmmsPath}
                   className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] bg-card hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                   title={companyName || APP_NAME}
@@ -228,7 +221,7 @@ export function Sidebar() {
               </button>
               {companyLogo ? (
                 <Link
-                  href="/dashboard"
+                  href={defaultCmmsPath}
                   className="flex h-14 w-full items-center rounded-[4px] px-2 hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -248,7 +241,7 @@ export function Sidebar() {
                 <div className="h-10 w-full animate-pulse rounded-[4px] bg-surface-high" />
               ) : (
                 <Link
-                  href="/dashboard"
+                  href={defaultCmmsPath}
                   className="text-sm font-semibold text-on-surface truncate rounded-[4px] px-2 py-2 hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >

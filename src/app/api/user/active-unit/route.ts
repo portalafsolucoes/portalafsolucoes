@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession, createSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
+import { canSwitchUnits, isSuperAdminRole } from '@/lib/user-roles'
 
 /**
  * PUT /api/user/active-unit
@@ -33,8 +34,8 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Unit not found in your company' }, { status: 404 })
   }
 
-  // Se não é admin, verificar se tem acesso à unidade via UserUnit
-  if (session.role !== 'SUPER_ADMIN') {
+  // Se não pode trocar unidade, verificar se tem acesso à unidade via UserUnit
+  if (!canSwitchUnits(session)) {
     const { data: userUnit } = await supabase
       .from('UserUnit')
       .select('id')
@@ -87,7 +88,7 @@ export async function GET() {
   // Buscar unidades disponíveis
   let availableUnits: any[] = []
 
-  if (session.role === 'SUPER_ADMIN') {
+  if (isSuperAdminRole(session)) {
     // Admin vê todas as unidades da empresa
     const { data } = await supabase
       .from('Location')
