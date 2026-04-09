@@ -15,6 +15,8 @@ import { RAFEditModal } from '@/components/rafs/RAFEditModal'
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { hasPermission } from '@/lib/permissions'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
 interface RAF {
   id: string
@@ -53,7 +55,6 @@ interface RAF {
 export default function RAFsPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
-  const role = user?.role ?? ''
   const [rafs, setRafs] = useState<RAF[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -69,17 +70,16 @@ export default function RAFsPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [rafToEdit, setRafToEdit] = useState<string | null>(null)
 
-  const hasAccess = !!user && (role === 'GESTOR' || role === 'SUPER_ADMIN')
+  const hasAccess = !!user && hasPermission(user, 'rafs', 'view')
 
   useEffect(() => {
     if (authLoading || !user) return
-    // Apenas admins podem acessar RAFs
-    if (role !== 'GESTOR' && role !== 'SUPER_ADMIN') {
-      router.push('/dashboard')
+    if (!hasPermission(user, 'rafs', 'view')) {
+      router.push(getDefaultCmmsPath(user))
       return
     }
     loadRAFs()
-  }, [authLoading, user, role])
+  }, [authLoading, router, user])
 
   const loadRAFs = async () => {
     setLoading(true)
@@ -160,10 +160,10 @@ export default function RAFsPage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer variant="full" className="overflow-hidden p-0">
         {/* Se modal de visualização está aberto, mostrar apenas ele */}
         {showViewModal && selectedRAF ? (
-          <div 
+          <div
             className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
             onClick={() => {
               setShowViewModal(false)
@@ -183,7 +183,7 @@ export default function RAFsPage() {
             </div>
           </div>
         ) : showEditModal && rafToEdit ? (
-          <div 
+          <div
             className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
             onClick={() => {
               setShowEditModal(false)
@@ -209,250 +209,266 @@ export default function RAFsPage() {
           </div>
         ) : (
           <>
-        {/* Header */}
-        <PageHeader
-          title="Relatórios de Análise de Falha (RAF)"
-          description="Gerencie os relatórios de análise de falha do sistema"
-          actions={
-            <>
-              <div className="hidden md:flex gap-1 border rounded-[4px] p-1">
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-2 rounded transition-colors ${
-                    viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
-                  }`}
-                  title="Visualização em Tabela"
+        <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
+          <PageHeader
+            title="Relatórios de Análise de Falha (RAF)"
+            description="Gerencie os relatórios de análise de falha do sistema"
+            className="mb-0"
+            actions={
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative w-64">
+                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por número, equipamento ou área..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 px-3 py-2 text-sm bg-card rounded-[4px] cursor-pointer hover:bg-accent/5">
+                  <input
+                    type="checkbox"
+                    checked={enableAreaFilter}
+                    onChange={(e) => setEnableAreaFilter(e.target.checked)}
+                    className="w-4 h-4 text-primary rounded"
+                  />
+                  <span className="text-sm font-medium whitespace-nowrap">Filtrar Área</span>
+                </label>
+
+                <div className="hidden md:flex items-center bg-muted rounded-[4px] p-1">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                      viewMode === 'table'
+                        ? 'bg-background text-foreground ambient-shadow'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Visualização em Tabela"
+                  >
+                    <Icon name="table" className="text-base" />
+                    <span className="hidden md:inline">Tabela</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                      viewMode === 'cards'
+                        ? 'bg-background text-foreground ambient-shadow'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Visualização em Cartões"
+                  >
+                    <Icon name="grid_view" className="text-base" />
+                    <span className="hidden md:inline">Grade</span>
+                  </button>
+                </div>
+
+                <ExportButton data={filteredRAFs} entity="rafs" />
+                <Button
+                  onClick={() => setShowModal(true)}
+                  className="flex-shrink-0"
                 >
-                  <Icon name="table" className="text-xl" />
-                </button>
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`p-2 rounded transition-colors ${
-                    viewMode === 'cards' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/10'
-                  }`}
-                  title="Visualização em Cartões"
-                >
-                  <Icon name="grid_view" className="text-xl" />
-                </button>
+                  <Icon name="add" className="mr-2 text-base" />
+                  Novo RAF
+                </Button>
               </div>
-              <ExportButton data={filteredRAFs} entity="rafs" />
-              <Button
-                onClick={() => setShowModal(true)}
-                className="flex-1 md:flex-none"
-              >
-                <Icon name="add" className="mr-2 text-base" />
-                <span className="text-sm md:text-base">Novo RAF</span>
-              </Button>
-            </>
-          }
-        />
-
-        {/* Busca e Filtros */}
-        <div className="mb-6 flex flex-col gap-3 md:flex-row md:gap-4">
-          <div className="flex-1 relative">
-            <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base md: md:text-xl text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar por número, equipamento ou área..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            />
-          </div>
-
-          <div className="flex gap-2 md:gap-4">
-            <label className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base bg-card rounded-[4px] cursor-pointer hover:bg-accent/5">
-              <input
-                type="checkbox"
-                checked={enableAreaFilter}
-                onChange={(e) => setEnableAreaFilter(e.target.checked)}
-                className="w-4 h-4 text-primary rounded"
-              />
-              <span className="text-sm font-medium whitespace-nowrap">Filtrar Área</span>
-            </label>
-          </div>
+            }
+          />
         </div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
-          </div>
-        ) : filteredRAFs.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-[4px]">
-            <Icon name="description" className="mx-auto text-5xl text-muted-foreground" />
-            <h3 className="mt-2 text-sm font-medium text-foreground">Nenhum RAF encontrado</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {searchTerm ? 'Tente ajustar sua busca' : 'Comece criando um novo RAF'}
-            </p>
-          </div>
-        ) : viewMode === 'cards' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
-            {filteredRAFs.map((raf) => (
-              <div
-                key={raf.id}
-                className="bg-card rounded-[4px] ambient-shadow p-3 hover:shadow-md transition-all"
-              >
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Icon name="description" className="text-base text-primary flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-foreground truncate">
-                          {raf.rafNumber}
-                        </h3>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {raf.area}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${
-                      raf.failureType === 'REPETITIVE'
-                        ? 'bg-danger-light text-foreground'
-                        : 'bg-warning-light text-foreground'
-                    }`}>
-                      {raf.failureType === 'REPETITIVE' ? 'Rep' : 'Alea'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-foreground line-clamp-2">
-                    {raf.equipment}
-                  </p>
-
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Icon name="calendar_today" className="text-sm" />
-                      <span>{formatDate(raf.occurrenceDate)}</span>
-                    </div>
-                    <div className="flex items-center gap-1 truncate">
-                      <Icon name="person" className="text-sm" />
-                      <span className="truncate">{raf.panelOperator}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-1 pt-1 border-t border-border">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleView(raf.id)}
-                      className="flex-1 text-[10px] px-2 py-1 h-7"
-                    >
-                      <Icon name="visibility" className="text-sm mr-1" />
-                      Ver
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(raf.id)}
-                      className="flex-1 text-[10px] px-2 py-1 h-7"
-                    >
-                      <Icon name="edit" className="text-sm mr-1" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(raf.id)}
-                      className="flex-1 text-[10px] px-2 py-1 h-7 text-danger hover:bg-danger-light"
-                    >
-                      <Icon name="delete" className="text-sm" />
-                    </Button>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+            <div className="w-full transition-all overflow-hidden flex flex-col">
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                    <p className="mt-2 text-muted-foreground">Carregando...</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-surface border-b border-border">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      RAF
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Área
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Equipamento
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Data
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Operador
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredRAFs.map((raf) => (
-                    <tr key={raf.id} className="hover:bg-surface transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Icon name="description" className="text-base text-primary" />
-                          <span className="text-sm font-semibold text-foreground">{raf.rafNumber}</span>
+              ) : filteredRAFs.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center p-12 text-center">
+                  <div>
+                    <Icon name="description" className="text-6xl text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum RAF encontrado</h3>
+                    <p className="text-muted-foreground">
+                      {searchTerm ? 'Tente ajustar sua busca' : 'Comece criando um novo RAF'}
+                    </p>
+                  </div>
+                </div>
+              ) : viewMode === 'cards' ? (
+                <div className="overflow-auto flex-1 p-4 md:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+                    {filteredRAFs.map((raf) => (
+                      <div
+                        key={raf.id}
+                        className="bg-card rounded-[4px] ambient-shadow p-3 hover:shadow-md transition-all"
+                      >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Icon name="description" className="text-base text-primary flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-bold text-foreground truncate">
+                                  {raf.rafNumber}
+                                </h3>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {raf.area}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${
+                              raf.failureType === 'REPETITIVE'
+                                ? 'bg-danger-light text-foreground'
+                                : 'bg-warning-light text-foreground'
+                            }`}>
+                              {raf.failureType === 'REPETITIVE' ? 'Rep' : 'Alea'}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-foreground line-clamp-2">
+                            {raf.equipment}
+                          </p>
+
+                          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Icon name="calendar_today" className="text-sm" />
+                              <span>{formatDate(raf.occurrenceDate)}</span>
+                            </div>
+                            <div className="flex items-center gap-1 truncate">
+                              <Icon name="person" className="text-sm" />
+                              <span className="truncate">{raf.panelOperator}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-1 pt-1 border-t border-border">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleView(raf.id)}
+                              className="flex-1 text-[10px] px-2 py-1 h-7"
+                            >
+                              <Icon name="visibility" className="text-sm mr-1" />
+                              Ver
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(raf.id)}
+                              className="flex-1 text-[10px] px-2 py-1 h-7"
+                            >
+                              <Icon name="edit" className="text-sm mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(raf.id)}
+                              className="flex-1 text-[10px] px-2 py-1 h-7 text-danger hover:bg-danger-light"
+                            >
+                              <Icon name="delete" className="text-sm" />
+                            </Button>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-muted-foreground">{raf.area}</span>
-                      </td>
-                      <td className="px-6 py-4 max-w-xs">
-                        <div className="text-sm text-foreground truncate">{raf.equipment}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-muted-foreground">{formatDate(raf.occurrenceDate)}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-muted-foreground">{raf.panelOperator}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          raf.failureType === 'REPETITIVE'
-                            ? 'bg-danger-light text-foreground'
-                            : 'bg-warning-light text-foreground'
-                        }`}>
-                          {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleView(raf.id)}
-                            className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
-                            title="Visualizar"
-                          >
-                            <Icon name="visibility" className="text-base" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(raf.id)}
-                            className="p-1.5 text-muted-foreground hover:bg-surface rounded transition-colors"
-                            title="Editar"
-                          >
-                            <Icon name="edit" className="text-base" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(raf.id)}
-                            className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
-                            title="Excluir"
-                          >
-                            <Icon name="delete" className="text-base" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col bg-card overflow-hidden">
+                  <div className="flex-1 overflow-auto min-h-0">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 bg-secondary z-10">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            RAF
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Área
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Equipamento
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Data
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Operador
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Tipo
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Ações
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-card divide-y divide-gray-200">
+                        {filteredRAFs.map((raf) => (
+                          <tr key={raf.id} className="hover:bg-secondary cursor-pointer transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <Icon name="description" className="text-base text-primary" />
+                                <span className="text-sm font-semibold text-foreground">{raf.rafNumber}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-muted-foreground">{raf.area}</span>
+                            </td>
+                            <td className="px-6 py-4 max-w-xs">
+                              <div className="text-sm text-foreground truncate">{raf.equipment}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-muted-foreground">{formatDate(raf.occurrenceDate)}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-muted-foreground">{raf.panelOperator}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                raf.failureType === 'REPETITIVE'
+                                  ? 'bg-danger-light text-foreground'
+                                  : 'bg-warning-light text-foreground'
+                              }`}>
+                                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => handleView(raf.id)}
+                                  className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
+                                  title="Visualizar"
+                                >
+                                  <Icon name="visibility" className="text-base" />
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(raf.id)}
+                                  className="p-1.5 text-muted-foreground hover:bg-secondary rounded transition-colors"
+                                  title="Editar"
+                                >
+                                  <Icon name="edit" className="text-base" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(raf.id)}
+                                  className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
+                                  title="Excluir"
+                                >
+                                  <Icon name="delete" className="text-base" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
           </>
         )}
 
