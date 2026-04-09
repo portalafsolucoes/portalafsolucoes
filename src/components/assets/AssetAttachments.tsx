@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Icon } from '@/components/ui/Icon'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
 
 interface AssetAttachment {
   id: string
@@ -425,310 +427,287 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
       </div>
 
       {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">Adicionar Anexo</h3>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="text-muted-foreground hover:text-muted-foreground"
+      <Modal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} title="Adicionar Anexo" size="md">
+        <form onSubmit={handleUpload}>
+          <div className="p-4 space-y-4">
+            {/* File Upload */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Arquivo
+              </label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-[4px] p-6 text-center cursor-pointer hover:border-border transition-colors"
               >
-                <Icon name="close" className="text-xl" />
-              </button>
+                {uploadForm.file ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Icon name="attach_file" className="text-3xl text-muted-foreground" />
+                    <div className="text-left">
+                      <p className="font-medium text-foreground">{uploadForm.file.name}</p>
+                      <p className="text-sm text-muted-foreground">{formatFileSize(uploadForm.file.size)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Icon name="upload" className="text-3xl text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Clique para selecionar ou arraste um arquivo
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
 
-            <form onSubmit={handleUpload} className="p-6 space-y-4">
-              {/* File Upload */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Arquivo
-                </label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-[4px] p-6 text-center cursor-pointer hover:border-border transition-colors"
-                >
-                  {uploadForm.file ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Icon name="attach_file" className="text-3xl text-muted-foreground" />
-                      <div className="text-left">
-                        <p className="font-medium text-foreground">{uploadForm.file.name}</p>
-                        <p className="text-sm text-muted-foreground">{formatFileSize(uploadForm.file.size)}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <Icon name="upload" className="text-3xl text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Clique para selecionar ou arraste um arquivo
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
+            {/* Name */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Nome *
+              </label>
+              <input
+                type="text"
+                value={uploadForm.name}
+                onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
+                required
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Nome do documento"
+              />
+            </div>
 
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Nome *
-                </label>
-                <input
-                  type="text"
-                  value={uploadForm.name}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
-                  placeholder="Nome do documento"
-                />
-              </div>
+            {/* Category */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Categoria *
+              </label>
+              <select
+                value={uploadForm.category}
+                onChange={(e) => setUploadForm(prev => ({ ...prev, category: e.target.value }))}
+                required
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {categoryOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Categoria *
-                </label>
-                <select
-                  value={uploadForm.category}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, category: e.target.value }))}
-                  required
-                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
-                >
-                  {categoryOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Description */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Descrição
+              </label>
+              <textarea
+                value={uploadForm.description}
+                onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Descrição do documento..."
+              />
+            </div>
 
-              {/* Description */}
+            {/* Version & Expiration Row */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Descrição
-                </label>
-                <textarea
-                  value={uploadForm.description}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
-                  placeholder="Descrição do documento..."
-                />
-              </div>
-
-              {/* Version & Tags Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Versão
-                  </label>
-                  <input
-                    type="text"
-                    value={uploadForm.version}
-                    onChange={(e) => setUploadForm(prev => ({ ...prev, version: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
-                    placeholder="ex: 1.0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Data de Expiração
-                  </label>
-                  <input
-                    type="date"
-                    value={uploadForm.expiresAt}
-                    onChange={(e) => setUploadForm(prev => ({ ...prev, expiresAt: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
-                  />
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Tags (separadas por vírgula)
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Versão
                 </label>
                 <input
                   type="text"
-                  value={uploadForm.tags}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-[4px] text-sm focus:ring-2 focus:ring-gray-500 focus:border-border"
-                  placeholder="ex: elétrica, motor, bomba"
+                  value={uploadForm.version}
+                  onChange={(e) => setUploadForm(prev => ({ ...prev, version: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="ex: 1.0"
                 />
               </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground bg-white rounded-[4px] hover:bg-surface"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploading || !uploadForm.name}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-graphite rounded-[4px] hover:bg-primary-graphite disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploading ? (
-                    <>
-                      <Icon name="progress_activity" className="text-base animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="upload" className="text-base" />
-                      Adicionar
-                    </>
-                  )}
-                </button>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Data de Expiração
+                </label>
+                <input
+                  type="date"
+                  value={uploadForm.expiresAt}
+                  onChange={(e) => setUploadForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
               </div>
-            </form>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Tags (separadas por vírgula)
+              </label>
+              <input
+                type="text"
+                value={uploadForm.tags}
+                onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="ex: elétrica, motor, bomba"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* Footer */}
+          <div className="flex gap-3 px-4 py-4 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowUploadModal(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={uploading || !uploadForm.name}
+              className="flex-1"
+            >
+              {uploading ? (
+                <>
+                  <Icon name="progress_activity" className="text-base animate-spin mr-2" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Icon name="upload" className="text-base mr-2" />
+                  Adicionar
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Attachment Detail Modal */}
-      {selectedAttachment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground truncate pr-4">
-                {selectedAttachment.name}
-              </h3>
-              <button
-                onClick={() => setSelectedAttachment(null)}
-                className="text-muted-foreground hover:text-muted-foreground flex-shrink-0"
-              >
-                <Icon name="close" className="text-xl" />
-              </button>
-            </div>
+      <Modal isOpen={!!selectedAttachment} onClose={() => setSelectedAttachment(null)} title={selectedAttachment?.name || ''} size="lg">
+        {selectedAttachment && (
+          <div className="p-4">
+            {/* Preview */}
+            {selectedAttachment.mimeType?.startsWith('image/') ? (
+              <img
+                src={selectedAttachment.url}
+                alt={selectedAttachment.name}
+                className="w-full max-h-96 object-contain rounded-[4px] bg-surface-low mb-6"
+              />
+            ) : (
+              <div className={`w-full h-48 rounded-[4px] flex items-center justify-center mb-6 ${getCategoryConfig(selectedAttachment.category).bgColor}`}>
+                <Icon name={getCategoryConfig(selectedAttachment.category).icon} className={`text-5xl ${getCategoryConfig(selectedAttachment.category).color}`} />
+              </div>
+            )}
 
-            <div className="p-6">
-              {/* Preview */}
-              {selectedAttachment.mimeType?.startsWith('image/') ? (
-                <img
-                  src={selectedAttachment.url}
-                  alt={selectedAttachment.name}
-                  className="w-full max-h-96 object-contain rounded-[4px] bg-surface-low mb-6"
-                />
-              ) : (
-                <div className={`w-full h-48 rounded-[4px] flex items-center justify-center mb-6 ${getCategoryConfig(selectedAttachment.category).bgColor}`}>
-                  <Icon name={getCategoryConfig(selectedAttachment.category).icon} className={`text-5xl ${getCategoryConfig(selectedAttachment.category).color}`} />
+            {/* Details */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Categoria</label>
+                  <p className="font-medium text-foreground">
+                    {getCategoryConfig(selectedAttachment.category).label}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tamanho</label>
+                  <p className="font-medium text-foreground">
+                    {formatFileSize(selectedAttachment.size)}
+                  </p>
+                </div>
+                {selectedAttachment.version && (
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Versão</label>
+                    <p className="font-medium text-foreground">{selectedAttachment.version}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Adicionado em</label>
+                  <p className="font-medium text-foreground">
+                    {format(new Date(selectedAttachment.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+
+              {selectedAttachment.description && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição</label>
+                  <p className="text-foreground mt-1">{selectedAttachment.description}</p>
                 </div>
               )}
 
-              {/* Details */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground">Categoria</label>
-                    <p className="font-medium text-foreground">
-                      {getCategoryConfig(selectedAttachment.category).label}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Tamanho</label>
-                    <p className="font-medium text-foreground">
-                      {formatFileSize(selectedAttachment.size)}
-                    </p>
-                  </div>
-                  {selectedAttachment.version && (
-                    <div>
-                      <label className="text-sm text-muted-foreground">Versão</label>
-                      <p className="font-medium text-foreground">{selectedAttachment.version}</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-sm text-muted-foreground">Adicionado em</label>
-                    <p className="font-medium text-foreground">
-                      {format(new Date(selectedAttachment.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedAttachment.description && (
-                  <div>
-                    <label className="text-sm text-muted-foreground">Descrição</label>
-                    <p className="text-foreground mt-1">{selectedAttachment.description}</p>
-                  </div>
-                )}
-
-                {selectedAttachment.tags.length > 0 && (
-                  <div>
-                    <label className="text-sm text-muted-foreground">Tags</label>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {selectedAttachment.tags.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-surface-low text-foreground rounded text-sm"
-                        >
-                          <Icon name="label" className="text-sm" />
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedAttachment.expiresAt && (
-                  <div>
-                    <label className="text-sm text-muted-foreground">Expira em</label>
-                    <p className={`font-medium ${
-                      new Date(selectedAttachment.expiresAt) <= new Date()
-                        ? 'text-muted-foreground'
-                        : 'text-foreground'
-                    }`}>
-                      {format(new Date(selectedAttachment.expiresAt), 'dd/MM/yyyy', { locale: ptBR })}
-                      {new Date(selectedAttachment.expiresAt) <= new Date() && ' (Expirado)'}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-between gap-3 mt-6 pt-4 border-t border-border">
+              {selectedAttachment.tags.length > 0 && (
                 <div>
-                  {!readOnly && (
-                    <button
-                      onClick={() => handleDelete(selectedAttachment.id)}
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground bg-surface rounded-[4px] hover:bg-surface-low"
-                    >
-                      <Icon name="delete" className="text-base" />
-                      Excluir
-                    </button>
-                  )}
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tags</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {selectedAttachment.tags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-surface-low text-foreground rounded text-sm"
+                      >
+                        <Icon name="label" className="text-sm" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <a
-                    href={selectedAttachment.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-white rounded-[4px] hover:bg-surface"
-                  >
-                    <Icon name="open_in_new" className="text-base" />
-                    Abrir
-                  </a>
-                  <a
-                    href={selectedAttachment.url}
-                    download={selectedAttachment.name}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-graphite rounded-[4px] hover:bg-primary-graphite"
-                  >
-                    <Icon name="download" className="text-base" />
-                    Download
-                  </a>
+              )}
+
+              {selectedAttachment.expiresAt && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Expira em</label>
+                  <p className={`font-medium ${
+                    new Date(selectedAttachment.expiresAt) <= new Date()
+                      ? 'text-muted-foreground'
+                      : 'text-foreground'
+                  }`}>
+                    {format(new Date(selectedAttachment.expiresAt), 'dd/MM/yyyy', { locale: ptBR })}
+                    {new Date(selectedAttachment.expiresAt) <= new Date() && ' (Expirado)'}
+                  </p>
                 </div>
-              </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6 pt-4 border-t border-border">
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => handleDelete(selectedAttachment.id)}
+                  className="flex-1"
+                >
+                  <Icon name="delete" className="text-base mr-2" />
+                  Excluir
+                </Button>
+              )}
+              <a
+                href={selectedAttachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1"
+              >
+                <Button type="button" variant="outline" className="w-full">
+                  <Icon name="open_in_new" className="text-base mr-2" />
+                  Abrir
+                </Button>
+              </a>
+              <a
+                href={selectedAttachment.url}
+                download={selectedAttachment.name}
+                className="flex-1"
+              >
+                <Button type="button" className="w-full">
+                  <Icon name="download" className="text-base mr-2" />
+                  Download
+                </Button>
+              </a>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   )
 }

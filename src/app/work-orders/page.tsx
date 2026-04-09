@@ -13,12 +13,13 @@ import { Icon } from '@/components/ui/Icon'
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { usePermissions } from '@/hooks/usePermissions'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { WorkOrderDetailModal } from '@/components/work-orders/WorkOrderDetailModal'
 import { WorkOrderEditModal } from '@/components/work-orders/WorkOrderEditModal'
 import { WorkOrderExecuteModal } from '@/components/work-orders/WorkOrderExecuteModal'
 import { FinalizeWorkOrderModal } from '@/components/work-orders/FinalizeWorkOrderModal'
+import { WorkOrderFormModal } from '@/components/work-orders/WorkOrderFormModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import Link from 'next/link'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
 
@@ -46,7 +47,6 @@ export default function WorkOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [systemStatusFilter, setSystemStatusFilter] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table')
-  const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string>('')
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingWorkOrderId, setEditingWorkOrderId] = useState<string>('')
@@ -57,8 +57,10 @@ export default function WorkOrdersPage() {
   const [deleting, setDeleting] = useState(false)
   const { user: currentUser } = useAuth()
   const { canCreate: canCreateWO, canEdit: canEditWO, canDelete: canDeleteWO } = usePermissions()
+  const isMobile = useIsMobile()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<any>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   useEffect(() => {
     if (!currentUser) return
@@ -101,7 +103,6 @@ export default function WorkOrdersPage() {
 
   const handleView = (workOrderId: string) => {
     setSelectedWorkOrderId(workOrderId)
-    setShowDetailModal(true)
   }
 
   const handleEdit = (workOrder: any) => {
@@ -147,32 +148,14 @@ export default function WorkOrdersPage() {
     wo.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const showSidePanel = !isMobile && (!!selectedWorkOrderId || showEditModal || showExecuteModal || showFinalizeModal || showCreateModal)
+
   if (!currentUser || !hasPermission(currentUser, 'work-orders', 'view')) {
     return null
   }
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        {/* Se modal está aberto, mostrar apenas ele */}
-        {showDetailModal && selectedWorkOrderId ? (
-          <div
-            className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
-            onClick={() => setShowDetailModal(false)}
-          >
-            <div className="w-full max-w-6xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-              <WorkOrderDetailModal
-                isOpen={true}
-                onClose={() => setShowDetailModal(false)}
-                workOrderId={selectedWorkOrderId}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                currentUserId={currentUser?.id}
-                inPage={true}
-              />
-            </div>
-          </div>
-        ) : (
-          <>
         <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
           <PageHeader
             title="Ordens de Serviço (OS)"
@@ -243,12 +226,19 @@ export default function WorkOrdersPage() {
 
                 <ExportButton data={filteredWorkOrders} entity="work-orders" />
                 {canCreateWO('work-orders') && (
-                  <Link href="/work-orders/new" className="flex-shrink-0">
-                    <Button className="whitespace-nowrap">
-                      <Icon name="add" className="mr-2 text-base" />
-                      Nova Ordem
-                    </Button>
-                  </Link>
+                  <Button
+                    onClick={() => {
+                      setSelectedWorkOrderId('')
+                      setShowEditModal(false)
+                      setShowExecuteModal(false)
+                      setShowFinalizeModal(false)
+                      setShowCreateModal(true)
+                    }}
+                    className="whitespace-nowrap"
+                  >
+                    <Icon name="add" className="mr-2 text-base" />
+                    Nova Ordem
+                  </Button>
                 )}
               </div>
             }
@@ -257,7 +247,8 @@ export default function WorkOrdersPage() {
 
         <div className="flex flex-1 overflow-hidden">
           <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-            <div className="w-full transition-all overflow-hidden flex flex-col">
+            {/* Left: table/grid */}
+            <div className={`${showSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
               {loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
@@ -273,7 +264,7 @@ export default function WorkOrdersPage() {
                     <p className="text-muted-foreground">Crie uma nova ordem de serviço para começar.</p>
                   </div>
                 </div>
-              ) : viewMode === 'grid' || window.innerWidth < 768 ? (
+              ) : viewMode === 'grid' || isMobile ? (
                 <div className="overflow-auto flex-1 p-4 md:p-6">
                   <div className="grid grid-cols-1 gap-3 md:gap-4">
                     {filteredWorkOrders.map((wo) => {
@@ -394,7 +385,7 @@ export default function WorkOrdersPage() {
                         {filteredWorkOrders.map((wo) => {
                           const displayId = wo.externalId || wo.internalId || wo.customId || wo.id.slice(0, 8)
                           return (
-                            <tr key={wo.id} className="hover:bg-secondary cursor-pointer transition-colors">
+                            <tr key={wo.id} onClick={() => handleView(wo.id)} className="hover:bg-secondary cursor-pointer transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="text-sm font-semibold text-foreground">{displayId}</span>
                               </td>
@@ -431,7 +422,7 @@ export default function WorkOrdersPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div className="flex justify-end gap-2">
                                   <button
-                                    onClick={() => handleView(wo.id)}
+                                    onClick={(e) => { e.stopPropagation(); handleView(wo.id) }}
                                     className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
                                     title="Visualizar"
                                   >
@@ -439,7 +430,7 @@ export default function WorkOrdersPage() {
                                   </button>
                                   {isAssignedExecutor(wo) && (
                                     <button
-                                      onClick={() => handleExecute(wo)}
+                                      onClick={(e) => { e.stopPropagation(); handleExecute(wo) }}
                                       className="p-1.5 text-success hover:bg-success-light rounded transition-colors"
                                       title={wo.status === 'COMPLETE' ? 'Editar Execução' : 'Executar'}
                                     >
@@ -448,7 +439,7 @@ export default function WorkOrdersPage() {
                                   )}
                                   {canEditWO('work-orders') && (
                                     <button
-                                      onClick={() => handleEdit(wo)}
+                                      onClick={(e) => { e.stopPropagation(); handleEdit(wo) }}
                                       className="p-1.5 text-muted-foreground hover:bg-secondary rounded transition-colors"
                                       title="Editar"
                                     >
@@ -457,7 +448,7 @@ export default function WorkOrdersPage() {
                                   )}
                                   {canDeleteWO('work-orders') && (
                                     <button
-                                      onClick={() => openDeleteDialog(wo)}
+                                      onClick={(e) => { e.stopPropagation(); openDeleteDialog(wo) }}
                                       className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
                                       title="Excluir"
                                     >
@@ -475,16 +466,86 @@ export default function WorkOrdersPage() {
                 </div>
               )}
             </div>
+
+            {/* Right: split panel (desktop only) */}
+            {!isMobile && (selectedWorkOrderId || showEditModal || showExecuteModal || showFinalizeModal || showCreateModal) && (
+              <div className="w-1/2 min-w-0">
+                {showCreateModal ? (
+                  <WorkOrderFormModal
+                    isOpen={true}
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={() => {
+                      loadWorkOrders()
+                      setShowCreateModal(false)
+                    }}
+                    inPage
+                  />
+                ) : showFinalizeModal && workOrderToFinalize ? (
+                  <FinalizeWorkOrderModal
+                    isOpen={true}
+                    onClose={() => {
+                      setShowFinalizeModal(false)
+                      setWorkOrderToFinalize(null)
+                    }}
+                    workOrder={workOrderToFinalize}
+                    onFinalized={() => {
+                      loadWorkOrders()
+                      setShowFinalizeModal(false)
+                      setWorkOrderToFinalize(null)
+                    }}
+                    inPage
+                  />
+                ) : showExecuteModal && workOrderToExecute ? (
+                  <WorkOrderExecuteModal
+                    isOpen={true}
+                    onClose={() => {
+                      setShowExecuteModal(false)
+                      setWorkOrderToExecute(null)
+                    }}
+                    workOrder={workOrderToExecute}
+                    onSuccess={() => {
+                      loadWorkOrders()
+                      setShowExecuteModal(false)
+                      setWorkOrderToExecute(null)
+                    }}
+                    inPage
+                  />
+                ) : showEditModal && editingWorkOrderId ? (
+                  <WorkOrderEditModal
+                    isOpen={true}
+                    onClose={() => {
+                      setShowEditModal(false)
+                      setEditingWorkOrderId('')
+                    }}
+                    workOrderId={editingWorkOrderId}
+                    onSuccess={() => {
+                      loadWorkOrders()
+                      setShowEditModal(false)
+                      setEditingWorkOrderId('')
+                    }}
+                    inPage
+                  />
+                ) : selectedWorkOrderId ? (
+                  <WorkOrderDetailModal
+                    isOpen={true}
+                    onClose={() => setSelectedWorkOrderId('')}
+                    workOrderId={selectedWorkOrderId}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    currentUserId={currentUser?.id}
+                    inPage
+                  />
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
-        </>
-        )}
 
-        {/* Modais sempre renderizados mas podem estar ocultos */}
-        {false && showDetailModal && selectedWorkOrderId && (
+        {/* Mobile: overlay modals */}
+        {isMobile && selectedWorkOrderId && (
           <WorkOrderDetailModal
-            isOpen={showDetailModal}
-            onClose={() => setShowDetailModal(false)}
+            isOpen={!!selectedWorkOrderId}
+            onClose={() => setSelectedWorkOrderId('')}
             workOrderId={selectedWorkOrderId}
             onEdit={handleEdit}
             onDelete={handleDelete}
@@ -492,8 +553,7 @@ export default function WorkOrdersPage() {
           />
         )}
 
-        {/* Modal de Edição */}
-        {showEditModal && editingWorkOrderId && (
+        {isMobile && showEditModal && editingWorkOrderId && (
           <WorkOrderEditModal
             isOpen={showEditModal}
             onClose={() => {
@@ -509,8 +569,7 @@ export default function WorkOrdersPage() {
           />
         )}
 
-        {/* Modal de Execução */}
-        {showExecuteModal && workOrderToExecute && (
+        {isMobile && showExecuteModal && workOrderToExecute && (
           <WorkOrderExecuteModal
             isOpen={showExecuteModal}
             onClose={() => {
@@ -526,8 +585,7 @@ export default function WorkOrdersPage() {
           />
         )}
 
-        {/* Modal de Finalização */}
-        {showFinalizeModal && workOrderToFinalize && (
+        {isMobile && showFinalizeModal && workOrderToFinalize && (
           <FinalizeWorkOrderModal
             isOpen={showFinalizeModal}
             onClose={() => {
@@ -539,6 +597,17 @@ export default function WorkOrdersPage() {
               loadWorkOrders()
               setShowFinalizeModal(false)
               setWorkOrderToFinalize(null)
+            }}
+          />
+        )}
+
+        {isMobile && showCreateModal && (
+          <WorkOrderFormModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={() => {
+              loadWorkOrders()
+              setShowCreateModal(false)
             }}
           />
         )}

@@ -82,7 +82,7 @@ export function ApproveRequestModal({
 
         {request?.team && (
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               <Icon name="person" className="inline text-base mr-1" />
               Atribuir Executante (Opcional)
             </label>
@@ -111,17 +111,19 @@ export function ApproveRequestModal({
           </div>
         )}
 
-        <div className="flex gap-3 justify-end pt-4 border-t">
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={processing}
+            className="flex-1"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={processing}
+            className="flex-1"
           >
             {processing ? 'Aprovando...' : 'Aprovar e Criar OS'}
           </Button>

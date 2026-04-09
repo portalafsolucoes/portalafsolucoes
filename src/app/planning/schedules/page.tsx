@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
@@ -184,34 +185,38 @@ export default function SchedulesPage() {
         </div>
       </div>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Nova Programação de OSs" size="md">
-        <div className="space-y-4">
-          {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Nova Programação de OSs" size="wide">
+        <div className="p-4 space-y-3">
+          {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Descrição <span className="text-danger">*</span></label>
-            <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
-              placeholder="Ex: Programação Mecânica Semana 15"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Data Início <span className="text-danger">*</span></label>
-              <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+          <ModalSection title="Programação">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="col-span-2 md:col-span-3">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição <span className="text-danger">*</span></label>
+                <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
+                  placeholder="Ex: Programação Mecânica Semana 15"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Início <span className="text-danger">*</span></label>
+                <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Fim <span className="text-danger">*</span></label>
+                <input type="date" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Data Fim <span className="text-danger">*</span></label>
-              <input type="date" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-            </div>
-          </div>
+          </ModalSection>
+        </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowModal(false)} size="sm">Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving} size="sm">{saving ? 'Processando...' : 'Criar'}</Button>
-          </div>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={() => setShowModal(false)} className="flex-1">Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
+            <Icon name="save" className="text-base mr-2" />
+            {saving ? 'Processando...' : 'Salvar'}
+          </Button>
         </div>
       </Modal>
     </PageContainer>

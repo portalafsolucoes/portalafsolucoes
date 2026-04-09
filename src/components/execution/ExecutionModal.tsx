@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
+import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
 
 interface ExecutionModalProps {
@@ -21,11 +23,11 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
   const [loading, setLoading] = useState(false)
   const [uploadingBefore, setUploadingBefore] = useState(false)
   const [uploadingAfter, setUploadingAfter] = useState(false)
-  
+
   const beforeInputRef = useRef<HTMLInputElement>(null)
   const afterInputRef = useRef<HTMLInputElement>(null)
 
-  const isCompleted = type === 'workorder' 
+  const isCompleted = type === 'workorder'
     ? item.status === 'COMPLETE'
     : item.executionCompletedAt
 
@@ -55,10 +57,10 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
       formData.append('file', file)
       formData.append('type', type)
 
-      // Simular upload - em produção, usar endpoint real
+      // Simular upload - em producao, usar endpoint real
       // const res = await fetch('/api/upload', { method: 'POST', body: formData })
       // const data = await res.json()
-      
+
       // Por enquanto, criar URL local
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -80,7 +82,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
   const handleStartExecution = async () => {
     if (!beforePhoto) {
-      alert('Foto "antes" é obrigatória para iniciar')
+      alert('Foto "antes" e obrigatoria para iniciar')
       return
     }
 
@@ -97,11 +99,11 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
       })
 
       if (res.ok) {
-        alert('Execução iniciada com sucesso!')
+        alert('Execucao iniciada com sucesso!')
         setStep('complete')
       } else {
         const data = await res.json()
-        alert(data.error || 'Erro ao iniciar execução')
+        alert(data.error || 'Erro ao iniciar execucao')
       }
     } catch (error) {
       alert('Erro ao conectar ao servidor')
@@ -112,12 +114,12 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
   const handleCompleteExecution = async () => {
     if (!afterPhoto) {
-      alert('Foto "depois" é obrigatória para completar')
+      alert('Foto "depois" e obrigatoria para completar')
       return
     }
 
     if (!executionNotes.trim()) {
-      alert('Notas de execução são obrigatórias')
+      alert('Notas de execucao sao obrigatorias')
       return
     }
 
@@ -138,11 +140,11 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
       })
 
       if (res.ok) {
-        alert('Execução completada com sucesso!')
+        alert('Execucao completada com sucesso!')
         onSuccess()
       } else {
         const data = await res.json()
-        alert(data.error || 'Erro ao completar execução')
+        alert(data.error || 'Erro ao completar execucao')
       }
     } catch (error) {
       alert('Erro ao conectar ao servidor')
@@ -163,105 +165,94 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-[4px] ambient-ambient-shadow max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-6 border-b border-border flex justify-between items-center sticky top-0 bg-card z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">
-              {type === 'workorder' ? 'Ordem de Serviço' : 'Solicitação de Serviço'}
-            </h2>
-            {type === 'workorder' && item.internalId && (
-              <p className="text-sm text-muted-foreground font-mono">{item.internalId}</p>
-            )}
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-muted-foreground">
-            <Icon name="close" className="text-2xl" />
-          </button>
-        </div>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={type === 'workorder' ? 'Ordem de Servico' : 'Solicitacao de Servico'}
+      size="wide"
+    >
+      <div className="p-4 space-y-3">
+        {type === 'workorder' && item.internalId && (
+          <p className="text-sm font-mono text-muted-foreground">{item.internalId}</p>
+        )}
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Informações Básicas */}
+        <ModalSection title="Informacoes Basicas">
           <div>
             <h3 className="text-lg font-semibold text-foreground mb-2">{item.title}</h3>
             <div className="flex gap-2 items-center">
               {getPriorityBadge(item.priority)}
-              {isCompleted && <Badge className="bg-success-light0">Concluída</Badge>}
-              {isStarted && !isCompleted && <Badge className="bg-warning-light0">Em Execução</Badge>}
-              {!isStarted && <Badge className="bg-secondary0">Não Iniciada</Badge>}
+              {isCompleted && <Badge className="bg-success-light0">Concluida</Badge>}
+              {isStarted && !isCompleted && <Badge className="bg-warning-light0">Em Execucao</Badge>}
+              {!isStarted && <Badge className="bg-secondary0">Nao Iniciada</Badge>}
             </div>
           </div>
 
           {item.description && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                <Icon name="description" className="text-base inline mr-1" />
-                Descrição
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Descricao
               </label>
               <p className="text-foreground bg-surface p-4 rounded-[4px]">{item.description}</p>
             </div>
           )}
+        </ModalSection>
 
-          {/* Apenas visualização (completado) */}
-          {isCompleted && (
-            <div className="space-y-6">
-              {/* Fotos */}
-              <div className="grid grid-cols-2 gap-4">
-                {beforePhoto && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      <Icon name="photo_camera" className="text-base inline mr-1" />
-                      Foto ANTES
-                    </label>
-                    <img 
-                      src={beforePhoto} 
-                      alt="Antes" 
-                      className="w-full h-64 object-cover rounded-[4px] border-2 border-border"
-                    />
-                  </div>
-                )}
-                {afterPhoto && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      <Icon name="photo_camera" className="text-base inline mr-1" />
-                      Foto DEPOIS
-                    </label>
-                    <img 
-                      src={afterPhoto} 
-                      alt="Depois" 
-                      className="w-full h-64 object-cover rounded-[4px] border-2 border-border"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Notas */}
-              {executionNotes && (
+        {/* Apenas visualizacao (completado) */}
+        {isCompleted && (
+          <ModalSection title="Registro de Execucao">
+            {/* Fotos */}
+            <div className="grid grid-cols-2 gap-4">
+              {beforePhoto && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    <Icon name="description" className="text-base inline mr-1" />
-                    Notas de Execução
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Foto ANTES
                   </label>
-                  <p className="text-foreground bg-surface p-4 rounded-[4px] whitespace-pre-wrap">{executionNotes}</p>
+                  <img
+                    src={beforePhoto}
+                    alt="Antes"
+                    className="w-full h-64 object-cover rounded-[4px] border-2 border-border"
+                  />
+                </div>
+              )}
+              {afterPhoto && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Foto DEPOIS
+                  </label>
+                  <img
+                    src={afterPhoto}
+                    alt="Depois"
+                    className="w-full h-64 object-cover rounded-[4px] border-2 border-border"
+                  />
                 </div>
               )}
             </div>
-          )}
 
-          {/* Iniciar Execução */}
-          {!isCompleted && step === 'start' && (
+            {/* Notas */}
+            {executionNotes && (
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Notas de Execucao
+                </label>
+                <p className="text-foreground bg-surface p-4 rounded-[4px] whitespace-pre-wrap">{executionNotes}</p>
+              </div>
+            )}
+          </ModalSection>
+        )}
+
+        {/* Iniciar Execucao */}
+        {!isCompleted && step === 'start' && (
+          <ModalSection title="Iniciar Execucao">
             <div className="space-y-6 bg-primary/5 p-6 rounded-[4px]">
               <div className="text-center mb-4">
                 <Icon name="play_arrow" className="text-5xl mx-auto text-primary mb-2" />
-                <h4 className="text-lg font-semibold text-foreground">Iniciar Execução</h4>
-                <p className="text-sm text-muted-foreground">Tire uma foto do estado atual antes de começar</p>
+                <h4 className="text-lg font-semibold text-foreground">Iniciar Execucao</h4>
+                <p className="text-sm text-muted-foreground">Tire uma foto do estado atual antes de comecar</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  <Icon name="photo_camera" className="text-base inline mr-1" />
-                  Foto ANTES da Execução *
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Foto ANTES da Execucao *
                 </label>
                 <div className="border-2 border-dashed border-border rounded-[4px] p-6 text-center bg-card">
                   {beforePhoto ? (
@@ -292,7 +283,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
                           </>
                         )}
                       </Button>
-                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG até 10MB</p>
+                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG ate 10MB</p>
                     </div>
                   )}
                   <input
@@ -316,32 +307,33 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
                 {loading ? 'Iniciando...' : (
                   <>
                     <Icon name="play_arrow" className="text-base mr-2" />
-                    Iniciar Execução
+                    Iniciar Execucao
                   </>
                 )}
               </Button>
             </div>
-          )}
+          </ModalSection>
+        )}
 
-          {/* Completar Execução */}
-          {!isCompleted && step === 'complete' && (
+        {/* Completar Execucao */}
+        {!isCompleted && step === 'complete' && (
+          <ModalSection title="Completar Execucao">
             <div className="space-y-6 bg-success-light p-6 rounded-[4px]">
               <div className="text-center mb-4">
                 <Icon name="check_circle" className="text-5xl mx-auto text-success mb-2" />
-                <h4 className="text-lg font-semibold text-foreground">Completar Execução</h4>
+                <h4 className="text-lg font-semibold text-foreground">Completar Execucao</h4>
                 <p className="text-sm text-muted-foreground">Documente o trabalho realizado</p>
               </div>
 
               {/* Foto Antes (read-only) */}
               {beforePhoto && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    <Icon name="photo_camera" className="text-base inline mr-1" />
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Foto ANTES (registrada)
                   </label>
-                  <img 
-                    src={beforePhoto} 
-                    alt="Antes" 
+                  <img
+                    src={beforePhoto}
+                    alt="Antes"
                     className="max-h-48 mx-auto rounded-[4px] border-2 border-border"
                   />
                 </div>
@@ -349,9 +341,8 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
               {/* Foto Depois */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  <Icon name="photo_camera" className="text-base inline mr-1" />
-                  Foto DEPOIS da Execução *
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Foto DEPOIS da Execucao *
                 </label>
                 <div className="border-2 border-dashed border-border rounded-[4px] p-6 text-center bg-card">
                   {afterPhoto ? (
@@ -382,7 +373,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
                           </>
                         )}
                       </Button>
-                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG até 10MB</p>
+                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG ate 10MB</p>
                     </div>
                   )}
                   <input
@@ -400,18 +391,17 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
 
               {/* Notas */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  <Icon name="description" className="text-base inline mr-1" />
-                  Notas de Execução *
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Notas de Execucao *
                 </label>
                 <textarea
                   value={executionNotes}
                   onChange={(e) => setExecutionNotes(e.target.value)}
                   rows={6}
-                  className="w-full p-3 rounded-[4px] focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                  placeholder="Descreva o trabalho realizado, peças utilizadas, observações, etc..."
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Descreva o trabalho realizado, pecas utilizadas, observacoes, etc..."
                 />
-                <p className="text-xs text-muted-foreground mt-1">Seja o mais detalhado possível</p>
+                <p className="text-xs text-muted-foreground mt-1">Seja o mais detalhado possivel</p>
               </div>
 
               <Button
@@ -422,24 +412,27 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
                 {loading ? 'Finalizando...' : (
                   <>
                     <Icon name="check_circle" className="text-base mr-2" />
-                    Finalizar Execução
+                    Finalizar Execucao
                   </>
                 )}
               </Button>
             </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 border-t border-border flex justify-between items-center bg-surface">
-          <div className="text-sm text-muted-foreground">
-            Criada em: {formatDate(item.createdAt)}
-          </div>
-          <Button onClick={onClose} variant="outline">
-            {isCompleted ? 'Fechar' : 'Cancelar'}
-          </Button>
-        </div>
+          </ModalSection>
+        )}
       </div>
-    </div>
+
+      {/* Footer */}
+      <div className="flex gap-3 px-4 py-4 border-t border-border">
+        <Button onClick={onClose} variant="outline" className="flex-1">
+          {isCompleted ? 'Fechar' : 'Cancelar'}
+        </Button>
+        {!isCompleted && (
+          <Button className="flex-1" disabled>
+            <Icon name="info" className="text-base mr-2" />
+            Criada em: {formatDate(item.createdAt)}
+          </Button>
+        )}
+      </div>
+    </Modal>
   )
 }

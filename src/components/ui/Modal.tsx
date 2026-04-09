@@ -62,19 +62,19 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
 
   if (inPage) {
     return (
-      <div className="w-full bg-card rounded-[4px] ambient-ambient-shadow max-h-[85vh] flex flex-col">
+      <div className="h-full flex flex-col bg-card border-l border-border">
         {!hideHeader && (
-          <div className="flex items-center justify-between px-6 py-4">
-            <h2 className="font-headline text-xl font-bold text-card-foreground">{title}</h2>
+          <div className="flex-shrink-0 flex items-start justify-between p-4 border-b border-border">
+            <h2 className="text-xl font-bold text-foreground">{title}</h2>
             <button
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1 hover:bg-muted rounded transition-colors"
             >
-              <Icon name="close" className="text-xl" />
+              <Icon name="close" className="text-xl text-muted-foreground" />
             </button>
           </div>
         )}
-        <div className={`${hideHeader ? 'p-6 sm:p-8' : 'px-0 py-0'}`}>
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {children}
         </div>
       </div>

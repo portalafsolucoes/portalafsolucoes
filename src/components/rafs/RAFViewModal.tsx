@@ -241,8 +241,8 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false }: RAFViewMo
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 md:gap-3 pt-3 md:pt-4 border-t px-3 md:px-6 pb-3 md:pb-4">
-          <Button variant="outline" onClick={onClose} className="text-sm md:text-base">
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose} className="flex-1">
             Fechar
           </Button>
         </div>

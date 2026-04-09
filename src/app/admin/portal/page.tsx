@@ -738,7 +738,7 @@ export default function AdminPortalPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Ative ou desative os módulos disponíveis para esta empresa.
               </p>
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+              <div className="space-y-2">
                 {modules.map((mod) => (
                   <label
                     key={mod.slug}

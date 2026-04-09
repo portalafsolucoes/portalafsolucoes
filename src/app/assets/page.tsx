@@ -264,7 +264,7 @@ export default function AssetsPage() {
                 {/* Left Panel - Asset Tree ou Table baseado no viewMode */}
                 <div
                   className={`${
-                    selectedAsset && !isCreating ? 'w-1/2' : 'w-full'
+                    (selectedAsset || isCreating) ? 'w-1/2' : 'w-full'
                   } ${
                     viewMode === 'tree' ? 'border-r border-border' : ''
                   } transition-all overflow-hidden`}
@@ -298,8 +298,19 @@ export default function AssetsPage() {
                   </div>
                 </div>
 
-                {/* Right Panel - Edit, or Details */}
-                {(!isCreating && selectedAsset) && (
+                {/* Right Panel - Create, Edit, or Details */}
+                {isCreating && (
+                  <div className="w-1/2">
+                    <AssetCreateModal
+                      isOpen={true}
+                      onClose={handleCreateClose}
+                      onSuccess={handleCreateSuccess}
+                      parentAsset={parentAssetForNew}
+                      inPage
+                    />
+                  </div>
+                )}
+                {!isCreating && selectedAsset && (
                   <div className="w-1/2">
                     {selectedAsset && isEditingInPanel ? (
                       <AssetEditPanel
@@ -308,8 +319,8 @@ export default function AssetsPage() {
                         onSuccess={handleEditSuccess}
                       />
                     ) : selectedAsset ? (
-                      <AssetDetailPanel 
-                        asset={selectedAsset} 
+                      <AssetDetailPanel
+                        asset={selectedAsset}
                         onClose={() => {
                           setSelectedAsset(null)
                           setIsEditingInPanel(false)
@@ -362,47 +373,28 @@ export default function AssetsPage() {
 
       {/* Modals for Mobile */}
       {isMobile && selectedAsset && !isEditingInPanel && (
-        <div 
-          className="fixed top-16 left-0 right-0 bottom-0 bg-black/20 z-40 overflow-y-auto lg:left-64"
-          onClick={() => {
+        <AssetDetailModal
+          isOpen={true}
+          onClose={() => {
             setSelectedAsset(null)
             setIsEditingInPanel(false)
           }}
-        >
-          <div className="max-w-7xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-            <AssetDetailModal
-              isOpen={true}
-              onClose={() => {
-                setSelectedAsset(null)
-                setIsEditingInPanel(false)
-              }}
-              asset={selectedAsset}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              inPage={true}
-            />
-          </div>
-        </div>
+          asset={selectedAsset}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
 
       {isMobile && selectedAsset && isEditingInPanel && (
-        <div 
-          className="fixed top-16 left-0 right-0 bottom-0 bg-black/20 z-40 overflow-y-auto lg:left-64"
-          onClick={() => setIsEditingInPanel(false)}
-        >
-          <div className="max-w-7xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-            <AssetEditModal
-              isOpen={true}
-              onClose={() => setIsEditingInPanel(false)}
-              asset={selectedAsset}
-              onSuccess={handleEditSuccess}
-              inPage={true}
-            />
-          </div>
-        </div>
+        <AssetEditModal
+          isOpen={true}
+          onClose={() => setIsEditingInPanel(false)}
+          asset={selectedAsset}
+          onSuccess={handleEditSuccess}
+        />
       )}
 
-      {isCreating && (
+      {isMobile && isCreating && (
         <AssetCreateModal
           isOpen={true}
           onClose={handleCreateClose}

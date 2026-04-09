@@ -1,5 +1,6 @@
 'use client'
 
+import { Modal } from './Modal'
 import { Icon } from './Icon'
 import { useState } from 'react'
 
@@ -12,8 +13,6 @@ interface ImageViewerModalProps {
 
 export function ImageViewerModal({ isOpen, onClose, imageUrl, imageName }: ImageViewerModalProps) {
   const [zoom, setZoom] = useState(100)
-
-  if (!isOpen) return null
 
   const handleDownload = () => {
     window.open(imageUrl, '_blank')
@@ -28,16 +27,16 @@ export function ImageViewerModal({ isOpen, onClose, imageUrl, imageName }: Image
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/90 p-4"
-      onClick={onClose}
-    >
+    <Modal isOpen={isOpen} onClose={onClose} size="full" hideHeader noPadding>
       <div
-        className="relative max-w-7xl max-h-full flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className="flex flex-col h-full bg-on-surface/95"
+        onClick={onClose}
       >
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-on-surface/50 backdrop-blur-sm p-4 flex items-center justify-between rounded-t-[4px]">
+        <div
+          className="flex items-center justify-between p-4 bg-on-surface/50 backdrop-blur-sm flex-shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
           <h3 className="text-white font-headline font-bold truncate flex-1">
             {imageName || 'Imagem'}
           </h3>
@@ -78,7 +77,10 @@ export function ImageViewerModal({ isOpen, onClose, imageUrl, imageName }: Image
         </div>
 
         {/* Image */}
-        <div className="mt-16 overflow-auto max-h-[calc(100vh-8rem)] flex items-center justify-center">
+        <div
+          className="flex-1 overflow-auto flex items-center justify-center min-h-0"
+          onClick={(e) => e.stopPropagation()}
+        >
           <img
             src={imageUrl}
             alt={imageName || 'Imagem'}
@@ -88,12 +90,15 @@ export function ImageViewerModal({ isOpen, onClose, imageUrl, imageName }: Image
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 bg-on-surface/50 backdrop-blur-sm p-3 text-center rounded-b-[4px]">
-          <p className="text-white/70 text-sm">
+        <div
+          className="flex gap-3 px-4 py-4 border-t border-border bg-on-surface/50 backdrop-blur-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-white/70 text-sm flex-1 text-center">
             Clique fora da imagem para fechar
           </p>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

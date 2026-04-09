@@ -169,28 +169,28 @@ export default function PlansPage() {
         </div>
       </div>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Novo Plano de Manutenção">
-        <div className="space-y-4">
-          {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
-          {result && <div className="p-3 bg-success-light text-success-light-foreground rounded-[4px] text-sm">{result}</div>}
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Novo Plano de Manutenção" size="wide">
+        <div className="p-4 space-y-3">
+          {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
+          {result && <div className="p-3 bg-success/10 text-success rounded-[4px] text-sm">{result}</div>}
 
           <ModalSection title="Plano">
-            <div>
-              <label className="block text-sm font-medium mb-1">Descrição <span className="text-danger">*</span></label>
-              <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
-                placeholder="Ex: Plano Lubrificação Abril 2026"
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Data Início <span className="text-danger">*</span></label>
-                <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
-                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="col-span-2 md:col-span-3">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição <span className="text-danger">*</span></label>
+                <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
+                  placeholder="Ex: Plano Lubrificação Abril 2026"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Data Fim <span className="text-danger">*</span></label>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Início <span className="text-danger">*</span></label>
+                <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Fim <span className="text-danger">*</span></label>
                 <input type="date" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
-                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
             </div>
           </ModalSection>
@@ -198,14 +198,14 @@ export default function PlansPage() {
           <div className="p-3 bg-muted rounded-[4px] text-xs text-muted-foreground">
             Ao criar o plano, o sistema emitirá automaticamente Ordens de Serviço para os ativos com manutenção prevista dentro do período selecionado.
           </div>
+        </div>
 
-          <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              <Icon name="save" className="text-base mr-2" />
-              {saving ? 'Processando...' : 'Criar'}
-            </Button>
-          </div>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={() => setShowModal(false)} className="flex-1">Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
+            <Icon name="save" className="text-base mr-2" />
+            {saving ? 'Processando...' : 'Salvar'}
+          </Button>
         </div>
       </Modal>
     </PageContainer>

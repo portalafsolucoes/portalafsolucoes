@@ -32,6 +32,10 @@
 ## Regras Operacionais
 - Fazer apenas o solicitado e preservar o comportamento atual fora do escopo
 - Editar antes de reescrever; nao criar scripts, `README`s ou documentos extras sem necessidade explicita
+- Manter a raiz do repositorio limpa: apenas arquivos estruturais, entrypoints e configuracoes podem ficar no topo
+- Documentacao auxiliar, inventarios e notas operacionais devem ir para `docs/` em subpastas coerentes
+- Screenshots, evidencias, relatorios de auditoria e artefatos de validacao devem ir para `auditoria/`
+- Nunca deixar arquivos soltos de documentacao ou auditoria na raiz
 - Nao duplicar regra de negocio entre UI, API e banco; reutilizar a logica central de permissao
 - Seguir a ordem de leitura definida em `CONVENTIONS.md` antes de implementar mudancas relevantes
 - Sempre alinhar novas features com `docs/SPEC.md` e `.claude/rules/*.md`
@@ -49,6 +53,7 @@
 - `AGENTS.md` e o ponto de entrada para Codex e agentes genericos
 - `.github/copilot-instructions.md` e o ponto de entrada para GitHub Copilot
 - `docs/AI_SETUP.md` define o inventario canonico de MCPs e skills sem armazenar segredos no repositorio
+- Ao gerar documentacao ou auditorias com apoio de IA, usar sempre `docs/` e `auditoria/` em vez da raiz do projeto
 
 ## Modulos do Sistema
 - Hub: pagina inicial apos login com modulos disponiveis por empresa

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -180,90 +181,98 @@ export default function AssetMaintenancePlanPage() {
         </div>
       </div>
 
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Novo Plano do Bem" size="lg">
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-          {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Novo Plano do Bem" size="wide">
+        <div className="p-4 space-y-3">
+          {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Bem/Ativo <span className="text-danger">*</span></label>
-            <select value={formData.assetId || ''} onChange={e => setFormData({...formData, assetId: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-              <option value="">Selecione...</option>
-              {assets.map(a => <option key={a.id} value={a.id}>{a.tag ? `[${a.tag}] ` : ''}{a.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-danger">*</span></label>
-            <select value={formData.serviceTypeId || ''} onChange={e => setFormData({...formData, serviceTypeId: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-              <option value="">Selecione...</option>
-              {serviceTypes.map(st => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Área de Manutenção</label>
-              <select value={formData.maintenanceAreaId || ''} onChange={e => setFormData({...formData, maintenanceAreaId: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Selecione...</option>
-                {maintenanceAreas.map(ma => <option key={ma.id} value={ma.id}>{ma.name}</option>)}
-              </select>
+          <ModalSection title="Classificação">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Bem/Ativo <span className="text-danger">*</span></label>
+                <select value={formData.assetId || ''} onChange={e => setFormData({...formData, assetId: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Selecione...</option>
+                  {assets.map(a => <option key={a.id} value={a.id}>{a.tag ? `[${a.tag}] ` : ''}{a.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo de Serviço <span className="text-danger">*</span></label>
+                <select value={formData.serviceTypeId || ''} onChange={e => setFormData({...formData, serviceTypeId: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Selecione...</option>
+                  {serviceTypes.map(st => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área de Manutenção</label>
+                <select value={formData.maintenanceAreaId || ''} onChange={e => setFormData({...formData, maintenanceAreaId: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Selecione...</option>
+                  {maintenanceAreas.map(ma => <option key={ma.id} value={ma.id}>{ma.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo de Manutenção</label>
+                <select value={formData.maintenanceTypeId || ''} onChange={e => setFormData({...formData, maintenanceTypeId: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Selecione...</option>
+                  {maintenanceTypes.map(mt => <option key={mt.id} value={mt.id}>{mt.name}</option>)}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Tipo de Manutenção</label>
-              <select value={formData.maintenanceTypeId || ''} onChange={e => setFormData({...formData, maintenanceTypeId: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Selecione...</option>
-                {maintenanceTypes.map(mt => <option key={mt.id} value={mt.id}>{mt.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Nome da Manutenção</label>
-            <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Tempo</label>
-              <input type="number" value={formData.maintenanceTime || ''} onChange={e => setFormData({...formData, maintenanceTime: Number(e.target.value)})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Unidade</label>
-              <select value={formData.timeUnit || ''} onChange={e => setFormData({...formData, timeUnit: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Selecione...</option>
-                <option value="Dia(s)">Dia(s)</option>
-                <option value="Semana(s)">Semana(s)</option>
-                <option value="Mês(es)">Mês(es)</option>
-                <option value="Hora(s)">Hora(s)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Período</label>
-              <select value={formData.period || ''} onChange={e => setFormData({...formData, period: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Selecione...</option>
-                <option value="Repetitiva">Repetitiva</option>
-                <option value="Unica">Única</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Data da Última Manutenção</label>
-            <input type="date" value={formData.lastMaintenanceDate || ''} onChange={e => setFormData({...formData, lastMaintenanceDate: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={formData.isStandard || false} onChange={e => setFormData({...formData, isStandard: e.target.checked})} className="rounded border-border" />
-            <label className="text-sm">Manutenção Padrão?</label>
-          </div>
+          </ModalSection>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)} size="sm">Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving} size="sm">{saving ? 'Salvando...' : 'Criar'}</Button>
-          </div>
+          <ModalSection title="Manutenção">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="md:col-span-3">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nome da Manutenção</label>
+                <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tempo</label>
+                <input type="number" value={formData.maintenanceTime || ''} onChange={e => setFormData({...formData, maintenanceTime: Number(e.target.value)})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Unidade</label>
+                <select value={formData.timeUnit || ''} onChange={e => setFormData({...formData, timeUnit: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Selecione...</option>
+                  <option value="Dia(s)">Dia(s)</option>
+                  <option value="Semana(s)">Semana(s)</option>
+                  <option value="Mês(es)">Mês(es)</option>
+                  <option value="Hora(s)">Hora(s)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Período</label>
+                <select value={formData.period || ''} onChange={e => setFormData({...formData, period: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Selecione...</option>
+                  <option value="Repetitiva">Repetitiva</option>
+                  <option value="Unica">Única</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data da Última Manutenção</label>
+                <input type="date" value={formData.lastMaintenanceDate || ''} onChange={e => setFormData({...formData, lastMaintenanceDate: e.target.value})}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.isStandard || false} onChange={e => setFormData({...formData, isStandard: e.target.checked})} className="rounded border-border" />
+              <label className="text-sm">Manutenção Padrão?</label>
+            </div>
+          </ModalSection>
+        </div>
+
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1">Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
+            <Icon name="save" className="text-base mr-2" />
+            {saving ? 'Salvando...' : 'Salvar'}
+          </Button>
         </div>
       </Modal>
     </PageContainer>

@@ -321,7 +321,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             <PanelSection title="Identificação">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName-in-page" className="block text-sm font-medium text-foreground mb-1">
+                  <label htmlFor="firstName-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Nome <span className="text-danger">*</span>
                   </label>
                   <input
@@ -335,7 +335,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastName-in-page" className="block text-sm font-medium text-foreground mb-1">
+                  <label htmlFor="lastName-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Sobrenome <span className="text-danger">*</span>
                   </label>
                   <input
@@ -352,7 +352,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="email-in-page" className="block text-sm font-medium text-foreground mb-1">
+                  <label htmlFor="email-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Email <span className="text-danger">*</span>
                   </label>
                   <input
@@ -366,7 +366,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   />
                 </div>
                 <div>
-                  <label htmlFor="password-in-page" className="block text-sm font-medium text-foreground mb-1">
+                  <label htmlFor="password-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-danger">*</span>}
                   </label>
                   <input
@@ -386,7 +386,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             <PanelSection title="Função e Acesso">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="role-in-page" className="block text-sm font-medium text-foreground mb-1">
+                  <label htmlFor="role-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Papel <span className="text-danger">*</span>
                   </label>
                   <select
@@ -407,7 +407,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="rate-in-page" className="block text-sm font-medium text-foreground mb-1">
+                  <label htmlFor="rate-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Taxa por Hora (R$)
                   </label>
                   <input
@@ -424,7 +424,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
               </div>
 
               <div>
-                <label htmlFor="locationId-in-page" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="locationId-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Localização
                 </label>
                 <select
@@ -444,7 +444,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
               </div>
 
               <div>
-                <label htmlFor="calendarId-in-page" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="calendarId-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Calendário
                 </label>
                 <select
@@ -467,7 +467,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             <PanelSection title="Unidades de Acesso">
               {units.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Unidades de Acesso
                   </label>
                   <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
@@ -520,7 +520,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             </Button>
             <Button type="submit" disabled={saving} className="flex-1">
               <Icon name="save" className="text-base mr-2" />
-              {saving ? 'Salvando...' : 'Salvar Alterações'}
+              {saving ? 'Salvando...' : userId ? 'Salvar Alterações' : 'Salvar'}
             </Button>
           </div>
         </form>
@@ -535,7 +535,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Identificação">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="firstName" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Nome <span className="text-danger">*</span>
                 </label>
                 <input
@@ -549,7 +549,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="lastName" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Sobrenome <span className="text-danger">*</span>
                 </label>
                 <input
@@ -566,7 +566,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Email <span className="text-danger">*</span>
                 </label>
                 <input
@@ -580,7 +580,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="password" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-danger">*</span>}
                 </label>
                 <input
@@ -600,7 +600,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Função e Acesso">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="role" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Papel <span className="text-danger">*</span>
                 </label>
                 <select
@@ -621,7 +621,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 </select>
               </div>
               <div>
-                <label htmlFor="rate" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="rate" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Taxa por Hora (R$)
                 </label>
                 <input
@@ -638,7 +638,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             </div>
 
             <div>
-              <label htmlFor="locationId" className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="locationId" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Localização
               </label>
               <select
@@ -658,7 +658,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             </div>
 
             <div>
-              <label htmlFor="calendarId" className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="calendarId" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Calendário
               </label>
               <select
@@ -681,7 +681,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Unidades de Acesso">
             {units.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Unidades de Acesso
                 </label>
                 <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
@@ -728,13 +728,13 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           </ModalSection>
         </div>
 
-        <div className="flex gap-3 px-6 py-4 border-t border-border">
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
           <Button type="submit" disabled={saving} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
+            {saving ? 'Salvando...' : userId ? 'Salvar Alterações' : 'Salvar'}
           </Button>
         </div>
       </form>

@@ -10,9 +10,10 @@ interface RAFFormModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  inPage?: boolean
 }
 
-export function RAFFormModal({ isOpen, onClose, onSuccess }: RAFFormModalProps) {
+export function RAFFormModal({ isOpen, onClose, onSuccess, inPage = false }: RAFFormModalProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     rafNumber: '',
@@ -72,7 +73,7 @@ export function RAFFormModal({ isOpen, onClose, onSuccess }: RAFFormModalProps) 
   const inputClass = "w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Relatório de Análise de Falha (RAF)">
+    <Modal isOpen={isOpen} onClose={onClose} title="Relatório de Análise de Falha (RAF)" inPage={inPage}>
       <form onSubmit={handleSubmit}>
         <div className="p-4 space-y-3">
 
@@ -206,13 +207,13 @@ export function RAFFormModal({ isOpen, onClose, onSuccess }: RAFFormModalProps) 
 
         </div>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="flex-1">
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {loading ? 'Salvando...' : 'Criar'}
+            {loading ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>
       </form>

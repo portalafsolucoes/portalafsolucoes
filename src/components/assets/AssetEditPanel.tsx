@@ -443,7 +443,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         {/* === CLASSIFICAÇÃO === */}
         <Section title="Classificação" defaultOpen={true}>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Ativo Pai</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Ativo Pai</label>
             <select value={formData.parentAssetId} onChange={(e) => updateField('parentAssetId', e.target.value)} className={selectClass}>
               <option value="">Nenhum (Ativo Raiz)</option>
               {assets.filter(a => !a.parentAssetId && a.id !== asset.id).map((a) => (
@@ -453,7 +453,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Família</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Família</label>
               <select value={formData.familyId} onChange={(e) => { updateField('familyId', e.target.value); updateField('familyModelId', '') }} className={selectClass}>
                 <option value="">Selecione</option>
                 {families.map((f: any) => (
@@ -462,7 +462,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Modelo</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modelo</label>
               <select value={formData.familyModelId} onChange={(e) => updateField('familyModelId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {filteredModels.map((m: any) => (
@@ -473,7 +473,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Prioridade</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Prioridade</label>
               <select value={formData.assetPriority} onChange={(e) => updateField('assetPriority', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 <option value="AAA">AAA - Altíssima</option>
@@ -485,7 +485,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Proprietário</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Proprietário</label>
               <select value={formData.ownershipType} onChange={(e) => updateField('ownershipType', e.target.value)} className={selectClass}>
                 <option value="PROPRIO">Próprio</option>
                 <option value="TERCEIRO">Terceiro</option>
@@ -498,11 +498,11 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         <Section title="Localização e Organização" defaultOpen={false}>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Unidade</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Unidade</label>
               <input type="text" value={unitName} disabled className={`${selectClass} opacity-70 cursor-not-allowed`} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Área</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área</label>
               <select value={formData.areaId} onChange={(e) => updateField('areaId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {filteredAreas.map((a: any) => (<option key={a.id} value={a.id}>{a.name}</option>))}
@@ -511,21 +511,21 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Centro de Trabalho</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro de Trabalho</label>
               <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {filteredWorkCenters.map((wc: any) => (<option key={wc.id} value={wc.id}>{wc.name}</option>))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Centro de Custo</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro de Custo</label>
               <select value={formData.costCenterId} onChange={(e) => updateField('costCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {costCenters.map((cc: any) => (<option key={cc.id} value={cc.id}>{cc.code ? `${cc.code} - ${cc.name}` : cc.name}</option>))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Posição</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Posição</label>
               <select value={formData.positionId} onChange={(e) => updateField('positionId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {positions.map((p: any) => (<option key={p.id} value={p.id}>{p.name}</option>))}
@@ -533,7 +533,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Turno</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Turno</label>
             <select value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} className={selectClass}>
               <option value="">Selecione</option>
               {calendars.map((cal: any) => (
@@ -571,7 +571,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           <div className="grid grid-cols-2 gap-3">
             <Input label="Vida Útil (valor)" value={formData.lifeValue} onChange={(e) => updateField('lifeValue', e.target.value)} placeholder="0" type="number" />
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Vida Útil (unidade)</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Vida Útil (unidade)</label>
               <select value={formData.lifeUnit} onChange={(e) => updateField('lifeUnit', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 <option value="HORAS">Horas</option>
@@ -652,7 +652,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Gravidade (G) - Impacto se falhar</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Gravidade (G) - Impacto se falhar</label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutGravity', value)}
@@ -666,7 +666,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Urgência (U) - Tempo disponível para resolver</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Urgência (U) - Tempo disponível para resolver</label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutUrgency', value)}
@@ -680,7 +680,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Tendência (T) - Piora se não tratado</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tendência (T) - Piora se não tratado</label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutTendency', value)}
@@ -709,7 +709,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         <Section title="Status" defaultOpen={false}>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Situação de Manutenção</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Situação de Manutenção</label>
               <select value={formData.maintenanceStatus} onChange={(e) => updateField('maintenanceStatus', e.target.value)} className={selectClass}>
                 <option value="ACTIVE">Ativo</option>
                 <option value="INACTIVE">Inativo</option>
@@ -723,7 +723,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         {/* === IMAGENS E ANEXOS === */}
         <Section title="Imagens e Anexos" defaultOpen={false}>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Foto Principal do Ativo</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Foto Principal do Ativo</label>
             {mainImagePreview ? (
               <div className="relative">
                 <img src={mainImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-[4px]" />
@@ -742,7 +742,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
 
           {existingFiles.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Arquivos Existentes ({existingFiles.length}/10)</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Arquivos Existentes ({existingFiles.length}/10)</label>
               <div className="space-y-1">
                 {existingFiles.map((file) => (
                   <div key={file.id} className="flex items-center justify-between p-2 bg-secondary rounded">
@@ -760,7 +760,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           )}
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Novos Anexos (até {10 - existingFiles.length})</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Novos Anexos (até {10 - existingFiles.length})</label>
             <input ref={attachmentsInputRef} type="file" multiple onChange={handleAttachmentsChange} className="hidden" disabled={existingFiles.length + attachments.length >= 10} />
             <div onClick={() => attachmentsInputRef.current?.click()} className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-input rounded-[4px] cursor-pointer hover:bg-secondary">
               <Icon name="upload" className="text-2xl text-muted-foreground mb-1" />

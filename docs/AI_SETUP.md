@@ -3,6 +3,7 @@
 ## Objetivo
 - Manter Claude Code, Codex e GitHub Copilot orientados pelo mesmo conjunto de regras e pelo mesmo inventario funcional de tooling
 - Evitar segredos, tokens e caminhos pessoais no repositorio
+- Garantir que agentes mantenham a raiz do projeto limpa, usando `docs/` para documentacao auxiliar e `auditoria/` para evidencias e relatorios
 
 ## Inventario Canonico de Skills
 - `ui-ux-pro-max`
@@ -78,3 +79,4 @@ url = "https://stitch.googleapis.com/mcp"
 ## Observacoes
 - Se houver um MCP local adicional para acesso direto a banco deste projeto, mante-lo como extensao user-scope e documentar a motivacao local sem commitar credenciais
 - Ao mudar o inventario de MCPs ou skills, atualizar este arquivo, `CONVENTIONS.md`, `AGENTS.md` e `.github/copilot-instructions.md`
+- Ao gerar documentacao, screenshots ou relatorios com apoio de IA, nunca salvar arquivos soltos na raiz do repositorio

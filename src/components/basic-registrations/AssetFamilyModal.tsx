@@ -246,13 +246,13 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
           )}
         </ModalSection>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
+            {saving ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Salvar')}
           </Button>
         </div>
       </div>

@@ -381,20 +381,20 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
           </ModalSection>
         </div>
 
-        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
             Cancelar
           </Button>
           <Button
             type="submit"
             disabled={!action || loading}
-            className={
+            className={`flex-1 ${
               action === 'approve'
                 ? 'bg-success text-white hover:bg-green-700'
                 : action === 'reject'
                 ? 'bg-danger text-white hover:bg-red-700'
                 : ''
-            }
+            }`}
           >
             {loading ? 'Processando...' : action === 'approve' ? 'Confirmar Aprovação' : 'Confirmar Rejeição'}
           </Button>

@@ -4,6 +4,9 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { ExportButton } from '@/components/ui/ExportButton'
 
 
@@ -528,31 +531,18 @@ export default function CriticalityPage() {
       </div>
 
       {/* Modal de Edição GUT */}
-      {editingAsset && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={closeGutEditor}>
-          <div 
-            className="bg-card rounded-[4px] ambient-shadow max-w-md w-full mx-4 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header do Modal */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Editar Matriz GUT</h3>
-                <p className="text-sm text-muted-foreground">{editingAsset.name}</p>
-              </div>
-              <button
-                onClick={closeGutEditor}
-                className="p-1 hover:bg-muted rounded transition-colors"
-              >
-                <Icon name="close" className="text-xl text-muted-foreground" />
-              </button>
-            </div>
-
-            {/* Conteúdo */}
-            <div className="p-4 space-y-4">
+      <Modal
+        isOpen={!!editingAsset}
+        onClose={closeGutEditor}
+        title={`Editar Matriz GUT — ${editingAsset?.name || ''}`}
+        size="md"
+      >
+        <div className="p-4 space-y-3">
+          <ModalSection title="Valores GUT">
+            <div className="space-y-4">
               {/* Gravidade */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Gravidade (G) - Impacto se falhar
                 </label>
                 <div className="flex items-center gap-2">
@@ -582,7 +572,7 @@ export default function CriticalityPage() {
 
               {/* Urgência */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Urgência (U) - Tempo para resolver
                 </label>
                 <div className="flex items-center gap-2">
@@ -612,7 +602,7 @@ export default function CriticalityPage() {
 
               {/* Tendência */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Tendência (T) - Piora se não tratado
                 </label>
                 <div className="flex items-center gap-2">
@@ -655,31 +645,19 @@ export default function CriticalityPage() {
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="flex gap-3 p-4 border-t border-border">
-              <button
-                onClick={closeGutEditor}
-                className="flex-1 px-4 py-2 rounded-[4px] hover:bg-muted transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={saveGutValues}
-                disabled={saving}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {saving ? (
-                  <Icon name="refresh" className="text-base animate-spin" />
-                ) : (
-                  <Icon name="save" className="text-base" />
-                )}
-                {saving ? 'Salvando...' : 'Salvar'}
-              </button>
-            </div>
-          </div>
+          </ModalSection>
         </div>
-      )}
+
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={closeGutEditor} className="flex-1">
+            Cancelar
+          </Button>
+          <Button onClick={saveGutValues} disabled={saving} className="flex-1">
+            <Icon name="save" className="text-base mr-2" />
+            {saving ? 'Salvando...' : 'Salvar'}
+          </Button>
+        </div>
+      </Modal>
     </PageContainer>
   )
 }

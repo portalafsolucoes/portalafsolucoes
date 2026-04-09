@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/hooks/useAuth'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
 
@@ -432,7 +433,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         {/* === SEÇÃO 2: CLASSIFICAÇÃO === */}
         <Section title="Classificação" defaultOpen={true}>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Ativo Pai {parentAsset && <span className="text-xs text-muted-foreground">(via menu contexto)</span>}
             </label>
             <select
@@ -452,7 +453,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">Família</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Família</label>
               <select value={formData.familyId} onChange={(e) => handleFamilyChange(e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {families.map((f: any) => (
@@ -461,7 +462,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">Modelo</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modelo</label>
               <select value={formData.familyModelId} onChange={(e) => updateField('familyModelId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {filteredModels.map((m: any) => (
@@ -472,7 +473,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Prioridade</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Prioridade</label>
               <select value={formData.assetPriority} onChange={(e) => updateField('assetPriority', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 <option value="AAA">AAA - Altíssima</option>
@@ -484,7 +485,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Proprietário</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Proprietário</label>
               <select value={formData.ownershipType} onChange={(e) => updateField('ownershipType', e.target.value)} className={selectClass}>
                 <option value="PROPRIO">Próprio</option>
                 <option value="TERCEIRO">Terceiro</option>
@@ -497,11 +498,11 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         <Section title="Localização e Organização" defaultOpen={false}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Unidade</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Unidade</label>
               <input type="text" value={unitName} disabled className={`${selectClass} opacity-70 cursor-not-allowed`} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Área</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área</label>
               <select value={formData.areaId} onChange={(e) => updateField('areaId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {filteredAreas.map((a: any) => (
@@ -510,7 +511,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Centro de Trabalho</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro de Trabalho</label>
               <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {filteredWorkCenters.map((wc: any) => (
@@ -519,7 +520,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Centro de Custo</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro de Custo</label>
               <select value={formData.costCenterId} onChange={(e) => updateField('costCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {costCenters.map((cc: any) => (
@@ -528,7 +529,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Posição</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Posição</label>
               <select value={formData.positionId} onChange={(e) => updateField('positionId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 {positions.map((p: any) => (
@@ -538,7 +539,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Turno</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Turno</label>
             <select value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} className={selectClass}>
               <option value="">Selecione</option>
               {calendars.map((cal: any) => (
@@ -630,7 +631,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               type="number"
             />
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Vida Útil (unidade)</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Vida Útil (unidade)</label>
               <select value={formData.lifeUnit} onChange={(e) => updateField('lifeUnit', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
                 <option value="HORAS">Horas</option>
@@ -711,7 +712,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Gravidade (G) - Impacto se falhar</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Gravidade (G) - Impacto se falhar</label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutGravity', value)}
@@ -725,7 +726,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Urgência (U) - Tempo disponível para resolver</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Urgência (U) - Tempo disponível para resolver</label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutUrgency', value)}
@@ -739,7 +740,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Tendência (T) - Piora se não tratado</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tendência (T) - Piora se não tratado</label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button key={value} type="button" onClick={() => updateField('gutTendency', value)}
@@ -768,7 +769,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         <Section title="Status" defaultOpen={false}>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Situação de Manutenção</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Situação de Manutenção</label>
               <select value={formData.maintenanceStatus} onChange={(e) => updateField('maintenanceStatus', e.target.value)} className={selectClass}>
                 <option value="ACTIVE">Ativo</option>
                 <option value="INACTIVE">Inativo</option>
@@ -792,7 +793,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         {/* === SEÇÃO 7: IMAGENS E ANEXOS === */}
         <Section title="Imagens e Anexos" defaultOpen={false}>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Foto Principal do Ativo</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Foto Principal do Ativo</label>
             {mainImagePreview ? (
               <div className="relative">
                 <img src={mainImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-[4px]" />
@@ -813,7 +814,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Arquivos Anexos (até 10)</label>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Arquivos Anexos (até 10)</label>
             <input ref={attachmentsInputRef} type="file" multiple onChange={handleAttachmentsChange} className="hidden" disabled={attachments.length >= 10} />
             <div onClick={() => attachmentsInputRef.current?.click()} className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-input rounded-[4px] cursor-pointer hover:bg-secondary">
               <Icon name="upload" className="text-2xl text-muted-foreground mb-1" />
@@ -851,33 +852,28 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
       </form>
 
       {/* Dialog: Pré-preenchimento via Bem Padrão */}
-      {standardAssetDialog.open && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-50 rounded-full">
-                <Icon name="auto_fix_high" className="text-2xl text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground">Bem Padrão encontrado</h3>
-                <p className="text-sm text-muted-foreground">Existe um cadastro padrão para esta família.</p>
-              </div>
+      <Modal isOpen={standardAssetDialog.open} onClose={dismissStandardAsset} title="Bem Padrão encontrado" size="sm">
+        <div className="p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-muted rounded-full">
+              <Icon name="auto_fix_high" className="text-2xl text-muted-foreground" />
             </div>
-            <p className="text-sm text-foreground mb-6">
-              Deseja pré-preencher os campos do cadastro com os dados padrão? Você poderá alterar qualquer campo após o preenchimento.
-            </p>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={dismissStandardAsset} className="flex-1">
-                Não, preencher manualmente
-              </Button>
-              <Button type="button" onClick={applyStandardAsset} className="flex-1">
-                <Icon name="auto_fix_high" className="text-base mr-2" />
-                Sim, pré-preencher
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground">Existe um cadastro padrão para esta família.</p>
           </div>
+          <p className="text-sm text-foreground mb-6">
+            Deseja pré-preencher os campos do cadastro com os dados padrão? Você poderá alterar qualquer campo após o preenchimento.
+          </p>
         </div>
-      )}
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button type="button" variant="outline" onClick={dismissStandardAsset} className="flex-1">
+            Não, preencher manualmente
+          </Button>
+          <Button type="button" onClick={applyStandardAsset} className="flex-1">
+            <Icon name="auto_fix_high" className="text-base mr-2" />
+            Sim, pré-preencher
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

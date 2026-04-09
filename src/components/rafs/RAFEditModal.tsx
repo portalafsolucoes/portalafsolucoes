@@ -155,25 +155,17 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" hideHeader inPage={inPage}>
-      <div className="flex flex-col h-full max-h-[88vh]">
-        {/* Header */}
-        <div className="flex justify-between items-center pb-4 border-b px-4 md:px-6 pt-4">
-          <h2 className="text-lg md:text-2xl font-bold text-foreground">Editar RAF</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-[4px] transition-colors"
-          >
-            <Icon name="close" className="text-2xl text-muted-foreground" />
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="w-8 h-8 border-4 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
+    <Modal isOpen={isOpen} onClose={onClose} title="Editar RAF" size="xl" inPage={inPage}>
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+            <p className="mt-2 text-muted-foreground">Carregando...</p>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto bg-card p-3 md:p-6">
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="p-4 space-y-3">
             <div className="space-y-4 md:space-y-6">
               {/* Informações Básicas */}
               <div className="mb-4 md:mb-6">
@@ -183,7 +175,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                 <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Número RAF *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Número RAF *</label>
                     <input
                       type="text"
                       required
@@ -194,7 +186,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Área *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área *</label>
                     <input
                       type="text"
                       required
@@ -205,7 +197,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Equipamento *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Equipamento *</label>
                     <input
                       type="text"
                       required
@@ -216,7 +208,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Data *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data *</label>
                     <input
                       type="date"
                       required
@@ -227,7 +219,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Hora *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hora *</label>
                     <input
                       type="time"
                       required
@@ -238,7 +230,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Operador *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Operador *</label>
                     <input
                       type="text"
                       required
@@ -249,7 +241,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Produção Perdida (ton)</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Produção Perdida (ton)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -260,7 +252,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Tipo de Falha *</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo de Falha *</label>
                     <select
                       required
                       value={formData.failureType}
@@ -512,19 +504,19 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                 </div>
               </div>
             </div>
-          </form>
-        )}
+          </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 pt-4 border-t px-4 md:px-6 pb-4">
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={(e: any) => handleSubmit(e)} disabled={saving || loading}>
-            {saving ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </div>
-      </div>
+          <div className="flex gap-3 px-4 py-4 border-t border-border">
+            <Button type="button" variant="outline" onClick={onClose} disabled={saving} className="flex-1">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving || loading} className="flex-1">
+              <Icon name="save" className="text-base mr-2" />
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </div>
+        </form>
+      )}
     </Modal>
   )
 }

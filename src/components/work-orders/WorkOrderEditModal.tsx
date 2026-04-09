@@ -12,13 +12,15 @@ interface WorkOrderEditModalProps {
   onClose: () => void
   workOrderId: string
   onSuccess: () => void
+  inPage?: boolean
 }
 
 export function WorkOrderEditModal({
   isOpen,
   onClose,
   workOrderId,
-  onSuccess
+  onSuccess,
+  inPage = false
 }: WorkOrderEditModalProps) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -155,7 +157,7 @@ export function WorkOrderEditModal({
 
   if (loading) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Editar Ordem de Serviço">
+      <Modal isOpen={isOpen} onClose={onClose} title="Editar Ordem de Serviço" inPage={inPage}>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-on-surface-variant"></div>
         </div>
@@ -165,7 +167,7 @@ export function WorkOrderEditModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Ordem de Serviço">
-      <form onSubmit={handleSubmit} className="p-4 space-y-3 overflow-y-auto">
+      <form onSubmit={handleSubmit} className="p-4 space-y-3">
         <ModalSection title="Identificação">
           <div>
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Título *</label>
@@ -323,13 +325,13 @@ export function WorkOrderEditModal({
           </div>
         </ModalSection>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button type="button" variant="outline" onClick={onClose} disabled={saving} className="flex-1">
             Cancelar
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : 'Salvar'}
+            {saving ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
         </div>
       </form>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
 
 interface Asset {
   id?: string
@@ -157,37 +158,16 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
     }
   }
 
-  if (!isOpen) return null
+  const modalTitle = editAsset ? 'Editar Ativo' : parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Cadastrar novo Ativo'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-end">
-      {/* Overlay */}
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-50" 
-        onClick={onClose}
-      />
-      
-      {/* Panel */}
-      <div className="relative w-full max-w-2xl h-full bg-card ambient-ambient-shadow overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-xl font-bold text-foreground">
-            {editAsset ? 'Editar Ativo' : parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Cadastrar novo Ativo'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-full transition-colors"
-          >
-            <Icon name="close" className="text-xl text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="lg">
+      <form onSubmit={handleSubmit}>
+        <div className="p-4 space-y-4">
           {/* Parent Asset Info */}
           {parentAsset && (
-            <div className="bg-primary/5 border border-blue-200 rounded-[4px] p-4">
-              <p className="text-sm text-blue-900">
+            <div className="bg-muted/50 border border-border rounded-[4px] p-4">
+              <p className="text-sm text-foreground">
                 <strong>Ativo Pai:</strong> {parentAsset.name}
               </p>
             </div>
@@ -207,14 +187,14 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Descrição
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Adicione mais informações"
             />
           </div>
@@ -222,13 +202,13 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
           {/* Ativo ou Local */}
           {!parentAsset && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Localização
               </label>
               <select
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Selecione uma localização</option>
                 {locations.map((loc) => (
@@ -241,7 +221,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
           )}
 
           {/* Código de Barras e Custo */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Código de Barras"
               value={formData.barCode}
@@ -260,13 +240,13 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
 
           {/* Responsável */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Responsável
             </label>
             <select
               value={formData.primaryUserId}
               onChange={(e) => setFormData({ ...formData, primaryUserId: e.target.value })}
-              className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Selecione um Responsável</option>
               {users.map((user) => (
@@ -278,15 +258,15 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
           </div>
 
           {/* Criticidade e Área */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="OPERATIONAL">Operacional</option>
                 <option value="DOWN">Parado</option>
@@ -305,10 +285,10 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
 
           {/* Adicionar Imagem */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Adicionar Imagem do Ativo
             </label>
-            <div className="border-2 border-dashed border-input rounded-[4px] p-8 text-center hover:border-primary transition-colors cursor-pointer">
+            <div className="border-2 border-dashed border-input rounded-[4px] p-8 text-center hover:border-border transition-colors cursor-pointer">
               <Icon name="image" className="text-5xl text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">
                 Clique para adicionar ou arraste uma imagem
@@ -316,27 +296,28 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
               <input type="file" className="hidden" accept="image/*" />
             </div>
           </div>
+        </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-            >
-              {loading ? 'Salvando...' : editAsset ? 'Salvar Alterações' : 'Criar Ativo'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Footer */}
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="flex-1"
+          >
+            <Icon name="save" className="text-base mr-2" />
+            {loading ? 'Salvando...' : editAsset ? 'Salvar Alterações' : 'Criar Ativo'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }

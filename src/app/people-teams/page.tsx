@@ -276,7 +276,7 @@ export default function PeopleTeamsPage() {
     activeTab === 'people'
       ? 'Gestao de pessoas e equipamentos'
       : 'Gestao de equipes e alocacoes operacionais'
-  const showPeopleSidePanel = !isMobile && !!selectedUserId
+  const showPeopleSidePanel = !isMobile && (!!selectedUserId || showNewUserModal)
   const isTableSplitView = showPeopleSidePanel && viewMode === 'table'
 
   if (!user || !hasPermission(user, 'people-teams', 'view')) {
@@ -361,7 +361,7 @@ export default function PeopleTeamsPage() {
                   <ExportButton data={filteredUsers} entity="users" />
 
                   {canCreate('people-teams') && (
-                    <Button onClick={() => setShowNewUserModal(true)} className="whitespace-nowrap">
+                    <Button onClick={() => { setSelectedUserId(null); setShowEditUserModal(false); setShowNewUserModal(true) }} className="whitespace-nowrap">
                       <Icon name="add" className="mr-2 text-base" />
                       Adicionar
                     </Button>
@@ -638,9 +638,16 @@ export default function PeopleTeamsPage() {
                 )}
               </div>
 
-              {!isMobile && selectedUserId && (
+              {!isMobile && (selectedUserId || showNewUserModal) && (
                 <div className="w-1/2 min-w-0">
-                  {showEditUserModal ? (
+                  {showNewUserModal ? (
+                    <PersonFormModal
+                      isOpen={showNewUserModal}
+                      onClose={handleCloseModals}
+                      onSuccess={handleSuccess}
+                      inPage
+                    />
+                  ) : showEditUserModal ? (
                     <PersonFormModal
                       isOpen={showEditUserModal}
                       onClose={handleCloseModals}
@@ -652,7 +659,7 @@ export default function PeopleTeamsPage() {
                     <PersonDetailModal
                       isOpen={!!selectedUserId}
                       onClose={handleCloseModals}
-                      userId={selectedUserId}
+                      userId={selectedUserId!}
                       onEdit={canEdit('people-teams') ? handleEditUser : () => {}}
                       onDelete={canDelete('people-teams') ? handleDelete : () => {}}
                       inPage
@@ -741,7 +748,7 @@ export default function PeopleTeamsPage() {
         />
       )}
 
-      {showNewUserModal && canCreate('people-teams') && (
+      {isMobile && showNewUserModal && canCreate('people-teams') && (
         <PersonFormModal
           isOpen={showNewUserModal}
           onClose={handleCloseModals}

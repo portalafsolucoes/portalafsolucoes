@@ -10,6 +10,7 @@ interface FinalizeModalProps {
   onClose: () => void
   workOrder: any
   onFinalized: () => void
+  inPage?: boolean
 }
 
 interface ExecutionResource {
@@ -63,7 +64,7 @@ interface CalendarDetail {
   efficiency: string
 }
 
-export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized }: FinalizeModalProps) {
+export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized, inPage = false }: FinalizeModalProps) {
   const [resources, setResources] = useState<ExecutionResource[]>([{
     memberName: '', quantity: 1, hours: 0,
     startDate: '', startTime: '', endDate: '', endTime: '', observation: '',
@@ -308,9 +309,9 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   if (!workOrder) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Finalizar OS: ${workOrder.title}`} size="xl">
-      <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-        {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
+    <Modal isOpen={isOpen} onClose={onClose} title={`Finalizar OS: ${workOrder.title}`} size="wide" inPage={inPage}>
+      <div className="p-4 space-y-3">
+        {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
 
         {/* Info da OS */}
         <div className="p-3 bg-muted rounded-[4px] text-sm">
@@ -536,7 +537,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
 
         {/* Observação geral */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Observação Geral</label>
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Observação Geral</label>
           <textarea value={executionNotes} onChange={e => setExecutionNotes(e.target.value)}
             rows={3} className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Notas sobre a execução..." />
@@ -568,9 +569,9 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         </div>
 
         {/* Botões */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
-          <Button variant="outline" onClick={onClose} size="sm">Cancelar</Button>
-          <Button onClick={handleFinalize} disabled={saving} size="sm">
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button onClick={handleFinalize} disabled={saving} className="flex-1">
             {saving ? 'Finalizando...' : 'Finalizar OS'}
           </Button>
         </div>

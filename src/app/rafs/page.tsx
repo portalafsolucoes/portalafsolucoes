@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 
 import { formatDate } from '@/lib/utils'
 import { RAFFormModal } from '@/components/rafs/RAFFormModal'
@@ -55,6 +56,7 @@ interface RAF {
 export default function RAFsPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const isMobile = useIsMobile()
   const [rafs, setRafs] = useState<RAF[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -65,10 +67,12 @@ export default function RAFsPage() {
   const [enableAreaFilter, setEnableAreaFilter] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [rafToDelete, setRafToDelete] = useState<string | null>(null)
-  const [showViewModal, setShowViewModal] = useState(false)
   const [selectedRAF, setSelectedRAF] = useState<RAF | null>(null)
+  const [showMobileViewModal, setShowMobileViewModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [rafToEdit, setRafToEdit] = useState<string | null>(null)
+
+  const showSidePanel = !isMobile && (!!selectedRAF || showEditModal || showModal)
 
   const hasAccess = !!user && hasPermission(user, 'rafs', 'view')
 
@@ -99,8 +103,13 @@ export default function RAFsPage() {
       const res = await fetch(`/api/rafs/${id}`)
       const data = await res.json()
       if (res.ok) {
+        setShowEditModal(false)
+        setRafToEdit(null)
+        setShowModal(false)
         setSelectedRAF(data.data)
-        setShowViewModal(true)
+        if (isMobile) {
+          setShowMobileViewModal(true)
+        }
       } else {
         alert(data.error || 'Erro ao carregar RAF')
       }
@@ -111,6 +120,8 @@ export default function RAFsPage() {
   }
 
   const handleEdit = (id: string) => {
+    setSelectedRAF(null)
+    setShowModal(false)
     setRafToEdit(id)
     setShowEditModal(true)
   }
@@ -161,54 +172,6 @@ export default function RAFsPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        {/* Se modal de visualização está aberto, mostrar apenas ele */}
-        {showViewModal && selectedRAF ? (
-          <div
-            className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
-            onClick={() => {
-              setShowViewModal(false)
-              setSelectedRAF(null)
-            }}
-          >
-            <div className="w-full max-w-6xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-              <RAFViewModal
-                isOpen={true}
-                onClose={() => {
-                  setShowViewModal(false)
-                  setSelectedRAF(null)
-                }}
-                raf={selectedRAF}
-                inPage={true}
-              />
-            </div>
-          </div>
-        ) : showEditModal && rafToEdit ? (
-          <div
-            className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
-            onClick={() => {
-              setShowEditModal(false)
-              setRafToEdit(null)
-            }}
-          >
-            <div className="w-full max-w-6xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-              <RAFEditModal
-                isOpen={true}
-                onClose={() => {
-                  setShowEditModal(false)
-                  setRafToEdit(null)
-                }}
-                rafId={rafToEdit}
-                onSuccess={() => {
-                  setShowEditModal(false)
-                  setRafToEdit(null)
-                  loadRAFs()
-                }}
-                inPage={true}
-              />
-            </div>
-          </div>
-        ) : (
-          <>
         <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
           <PageHeader
             title="Relatórios de Análise de Falha (RAF)"
@@ -266,7 +229,7 @@ export default function RAFsPage() {
 
                 <ExportButton data={filteredRAFs} entity="rafs" />
                 <Button
-                  onClick={() => setShowModal(true)}
+                  onClick={() => { setSelectedRAF(null); setShowEditModal(false); setRafToEdit(null); setShowModal(true) }}
                   className="flex-shrink-0"
                 >
                   <Icon name="add" className="mr-2 text-base" />
@@ -279,7 +242,7 @@ export default function RAFsPage() {
 
         <div className="flex flex-1 overflow-hidden">
           <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-            <div className="w-full transition-all overflow-hidden flex flex-col">
+            <div className={`${showSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
               {loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
@@ -406,7 +369,7 @@ export default function RAFsPage() {
                       </thead>
                       <tbody className="bg-card divide-y divide-gray-200">
                         {filteredRAFs.map((raf) => (
-                          <tr key={raf.id} className="hover:bg-secondary cursor-pointer transition-colors">
+                          <tr key={raf.id} onClick={() => handleView(raf.id)} className="hover:bg-secondary cursor-pointer transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 <Icon name="description" className="text-base text-primary" />
@@ -437,21 +400,21 @@ export default function RAFsPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex justify-end gap-2">
                                 <button
-                                  onClick={() => handleView(raf.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleView(raf.id) }}
                                   className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
                                   title="Visualizar"
                                 >
                                   <Icon name="visibility" className="text-base" />
                                 </button>
                                 <button
-                                  onClick={() => handleEdit(raf.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(raf.id) }}
                                   className="p-1.5 text-muted-foreground hover:bg-secondary rounded transition-colors"
                                   title="Editar"
                                 >
                                   <Icon name="edit" className="text-base" />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(raf.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(raf.id) }}
                                   className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
                                   title="Excluir"
                                 >
@@ -467,20 +430,63 @@ export default function RAFsPage() {
                 </div>
               )}
             </div>
+            {/* Right: panel (desktop only) */}
+            {!isMobile && (selectedRAF || showEditModal || showModal) && (
+              <div className="w-1/2 min-w-0">
+                {showEditModal && rafToEdit ? (
+                  <RAFEditModal
+                    isOpen={true}
+                    onClose={() => { setShowEditModal(false); setRafToEdit(null) }}
+                    rafId={rafToEdit}
+                    onSuccess={() => { setShowEditModal(false); setRafToEdit(null); loadRAFs() }}
+                    inPage
+                  />
+                ) : showModal ? (
+                  <RAFFormModal
+                    isOpen={true}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={() => { setShowModal(false); loadRAFs() }}
+                    inPage
+                  />
+                ) : selectedRAF ? (
+                  <RAFViewModal
+                    isOpen={true}
+                    onClose={() => setSelectedRAF(null)}
+                    raf={selectedRAF}
+                    inPage
+                  />
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
-          </>
-        )}
 
-      {/* Modal de Criação (sempre disponível) */}
-      <RAFFormModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSuccess={() => {
-          setShowModal(false)
-          loadRAFs()
-        }}
-      />
+      {/* Mobile overlays */}
+      {isMobile && selectedRAF && !showEditModal && !showModal && (
+        <RAFViewModal
+          isOpen={showMobileViewModal && !!selectedRAF}
+          onClose={() => {
+            setShowMobileViewModal(false)
+            setSelectedRAF(null)
+          }}
+          raf={selectedRAF}
+        />
+      )}
+      {isMobile && showEditModal && rafToEdit && (
+        <RAFEditModal
+          isOpen={true}
+          onClose={() => { setShowEditModal(false); setRafToEdit(null) }}
+          rafId={rafToEdit}
+          onSuccess={() => { setShowEditModal(false); setRafToEdit(null); loadRAFs() }}
+        />
+      )}
+      {isMobile && showModal && (
+        <RAFFormModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => { setShowModal(false); loadRAFs() }}
+        />
+      )}
 
       <ConfirmationModal
         isOpen={showDeleteModal}

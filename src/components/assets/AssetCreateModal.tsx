@@ -17,6 +17,16 @@ export function AssetCreateModal({ isOpen, onClose, onSuccess, parentAsset, inPa
     onClose()
   }
 
+  if (inPage) {
+    return (
+      <AssetCreatePanel
+        onClose={onClose}
+        onSuccess={handleSuccess}
+        parentAsset={parentAsset}
+      />
+    )
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xxl" hideHeader noPadding>
       <AssetCreatePanel

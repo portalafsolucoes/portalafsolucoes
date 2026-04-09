@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
+import { Modal } from '@/components/ui/Modal'
 import Link from 'next/link'
 
 export default function WorkOrderDetailPage() {
@@ -278,40 +279,40 @@ export default function WorkOrderDetailPage() {
           </div>
         </div>
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-[4px] ambient-shadow-lg max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 rounded-full bg-danger-light flex items-center justify-center">
-                <Icon name="error" className="text-2xl text-danger" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Confirmar Exclusão</h3>
-                <p className="text-sm text-muted-foreground">Esta ação não pode ser desfeita</p>
-              </div>
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Confirmar Exclusão"
+        size="sm"
+      >
+        <div className="p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-danger-light flex items-center justify-center flex-shrink-0">
+              <Icon name="error" className="text-2xl text-danger" />
             </div>
-            <p className="text-foreground mb-6">
-              Tem certeza que deseja excluir a ordem de serviço <strong>{displayId}</strong>?
+            <p className="text-foreground">
+              Tem certeza que deseja excluir a ordem de serviço <strong>{displayId}</strong>? Esta ação não pode ser desfeita.
             </p>
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="bg-danger hover:bg-primary-graphite text-white"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? 'Excluindo...' : 'Excluir'}
-              </Button>
-            </div>
           </div>
         </div>
-      )}
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button
+            variant="outline"
+            onClick={() => setShowDeleteModal(false)}
+            disabled={deleting}
+            className="flex-1"
+          >
+            Cancelar
+          </Button>
+          <Button
+            className="flex-1 bg-danger hover:bg-primary-graphite text-white"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </div>
+      </Modal>
     </PageContainer>
   )
 }

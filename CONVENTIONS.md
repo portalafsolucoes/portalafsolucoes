@@ -11,6 +11,10 @@
 - Formular a tarefa a partir da spec, por exemplo: `Leia a secao de Localizacoes em docs/SPEC.md e implemente conforme a spec`
 - Nao implementar regras novas a partir de prompt generico quando a spec ja cobre o comportamento esperado
 - Quando houver divergencia entre implementacao e documentacao, tratar a documentacao oficial como fonte de verdade ate a sincronizacao ser feita conscientemente
+- Manter a raiz do repositorio enxuta: somente arquivos estruturais, entrypoints e configuracoes do projeto podem ficar no topo
+- Toda documentacao auxiliar, operacional, inventarios, guias e notas em Markdown deve ir para `docs/` em uma subpasta coerente
+- Toda evidencia de auditoria, screenshots, relatorios visuais e artefatos de validacao manual devem ir para `auditoria/`
+- Nunca gerar arquivos soltos na raiz para documentacao ou auditoria; antes de criar, escolher a pasta correta em `docs/` ou `auditoria/`
 
 ## Atualizacao de Documentacao por Tipo de Mudanca
 - Mudanca funcional, modular, navegacional, de regra de negocio ou permissao: atualizar `docs/SPEC.md`
@@ -18,6 +22,7 @@
 - Mudanca de API route, server action, validacao de payload, resposta, escopo ou permissao no backend: atualizar `.claude/rules/api.md`
 - Mudanca de convencao geral do projeto, stack, comandos ou fluxo operacional: atualizar `CLAUDE.md`
 - Mudanca de inventario de MCPs, skills ou onboarding de agentes: atualizar `docs/AI_SETUP.md`, `AGENTS.md` e `.github/copilot-instructions.md` quando aplicavel
+- Mudanca na organizacao de arquivos auxiliares ou no uso da raiz do repositorio: atualizar `README.md`, `CLAUDE.md`, `AGENTS.md` e `.github/copilot-instructions.md`
 
 ## Fechamento de Entrega
 - Ao concluir uma entrega, registrar em `docs/SPEC.md` o que ficou implementado e qualquer detalhe relevante de comportamento

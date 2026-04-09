@@ -16,3 +16,5 @@ Leia primeiro `CONVENTIONS.md`.
 - Nao duplicar regra de negocio entre frontend e backend
 - Respeitar o recorte `perfil + empresa + unidade ativa`
 - Usar `docs/AI_SETUP.md` como inventario canonico de MCPs e skills
+- Manter a raiz do repositorio limpa: documentacao auxiliar em `docs/` e auditorias/evidencias em `auditoria/`
+- Nunca criar arquivos soltos de Markdown, screenshot ou relatorio na raiz

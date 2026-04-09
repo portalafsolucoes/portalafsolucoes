@@ -126,25 +126,13 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={request ? 'Editar Solicitação de Serviço (SC)' : 'Nova Solicitação de Serviço (SC)'}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex justify-between items-center pb-3 md:pb-4 border-b px-4 md:px-6 pt-4">
-          <h2 className="text-lg md:text-2xl font-bold text-foreground">
-            {request ? 'Editar' : 'Nova'} Solicitação de Serviço (SC)
-          </h2>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors"
-            disabled={loading}
-          >
-            <Icon name="close" className="text-xl md:text-2xl text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto py-4 md:py-6 space-y-4 md:space-y-6 px-4 md:px-6">
+        <div className="p-4 space-y-3">
           <ModalSection title="Solicitação">
             <Input
               label="Título *"
@@ -155,7 +143,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
             />
 
             <div>
-              <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Descrição
               </label>
               <textarea
@@ -171,7 +159,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
           <ModalSection title="Prioridade e Prazo">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Prioridade
                 </label>
                 <select
@@ -187,7 +175,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
               </div>
 
               <div>
-                <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Data Desejada (Opcional)
                 </label>
                 <div className="relative">
@@ -205,7 +193,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
 
           <ModalSection title="Atribuição">
             <div>
-              <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Atribuir a Equipe (Opcional)
               </label>
               <select
@@ -235,19 +223,19 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
           </ModalSection>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
           <Button
             type="button"
             variant="outline"
             onClick={handleClose}
             disabled={loading}
+            className="flex-1"
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {loading ? 'Salvando...' : request ? 'Salvar' : 'Criar'}
+            {loading ? 'Salvando...' : request ? 'Salvar Alterações' : 'Salvar'}
           </Button>
         </div>
       </form>

@@ -141,10 +141,10 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={teamId ? 'Editar Equipe' : 'Nova Equipe'}>
       <form onSubmit={handleSubmit}>
-        <div className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
+        <div className="p-4 space-y-3">
           <ModalSection title="Identificação">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="name" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Nome da Equipe <span className="text-danger">*</span>
               </label>
               <input
@@ -159,7 +159,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="description" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Descrição
               </label>
               <textarea
@@ -175,7 +175,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
 
           <ModalSection title="Membros da Equipe">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-3">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Membros da Equipe ({formData.memberIds.length} selecionados)
               </label>
               <div className="border border-input rounded-[4px] p-4 max-h-96 overflow-y-auto">
@@ -222,13 +222,13 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
           </ModalSection>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : 'Salvar'}
+            {saving ? 'Salvando...' : teamId ? 'Salvar Alterações' : 'Salvar'}
           </Button>
         </div>
       </form>

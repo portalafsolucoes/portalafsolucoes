@@ -187,7 +187,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
       onClose={onClose}
       title={editingItem ? 'Editar Calendário' : 'Novo Calendário'}
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 space-y-3">
         {error && (
           <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
@@ -197,7 +197,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
         <ModalSection title="Informações Básicas">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Nome <span className="text-danger">*</span>
               </label>
               <input
@@ -209,7 +209,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Tipo</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo</label>
               <select
                 value={type}
                 onChange={e => setType(e.target.value)}
@@ -220,7 +220,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Descrição</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição</label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -229,7 +229,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Código Protheus</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Código Protheus</label>
               <input
                 type="text"
                 value={protheusCode}
@@ -355,11 +355,11 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
         </ModalSection>
 
         {/* Rodapé */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
+            {saving ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Salvar')}
           </Button>
         </div>
       </div>

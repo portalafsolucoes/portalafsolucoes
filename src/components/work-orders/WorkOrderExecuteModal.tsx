@@ -16,6 +16,7 @@ interface WorkOrderExecuteModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  inPage?: boolean
 }
 
 interface FilePreview {
@@ -31,7 +32,8 @@ export function WorkOrderExecuteModal({
   isOpen,
   onClose,
   workOrder,
-  onSuccess
+  onSuccess,
+  inPage = false
 }: WorkOrderExecuteModalProps) {
   const [startTime, setStartTime] = useState<string>('')
   const [endTime, setEndTime] = useState<string>('')
@@ -287,7 +289,7 @@ export function WorkOrderExecuteModal({
   if (!workOrder) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" hideHeader>
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" hideHeader inPage={inPage}>
       <div className="flex flex-col h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">

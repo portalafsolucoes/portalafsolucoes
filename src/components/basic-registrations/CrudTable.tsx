@@ -412,7 +412,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
               return true
             }).map(field => (
               <div key={field.key}>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   {field.label} {field.required && <span className="text-danger">*</span>}
                 </label>
                 {field.type === 'combobox' ? (
@@ -482,11 +482,11 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
               </div>
             ))}
             </ModalSection>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
-              <Button variant="outline" onClick={() => setShowModal(false)}>
+            <div className="flex gap-3 px-4 py-4 border-t border-border">
+              <Button variant="outline" onClick={() => setShowModal(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={saving}>
+              <Button onClick={handleSave} disabled={saving} className="flex-1">
                 <Icon name="save" className="text-base mr-2" />
                 {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
               </Button>

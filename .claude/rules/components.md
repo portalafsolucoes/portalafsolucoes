@@ -243,34 +243,48 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
 - O modal `Analisar Solicitação` em Aprovações deve usar `title` no `Modal`, `size="wide"` e `ModalSection`
 
 ### Excecoes
-- Ativos e Pessoas (Criar/Editar/Detalhe em desktop): usam modo `inPage` como painel lateral
-- Modais de confirmacao (`ConfirmationModal`): usam `size="sm"` sem `ModalSection`
+- Modais de confirmacao (`ConfirmationModal`, `ConfirmDialog`): usam `size="sm"` sem `ModalSection`, permanecem overlay
+- Nenhum outro modal deve usar overlay no desktop. Todo detalhe, edicao e criacao abre no painel lateral direito
+
+### Split-panel como padrao universal para listagens (OBRIGATORIO)
+Toda tela de listagem DEVE usar o padrao split-panel no desktop para TODOS os fluxos (detalhe, edicao, criacao, execucao, finalizacao):
+- Clicar em uma linha da tabela abre o painel de detalhe na metade direita (w-1/2)
+- A tabela comprime para w-1/2 quando o painel esta aberto
+- Do painel de detalhe, o botao Editar abre o formulario de edicao no mesmo painel direito
+- O botao Adicionar abre o formulario de criacao no painel direito (fechando detalhe/edicao anterior)
+- Executar, Finalizar e qualquer outra acao abrem no painel direito, nao como overlay
+- No mobile (`useIsMobile`), todos os fluxos abrem como overlay `<Modal>` padrao
+- Unica excecao para overlay: modais de confirmacao de exclusao (`ConfirmDialog`, `ConfirmationModal`)
+- Os componentes devem aceitar prop `inPage` para renderizar como painel embutido
+- Cada componente que suporta `inPage` deve renderizar: header com titulo + botao X, conteudo scrollavel, footer fixo
+
+Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 
 ## Mapa de Telas e Modais
-| Rota | Titulo | Tipo | Modais/Paineis |
-|------|--------|------|----------------|
-| `/hub` | Hub | Portal | - |
-| `/login` | Login | Form | - |
-| `/dashboard` | Dashboard | Stats | - |
-| `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal |
-| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal |
-| `/work-orders` | Ordens de Servico | Listagem | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal |
-| `/requests` | Solicitacoes | Listagem | RequestFormModal, RequestDetailModal |
-| `/requests/approvals` | Aprovacoes | Listagem | ApprovalModal |
-| `/rafs` | RAF | Listagem | RAFFormModal, RAFViewModal, RAFEditModal |
-| `/locations` | Localizacoes | Listagem | - |
-| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem | CalendarModal, AssetFamilyModal, ResourceModal, GenericStepModal |
-| `/criticality` | Criticidade | Listagem | - |
-| `/maintenance-plan/standard` | Plano Padrao | Listagem | - |
-| `/maintenance-plan/asset` | Plano por Ativo | Listagem | - |
-| `/planning/plans` | Planejamento | Listagem | - |
-| `/planning/schedules` | Programacao | Listagem | - |
-| `/kpi` | KPI | Dashboard | - |
-| `/gep` | GEP | Dashboard | - |
-| `/tree` | Arvore | Visualizacao | AssetDetailPanel |
-| `/admin/portal` | Configuracoes | Admin | - |
-| `/admin/users` | Usuarios | Admin | Modal (form/delete) |
-| `/admin/units` | Unidades | Admin | Modal (form/delete) |
-| `/profile` | Perfil | Detalhe | - |
-| `/settings` | Configuracoes Usuario | Form | - |
-| `/technician/my-tasks` | Minhas Tarefas | Listagem | - |
+| Rota | Titulo | Tipo | Paineis inPage (desktop) | Overlay (mobile + confirmacao) |
+|------|--------|------|--------------------------|-------------------------------|
+| `/hub` | Hub | Portal | - | - |
+| `/login` | Login | Form | - | - |
+| `/dashboard` | Dashboard | Stats | - | - |
+| `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal | ConfirmDialog |
+| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal | ConfirmDialog |
+| `/work-orders` | Ordens de Servico | Listagem split-panel | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal | ConfirmDialog |
+| `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal, RequestFormModal | ConfirmDialog |
+| `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal | - |
+| `/rafs` | RAF | Listagem split-panel | RAFViewModal, RAFEditModal, RAFFormModal | ConfirmationModal |
+| `/locations` | Localizacoes | Listagem | - | - |
+| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem | - | - |
+| `/criticality` | Criticidade | Listagem | - | - |
+| `/maintenance-plan/standard` | Plano Padrao | Listagem | - | - |
+| `/maintenance-plan/asset` | Plano por Ativo | Listagem | - | - |
+| `/planning/plans` | Planejamento | Listagem | - | - |
+| `/planning/schedules` | Programacao | Listagem | - | - |
+| `/kpi` | KPI | Dashboard | - | - |
+| `/gep` | GEP | Dashboard | - | - |
+| `/tree` | Arvore | Visualizacao | AssetDetailPanel | - |
+| `/admin/portal` | Configuracoes | Admin | - | - |
+| `/admin/users` | Usuarios | Admin | - | - |
+| `/admin/units` | Unidades | Admin | - | - |
+| `/profile` | Perfil | Detalhe | - | - |
+| `/settings` | Configuracoes Usuario | Form | - | - |
+| `/technician/my-tasks` | Minhas Tarefas | Listagem | - | - |

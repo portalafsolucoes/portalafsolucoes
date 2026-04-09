@@ -131,28 +131,6 @@ export default function RequestsPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        {/* Se modal está aberto, mostrar apenas ele */}
-        {showDetailModal && selectedRequestId ? (
-          <div
-            className="fixed top-16 left-0 right-0 bottom-0 backdrop-blur-md bg-background/40 z-40 overflow-y-auto lg:left-64"
-            onClick={() => setShowDetailModal(false)}
-          >
-            <div className="w-full max-w-6xl mx-auto p-4" onClick={(e) => e.stopPropagation()}>
-              <RequestDetailModal
-                isOpen={true}
-                onClose={() => setShowDetailModal(false)}
-                requestId={selectedRequestId}
-                onEdit={handleEdit}
-                onDelete={(requestId: string) => {
-                  const request = requests.find(r => r.id === requestId)
-                  if (request) openDeleteDialog(request)
-                }}
-                inPage={true}
-              />
-            </div>
-          </div>
-        ) : (
-          <>
         <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
           <PageHeader
             title="Solicitações de Serviço (SC)"
@@ -429,22 +407,18 @@ export default function RequestsPage() {
             </div>
           </div>
         </div>
-        </>
-        )}
 
-      {/* Modais sempre renderizados */}
-      {false && showDetailModal && selectedRequestId && (
-        <RequestDetailModal
-          isOpen={showDetailModal}
-          onClose={() => setShowDetailModal(false)}
-          requestId={selectedRequestId}
-          onEdit={handleEdit}
-          onDelete={(requestId: string) => {
-            const request = requests.find(r => r.id === requestId)
-            if (request) openDeleteDialog(request)
-          }}
-        />
-      )}
+      {/* Modal de Detalhe */}
+      <RequestDetailModal
+        isOpen={showDetailModal && !!selectedRequestId}
+        onClose={() => setShowDetailModal(false)}
+        requestId={selectedRequestId || ''}
+        onEdit={handleEdit}
+        onDelete={(requestId: string) => {
+          const request = requests.find(r => r.id === requestId)
+          if (request) openDeleteDialog(request)
+        }}
+      />
 
       {/* Modal de criação/edição */}
       <RequestFormModal

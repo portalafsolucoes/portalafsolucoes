@@ -43,6 +43,8 @@ npm run dev                  # http://localhost:3000
 ## Estrutura
 
 ```
+auditoria/      # Evidencias visuais, screenshots e relatorios de auditoria
+docs/           # Documentacao funcional, tecnica e operacional
 src/
   app/          # Rotas (work-orders, requests, assets, gep, rafs)
   components/   # Componentes React
@@ -50,10 +52,16 @@ src/
 prisma/         # Schema do banco
 scripts/        # Scripts de manutencao e deploy
 tests/          # Testes E2E
-docs/           # Documentacao tecnica
 gep/            # Dados de variaveis de processo
 ```
 
 ## Documentacao
 
 Toda documentacao tecnica esta em [`docs/`](./docs/).
+
+## Organizacao da Raiz
+
+- A raiz deve conter somente arquivos estruturais do projeto, entrypoints e configuracoes
+- Documentacao auxiliar, inventarios, guias operacionais e notas em Markdown devem ficar em [`docs/`](./docs/)
+- Evidencias de auditoria, screenshots e relatorios de validacao devem ficar em [`auditoria/`](./auditoria/)
+- Nao deixar arquivos soltos de documentacao ou auditoria na raiz
