@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 
 const UNIT_OPTIONS: Record<string, { value: string; label: string }[]> = {
@@ -126,114 +127,106 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
       isOpen={true}
       onClose={onClose}
       title={editingItem ? 'Editar Recurso' : 'Novo Recurso'}
-      size="md"
     >
-      <div className="space-y-4">
+      <div className="p-4 space-y-3 overflow-y-auto">
         {error && (
           <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
           </div>
         )}
 
-        {/* Tipo */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Tipo <span className="text-danger">*</span>
-          </label>
-          <select
-            value={type}
-            onChange={e => handleTypeChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="">Selecione...</option>
-            <option value="MATERIAL">Material</option>
-            <option value="TOOL">Ferramenta</option>
-          </select>
-        </div>
-
-        {/* Nome */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Nome <span className="text-danger">*</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder={type === 'TOOL' ? 'Ex: Chave de Torque' : 'Ex: Graxa Industrial'}
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-
-        {/* Unidade */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Unidade <span className="text-danger">*</span>
-          </label>
-          <select
-            value={unit}
-            onChange={e => setUnit(e.target.value)}
-            disabled={!type}
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {!type ? (
-              <option value="">Selecione um tipo primeiro</option>
-            ) : (
-              <>
-                <option value="">Selecione a unidade...</option>
-                {unitOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+        <ModalSection title="Recurso">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Tipo <span className="text-danger">*</span>
+              </label>
+              <select
+                value={type}
+                onChange={e => handleTypeChange(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Selecione...</option>
+                <option value="MATERIAL">Material</option>
+                <option value="TOOL">Ferramenta</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Nome <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder={type === 'TOOL' ? 'Ex: Chave de Torque' : 'Ex: Graxa Industrial'}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Unidade <span className="text-danger">*</span>
+              </label>
+              <select
+                value={unit}
+                onChange={e => setUnit(e.target.value)}
+                disabled={!type}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {!type ? (
+                  <option value="">Selecione um tipo primeiro</option>
+                ) : (
+                  <>
+                    <option value="">Selecione a unidade...</option>
+                    {unitOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Custo Unitário (R$)
+              </label>
+              <input
+                type="number"
+                value={unitCost}
+                onChange={e => setUnitCost(Number(e.target.value))}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Calendário
+              </label>
+              <select
+                value={calendarId}
+                onChange={e => setCalendarId(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Nenhum</option>
+                {calendars.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
-              </>
-            )}
-          </select>
-        </div>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Código Protheus
+              </label>
+              <input
+                type="text"
+                value={protheusCode}
+                onChange={e => setProtheusCode(e.target.value)}
+                placeholder="Ex: E01"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+        </ModalSection>
 
-        {/* Custo Unitário */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Custo Unitário (R$)
-          </label>
-          <input
-            type="number"
-            value={unitCost}
-            onChange={e => setUnitCost(Number(e.target.value))}
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-
-        {/* Calendário */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Calendário
-          </label>
-          <select
-            value={calendarId}
-            onChange={e => setCalendarId(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="">Nenhum</option>
-            {calendars.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Código Protheus */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Código Protheus
-          </label>
-          <input
-            type="text"
-            value={protheusCode}
-            onChange={e => setProtheusCode(e.target.value)}
-            placeholder="Ex: E01"
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

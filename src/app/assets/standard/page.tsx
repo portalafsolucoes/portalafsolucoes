@@ -5,6 +5,8 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 
 interface StandardAsset {
   id: string
@@ -77,22 +79,6 @@ const emptyForm = {
   annualCoupValue: '',
 }
 
-function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="rounded-[4px] overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted/50 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
-      >
-        {open ? <Icon name="expand_more" className="text-base" /> : <Icon name="chevron_right" className="text-base" />}
-        {title}
-      </button>
-      {open && <div className="p-4 space-y-3">{children}</div>}
-    </div>
-  )
-}
 
 export default function StandardAssetsPage() {
   const [items, setItems] = useState<StandardAsset[]>([])
@@ -374,21 +360,10 @@ export default function StandardAssetsPage() {
           )}
         </div>
       {/* Modal de Criação/Edição */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-8 overflow-y-auto">
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-3xl mx-4 mb-8" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="text-lg font-bold text-foreground">
-                {editing ? 'Editar Bem Padrão' : 'Novo Bem Padrão'}
-              </h2>
-              <button onClick={() => setModalOpen(false)} className="p-1 hover:bg-muted rounded transition-colors">
-                <Icon name="close" className="text-xl text-muted-foreground" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Bem Padrão' : 'Novo Bem Padrão'}>
+            <form onSubmit={handleSubmit} className="p-4 space-y-3">
               {/* Família */}
-              <Section title="Família" defaultOpen={true}>
+              <ModalSection title="Família" defaultOpen={true}>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">Família de Bens *</label>
                   <select
@@ -413,10 +388,10 @@ export default function StandardAssetsPage() {
                   onChange={(e) => updateField('name', e.target.value)}
                   placeholder="Nome padrão do bem"
                 />
-              </Section>
+              </ModalSection>
 
               {/* Localização e Organização */}
-              <Section title="Localização e Organização" defaultOpen={true}>
+              <ModalSection title="Localização e Organização" defaultOpen={true}>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro Custo</label>
@@ -497,10 +472,10 @@ export default function StandardAssetsPage() {
                   </div>
                   <Input label="Estoque" value={formData.warehouse} onChange={(e) => updateField('warehouse', e.target.value)} placeholder="Almoxarifado" />
                 </div>
-              </Section>
+              </ModalSection>
 
               {/* Fornecedor */}
-              <Section title="Fornecedor e Modelo" defaultOpen={true}>
+              <ModalSection title="Fornecedor e Modelo" defaultOpen={true}>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Input label="Fornecedor" value={formData.supplierCode} onChange={(e) => updateField('supplierCode', e.target.value)} placeholder="Código do fornecedor" />
                   <Input label="Loja" value={formData.supplierStore} onChange={(e) => updateField('supplierStore', e.target.value)} placeholder="Loja" />
@@ -523,10 +498,10 @@ export default function StandardAssetsPage() {
                   <Input label="Modelo" value={formData.modelName} onChange={(e) => updateField('modelName', e.target.value)} placeholder="Modelo do equipamento" />
                   <Input label="Série" value={formData.serialNumber} onChange={(e) => updateField('serialNumber', e.target.value)} placeholder="Número de série" />
                 </div>
-              </Section>
+              </ModalSection>
 
               {/* Características */}
-              <Section title="Características" defaultOpen={true}>
+              <ModalSection title="Características" defaultOpen={true}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs text-muted-foreground">Defina as características padrão que serão pré-preenchidas ao criar um bem desta família.</p>
                   <button type="button" onClick={addCharacteristicRow} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium">
@@ -582,10 +557,10 @@ export default function StandardAssetsPage() {
                     ))}
                   </div>
                 )}
-              </Section>
+              </ModalSection>
 
               {/* Operação */}
-              <Section title="Operação" defaultOpen={false}>
+              <ModalSection title="Operação" defaultOpen={false}>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">Prioridade</label>
@@ -611,10 +586,10 @@ export default function StandardAssetsPage() {
                   <Input label="Val. Ac. Ano (R$)" value={formData.annualCoupValue} onChange={(e) => updateField('annualCoupValue', e.target.value)} placeholder="0,00" type="number" step="0.01" />
                   <Input label="Imagem URL" value={formData.imageUrl} onChange={(e) => updateField('imageUrl', e.target.value)} placeholder="URL da imagem padrão" />
                 </div>
-              </Section>
+              </ModalSection>
 
               {/* Contador */}
-              <Section title="Contador" defaultOpen={false}>
+              <ModalSection title="Contador" defaultOpen={false}>
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
@@ -639,7 +614,7 @@ export default function StandardAssetsPage() {
                     </select>
                   </div>
                 )}
-              </Section>
+              </ModalSection>
 
               {/* Botões */}
               <div className="flex gap-3 pt-4 border-t border-border">
@@ -652,9 +627,7 @@ export default function StandardAssetsPage() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

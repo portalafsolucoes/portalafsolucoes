@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
@@ -126,30 +127,31 @@ export default function PlansPage() {
         </div>
       </div>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Novo Plano de Manutenção" size="md">
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Novo Plano de Manutenção">
         <div className="space-y-4">
           {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
           {result && <div className="p-3 bg-success-light text-success-light-foreground rounded-[4px] text-sm">{result}</div>}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Descrição <span className="text-danger">*</span></label>
-            <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
-              placeholder="Ex: Plano Lubrificação Abril 2026"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <ModalSection title="Plano">
             <div>
-              <label className="block text-sm font-medium mb-1">Data Início <span className="text-danger">*</span></label>
-              <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
+              <label className="block text-sm font-medium mb-1">Descrição <span className="text-danger">*</span></label>
+              <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
+                placeholder="Ex: Plano Lubrificação Abril 2026"
                 className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Data Fim <span className="text-danger">*</span></label>
-              <input type="date" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Data Início <span className="text-danger">*</span></label>
+                <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Data Fim <span className="text-danger">*</span></label>
+                <input type="date" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+              </div>
             </div>
-          </div>
+          </ModalSection>
 
           <div className="p-3 bg-muted rounded-[4px] text-xs text-muted-foreground">
             Ao criar o plano, o sistema emitirá automaticamente Ordens de Serviço para os ativos com manutenção prevista dentro do período selecionado.

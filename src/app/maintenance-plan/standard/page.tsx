@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -170,76 +171,81 @@ export default function StandardMaintenancePlanPage() {
         </div>
       </div>
 
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Novo Plano Padrão" size="lg">
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Novo Plano Padrão">
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           {error && <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">{error}</div>}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <ModalSection title="Classificação">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Família <span className="text-danger">*</span></label>
+                <select value={formData.familyId || ''} onChange={e => { setFormData({...formData, familyId: e.target.value, familyModelId: ''}); if(e.target.value) loadModels(e.target.value); }}
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
+                  <option value="">Selecione...</option>
+                  {families.map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Tipo Modelo</label>
+                <select value={formData.familyModelId || ''} onChange={e => setFormData({...formData, familyModelId: e.target.value})}
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
+                  <option value="">Genérico</option>
+                  {familyModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+            </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Família <span className="text-danger">*</span></label>
-              <select value={formData.familyId || ''} onChange={e => { setFormData({...formData, familyId: e.target.value, familyModelId: ''}); if(e.target.value) loadModels(e.target.value); }}
+              <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-danger">*</span></label>
+              <select value={formData.serviceTypeId || ''} onChange={e => setFormData({...formData, serviceTypeId: e.target.value})}
                 className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
                 <option value="">Selecione...</option>
-                {families.map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
+                {serviceTypes.map(st => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
               </select>
             </div>
+          </ModalSection>
+
+          <ModalSection title="Manutenção">
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo Modelo</label>
-              <select value={formData.familyModelId || ''} onChange={e => setFormData({...formData, familyModelId: e.target.value})}
+              <label className="block text-sm font-medium mb-1">Nome da Manutenção <span className="text-danger">*</span></label>
+              <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})}
+                placeholder="Ex: Manutenção Prev. Mec. 28 Dias" className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Tempo <span className="text-danger">*</span></label>
+                <input type="number" value={formData.maintenanceTime || ''} onChange={e => setFormData({...formData, maintenanceTime: Number(e.target.value)})}
+                  placeholder="Ex: 28" className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Unidade <span className="text-danger">*</span></label>
+                <select value={formData.timeUnit || ''} onChange={e => setFormData({...formData, timeUnit: e.target.value})}
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
+                  <option value="">Selecione...</option>
+                  <option value="Dia(s)">Dia(s)</option>
+                  <option value="Semana(s)">Semana(s)</option>
+                  <option value="Mês(es)">Mês(es)</option>
+                  <option value="Hora(s)">Hora(s)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Período <span className="text-danger">*</span></label>
+                <select value={formData.period || ''} onChange={e => setFormData({...formData, period: e.target.value})}
+                  className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
+                  <option value="">Selecione...</option>
+                  <option value="Repetitiva">Repetitiva</option>
+                  <option value="Unica">Única</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Calendário</label>
+              <select value={formData.calendarId || ''} onChange={e => setFormData({...formData, calendarId: e.target.value})}
                 className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Genérico</option>
-                {familyModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                <option value="">Nenhum</option>
+                {calendars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-danger">*</span></label>
-            <select value={formData.serviceTypeId || ''} onChange={e => setFormData({...formData, serviceTypeId: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-              <option value="">Selecione...</option>
-              {serviceTypes.map(st => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Nome da Manutenção <span className="text-danger">*</span></label>
-            <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})}
-              placeholder="Ex: Manutenção Prev. Mec. 28 Dias" className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Tempo <span className="text-danger">*</span></label>
-              <input type="number" value={formData.maintenanceTime || ''} onChange={e => setFormData({...formData, maintenanceTime: Number(e.target.value)})}
-                placeholder="Ex: 28" className="w-full px-3 py-2 text-sm rounded-[4px] bg-card" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Unidade <span className="text-danger">*</span></label>
-              <select value={formData.timeUnit || ''} onChange={e => setFormData({...formData, timeUnit: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Selecione...</option>
-                <option value="Dia(s)">Dia(s)</option>
-                <option value="Semana(s)">Semana(s)</option>
-                <option value="Mês(es)">Mês(es)</option>
-                <option value="Hora(s)">Hora(s)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Período <span className="text-danger">*</span></label>
-              <select value={formData.period || ''} onChange={e => setFormData({...formData, period: e.target.value})}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-                <option value="">Selecione...</option>
-                <option value="Repetitiva">Repetitiva</option>
-                <option value="Unica">Única</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Calendário</label>
-            <select value={formData.calendarId || ''} onChange={e => setFormData({...formData, calendarId: e.target.value})}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card">
-              <option value="">Nenhum</option>
-              {calendars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
+          </ModalSection>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowCreateModal(false)} size="sm">Cancelar</Button>

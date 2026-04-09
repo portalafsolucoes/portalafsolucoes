@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 
 interface AssetFamilyModalProps {
@@ -129,71 +130,65 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
       isOpen={true}
       onClose={onClose}
       title={editingItem ? 'Editar Família de Bens' : 'Nova Família de Bens'}
-      size="lg"
     >
-      <div className="p-6 space-y-4">
+      <div className="p-4 space-y-3 overflow-y-auto">
         {error && (
           <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              Código <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              placeholder="Ex: COMAR"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+        <ModalSection title="Identificação">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Código <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="Ex: COMAR"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Nome <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Ex: Compressores de Ar"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo</label>
+              <select
+                value={familyType}
+                onChange={e => setFamilyType(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="BEM">Bem</option>
+                <option value="FERRAMENTA">Ferramenta</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Código Protheus</label>
+              <input
+                type="text"
+                value={protheusCode}
+                onChange={e => setProtheusCode(e.target.value)}
+                placeholder="Ex: COMAR"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              Nome <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: Compressores de Ar"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
+        </ModalSection>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Tipo</label>
-            <select
-              value={familyType}
-              onChange={e => setFamilyType(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="BEM">Bem</option>
-              <option value="FERRAMENTA">Ferramenta</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Código Protheus</label>
-            <input
-              type="text"
-              value={protheusCode}
-              onChange={e => setProtheusCode(e.target.value)}
-              placeholder="Ex: COMAR"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-
-        {/* Multi-select de Tipos Modelo */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Tipos Modelo aplicáveis
-          </label>
+        <ModalSection title="Tipos Modelo Aplicáveis">
           {loadingMappings ? (
             <div className="text-sm text-muted-foreground py-2">Carregando...</div>
           ) : assetFamilyModels.length === 0 ? (
@@ -249,9 +244,9 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
               })}
             </div>
           )}
-        </div>
+        </ModalSection>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border px-4">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { FileUploader } from './FileUploader'
@@ -125,7 +126,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose}>
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         {/* Header */}
         <div className="flex justify-between items-center pb-3 md:pb-4 border-b px-4 md:px-6 pt-4">
@@ -144,96 +145,94 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto py-4 md:py-6 space-y-4 md:space-y-6 px-4 md:px-6">
-          {/* Título */}
-          <Input
-            label="Título *"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-            placeholder="Ex: Vazamento no banheiro"
-          />
-
-          {/* Descrição */}
-          <div>
-            <label className="block text-sm md:text-base font-medium text-foreground mb-1">
-              Descrição
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Descreva detalhadamente o problema ou necessidade..."
+          <ModalSection title="Solicitação">
+            <Input
+              label="Título *"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+              placeholder="Ex: Vazamento no banheiro"
             />
-          </div>
 
-          {/* Prioridade e Data */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm md:text-base font-medium text-foreground mb-1">
-                Prioridade
+                Descrição
               </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
                 className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="NONE">Nenhuma</option>
-                <option value="LOW">Baixa</option>
-                <option value="MEDIUM">Média</option>
-                <option value="HIGH">Alta</option>
-              </select>
+                placeholder="Descreva detalhadamente o problema ou necessidade..."
+              />
             </div>
+          </ModalSection>
 
-            <div>
-              <label className="block text-sm md:text-base font-medium text-foreground mb-1">
-                Data Desejada (Opcional)
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+          <ModalSection title="Prioridade e Prazo">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+                  Prioridade
+                </label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                   className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <Icon name="calendar_today" className="absolute right-3 top-2.5 text-xl text-muted-foreground pointer-events-none" />
+                >
+                  <option value="NONE">Nenhuma</option>
+                  <option value="LOW">Baixa</option>
+                  <option value="MEDIUM">Média</option>
+                  <option value="HIGH">Alta</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+                  Data Desejada (Opcional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <Icon name="calendar_today" className="absolute right-3 top-2.5 text-xl text-muted-foreground pointer-events-none" />
+                </div>
               </div>
             </div>
-          </div>
+          </ModalSection>
 
-          {/* Equipe */}
-          <div>
-            <label className="block text-sm md:text-base font-medium text-foreground mb-1">
-              Atribuir a Equipe (Opcional)
-            </label>
-            <select
-              value={formData.teamId}
-              onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-              className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Nenhuma equipe</option>
-              {teams.map(team => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              A equipe poderá aceitar ou recusar esta solicitação
-            </p>
-          </div>
+          <ModalSection title="Atribuição">
+            <div>
+              <label className="block text-sm md:text-base font-medium text-foreground mb-1">
+                Atribuir a Equipe (Opcional)
+              </label>
+              <select
+                value={formData.teamId}
+                onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
+                className="w-full px-3 py-2 text-sm md:text-base border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Nenhuma equipe</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                A equipe poderá aceitar ou recusar esta solicitação
+              </p>
+            </div>
+          </ModalSection>
 
-          {/* Upload de Arquivos */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Anexos
-            </label>
-            <FileUploader 
-              files={files} 
+          <ModalSection title="Anexos">
+            <FileUploader
+              files={files}
               onFilesChange={setFiles}
               maxFiles={10}
             />
-          </div>
+          </ModalSection>
         </div>
 
         {/* Footer */}

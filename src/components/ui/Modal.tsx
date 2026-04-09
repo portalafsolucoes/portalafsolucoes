@@ -8,13 +8,13 @@ interface ModalProps {
   onClose: () => void
   title?: string
   children: React.ReactNode
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'full'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'full' | 'wide'
   hideHeader?: boolean
   noPadding?: boolean
   inPage?: boolean
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeader = false, noPadding = false, inPage = false }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHeader = false, noPadding = false, inPage = false }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -50,7 +50,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeade
     lg: 'w-full max-w-4xl',
     xl: 'w-full max-w-5xl',
     xxl: 'w-full max-w-6xl',
-    full: 'w-full max-w-7xl'
+    full: 'w-full max-w-7xl',
+    wide: 'w-[calc(100vw-200px)] max-w-[1400px]'
   }
 
   if (inPage) {
@@ -83,9 +84,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeade
       />
 
       {/* Modal */}
-      <div className="flex min-h-screen items-center justify-center p-3 sm:p-4 md:p-6">
+      <div className="flex min-h-screen items-start justify-center pt-8 pb-8 px-3 sm:px-4 md:px-6">
         <div
-          className={`relative bg-card rounded-[4px] ambient-ambient-shadow ${sizeClasses[size]} max-h-[92vh] sm:max-h-[90vh] md:max-h-[88vh] flex flex-col`}
+          className={`relative bg-card rounded-[4px] ambient-ambient-shadow ${sizeClasses[size]} max-h-[88vh] flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

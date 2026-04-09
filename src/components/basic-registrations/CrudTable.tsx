@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { exportToExcel } from '@/lib/exportExcel'
 import { usePermissions } from '@/hooks/usePermissions'
 
@@ -389,7 +390,6 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           title={editingItem ? `Editar ${title}` : `Novo ${title}`}
-          size="md"
         >
           <div className="space-y-4">
             {error && (
@@ -397,6 +397,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                 {error}
               </div>
             )}
+            <ModalSection title="Dados">
             {fields.filter(f => {
               if (f.readOnly && !editingItem) return false
               if (f.visibleWhen) {
@@ -480,6 +481,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                 )}
               </div>
             ))}
+            </ModalSection>
             <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
               <Button variant="outline" onClick={() => setShowModal(false)} size="sm">
                 Cancelar

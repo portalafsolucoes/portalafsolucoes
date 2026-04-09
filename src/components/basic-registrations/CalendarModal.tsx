@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 
 const WEEK_DAYS = [
@@ -185,7 +186,6 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
       isOpen={true}
       onClose={onClose}
       title={editingItem ? 'Editar Calendário' : 'Novo Calendário'}
-      size="xl"
     >
       <div className="p-6 space-y-6">
         {error && (
@@ -194,57 +194,54 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
           </div>
         )}
 
-        {/* Informações básicas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              Nome <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: Calendário Operacional"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+        <ModalSection title="Informações Básicas">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Nome <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Ex: Calendário Operacional"
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Tipo</label>
+              <select
+                value={type}
+                onChange={e => setType(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="WORK">Mão de Obra</option>
+                <option value="EQUIPMENT">Equipamento</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Descrição</label>
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Código Protheus</label>
+              <input
+                type="text"
+                value={protheusCode}
+                onChange={e => setProtheusCode(e.target.value)}
+                placeholder="Ex: M03"
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Tipo</label>
-            <select
-              value={type}
-              onChange={e => setType(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="WORK">Mão de Obra</option>
-              <option value="EQUIPMENT">Equipamento</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Descrição</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Código Protheus</label>
-            <input
-              type="text"
-              value={protheusCode}
-              onChange={e => setProtheusCode(e.target.value)}
-              placeholder="Ex: M03"
-              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
+        </ModalSection>
 
-        {/* Grade semanal */}
-        <div>
-          <h3 className="text-sm font-semibold text-foreground mb-3 pb-1 border-b border-on-surface-variant/10">
-            Horários por Dia da Semana
-          </h3>
+        <ModalSection title="Horários por Dia da Semana">
           <div className="space-y-2">
             {workDays.weekDays.map(dayConfig => (
               <div
@@ -310,13 +307,9 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               </div>
             ))}
           </div>
-        </div>
+        </ModalSection>
 
-        {/* Feriados */}
-        <div>
-          <h3 className="text-sm font-semibold text-foreground mb-3 pb-1 border-b border-on-surface-variant/10">
-            Feriados
-          </h3>
+        <ModalSection title="Feriados">
           <div className="space-y-2">
             {workDays.holidays.length === 0 && (
               <p className="text-xs text-muted-foreground italic">Nenhum feriado cadastrado.</p>
@@ -359,7 +352,7 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
               </button>
             </div>
           </div>
-        </div>
+        </ModalSection>
 
         {/* Rodapé */}
         <div className="flex justify-end gap-3 pt-2 border-t border-on-surface-variant/10">

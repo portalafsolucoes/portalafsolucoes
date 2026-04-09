@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
 import { getRoleLabel } from '@/lib/rbac'
 import Link from 'next/link'
@@ -67,7 +68,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
 
   if (loading || !user) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Pessoa" size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Pessoa">
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
@@ -77,7 +78,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Pessoa" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Pessoa">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -105,7 +106,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
               </span>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={onEdit}
@@ -124,12 +125,10 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
           </div>
         </div>
 
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact Info */}
-          <div className="bg-secondary rounded-[4px] p-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Informações de Contato</h3>
-            <div className="space-y-4">
+        {/* Contact Info */}
+        <ModalSection title="Informações de Contato">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-secondary rounded-[4px] p-4 space-y-4">
               <div className="flex items-center gap-3">
                 <Icon name="mail" className="text-xl text-muted-foreground" />
                 <div>
@@ -155,11 +154,12 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
               </div>
             </div>
           </div>
+        </ModalSection>
 
-          {/* Work Info */}
-          <div className="bg-secondary rounded-[4px] p-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Informações de Trabalho</h3>
-            <div className="space-y-4">
+        {/* Work Info */}
+        <ModalSection title="Informações de Trabalho">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-secondary rounded-[4px] p-4 space-y-4">
               <div className="flex items-center gap-3">
                 <Icon name="group" className="text-xl text-muted-foreground" />
                 <div>
@@ -191,12 +191,11 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
               </div>
             </div>
           </div>
-        </div>
+        </ModalSection>
 
         {/* Teams */}
         {user.teamMemberships && user.teamMemberships.length > 0 && (
-          <div className="bg-secondary rounded-[4px] p-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Equipes</h3>
+          <ModalSection title="Equipes">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {user.teamMemberships.map((membership: any) => (
                 <div
@@ -208,12 +207,11 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
                 </div>
               ))}
             </div>
-          </div>
+          </ModalSection>
         )}
 
         {/* Metadata */}
-        <div className="bg-secondary rounded-[4px] p-4">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Informações do Sistema</h3>
+        <ModalSection title="Informações do Sistema" defaultOpen={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Criado em</p>
@@ -230,7 +228,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete }:
               </div>
             )}
           </div>
-        </div>
+        </ModalSection>
       </div>
     </Modal>
   )

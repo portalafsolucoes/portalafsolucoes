@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
 
 interface TeamDetailModalProps {
@@ -63,7 +64,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
 
   if (loading || !team) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Equipe" size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Equipe">
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
@@ -73,7 +74,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Equipe" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Equipe">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -86,7 +87,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
               <p className="text-muted-foreground mt-2">{team.description}</p>
             )}
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={onEdit}
@@ -106,41 +107,42 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-primary/5 rounded-[4px] p-4">
-            <div className="flex items-center gap-3">
-              <Icon name="group" className="text-3xl text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Membros</p>
-                <p className="text-2xl font-bold text-foreground">{team._count?.members || 0}</p>
+        <ModalSection title="Estatísticas">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-primary/5 rounded-[4px] p-4">
+              <div className="flex items-center gap-3">
+                <Icon name="group" className="text-3xl text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Membros</p>
+                  <p className="text-2xl font-bold text-foreground">{team._count?.members || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-success-light rounded-[4px] p-4">
+              <div className="flex items-center gap-3">
+                <Icon name="construction" className="text-3xl text-success" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Ordens de Serviço</p>
+                  <p className="text-2xl font-bold text-foreground">{team._count?.assignedWorkOrders || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-purple-50 rounded-[4px] p-4">
+              <div className="flex items-center gap-3">
+                <Icon name="inventory_2" className="text-3xl text-purple-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Ativos Atribuídos</p>
+                  <p className="text-2xl font-bold text-foreground">{team._count?.assignedAssets || 0}</p>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="bg-success-light rounded-[4px] p-4">
-            <div className="flex items-center gap-3">
-              <Icon name="construction" className="text-3xl text-success" />
-              <div>
-                <p className="text-sm text-muted-foreground">Ordens de Serviço</p>
-                <p className="text-2xl font-bold text-foreground">{team._count?.assignedWorkOrders || 0}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-purple-50 rounded-[4px] p-4">
-            <div className="flex items-center gap-3">
-              <Icon name="inventory_2" className="text-3xl text-purple-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Ativos Atribuídos</p>
-                <p className="text-2xl font-bold text-foreground">{team._count?.assignedAssets || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        </ModalSection>
 
         {/* Members */}
-        <div className="bg-secondary rounded-[4px] p-4">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Membros da Equipe</h3>
+        <ModalSection title="Membros">
           {team.members && team.members.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {team.members.map((membership: any) => (
@@ -176,7 +178,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
           ) : (
             <p className="text-muted-foreground text-center py-8">Nenhum membro nesta equipe ainda.</p>
           )}
-        </div>
+        </ModalSection>
       </div>
     </Modal>
   )

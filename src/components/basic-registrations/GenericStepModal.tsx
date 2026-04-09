@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
@@ -118,7 +119,6 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
       isOpen={true}
       onClose={onClose}
       title={editingItem ? 'Editar Etapas Genéricas' : 'Novo Etapas Genéricas'}
-      size="md"
     >
       <div className="space-y-4">
         {error && (
@@ -127,103 +127,117 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
           </div>
         )}
 
-        {/* Descrição */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Descrição <span className="text-danger">*</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="Ex: Abastecer redutor com óleo novo"
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+        <ModalSection title="Etapa">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Descrição */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Descrição <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Ex: Abastecer redutor com óleo novo"
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
 
-        {/* Tipo de Opção */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Tipo de Opção
-          </label>
-          <select
-            value={optionType}
-            onChange={e => setOptionType(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="NONE">Nenhuma</option>
-            <option value="RESPONSE">Resposta</option>
-            <option value="OPTION">Opção</option>
-          </select>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {optionType === 'NONE' && 'Etapa simples — apenas confirma conclusão'}
-            {optionType === 'RESPONSE' && 'O executante deverá digitar um valor (texto/número) ao executar esta etapa'}
-            {optionType === 'OPTION' && 'O executante deverá escolher entre as opções cadastradas abaixo'}
-          </p>
-        </div>
+            {/* Tipo de Opção */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Tipo de Opção
+              </label>
+              <select
+                value={optionType}
+                onChange={e => setOptionType(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="NONE">Nenhuma</option>
+                <option value="RESPONSE">Resposta</option>
+                <option value="OPTION">Opção</option>
+              </select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {optionType === 'NONE' && 'Etapa simples — apenas confirma conclusão'}
+                {optionType === 'RESPONSE' && 'O executante deverá digitar um valor (texto/número) ao executar esta etapa'}
+                {optionType === 'OPTION' && 'O executante deverá escolher entre as opções cadastradas abaixo'}
+              </p>
+            </div>
+
+            {/* Código Protheus */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Código Protheus
+              </label>
+              <input
+                type="text"
+                value={protheusCode}
+                onChange={e => setProtheusCode(e.target.value)}
+                placeholder="Ex: ABA001"
+                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+        </ModalSection>
 
         {/* Gerenciamento de Opções — só aparece quando OPTION */}
-        {optionType === 'OPTION' && (
-          <div className="rounded-[4px] p-3 space-y-3">
-            <label className="block text-sm font-medium text-foreground">
-              Opções Disponíveis <span className="text-danger">*</span>
-            </label>
+        {optionType !== 'NONE' && (
+          <ModalSection title="Opções" defaultOpen={true}>
+            {optionType === 'OPTION' && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-foreground">
+                  Opções Disponíveis <span className="text-danger">*</span>
+                </label>
 
-            {/* Lista de opções existentes */}
-            {options.length > 0 && (
-              <div className="space-y-1">
-                {options.map((opt, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
-                    <Icon name="drag_indicator" className="text-sm text-muted-foreground shrink-0" />
-                    <span className="flex-1 text-sm text-foreground">{opt.label}</span>
-                    <button
-                      onClick={() => removeOption(i)}
-                      className="p-1 hover:bg-danger-light rounded transition-colors"
-                      title="Remover opção"
-                    >
-                      <Icon name="delete" className="text-sm text-danger" />
-                    </button>
+                {/* Lista de opções existentes */}
+                {options.length > 0 && (
+                  <div className="space-y-1">
+                    {options.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
+                        <Icon name="drag_indicator" className="text-sm text-muted-foreground shrink-0" />
+                        <span className="flex-1 text-sm text-foreground">{opt.label}</span>
+                        <button
+                          onClick={() => removeOption(i)}
+                          className="p-1 hover:bg-danger-light rounded transition-colors"
+                          title="Remover opção"
+                        >
+                          <Icon name="delete" className="text-sm text-danger" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {/* Adicionar nova opção */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newOptionLabel}
+                    onChange={e => setNewOptionLabel(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOption())}
+                    placeholder="Ex: OK, NOK, Normal, Baixo..."
+                    className="flex-1 px-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <Button size="sm" variant="outline" onClick={addOption} disabled={!newOptionLabel.trim()}>
+                    <Icon name="add" className="text-sm mr-1" /> Adicionar
+                  </Button>
+                </div>
+
+                {options.length < 2 && (
+                  <p className="text-xs text-amber-600">
+                    Adicione pelo menos 2 opções para que o executante possa escolher.
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Adicionar nova opção */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newOptionLabel}
-                onChange={e => setNewOptionLabel(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOption())}
-                placeholder="Ex: OK, NOK, Normal, Baixo..."
-                className="flex-1 px-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <Button size="sm" variant="outline" onClick={addOption} disabled={!newOptionLabel.trim()}>
-                <Icon name="add" className="text-sm mr-1" /> Adicionar
-              </Button>
-            </div>
-
-            {options.length < 2 && (
-              <p className="text-xs text-amber-600">
-                Adicione pelo menos 2 opções para que o executante possa escolher.
+            {optionType === 'RESPONSE' && (
+              <p className="text-sm text-muted-foreground">
+                O executante deverá digitar um valor ao executar esta etapa. Nenhuma configuração adicional necessária.
               </p>
             )}
-          </div>
+          </ModalSection>
         )}
-
-        {/* Código Protheus */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            Código Protheus
-          </label>
-          <input
-            type="text"
-            value={protheusCode}
-            onChange={e => setProtheusCode(e.target.value)}
-            placeholder="Ex: ABA001"
-            className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
 
         {/* Botões */}
         <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
