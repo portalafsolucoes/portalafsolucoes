@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Icon } from '@/components/ui/Icon'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -16,8 +16,39 @@ import { ExportButton } from '@/components/ui/ExportButton'
 
 type ViewMode = 'grid' | 'table' | 'hierarchy'
 
+type TeamMembership = {
+  team: {
+    id: string
+    name: string
+  }
+}
+
+type UserWithTeams = User & {
+  teamMemberships?: TeamMembership[]
+}
+
+type Team = {
+  id: string
+  name: string
+  description?: string
+  members: Array<{
+    user: {
+      firstName: string
+      lastName: string
+    }
+  }>
+  _count: {
+    assignedWorkOrders: number
+    assignedAssets: number
+  }
+}
+
+type PeopleHierarchy = Record<string, Record<string, UserWithTeams[]>>
+type SortField = 'name' | 'email' | 'jobTitle' | 'role' | 'enabled'
+type SortDirection = 'asc' | 'desc'
+
 export default function PeopleTeamsPage() {
-  const [activeTab, setActiveTab] = useState<'people' | 'teams'>('people')
+  const activeTab: 'people' | 'teams' = 'people'
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   
   // People states
@@ -25,26 +56,20 @@ export default function PeopleTeamsPage() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('')
+  const [sortField, setSortField] = useState<SortField>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [showNewUserModal, setShowNewUserModal] = useState(false)
   const [showEditUserModal, setShowEditUserModal] = useState(false)
   
   // Teams states
-  const [teams, setTeams] = useState<any[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [loadingTeams, setLoadingTeams] = useState(true)
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [showNewTeamModal, setShowNewTeamModal] = useState(false)
   const [showEditTeamModal, setShowEditTeamModal] = useState(false)
 
-  useEffect(() => {
-    if (activeTab === 'people') {
-      fetchUsers()
-    } else {
-      fetchTeams()
-    }
-  }, [activeTab, roleFilter])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoadingUsers(true)
       const params = new URLSearchParams()
@@ -61,9 +86,9 @@ export default function PeopleTeamsPage() {
     } finally {
       setLoadingUsers(false)
     }
-  }
+  }, [roleFilter])
 
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async () => {
     try {
       setLoadingTeams(true)
       const res = await fetch('/api/teams')
@@ -74,7 +99,15 @@ export default function PeopleTeamsPage() {
     } finally {
       setLoadingTeams(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'people') {
+      void fetchUsers()
+    } else {
+      void fetchTeams()
+    }
+  }, [activeTab, fetchTeams, fetchUsers])
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase()
@@ -83,6 +116,28 @@ export default function PeopleTeamsPage() {
       user.lastName.toLowerCase().includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower)
     )
+  })
+
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+
+    switch (sortField) {
+      case 'name': {
+        const aName = `${a.firstName} ${a.lastName}`.toLowerCase()
+        const bName = `${b.firstName} ${b.lastName}`.toLowerCase()
+        return aName.localeCompare(bName) * modifier
+      }
+      case 'email':
+        return a.email.toLowerCase().localeCompare(b.email.toLowerCase()) * modifier
+      case 'jobTitle':
+        return (a.jobTitle || '').toLowerCase().localeCompare((b.jobTitle || '').toLowerCase()) * modifier
+      case 'role':
+        return getRoleLabel(a.role).localeCompare(getRoleLabel(b.role)) * modifier
+      case 'enabled':
+        return ((a.enabled ? 1 : 0) - (b.enabled ? 1 : 0)) * modifier
+      default:
+        return 0
+    }
   })
 
   // Handlers
@@ -133,13 +188,37 @@ export default function PeopleTeamsPage() {
     }
   }
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-foreground"
+      />
+    )
+  }
+
   // Build hierarchy for people: Teams > Job Titles > People (3 layers)
   const buildHierarchy = () => {
-    const hierarchy: any = {}
+    const hierarchy: PeopleHierarchy = {}
     
     filteredUsers.forEach(user => {
+      const userWithTeams = user as UserWithTeams
       // Get user's teams
-      const userTeams = (user as any).teamMemberships?.map((tm: any) => tm.team) || []
+      const userTeams = userWithTeams.teamMemberships?.map((tm) => tm.team) || []
       
       if (userTeams.length === 0) {
         // Users without team go to "Sem Equipe"
@@ -155,7 +234,7 @@ export default function PeopleTeamsPage() {
         hierarchy[teamName][jobTitle].push(user)
       } else {
         // Add user to each of their teams
-        userTeams.forEach((team: any) => {
+        userTeams.forEach((team) => {
           const teamName = team.name
           if (!hierarchy[teamName]) {
             hierarchy[teamName] = {}
@@ -173,114 +252,114 @@ export default function PeopleTeamsPage() {
     return hierarchy
   }
 
+  const pageTitle = activeTab === 'people' ? 'Pessoas' : 'Equipes'
+  const pageDescription =
+    activeTab === 'people'
+      ? 'Gestao de pessoas e equipamentos'
+      : 'Gestao de equipes e alocacoes operacionais'
+
   return (
-    <PageContainer>
-        {/* Header with Tabs */}
-        <div className="mb-6">
-          <PageHeader title="Pessoas e Equipes" description="Gerencie pessoas, equipes e permissões" />
-          
-          {/* Tabs */}
-          <div className="border-b border-border">
-            <nav className="-mb-px flex gap-8">
-              <button
-                onClick={() => setActiveTab('people')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'people'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                Pessoas
-              </button>
-              <button
-                onClick={() => setActiveTab('teams')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'teams'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                Equipes
-              </button>
-            </nav>
-          </div>
+    <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="px-4 py-4 md:px-6 flex-shrink-0">
+          <PageHeader
+            title={pageTitle}
+            description={pageDescription}
+            actions={
+              activeTab === 'people' ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="relative">
+                    <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Buscar pessoas..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+
+                  <div className="flex items-center bg-muted rounded-[4px] p-1">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                        viewMode === 'grid'
+                          ? 'bg-background text-foreground ambient-shadow'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Visualização em Grade"
+                    >
+                      <Icon name="grid_view" className="text-base" />
+                      <span className="hidden md:inline">Grade</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                        viewMode === 'table'
+                          ? 'bg-background text-foreground ambient-shadow'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Visualização em Tabela"
+                    >
+                      <Icon name="table" className="text-base" />
+                      <span className="hidden md:inline">Tabela</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('hierarchy')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                        viewMode === 'hierarchy'
+                          ? 'bg-background text-foreground ambient-shadow'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Visualização Hierárquica"
+                    >
+                      <Icon name="account_tree" className="text-base" />
+                      <span className="hidden md:inline">Árvore</span>
+                    </button>
+                  </div>
+
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Todos os Papéis</option>
+                    <option value="SUPER_ADMIN">Super Administrador</option>
+                    <option value="GESTOR">Gestor</option>
+                    <option value="PLANEJADOR">Planejador</option>
+                    <option value="MECANICO">Mecânico</option>
+                    <option value="ELETRICISTA">Eletricista</option>
+                    <option value="OPERADOR">Operador</option>
+                    <option value="CONSTRUTOR_CIVIL">Construtor Civil</option>
+                  </select>
+
+                  <ExportButton data={filteredUsers} entity="users" />
+
+                  <button
+                    onClick={() => setShowNewUserModal(true)}
+                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors whitespace-nowrap"
+                  >
+                    <Icon name="add" className="text-xl" />
+                    Adicionar
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setShowNewTeamModal(true)}
+                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors whitespace-nowrap"
+                  >
+                    <Icon name="add" className="text-xl" />
+                    Nova Equipe
+                  </button>
+                </div>
+              )
+            }
+          />
         </div>
 
         {/* People Tab Content */}
         {activeTab === 'people' && (
-          <>
-            {/* Actions Bar */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-[4px] transition-colors ${
-                    viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'bg-card text-muted-foreground hover:bg-accent/10'
-                  }`}
-                  title="Visualização em Grade"
-                >
-                  <Icon name="grid_view" className="text-xl" />
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-2 rounded-[4px] transition-colors ${
-                    viewMode === 'table' ? 'bg-primary/10 text-primary' : 'bg-card text-muted-foreground hover:bg-accent/10'
-                  }`}
-                  title="Visualização em Tabela"
-                >
-                  <Icon name="list" className="text-xl" />
-                </button>
-                <button
-                  onClick={() => setViewMode('hierarchy')}
-                  className={`p-2 rounded-[4px] transition-colors ${
-                    viewMode === 'hierarchy' ? 'bg-primary/10 text-primary' : 'bg-card text-muted-foreground hover:bg-accent/10'
-                  }`}
-                  title="Visualização Hierárquica"
-                >
-                  <Icon name="hub" className="text-xl" />
-                </button>
-              </div>
-              
-              <ExportButton data={filteredUsers} entity="users" />
-              <button
-                onClick={() => setShowNewUserModal(true)}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-              >
-                <Icon name="add" className="text-xl" />
-                Adicionar Pessoa
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-card rounded-[4px] ambient-shadow p-4 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
-                  <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xl" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por nome ou email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-                  />
-                </div>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  <option value="">Todos os Papéis</option>
-                  <option value="SUPER_ADMIN">Super Administrador</option>
-                  <option value="GESTOR">Gestor</option>
-                  <option value="PLANEJADOR">Planejador</option>
-                  <option value="MECANICO">Mecânico</option>
-                  <option value="ELETRICISTA">Eletricista</option>
-                  <option value="OPERADOR">Operador</option>
-                  <option value="CONSTRUTOR_CIVIL">Construtor Civil</option>
-                </select>
-              </div>
-            </div>
-
+          <div className="px-4 pb-4 pt-1 md:px-6 md:pb-6">
             {/* Content */}
             {loadingUsers ? (
               <div className="text-center py-12">
@@ -298,7 +377,7 @@ export default function PeopleTeamsPage() {
                 {/* Grid View */}
                 {viewMode === 'grid' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredUsers.map((user) => (
+                    {sortedUsers.map((user) => (
                       <div
                         key={user.id}
                         onClick={() => handleUserClick(user.id)}
@@ -362,15 +441,40 @@ export default function PeopleTeamsPage() {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-secondary">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cargo</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                              <span>Nome</span>
+                              {renderSortIcon('name')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('email')} className="flex items-center gap-1">
+                              <span>Email</span>
+                              {renderSortIcon('email')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('jobTitle')} className="flex items-center gap-1">
+                              <span>Cargo</span>
+                              {renderSortIcon('jobTitle')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1">
+                              <span>Papel</span>
+                              {renderSortIcon('role')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('enabled')} className="flex items-center gap-1">
+                              <span>Status</span>
+                              {renderSortIcon('enabled')}
+                            </button>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-card divide-y divide-gray-200">
-                        {filteredUsers.map((user) => (
+                        {sortedUsers.map((user) => (
                           <tr
                             key={user.id}
                             onClick={() => handleUserClick(user.id)}
@@ -427,7 +531,7 @@ export default function PeopleTeamsPage() {
                 {/* Hierarchy View - 3 Layers: Teams > Job Titles > People */}
                 {viewMode === 'hierarchy' && (
                   <div className="space-y-6">
-                    {Object.entries(buildHierarchy()).map(([teamName, jobTitles]: [string, any]) => (
+                    {Object.entries(buildHierarchy()).map(([teamName, jobTitles]) => (
                       <div key={teamName} className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
                         {/* Layer 1: Team */}
                         <div className="bg-primary/5 px-6 py-4 border-b border-border">
@@ -435,24 +539,24 @@ export default function PeopleTeamsPage() {
                             <Icon name="group" className="text-xl" />
                             {teamName}
                             <span className="text-sm font-normal text-primary">
-                              ({Object.values(jobTitles).reduce((acc: number, users: any) => acc + users.length, 0)} pessoas)
+                              ({Object.values(jobTitles).reduce((acc, groupUsers) => acc + groupUsers.length, 0)} pessoas)
                             </span>
                           </h3>
                         </div>
                         
                         <div className="p-6 space-y-4">
-                          {Object.entries(jobTitles).map(([jobTitle, users]: [string, any]) => (
+                          {Object.entries(jobTitles).map(([jobTitle, groupUsers]) => (
                             <div key={jobTitle} className="border-l-4 border-on-surface-variant pl-4">
                               {/* Layer 2: Job Title */}
                               <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
                                 <Icon name="hub" className="text-base text-success" />
                                 {jobTitle}
-                                <span className="text-sm font-normal text-muted-foreground">({users.length})</span>
+                                <span className="text-sm font-normal text-muted-foreground">({groupUsers.length})</span>
                               </h4>
                               
                               {/* Layer 3: People */}
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ml-6">
-                                {users.map((user: User) => (
+                                {groupUsers.map((user) => (
                                   <div
                                     key={user.id}
                                     onClick={() => handleUserClick(user.id)}
@@ -487,26 +591,16 @@ export default function PeopleTeamsPage() {
 
                 {/* Summary */}
                 <div className="mt-6 text-center text-muted-foreground">
-                  Mostrando {filteredUsers.length} de {users.length} pessoa(s)
+                  Mostrando {sortedUsers.length} de {users.length} pessoa(s)
                 </div>
               </>
             )}
-          </>
+          </div>
         )}
 
         {/* Teams Tab Content */}
         {activeTab === 'teams' && (
-          <>
-            <div className="flex justify-end mb-6">
-              <button
-                onClick={() => setShowNewTeamModal(true)}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-              >
-                <Icon name="add" className="text-xl" />
-                Nova Equipe
-              </button>
-            </div>
-
+          <div className="p-4 md:p-6">
             {loadingTeams ? (
               <div className="text-center py-12">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
@@ -545,7 +639,7 @@ export default function PeopleTeamsPage() {
                           Membros ({team.members.length}):
                         </div>
                         <div className="space-y-1">
-                          {team.members.slice(0, 3).map((member: any, idx: number) => (
+                          {team.members.slice(0, 3).map((member, idx: number) => (
                             <div key={idx} className="text-sm text-muted-foreground">
                               {member.user.firstName} {member.user.lastName}
                             </div>
@@ -567,7 +661,7 @@ export default function PeopleTeamsPage() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
 
       {/* Modals */}

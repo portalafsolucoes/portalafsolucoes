@@ -371,6 +371,31 @@ Padrao visual:
 - **NAO** use icones no titulo do `PageHeader`.
 - O `AppShell` fornece sidebar, header e scroll; o espacamento da pagina e responsabilidade do `PageContainer`.
 
+### Padrao de Tela de Listagem (OBRIGATORIO)
+
+Referencia: telas de `Pessoas` e `Ativos`.
+
+- Toda listagem principal deve concentrar titulo, descricao e controles no topo da pagina usando `PageHeader`.
+- O topo deve usar `PageContainer variant="full" className="overflow-hidden p-0"` quando a tela tiver comportamento de painel, tabela grande ou alternancia de visualizacao.
+- O wrapper do topo deve ser enxuto, sem card branco destacado, usando `px-4 py-4 md:px-6`.
+- A tabela, grade ou arvore deve subir logo abaixo do topo; evite blocos vazios ou espacamento vertical excessivo entre header e conteudo.
+- **NAO** duplique navegacao com abas ou toggles abaixo do header quando a mesma escolha ja existir nos controles superiores.
+
+#### Ordem dos controles
+
+Quando aplicavel, a ordem visual deve ser:
+1. Busca
+2. Alternancia de visualizacao (`Grade`, `Tabela`, `Arvore`, etc.)
+3. Filtros
+4. Exportacao (`Excel`)
+5. Acao primaria (`Adicionar`, `Novo`, etc.)
+
+#### Tabelas de listagem
+
+- Cabecalhos que representam campos ordenaveis devem permitir reordenacao por clique.
+- Use indicador visual de ordenacao no proprio cabecalho.
+- A tabela deve comecar imediatamente abaixo do topo, dentro do fluxo principal da pagina.
+
 ### Logo da Empresa na Sidebar (OBRIGATORIO)
 
 - A logo no topo esquerdo da sidebar deve vir **exclusivamente** de `user.company.logo` retornado por `/api/auth/me`.
