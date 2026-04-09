@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx'
 interface ExportColumn {
   key: string
   header: string
-  transform?: (value: any, row: any) => string | number
+  transform?: (value: unknown, row: Record<string, unknown>) => string | number
 }
 
 /**
@@ -14,14 +14,14 @@ interface ExportColumn {
  * @param sheetName - Nome da aba (padrão: "Dados")
  */
 export function exportToExcel(
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
   filename: string,
   sheetName: string = 'Dados'
 ) {
   // Montar linhas
   const rows = data.map(item => {
-    const row: Record<string, any> = {}
+    const row: Record<string, unknown> = {}
     for (const col of columns) {
       const rawValue = getNestedValue(item, col.key)
       row[col.header] = col.transform ? col.transform(rawValue, item) : (rawValue ?? '')
@@ -47,8 +47,14 @@ export function exportToExcel(
   XLSX.writeFile(wb, `${filename}.xlsx`)
 }
 
-function getNestedValue(obj: any, path: string): any {
-  return path.split('.').reduce((current, key) => current?.[key], obj)
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+  return path.split('.').reduce<unknown>((current, key) => {
+    if (current && typeof current === 'object' && key in current) {
+      return (current as Record<string, unknown>)[key]
+    }
+
+    return undefined
+  }, obj)
 }
 
 // Configurações pré-definidas para entidades comuns
@@ -78,6 +84,33 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'serialNumber', header: 'Nº Série' },
       { key: 'protheusCode', header: 'Cód. Protheus' },
       { key: 'createdAt', header: 'Criado em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+    ],
+  },
+  'standard-assets': {
+    filename: 'Bens_Padrao',
+    columns: [
+      { key: 'family.code', header: 'Cod. Familia' },
+      { key: 'family.name', header: 'Familia' },
+      { key: 'name', header: 'Nome' },
+      { key: 'manufacturer', header: 'Fabricante' },
+      { key: 'modelName', header: 'Modelo' },
+      { key: 'priority', header: 'Prioridade' },
+      { key: 'shiftCode', header: 'Turno' },
+      { key: 'createdAt', header: 'Criado em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+    ],
+  },
+  'asset-criticality': {
+    filename: 'Criticidade_Ativos',
+    columns: [
+      { key: 'name', header: 'Ativo' },
+      { key: 'customId', header: 'Codigo' },
+      { key: 'location.name', header: 'Localizacao' },
+      { key: 'classification', header: 'Classificacao' },
+      { key: 'gutScore', header: 'GUT' },
+      { key: 'openRequestsCount', header: 'SS Abertas' },
+      { key: 'openWorkOrdersCount', header: 'OS Abertas' },
+      { key: 'rafCount', header: 'RAFs' },
+      { key: 'totalScore', header: 'Score Total' },
     ],
   },
   requests: {

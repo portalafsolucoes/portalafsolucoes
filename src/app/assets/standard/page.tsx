@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import { ExportButton } from '@/components/ui/ExportButton'
 
 interface StandardAsset {
   id: string
@@ -37,7 +38,44 @@ interface StandardAsset {
   coupling: string | null
   annualCoupValue: number | null
   createdAt: string
-  characteristics?: any[]
+  characteristics?: StandardAssetCharacteristic[]
+}
+
+interface StandardAssetCharacteristic {
+  characteristicId: string
+  value: string | null
+  unit: string | null
+  characteristic?: {
+    unit?: string | null
+  } | null
+}
+
+interface FamilyOption {
+  id: string
+  code: string
+  name: string
+}
+
+interface CostCenterOption {
+  id: string
+  code: string
+  name: string
+}
+
+interface CalendarOption {
+  id: string
+  name: string
+}
+
+interface WorkCenterOption {
+  id: string
+  name: string
+  protheusCode?: string | null
+}
+
+interface NamedOption {
+  id: string
+  name: string
 }
 
 interface CharacteristicOption {
@@ -80,15 +118,17 @@ const emptyForm = {
   annualCoupValue: '',
 }
 
+type SortField = 'family' | 'name' | 'manufacturer' | 'modelName' | 'priority' | 'shiftCode'
+type SortDirection = 'asc' | 'desc'
 
 export default function StandardAssetsPage() {
   const [items, setItems] = useState<StandardAsset[]>([])
-  const [families, setFamilies] = useState<any[]>([])
-  const [costCenters, setCostCenters] = useState<any[]>([])
-  const [calendars, setCalendars] = useState<any[]>([])
-  const [workCenters, setWorkCenters] = useState<any[]>([])
-  const [assetFamilyModels, setAssetFamilyModels] = useState<any[]>([])
-  const [counterTypes, setCounterTypes] = useState<any[]>([])
+  const [families, setFamilies] = useState<FamilyOption[]>([])
+  const [costCenters, setCostCenters] = useState<CostCenterOption[]>([])
+  const [calendars, setCalendars] = useState<CalendarOption[]>([])
+  const [workCenters, setWorkCenters] = useState<WorkCenterOption[]>([])
+  const [assetFamilyModels, setAssetFamilyModels] = useState<NamedOption[]>([])
+  const [counterTypes, setCounterTypes] = useState<NamedOption[]>([])
   const [characteristics, setCharacteristics] = useState<CharacteristicOption[]>([])
   const [characteristicRows, setCharacteristicRows] = useState<CharacteristicRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -97,6 +137,8 @@ export default function StandardAssetsPage() {
   const [editing, setEditing] = useState<StandardAsset | null>(null)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState(emptyForm)
+  const [sortField, setSortField] = useState<SortField>('family')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   useEffect(() => {
     loadData()
@@ -176,7 +218,7 @@ export default function StandardAssetsPage() {
     })
     // Carregar características existentes
     if (item.characteristics && item.characteristics.length > 0) {
-      setCharacteristicRows(item.characteristics.map((c: any) => ({
+      setCharacteristicRows(item.characteristics.map((c) => ({
         characteristicId: c.characteristicId,
         value: c.value || '',
         unit: c.unit || c.characteristic?.unit || '',
@@ -283,16 +325,63 @@ export default function StandardAssetsPage() {
     )
   })
 
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+
+    const getValue = (item: StandardAsset) => {
+      switch (sortField) {
+        case 'family':
+          return item.family ? `${item.family.code} - ${item.family.name}` : ''
+        case 'name':
+          return item.name || ''
+        case 'manufacturer':
+          return item.manufacturer || ''
+        case 'modelName':
+          return item.modelName || ''
+        case 'priority':
+          return item.priority || ''
+        case 'shiftCode':
+          return item.shiftCode || ''
+        default:
+          return ''
+      }
+    }
+
+    return getValue(a).toLowerCase().localeCompare(getValue(b).toLowerCase()) * modifier
+  })
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-foreground"
+      />
+    )
+  }
+
   return (
-    <PageContainer>
-        {/* Header */}
-        <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
+    <PageContainer variant="full" className="overflow-hidden p-0">
+        <div className="px-4 py-4 md:px-6 flex-shrink-0">
           <PageHeader
             title="Bens Padrão"
             description="Cadastro de bens padrão para pré-preenchimento"
             actions={
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex-1 max-w-md relative">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
                   <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
                   <input
                     type="text"
@@ -302,6 +391,7 @@ export default function StandardAssetsPage() {
                     className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
+                <ExportButton data={sortedItems} entity="standard-assets" />
                 <Button onClick={handleNew} className="whitespace-nowrap">
                   <Icon name="add" className="mr-2 text-base" />
                   Novo Bem Padrão
@@ -311,8 +401,7 @@ export default function StandardAssetsPage() {
           />
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
+        <div className="px-4 pb-4 pt-1 md:px-6 md:pb-6 flex-1 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
@@ -324,43 +413,75 @@ export default function StandardAssetsPage() {
               <p className="text-sm">Cadastre um bem padrão para pré-preencher automaticamente os bens individuais.</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 sticky top-0">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">Família</th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">Nome</th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground hidden md:table-cell">Fabricante</th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground hidden md:table-cell">Modelo</th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground hidden lg:table-cell">Prioridade</th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground hidden lg:table-cell">Turno</th>
-                  <th className="text-right px-4 py-3 font-semibold text-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredItems.map(item => (
-                  <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">
-                      {item.family ? `${item.family.code} - ${item.family.name}` : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{item.name || '-'}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{item.manufacturer || '-'}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{item.modelName || '-'}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{item.priority || '-'}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{item.shiftCode || '-'}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleEdit(item)} className="p-1.5 hover:bg-muted rounded-[4px] transition-colors" title="Editar">
-                          <Icon name="edit" className="text-base text-muted-foreground" />
-                        </button>
-                        <button onClick={() => handleDelete(item.id)} className="p-1.5 hover:bg-red-50 rounded-[4px] transition-colors" title="Excluir">
-                          <Icon name="delete" className="text-base text-danger" />
-                        </button>
-                      </div>
-                    </td>
+            <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-secondary sticky top-0">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <button type="button" onClick={() => handleSort('family')} className="flex items-center gap-1">
+                        Família
+                        {renderSortIcon('family')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                        Nome
+                        {renderSortIcon('name')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">
+                      <button type="button" onClick={() => handleSort('manufacturer')} className="flex items-center gap-1">
+                        Fabricante
+                        {renderSortIcon('manufacturer')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">
+                      <button type="button" onClick={() => handleSort('modelName')} className="flex items-center gap-1">
+                        Modelo
+                        {renderSortIcon('modelName')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
+                      <button type="button" onClick={() => handleSort('priority')} className="flex items-center gap-1">
+                        Prioridade
+                        {renderSortIcon('priority')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
+                      <button type="button" onClick={() => handleSort('shiftCode')} className="flex items-center gap-1">
+                        Turno
+                        {renderSortIcon('shiftCode')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-card divide-y divide-gray-200">
+                  {sortedItems.map(item => (
+                    <tr key={item.id} className="hover:bg-secondary transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
+                        {item.family ? `${item.family.code} - ${item.family.name}` : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{item.name || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden md:table-cell">{item.manufacturer || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden md:table-cell">{item.modelName || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.priority || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.shiftCode || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => handleEdit(item)} className="p-1.5 hover:bg-muted rounded-[4px] transition-colors" title="Editar">
+                            <Icon name="edit" className="text-base text-muted-foreground" />
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} className="p-1.5 hover:bg-red-50 rounded-[4px] transition-colors" title="Excluir">
+                            <Icon name="delete" className="text-base text-danger" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       {/* Modal de Criação/Edição */}
@@ -378,7 +499,7 @@ export default function StandardAssetsPage() {
                     required
                   >
                     <option value="">Selecione uma família</option>
-                    {availableFamilies.map((f: any) => (
+                    {availableFamilies.map((f) => (
                       <option key={f.id} value={f.id}>{f.code ? `${f.code} - ${f.name}` : f.name}</option>
                     ))}
                   </select>
@@ -402,7 +523,7 @@ export default function StandardAssetsPage() {
                     <select
                       value={formData.costCenterCode}
                       onChange={(e) => {
-                        const selected = costCenters.find((c: any) => c.code === e.target.value)
+                        const selected = costCenters.find((c) => c.code === e.target.value)
                         setFormData(prev => ({
                           ...prev,
                           costCenterCode: e.target.value,
@@ -412,7 +533,7 @@ export default function StandardAssetsPage() {
                       className={selectClass}
                     >
                       <option value="">Selecione</option>
-                      {costCenters.map((c: any) => (
+                      {costCenters.map((c) => (
                         <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
                       ))}
                     </select>
@@ -435,7 +556,7 @@ export default function StandardAssetsPage() {
                       className={selectClass}
                     >
                       <option value="">Selecione</option>
-                      {calendars.map((c: any) => (
+                      {calendars.map((c) => (
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
@@ -447,7 +568,7 @@ export default function StandardAssetsPage() {
                     <select
                       value={formData.workCenterCode}
                       onChange={(e) => {
-                        const selected = workCenters.find((w: any) => (w.protheusCode || w.name) === e.target.value)
+                        const selected = workCenters.find((w) => (w.protheusCode || w.name) === e.target.value)
                         setFormData(prev => ({
                           ...prev,
                           workCenterCode: e.target.value,
@@ -457,7 +578,7 @@ export default function StandardAssetsPage() {
                       className={selectClass}
                     >
                       <option value="">Selecione</option>
-                      {workCenters.map((w: any) => (
+                      {workCenters.map((w) => (
                         <option key={w.id} value={w.protheusCode || w.name}>
                           {w.protheusCode ? `${w.protheusCode} - ${w.name}` : w.name}
                         </option>
@@ -491,7 +612,7 @@ export default function StandardAssetsPage() {
                       className={selectClass}
                     >
                       <option value="">Selecione</option>
-                      {assetFamilyModels.map((m: any) => (
+                      {assetFamilyModels.map((m) => (
                         <option key={m.id} value={m.name}>{m.name}</option>
                       ))}
                     </select>
@@ -612,7 +733,7 @@ export default function StandardAssetsPage() {
                       className={selectClass}
                     >
                       <option value="">Selecione o tipo de contador</option>
-                      {counterTypes.map((ct: any) => (
+                      {counterTypes.map((ct) => (
                         <option key={ct.id} value={ct.name}>{ct.name}</option>
                       ))}
                     </select>

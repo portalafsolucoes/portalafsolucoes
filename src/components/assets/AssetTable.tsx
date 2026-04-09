@@ -98,7 +98,7 @@ export function AssetTable({
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortField(field)
       setSortDirection('asc')
@@ -125,11 +125,15 @@ export function AssetTable({
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
-      return <Icon name="expand_more" className="text-base text-muted-foreground opacity-0 group-hover:opacity-50" />
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
     }
-    return sortDirection === 'asc'
-      ? <Icon name="expand_less" className="text-base text-primary" />
-      : <Icon name="expand_more" className="text-base text-primary" />
+
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-foreground"
+      />
+    )
   }
 
   const getStatusInfo = (status: string) => {
@@ -163,11 +167,11 @@ export function AssetTable({
 
       {/* Tabela */}
       <div className="flex-1 overflow-auto min-h-0">
-        <table className="w-full">
-          <thead className="sticky top-0 bg-surface border-b border-border backdrop-blur-sm z-10">
-            <tr className="border-b border-border">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="sticky top-0 bg-secondary z-10">
+            <tr>
               {/* Checkbox */}
-              <th className="w-12 px-4 py-3 text-left">
+              <th className="w-12 px-6 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={selectedIds.size === assets.length && assets.length > 0}
@@ -178,75 +182,72 @@ export function AssetTable({
               
               {/* Código do Bem */}
               <th
-                className="px-4 py-3 text-left cursor-pointer group"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 onClick={() => handleSort('protheusCode')}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <button type="button" className="flex items-center gap-1">
                   Código
                   <SortIcon field="protheusCode" />
-                </div>
+                </button>
               </th>
 
               {/* Nome */}
               <th
-                className="px-4 py-3 text-left cursor-pointer group"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 onClick={() => handleSort('name')}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Icon name="inventory_2" className="text-base" />
+                <button type="button" className="flex items-center gap-1">
                   Nome do Ativo
                   <SortIcon field="name" />
-                </div>
+                </button>
               </th>
               
               {/* Status */}
               <th 
-                className="px-4 py-3 text-left cursor-pointer group"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 onClick={() => handleSort('status')}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <button type="button" className="flex items-center gap-1">
                   Status
                   <SortIcon field="status" />
-                </div>
+                </button>
               </th>
               
               {/* Área */}
               <th 
-                className="px-4 py-3 text-left cursor-pointer group"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 onClick={() => handleSort('area')}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Icon name="location_on" className="text-base" />
+                <button type="button" className="flex items-center gap-1">
                   Área
                   <SortIcon field="area" />
-                </div>
+                </button>
               </th>
               
               {/* Data de Criação */}
               <th 
-                className="px-4 py-3 text-left cursor-pointer group"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 onClick={() => handleSort('createdAt')}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Icon name="calendar_today" className="text-base" />
+                <button type="button" className="flex items-center gap-1">
                   Criado em
                   <SortIcon field="createdAt" />
-                </div>
+                </button>
               </th>
               
               {/* Ações */}
-              <th className="w-20 px-4 py-3 text-center">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <th className="w-20 px-6 py-3 text-center">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Ações
                 </span>
               </th>
             </tr>
           </thead>
           
-          <tbody className="divide-y divide-border">
+          <tbody className="bg-card divide-y divide-gray-200">
             {sortedAssets.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Icon name="inventory_2" className="text-5xl opacity-20" />
                     <p className="text-sm">Nenhum ativo encontrado</p>
@@ -264,13 +265,13 @@ export function AssetTable({
                     key={asset.id}
                     className={`
                       transition-colors cursor-pointer
-                      ${isActive ? 'bg-primary/10' : 'hover:bg-muted/50'}
+                      ${isActive ? 'bg-primary/10' : 'hover:bg-secondary'}
                       ${isSelected ? 'bg-primary/5' : ''}
                     `}
                     onClick={() => onSelectAsset(asset)}
                   >
                     {/* Checkbox */}
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -280,7 +281,7 @@ export function AssetTable({
                     </td>
                     
                     {/* Código do Bem */}
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-foreground font-mono">
                         {asset.protheusCode || '-'}
                       </span>
@@ -290,9 +291,9 @@ export function AssetTable({
                     </td>
 
                     {/* Nome */}
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-medium text-foreground">
+                        <span className="text-sm font-medium text-foreground">
                           {asset.name}
                         </span>
                         {asset.description && (
@@ -304,7 +305,7 @@ export function AssetTable({
                     </td>
                     
                     {/* Status */}
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`
                         inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
                         ${statusInfo.className}
@@ -315,21 +316,21 @@ export function AssetTable({
                     </td>
                     
                     {/* Área */}
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-foreground">
                         {asset.area || '-'}
                       </span>
                     </td>
                     
                     {/* Data de Criação */}
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-muted-foreground">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-foreground">
                         {formatDate(asset.createdAt)}
                       </span>
                     </td>
                     
                     {/* Ações */}
-                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="relative">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === asset.id ? null : asset.id)}

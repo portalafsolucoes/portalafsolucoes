@@ -394,6 +394,8 @@ Quando aplicavel, a ordem visual deve ser:
 
 - Cabecalhos que representam campos ordenaveis devem permitir reordenacao por clique.
 - Use indicador visual de ordenacao no proprio cabecalho.
+- O visual de referencia da tabela e a tela de `Pessoas`: `min-w-full divide-y divide-gray-200`, `thead` com `bg-secondary`, `tbody` com `bg-card divide-y divide-gray-200`, `th` com `px-6 py-3 text-xs font-medium uppercase tracking-wider` e linhas com `hover:bg-secondary`.
+- Em tabelas operacionais, todas as colunas de dados visiveis devem aceitar reordenacao por clique quando houver valor comparavel; excecoes devem ficar restritas a checkbox, menus de acao e colunas puramente decorativas.
 - A tabela deve comecar imediatamente abaixo do topo, dentro do fluxo principal da pagina.
 
 ### Logo da Empresa na Sidebar (OBRIGATORIO)

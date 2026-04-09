@@ -4,10 +4,7 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
-
-import { getStatusColor } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AssetTree } from '@/components/assets/AssetTree'
 import { AssetTable } from '@/components/assets/AssetTable'
@@ -17,7 +14,6 @@ import { ExportButton } from '@/components/ui/ExportButton'
 // Lazy load: modais e painéis só carregam quando necessário
 const AssetDetailPanel = dynamic(() => import('@/components/assets/AssetDetailPanel').then(m => ({ default: m.AssetDetailPanel })), { ssr: false })
 const AssetEditPanel = dynamic(() => import('@/components/assets/AssetEditPanel').then(m => ({ default: m.AssetEditPanel })), { ssr: false })
-const AssetCreatePanel = dynamic(() => import('@/components/assets/AssetCreatePanel').then(m => ({ default: m.AssetCreatePanel })), { ssr: false })
 const AssetDetailModal = dynamic(() => import('@/components/assets/AssetDetailModal').then(m => ({ default: m.AssetDetailModal })), { ssr: false })
 const AssetEditModal = dynamic(() => import('@/components/assets/AssetEditModal').then(m => ({ default: m.AssetEditModal })), { ssr: false })
 const AssetCreateModal = dynamic(() => import('@/components/assets/AssetCreateModal').then(m => ({ default: m.AssetCreateModal })), { ssr: false })
@@ -103,7 +99,7 @@ export default function AssetsPage() {
     setIsCreating(true)
   }
 
-  const handleEdit = (asset: Asset) => {
+  const handleEdit = () => {
     setIsEditingInPanel(true)
   }
 
@@ -123,7 +119,7 @@ export default function AssetsPage() {
       } else {
         alert('Erro ao excluir ativo')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     }
   }
@@ -158,7 +154,7 @@ export default function AssetsPage() {
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
       {/* Header */}
-      <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
+      <div className="border-b border-border px-4 py-4 md:px-6 flex-shrink-0">
         <PageHeader
           title="Ativos"
           description="Gestao de bens e equipamentos"
