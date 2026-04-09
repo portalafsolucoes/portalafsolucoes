@@ -4,6 +4,7 @@
 - Produto: Portal AF Solucoes - Gestao de Manutencao (CMMS) multiempresa e multiunidade
 - Repositorio: https://github.com/portalafsolucoes/portalafsolucoes
 - Stack: Next.js 15 (App Router, React 19, TypeScript), PostgreSQL via Supabase + Prisma ORM, Tailwind CSS v4 + Shadcn/UI + Recharts, Zustand + React Query, Playwright, Vercel + Cloudinary
+- Leia primeiro `CONVENTIONS.md` para o fluxo compartilhado entre Claude Code, Codex e GitHub Copilot
 - Para spec completa do sistema, leia `docs/SPEC.md`
 
 ## Comandos
@@ -32,7 +33,9 @@
 - Fazer apenas o solicitado e preservar o comportamento atual fora do escopo
 - Editar antes de reescrever; nao criar scripts, `README`s ou documentos extras sem necessidade explicita
 - Nao duplicar regra de negocio entre UI, API e banco; reutilizar a logica central de permissao
+- Seguir a ordem de leitura definida em `CONVENTIONS.md` antes de implementar mudancas relevantes
 - Sempre alinhar novas features com `docs/SPEC.md` e `.claude/rules/*.md`
+- Toda mudanca finalizada deve atualizar a documentacao correspondente: regra funcional em `docs/SPEC.md`, padrao de UI em `.claude/rules/components.md`, contrato de API em `.claude/rules/api.md` e convencoes gerais neste `CLAUDE.md`
 - Antes de criar fluxo novo, validar perfil, empresa/unidade, status envolvidos e criterio de aceite
 - Em listas, sempre considerar busca, filtros, loading, estado vazio, responsividade e permissao
 - Em formularios, garantir validacoes de negocio e status inicial correto
@@ -40,6 +43,12 @@
 - Rodar `lint`, `test` e/ou `build` conforme o impacto antes de concluir; se algo nao puder ser validado, declarar
 - Em caso de divergencia, seguir `docs/SPEC.md` e `.claude/rules/*.md` e registrar o gap
 - Se algum documento auxiliar estiver diferente da spec ou das rules, trata-lo como desatualizado ate ser sincronizado
+
+## Tooling de IA
+- `CONVENTIONS.md` e a referencia compartilhada entre agentes
+- `AGENTS.md` e o ponto de entrada para Codex e agentes genericos
+- `.github/copilot-instructions.md` e o ponto de entrada para GitHub Copilot
+- `docs/AI_SETUP.md` define o inventario canonico de MCPs e skills sem armazenar segredos no repositorio
 
 ## Modulos do Sistema
 - Hub: pagina inicial apos login com modulos disponiveis por empresa

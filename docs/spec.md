@@ -8,6 +8,15 @@
 - Versao funcional atual: `1.0`
 - Data da especificacao: `09/04/2026`
 
+## Disciplina de Implementacao e Documentacao
+- Antes de implementar qualquer funcionalidade, localizar a secao relevante desta spec e usar essa secao como contrato funcional
+- Preferir prompts orientados por spec, por exemplo: `Leia a secao de Localizacoes em docs/SPEC.md e implemente conforme a spec`
+- Mudancas de regra de negocio, fluxo funcional, permissoes, navegacao ou comportamento de modulo devem atualizar este arquivo no mesmo ciclo da implementacao
+- Ao finalizar uma entrega, registrar aqui o que ficou implementado, mudancas de comportamento relevantes e eventuais gaps conhecidos
+- Mudancas de UI que alterem padrao reutilizavel devem atualizar `.claude/rules/components.md`
+- Mudancas de API, server action ou contrato backend devem atualizar `.claude/rules/api.md`
+- Mudancas de convencao geral do projeto devem atualizar `CLAUDE.md` e, quando forem compartilhadas por agentes, tambem `CONVENTIONS.md`
+
 ## Regras de Produto
 
 ### Multiempresa e Multiunidade

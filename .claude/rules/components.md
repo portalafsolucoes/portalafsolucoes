@@ -17,6 +17,10 @@ globs: src/components/**,src/app/**/page.tsx
 - Usar o design system existente com `Tailwind CSS v4`, `Shadcn/UI`, `Recharts` e icones no padrao `Material Symbols`
 - O botao de acao principal deve usar o componente `<Button>`; nao usar `<button>` raw para acoes padronizadas
 
+## Sincronizacao de Documentacao
+- Se uma mudanca alterar padroes reutilizaveis de pagina, modal, listagem, painel ou layout, atualizar este arquivo no mesmo ciclo
+- Se a mudanca afetar comportamento funcional percebido pelo usuario, atualizar tambem a secao correspondente em `docs/SPEC.md`
+
 ## Layout de Paginas (OBRIGATORIO)
 Toda tela (`page.tsx`) DEVE usar os componentes `PageContainer` e `PageHeader`. Nunca defina padding, max-width ou titulo de pagina manualmente.
 

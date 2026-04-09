@@ -44,8 +44,6 @@ test-results/
 # ========================================
 # IDE & Editor
 # ========================================
-.agents/
-.codex/
 .cursor/
 .dev-control/
 .windsurf/
@@ -55,6 +53,12 @@ test-results/
 # AI Tools
 # ========================================
 .claude/worktrees/
+.claude/skills/**/node_modules/
+.claude/skills/**/.temp-execution-*.js
+.claude/skills/**/__pycache__/
+.codex/skills/**/node_modules/
+.codex/skills/**/.temp-execution-*.js
+.codex/skills/**/__pycache__/
 .kiro/
 
 # ========================================
@@ -74,6 +78,7 @@ yarn-error.log*
 # ========================================
 .vercel
 .venv/
+.dev-control/*.pid
 
 # ========================================
 # User Content

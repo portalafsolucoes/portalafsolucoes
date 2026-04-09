@@ -1,0 +1,31 @@
+# Convencoes Compartilhadas
+
+## Ordem de Leitura Obrigatoria
+- Ler `docs/SPEC.md` para contrato funcional e regra de negocio
+- Ler `CLAUDE.md` para stack, comandos e regras operacionais
+- Ler a rule relevante em `.claude/rules/` conforme o tipo de mudanca
+- Ler `docs/AI_SETUP.md` quando a tarefa envolver MCPs, skills ou configuracao de agentes
+
+## Fluxo Obrigatorio de Implementacao
+- Antes de escrever codigo, localizar a secao funcional relevante em `docs/SPEC.md`
+- Formular a tarefa a partir da spec, por exemplo: `Leia a secao de Localizacoes em docs/SPEC.md e implemente conforme a spec`
+- Nao implementar regras novas a partir de prompt generico quando a spec ja cobre o comportamento esperado
+- Quando houver divergencia entre implementacao e documentacao, tratar a documentacao oficial como fonte de verdade ate a sincronizacao ser feita conscientemente
+
+## Atualizacao de Documentacao por Tipo de Mudanca
+- Mudanca funcional, modular, navegacional, de regra de negocio ou permissao: atualizar `docs/SPEC.md`
+- Mudanca de layout, componente reutilizavel, modal, padrao de listagem ou comportamento visual compartilhado: atualizar `.claude/rules/components.md`
+- Mudanca de API route, server action, validacao de payload, resposta, escopo ou permissao no backend: atualizar `.claude/rules/api.md`
+- Mudanca de convencao geral do projeto, stack, comandos ou fluxo operacional: atualizar `CLAUDE.md`
+- Mudanca de inventario de MCPs, skills ou onboarding de agentes: atualizar `docs/AI_SETUP.md`, `AGENTS.md` e `.github/copilot-instructions.md` quando aplicavel
+
+## Fechamento de Entrega
+- Ao concluir uma entrega, registrar em `docs/SPEC.md` o que ficou implementado e qualquer detalhe relevante de comportamento
+- Declarar gaps, limites ou pendencias quando a implementacao nao cobrir a spec inteira
+- Validar com `lint`, `test` e/ou `build` conforme o impacto
+
+## Arquivos de Entrada por Ferramenta
+- Claude Code: `CLAUDE.md` + `.claude/rules/*.md`
+- Codex e agentes genericos: `AGENTS.md`
+- GitHub Copilot: `.github/copilot-instructions.md`
+- Todos devem convergir para este arquivo e para `docs/SPEC.md`

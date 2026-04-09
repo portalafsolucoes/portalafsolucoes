@@ -29,6 +29,10 @@ globs: src/app/api/**,src/actions/**
 - Em falhas, retornar JSON com `error` e status HTTP coerente (`400`, `401`, `403`, `404`, `409`, `500`)
 - Toda acao que altera dados deve validar payload, status permitidos e relacoes obrigatorias antes de persistir
 
+## Sincronizacao de Documentacao
+- Toda mudanca de contrato, permissao, validacao ou comportamento de rota/action deve atualizar a secao funcional correspondente em `docs/SPEC.md`
+- Quando a mudanca alterar um padrao reutilizavel de API ou server action, atualizar este arquivo no mesmo ciclo
+
 ## Tratamento de Erros e Validacao
 - Formularios e APIs devem garantir validacoes de negocio e status inicial correto
 - Rejeicao de solicitacao exige motivo
