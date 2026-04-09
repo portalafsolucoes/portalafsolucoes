@@ -243,7 +243,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
   return (
     <div className="bg-white rounded-[4px] ambient-shadow">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-on-surface-variant/10">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="attach_file" className="text-xl text-muted-foreground" />
@@ -428,7 +428,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-on-surface-variant/10 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Adicionar Anexo</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
@@ -563,7 +563,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowUploadModal(false)}
@@ -598,7 +598,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
       {selectedAttachment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[4px] ambient-ambient-shadow max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-on-surface-variant/10 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground truncate pr-4">
                 {selectedAttachment.name}
               </h3>
@@ -693,7 +693,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
               </div>
 
               {/* Actions */}
-              <div className="flex justify-between gap-3 mt-6 pt-4 border-t border-on-surface-variant/10">
+              <div className="flex justify-between gap-3 mt-6 pt-4 border-t border-border">
                 <div>
                   {!readOnly && (
                     <button

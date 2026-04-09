@@ -104,7 +104,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
         <div className="flex-1 overflow-y-auto">
           {/* Imagem do Ativo */}
           {asset.image && (
-            <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
+            <div className="p-4 md:p-6 border-b border-border">
               <h3 className="text-sm font-semibold text-foreground mb-2">Imagem Principal</h3>
               <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
                 <img 
@@ -117,7 +117,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
           )}
 
           {/* Informações Básicas */}
-          <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
+          <div className="p-4 md:p-6 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3">Informações</h3>
             
             {asset.description && (
@@ -200,7 +200,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
           </div>
 
           {/* QR Code */}
-          <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
+          <div className="p-4 md:p-6 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3">QR Code do Ativo</h3>
             <div className="flex flex-col items-center bg-secondary rounded-[4px] p-4">
               <QRCodeSVG 
@@ -217,7 +217,7 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
 
           {/* Arquivos Anexos */}
           {asset.files && asset.files.length > 0 && (
-            <div className="p-4 md:p-6 border-b border-on-surface-variant/10">
+            <div className="p-4 md:p-6 border-b border-border">
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Icon name="attach_file" className="text-base" />
                 Arquivos Anexos ({asset.files.length})

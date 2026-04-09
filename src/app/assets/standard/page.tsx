@@ -404,7 +404,7 @@ export default function StandardAssetsPage() {
         <div className="px-4 pb-4 pt-1 md:px-6 md:pb-6 flex-1 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">

@@ -166,7 +166,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-[4px] ambient-ambient-shadow max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-on-surface-variant/10 flex justify-between items-center sticky top-0 bg-card z-10">
+        <div className="p-6 border-b border-border flex justify-between items-center sticky top-0 bg-card z-10">
           <div>
             <h2 className="text-2xl font-bold text-foreground">
               {type === 'workorder' ? 'Ordem de Serviço' : 'Solicitação de Serviço'}
@@ -431,7 +431,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-on-surface-variant/10 flex justify-between items-center bg-surface">
+        <div className="p-6 border-t border-border flex justify-between items-center bg-surface">
           <div className="text-sm text-muted-foreground">
             Criada em: {formatDate(item.createdAt)}
           </div>

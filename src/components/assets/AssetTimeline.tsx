@@ -151,7 +151,7 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
   return (
     <div className="bg-white rounded-[4px] ambient-shadow">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-on-surface-variant/10">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-foreground">
@@ -180,7 +180,7 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
 
         {/* Filtros */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-on-surface-variant/10">
+          <div className="mt-4 pt-4 border-t border-border">
             <label className="block text-sm font-medium text-foreground mb-2">
               Filtrar por tipo de evento
             </label>
@@ -277,7 +277,7 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
 
                               {/* Metadata */}
                               {event.metadata && Object.keys(event.metadata).length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-on-surface-variant/10">
+                                <div className="mt-3 pt-3 border-t border-border">
                                   <details className="group">
                                     <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
                                       <Icon name="expand_more" className="text-sm group-open:rotate-180 transition-transform" />

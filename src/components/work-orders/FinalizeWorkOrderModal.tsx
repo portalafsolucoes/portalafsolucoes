@@ -568,7 +568,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         </div>
 
         {/* Botões */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <Button variant="outline" onClick={onClose} size="sm">Cancelar</Button>
           <Button onClick={handleFinalize} disabled={saving} size="sm">
             {saving ? 'Finalizando...' : 'Finalizar OS'}

@@ -45,7 +45,7 @@ export function Navbar() {
   }
 
   return (
-    <nav className="bg-card border-b border-on-surface-variant/10 ambient-shadow">
+    <nav className="bg-card border-b border-border ambient-shadow">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between">
           <div className="flex">

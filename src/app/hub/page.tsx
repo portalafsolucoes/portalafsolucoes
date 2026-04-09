@@ -107,7 +107,7 @@ export default function HubPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,220,198,0.35),_transparent_35%),linear-gradient(180deg,#fbfbfb_0%,#f3f5f5_100%)] flex flex-col">
       {/* Header */}
-      <header className="glass border-b border-on-surface-variant/10">
+      <header className="glass border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[4px] bg-primary-graphite flex items-center justify-center flex-shrink-0">
@@ -241,7 +241,7 @@ export default function HubPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-on-surface-variant/10 py-4">
+      <footer className="border-t border-border py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-on-surface-variant/70">
             &copy; {new Date().getFullYear()} AF Soluções. Todos os direitos reservados.

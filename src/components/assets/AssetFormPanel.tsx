@@ -170,7 +170,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
       {/* Panel */}
       <div className="relative w-full max-w-2xl h-full bg-card ambient-ambient-shadow overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-on-surface-variant/10 px-6 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-bold text-foreground">
             {editAsset ? 'Editar Ativo' : parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Cadastrar novo Ativo'}
           </h2>
@@ -318,7 +318,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-on-surface-variant/10">
+          <div className="flex gap-3 pt-4 border-t border-border">
             <Button
               type="button"
               variant="outline"
