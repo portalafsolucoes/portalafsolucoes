@@ -90,17 +90,17 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto transition-[padding] duration-300 lg:pl-0"
+      className="fixed inset-0 z-50 transition-[padding] duration-300"
       style={{ paddingLeft: `${sidebarWidth}px` }}
     >
-      {/* Overlay - covers only the content area */}
+      {/* Overlay */}
       <div
         className="fixed inset-0 bg-on-surface/20 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal - centered within the content area */}
-      <div className="flex min-h-screen items-start justify-center pt-8 pb-8 px-3 sm:px-4 md:px-6">
+      {/* Centering wrapper */}
+      <div className="relative flex min-h-full items-start justify-center pt-8 pb-8 px-4 md:px-6 overflow-y-auto">
         <div
           className={`relative bg-card rounded-[4px] ambient-ambient-shadow ${isWide ? '' : sizeClasses[size]} max-h-[88vh] flex flex-col`}
           style={wideStyle}
@@ -108,7 +108,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
         >
           {/* Header */}
           {!hideHeader && (
-            <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
               <h2 className="font-headline text-xl font-bold text-card-foreground">{title}</h2>
               <button
                 onClick={onClose}
@@ -119,8 +119,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
             </div>
           )}
 
-          {/* Content */}
-          <div className={`flex-1 overflow-y-auto ${noPadding ? '' : hideHeader ? 'p-6 sm:p-8' : 'px-0 py-0'}`}>
+          {/* Scrollable content */}
+          <div className={`flex-1 min-h-0 overflow-y-auto ${noPadding ? '' : hideHeader ? 'p-6 sm:p-8' : ''}`}>
             {children}
           </div>
         </div>

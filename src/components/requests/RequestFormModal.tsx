@@ -144,7 +144,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto py-4 md:py-6 space-y-4 md:space-y-6 px-4 md:px-6">
+        <div className="py-4 space-y-3 px-4">
           <ModalSection title="Solicitação">
             <Input
               label="Título *"
@@ -236,7 +236,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row justify-end gap-2 md:gap-3 pt-3 md:pt-4 border-t px-4 md:px-6 pb-4">
+        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
           <Button
             type="button"
             variant="outline"

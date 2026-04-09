@@ -240,7 +240,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
         )}
 
         {/* Botões */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

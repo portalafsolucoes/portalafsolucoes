@@ -140,7 +140,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={teamId ? 'Editar Equipe' : 'Nova Equipe'}>
       <form onSubmit={handleSubmit}>
-        <div className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
+        <div className="p-4 space-y-3">
           <ModalSection title="Identificação">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">

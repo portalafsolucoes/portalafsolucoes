@@ -247,7 +247,7 @@ export default function StandardMaintenancePlanPage() {
             </div>
           </ModalSection>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowCreateModal(false)} size="sm">Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} size="sm">{saving ? 'Salvando...' : 'Criar'}</Button>
           </div>

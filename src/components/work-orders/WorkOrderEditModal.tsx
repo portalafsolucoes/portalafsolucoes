@@ -164,7 +164,7 @@ export function WorkOrderEditModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Ordem de Serviço">
-      <form onSubmit={handleSubmit} className="p-4 space-y-3 overflow-y-auto">
+      <form onSubmit={handleSubmit} className="p-4 space-y-3">
         <ModalSection title="Identificação">
           <div>
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Título *</label>
@@ -322,7 +322,7 @@ export function WorkOrderEditModal({
           </div>
         </ModalSection>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>

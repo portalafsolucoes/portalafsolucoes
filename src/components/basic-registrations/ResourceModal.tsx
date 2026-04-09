@@ -128,7 +128,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
       onClose={onClose}
       title={editingItem ? 'Editar Recurso' : 'Novo Recurso'}
     >
-      <div className="p-4 space-y-3 overflow-y-auto">
+      <div className="p-4 space-y-3">
         {error && (
           <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
             {error}
@@ -226,7 +226,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars }: Reso
           </div>
         </ModalSection>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
           <Button variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>

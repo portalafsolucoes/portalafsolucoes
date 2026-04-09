@@ -220,7 +220,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess }: PersonFo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}>
       <form onSubmit={handleSubmit}>
-        <div className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
+        <div className="p-4 space-y-3">
           <ModalSection title="Identificação">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

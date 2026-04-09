@@ -617,7 +617,7 @@ export default function StandardAssetsPage() {
               </ModalSection>
 
               {/* Botões */}
-              <div className="flex gap-3 pt-4 border-t border-border">
+              <div className="flex gap-3 px-4 py-4 border-t border-border">
                 <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
                   Cancelar
                 </Button>
