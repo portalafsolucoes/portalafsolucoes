@@ -68,7 +68,6 @@ export default function DashboardPage() {
   return (
     <PageContainer>
         <PageHeader
-          icon="dashboard"
           title="Dashboard"
           description="Visão geral do sistema de manutenção"
         />

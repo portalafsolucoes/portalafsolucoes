@@ -288,7 +288,6 @@ export default function StandardAssetsPage() {
         {/* Header */}
         <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
           <PageHeader
-            icon="category"
             title="Bens Padrão"
             description="Cadastro de bens padrão para pré-preenchimento"
             actions={

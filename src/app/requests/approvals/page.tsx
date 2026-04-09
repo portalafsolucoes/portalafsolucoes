@@ -291,7 +291,6 @@ export default function RequestApprovalsPage() {
   return (
     <PageContainer>
         <PageHeader
-          icon="check_circle"
           title="Aprovações de Solicitações"
           description="Gerencie aprovações, rejeições e acompanhe o status"
         />

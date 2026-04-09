@@ -154,7 +154,6 @@ export default function RequestsPage() {
         ) : (
           <>
         <PageHeader
-          icon="description"
           title="Solicitações de Serviço (SC)"
           description="Gerencie solicitações de manutenção e serviços"
           actions={

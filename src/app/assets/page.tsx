@@ -160,7 +160,6 @@ export default function AssetsPage() {
       {/* Header */}
       <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
         <PageHeader
-          icon="inventory_2"
           title="Ativos"
           description="Gestao de bens e equipamentos"
           actions={

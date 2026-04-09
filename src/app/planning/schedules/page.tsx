@@ -83,7 +83,6 @@ export default function SchedulesPage() {
     <PageContainer>
       <div className="space-y-6">
         <PageHeader
-          icon="calendar_month"
           title="Programação de OSs"
           description="Programação e confirmação de ordens de serviço"
         />

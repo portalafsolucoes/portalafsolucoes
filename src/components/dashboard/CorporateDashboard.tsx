@@ -42,7 +42,7 @@ export function CorporateDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon="business" title="Dashboard Corporativo" description="Visão consolidada de todas as unidades" />
+      <PageHeader title="Dashboard Corporativo" description="Visão consolidada de todas as unidades" />
 
       {/* Totais Corporativos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">

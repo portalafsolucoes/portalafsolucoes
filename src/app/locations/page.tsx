@@ -42,7 +42,6 @@ export default function LocationsPage() {
   return (
     <PageContainer>
         <PageHeader
-          icon="location_on"
           title="Localizações"
           description="Gerencie os locais físicos"
           actions={

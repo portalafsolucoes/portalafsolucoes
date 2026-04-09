@@ -78,7 +78,6 @@ export default function PlansPage() {
     <PageContainer>
       <div className="space-y-6">
         <PageHeader
-          icon="event_note"
           title="Plano de Manutenção"
           description="Emissão de planos de manutenção preventiva e preditiva"
         />
