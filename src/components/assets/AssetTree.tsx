@@ -181,6 +181,9 @@ export function AssetTree({ assets, onSelectAsset, selectedAssetId, onAddSubAsse
             parent.childAssets = []
           }
           parent.childAssets.push(assetWithChildren)
+        } else {
+          // Mantém o ativo visível mesmo se o pai não vier na listagem filtrada.
+          rootAssets.push(assetWithChildren)
         }
       }
     })

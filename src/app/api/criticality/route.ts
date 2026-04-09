@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getEffectiveUnitId, getSession } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +38,24 @@ interface AssetCriticality {
   classification: 'critical' | 'warning' | 'ok'
 }
 
+interface RelatedEntity {
+  id: string
+  name: string
+}
+
+interface AssetRow {
+  id: string
+  name: string
+  customId: string | null
+  area: string | null
+  status: string
+  gutGravity: number | null
+  gutUrgency: number | null
+  gutTendency: number | null
+  Location: RelatedEntity | null
+  AssetCategory: RelatedEntity | null
+}
+
 function normalizeText(value: string | null | undefined) {
   return (value || '').trim().toLowerCase()
 }
@@ -52,8 +70,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const classification = searchParams.get('classification') // 'critical', 'warning', 'ok'
     const locationId = searchParams.get('locationId')
+    const unitIdParam = searchParams.get('unitId')
     const sortBy = searchParams.get('sortBy') || 'totalScore'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
+    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
 
     // Buscar todos os ativos com campos GUT
     let assetsQuery = supabase
@@ -73,6 +93,10 @@ export async function GET(request: NextRequest) {
       `)
       .eq('companyId', session.companyId)
       .eq('archived', false)
+
+    if (effectiveUnitId) {
+      assetsQuery = assetsQuery.eq('unitId', effectiveUnitId)
+    }
 
     if (locationId) {
       assetsQuery = assetsQuery.eq('locationId', locationId)
@@ -108,10 +132,16 @@ export async function GET(request: NextRequest) {
         .in('status', ['PENDING', 'RELEASED', 'IN_PROGRESS', 'ON_HOLD']),
       
       // RAFs por equipamento (usando campo equipment que contém o nome)
-      supabase
+      (() => {
+        let query = supabase
         .from('FailureAnalysisReport')
         .select('equipment')
         .eq('companyId', session.companyId)
+        if (effectiveUnitId) {
+          query = query.eq('unitId', effectiveUnitId)
+        }
+        return query
+      })()
     ])
 
     // Contar por ativo
@@ -176,13 +206,11 @@ export async function GET(request: NextRequest) {
     const maxWorkOrders = Math.max(...Object.values(workOrderCounts), 1)
     const maxRafs = Math.max(...Object.values(rafCounts), 1)
 
-    const criticalities: AssetCriticality[] = assets.map(asset => {
+    const criticalities: AssetCriticality[] = (assets as AssetRow[]).map(asset => {
       // GUT Score (1-5 cada, máx = 125, normalizado para 0-100)
-      // Usar valores default se colunas GUT não existirem
-      const assetAny = asset as any
-      const g = assetAny.gutGravity || 1
-      const u = assetAny.gutUrgency || 1
-      const t = assetAny.gutTendency || 1
+      const g = asset.gutGravity || 1
+      const u = asset.gutUrgency || 1
+      const t = asset.gutTendency || 1
       const gutScore = (g * u * t / 125) * 100
 
       // Contagens
@@ -221,8 +249,8 @@ export async function GET(request: NextRequest) {
         customId: asset.customId,
         area: asset.area,
         status: asset.status,
-        location: asset.Location ? { id: (asset.Location as any).id, name: (asset.Location as any).name } : null,
-        category: asset.AssetCategory ? { id: (asset.AssetCategory as any).id, name: (asset.AssetCategory as any).name } : null,
+        location: asset.Location ? { id: asset.Location.id, name: asset.Location.name } : null,
+        category: asset.AssetCategory ? { id: asset.AssetCategory.id, name: asset.AssetCategory.name } : null,
         gutGravity: g,
         gutUrgency: u,
         gutTendency: t,
