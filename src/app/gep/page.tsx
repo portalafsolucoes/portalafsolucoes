@@ -457,61 +457,68 @@ export default function GEPPage() {
   };
 
   return (
-    <PageContainer>
-      <div className="space-y-6">
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
+          className="mb-0"
           title="Gerenciamento de Variáveis de Processo (GVP)"
           description={`443 Variáveis Totais | ${gepData.length} horas de dados`}
           actions={
             <Button variant="outline" size="sm"><Icon name="download" className="text-base mr-2" />Exportar</Button>
           }
         />
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              {moagem1Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
-              <div><p className="font-medium">Moagem 1</p><p className="text-sm text-muted-foreground">{moagem1Running ? 'Rodando' : 'Parada'} - 106 vars</p></div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              {moagem2Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
-              <div><p className="font-medium">Moagem 2</p><p className="text-sm text-muted-foreground">{moagem2Running ? 'Rodando' : 'Parada'} - 105 vars</p></div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              {moagem3Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
-              <div><p className="font-medium">Moagem 3</p><p className="text-sm text-muted-foreground">{moagem3Running ? 'Rodando' : 'Parada'} - 97 vars</p></div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              {secadorRunning ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
-              <div><p className="font-medium">Secador</p><p className="text-sm text-muted-foreground">{secadorRunning ? 'Rodando' : 'Parado'} - 77 vars</p></div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          <div className="w-full overflow-auto p-4 md:p-6">
+            <div className="space-y-6">
 
-        <Card>
-          <CardHeader><CardTitle>Filtros e Visualização</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Icon name="calendar_today" className="text-base" />
-                Data do Relatório:
-              </label>
-              <input 
-                type="date" 
-                value={selectedDate} 
-                onChange={(e) => setSelectedDate(e.target.value)} 
-                className="w-full md:w-64 px-3 py-2 border rounded-[4px] focus:ring-2 focus:ring-primary" 
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Serão exibidos os 4 turnos completos (A, B, C, D) com 6 leituras cada
-              </p>
-            </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    {moagem1Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
+                    <div><p className="font-medium">Moagem 1</p><p className="text-sm text-muted-foreground">{moagem1Running ? 'Rodando' : 'Parada'} - 106 vars</p></div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    {moagem2Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
+                    <div><p className="font-medium">Moagem 2</p><p className="text-sm text-muted-foreground">{moagem2Running ? 'Rodando' : 'Parada'} - 105 vars</p></div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    {moagem3Running ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
+                    <div><p className="font-medium">Moagem 3</p><p className="text-sm text-muted-foreground">{moagem3Running ? 'Rodando' : 'Parada'} - 97 vars</p></div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    {secadorRunning ? <Icon name="play_circle" className="text-3xl text-muted-foreground" /> : <Icon name="stop_circle" className="text-3xl text-muted-foreground" />}
+                    <div><p className="font-medium">Secador</p><p className="text-sm text-muted-foreground">{secadorRunning ? 'Rodando' : 'Parado'} - 77 vars</p></div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader><CardTitle>Filtros e Visualização</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Icon name="calendar_today" className="text-base" />
+                      Data do Relatório:
+                    </label>
+                    <input 
+                      type="date" 
+                      value={selectedDate} 
+                      onChange={(e) => setSelectedDate(e.target.value)} 
+                      className="w-full md:w-64 px-3 py-2 border rounded-[4px] focus:ring-2 focus:ring-primary" 
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Serão exibidos os 4 turnos completos (A, B, C, D) com 6 leituras cada
+                    </p>
+                  </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">Setor:</label>
@@ -593,12 +600,17 @@ export default function GEPPage() {
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
 
-        {loading ? (
-          <Card><CardContent className="p-8 text-center">Carregando dados...</CardContent></Card>
-        ) : viewMode === 'chart' ? (
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center py-16">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                    <p className="mt-2 text-muted-foreground">Carregando...</p>
+                  </div>
+                </div>
+              ) : viewMode === 'chart' ? (
           selectedVariables.length > 6 ? (
             <Card>
               <CardContent className="p-8 text-center">
@@ -906,7 +918,10 @@ export default function GEPPage() {
               );
             })}
           </div>
-        )}
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <VariableSelector
