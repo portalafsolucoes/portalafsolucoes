@@ -235,13 +235,21 @@ export default function AssetsPage() {
             {!isMobile && (
               <>
                 {/* Left Panel - Asset Tree ou Table baseado no viewMode */}
-                <div className={`${selectedAsset && !isCreating ? 'w-1/2' : 'w-full'} border-r border-border bg-card transition-all overflow-hidden`}>
+                <div
+                  className={`${
+                    selectedAsset && !isCreating ? 'w-1/2' : 'w-full'
+                  } ${
+                    viewMode === 'tree' ? 'border-r border-border bg-card' : 'bg-transparent'
+                  } transition-all overflow-hidden`}
+                >
                   <div className="h-full flex flex-col overflow-hidden">
-                    <div className="p-3 border-b border-border bg-surface flex-shrink-0">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                        {viewMode === 'tree' ? 'Hierarquia de Ativos' : 'Lista de Ativos'}
-                      </p>
-                    </div>
+                    {viewMode === 'tree' && (
+                      <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                          Hierarquia de Ativos
+                        </p>
+                      </div>
+                    )}
                     <div className={`flex-1 min-h-0 ${viewMode === 'tree' ? 'overflow-auto' : ''}`}>
                       {viewMode === 'tree' ? (
                         <AssetTree
@@ -290,13 +298,15 @@ export default function AssetsPage() {
 
             {/* Mobile: Tree/Table View with Modals - Inspirado no TracOS */}
             {isMobile && (
-              <div className="w-full border-r border-border bg-card overflow-hidden">
+              <div className={`w-full ${viewMode === 'tree' ? 'border-r border-border bg-card' : 'bg-transparent'} overflow-hidden`}>
                 <div className="h-full flex flex-col overflow-hidden">
-                  <div className="p-3 border-b border-border bg-surface flex-shrink-0">
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                      {viewMode === 'tree' ? 'Hierarquia de Ativos' : 'Lista de Ativos'}
-                    </p>
-                  </div>
+                  {viewMode === 'tree' && (
+                    <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+                      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                        Hierarquia de Ativos
+                      </p>
+                    </div>
+                  )}
                   <div className={`flex-1 min-h-0 ${viewMode === 'tree' ? 'overflow-auto' : ''}`}>
                     {viewMode === 'tree' ? (
                       <AssetTree 

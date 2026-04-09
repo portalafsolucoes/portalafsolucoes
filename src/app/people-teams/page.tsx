@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 
 type ViewMode = 'grid' | 'table' | 'hierarchy'
 
@@ -49,6 +50,7 @@ type SortDirection = 'asc' | 'desc'
 
 export default function PeopleTeamsPage() {
   const activeTab: 'people' | 'teams' = 'people'
+  const isMobile = useIsMobile()
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   
   // People states
@@ -257,6 +259,8 @@ export default function PeopleTeamsPage() {
     activeTab === 'people'
       ? 'Gestao de pessoas e equipamentos'
       : 'Gestao de equipes e alocacoes operacionais'
+  const showPeopleSidePanel = !isMobile && !!selectedUserId
+  const isTableSplitView = showPeopleSidePanel && viewMode === 'table'
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -359,242 +363,277 @@ export default function PeopleTeamsPage() {
 
         {/* People Tab Content */}
         {activeTab === 'people' && (
-          <div className="px-4 pb-4 pt-1 md:px-6 md:pb-6">
-            {/* Content */}
-            {loadingUsers ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                <p className="mt-2 text-muted-foreground">Carregando...</p>
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
-                <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
-                <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
-              </div>
-            ) : (
-              <>
-                {/* Grid View */}
-                {viewMode === 'grid' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sortedUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        onClick={() => handleUserClick(user.id)}
-                        className="bg-card rounded-[4px] ambient-shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
-                        data-user-id={user.id}
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            {user.image ? (
-                              <img
-                                src={user.image}
-                                alt={`${user.firstName} ${user.lastName}`}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-primary font-semibold text-lg">
-                                  {user.firstName[0]}{user.lastName[0]}
-                                </span>
-                              </div>
-                            )}
-                            <div>
-                              <h3 className="font-semibold text-foreground">
-                                {user.firstName} {user.lastName}
-                              </h3>
-                              <p className="text-sm text-muted-foreground">{user.jobTitle || 'Sem cargo'}</p>
-                            </div>
-                          </div>
-                          {user.enabled ? (
-                            <Icon name="how_to_reg" className="text-xl text-success" />
-                          ) : (
-                            <Icon name="person_off" className="text-xl text-danger" />
-                          )}
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground flex items-center gap-2">
-                            <span className="font-medium">Email:</span>
-                            <span className="truncate">{user.email}</span>
-                          </p>
-                          {user.phone && (
-                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                              <span className="font-medium">Telefone:</span>
-                              <span>{user.phone}</span>
-                            </p>
-                          )}
-                          <div className="pt-2 border-t border-border">
-                            <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                              {getRoleLabel(user.role)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+          <div className="flex flex-1 overflow-hidden px-4 pb-4 pt-1 md:px-6 md:pb-6">
+            <div className={`flex flex-1 min-h-0 overflow-hidden ${isTableSplitView ? 'border-t border-border bg-card' : ''}`}>
+              <div
+                className={`${
+                  showPeopleSidePanel ? 'w-1/2 min-w-0' : 'w-full'
+                } transition-all overflow-hidden ${isTableSplitView ? 'bg-card' : ''}`}
+              >
+                {loadingUsers ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                    <p className="mt-2 text-muted-foreground">Carregando...</p>
                   </div>
-                )}
-
-                {/* Table View */}
-                {viewMode === 'table' && (
-                  <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-secondary">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
-                              <span>Nome</span>
-                              {renderSortIcon('name')}
-                            </button>
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            <button type="button" onClick={() => handleSort('email')} className="flex items-center gap-1">
-                              <span>Email</span>
-                              {renderSortIcon('email')}
-                            </button>
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            <button type="button" onClick={() => handleSort('jobTitle')} className="flex items-center gap-1">
-                              <span>Cargo</span>
-                              {renderSortIcon('jobTitle')}
-                            </button>
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1">
-                              <span>Papel</span>
-                              {renderSortIcon('role')}
-                            </button>
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            <button type="button" onClick={() => handleSort('enabled')} className="flex items-center gap-1">
-                              <span>Status</span>
-                              {renderSortIcon('enabled')}
-                            </button>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-card divide-y divide-gray-200">
+                ) : filteredUsers.length === 0 ? (
+                  <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+                    <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
+                    <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Grid View */}
+                    {viewMode === 'grid' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sortedUsers.map((user) => (
-                          <tr
+                          <div
                             key={user.id}
                             onClick={() => handleUserClick(user.id)}
-                            className="hover:bg-secondary cursor-pointer transition-colors"
+                            className="bg-card rounded-[4px] ambient-shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
                             data-user-id={user.id}
                           >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
                                 {user.image ? (
-                                  <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                  <img
+                                    src={user.image}
+                                    alt={`${user.firstName} ${user.lastName}`}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                  />
                                 ) : (
-                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-primary font-semibold">
+                                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <span className="text-primary font-semibold text-lg">
                                       {user.firstName[0]}{user.lastName[0]}
                                     </span>
                                   </div>
                                 )}
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-foreground">
+                                <div>
+                                  <h3 className="font-semibold text-foreground">
                                     {user.firstName} {user.lastName}
-                                  </div>
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">{user.jobTitle || 'Sem cargo'}</p>
                                 </div>
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-foreground">{user.email}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-foreground">{user.jobTitle || '-'}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-foreground">
-                                {getRoleLabel(user.role)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
                               {user.enabled ? (
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">
-                                  Ativo
-                                </span>
+                                <Icon name="how_to_reg" className="text-xl text-success" />
                               ) : (
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-light text-danger-light-foreground">
-                                  Inativo
-                                </span>
+                                <Icon name="person_off" className="text-xl text-danger" />
                               )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {/* Hierarchy View - 3 Layers: Teams > Job Titles > People */}
-                {viewMode === 'hierarchy' && (
-                  <div className="space-y-6">
-                    {Object.entries(buildHierarchy()).map(([teamName, jobTitles]) => (
-                      <div key={teamName} className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-                        {/* Layer 1: Team */}
-                        <div className="bg-primary/5 px-6 py-4 border-b border-border">
-                          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                            <Icon name="group" className="text-xl" />
-                            {teamName}
-                            <span className="text-sm font-normal text-primary">
-                              ({Object.values(jobTitles).reduce((acc, groupUsers) => acc + groupUsers.length, 0)} pessoas)
-                            </span>
-                          </h3>
-                        </div>
-                        
-                        <div className="p-6 space-y-4">
-                          {Object.entries(jobTitles).map(([jobTitle, groupUsers]) => (
-                            <div key={jobTitle} className="border-l-4 border-on-surface-variant pl-4">
-                              {/* Layer 2: Job Title */}
-                              <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
-                                <Icon name="hub" className="text-base text-success" />
-                                {jobTitle}
-                                <span className="text-sm font-normal text-muted-foreground">({groupUsers.length})</span>
-                              </h4>
-                              
-                              {/* Layer 3: People */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ml-6">
-                                {groupUsers.map((user) => (
-                                  <div
-                                    key={user.id}
-                                    onClick={() => handleUserClick(user.id)}
-                                    className="flex items-center gap-3 p-3 rounded-[4px] hover:bg-secondary cursor-pointer transition-colors"
-                                    data-user-id={user.id}
-                                  >
-                                    {user.image ? (
-                                      <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                    ) : (
-                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <span className="text-primary font-semibold text-sm">
-                                          {user.firstName[0]}{user.lastName[0]}
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-sm font-medium text-foreground truncate">
-                                        {user.firstName} {user.lastName}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-                                    </div>
-                                  </div>
-                                ))}
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <span className="font-medium">Email:</span>
+                                <span className="truncate">{user.email}</span>
+                              </p>
+                              {user.phone && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <span className="font-medium">Telefone:</span>
+                                  <span>{user.phone}</span>
+                                </p>
+                              )}
+                              <div className="pt-2 border-t border-border">
+                                <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                                  {getRoleLabel(user.role)}
+                                </span>
                               </div>
                             </div>
-                          ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Table View */}
+                    {viewMode === 'table' && (
+                      <div className={`${showPeopleSidePanel ? 'h-full flex flex-col bg-card overflow-hidden' : 'bg-card rounded-[4px] ambient-shadow overflow-hidden'}`}>
+                        <div className="flex-1 overflow-auto min-h-0">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-secondary">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                                    <span>Nome</span>
+                                    {renderSortIcon('name')}
+                                  </button>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  <button type="button" onClick={() => handleSort('email')} className="flex items-center gap-1">
+                                    <span>Email</span>
+                                    {renderSortIcon('email')}
+                                  </button>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  <button type="button" onClick={() => handleSort('jobTitle')} className="flex items-center gap-1">
+                                    <span>Cargo</span>
+                                    {renderSortIcon('jobTitle')}
+                                  </button>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1">
+                                    <span>Papel</span>
+                                    {renderSortIcon('role')}
+                                  </button>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  <button type="button" onClick={() => handleSort('enabled')} className="flex items-center gap-1">
+                                    <span>Status</span>
+                                    {renderSortIcon('enabled')}
+                                  </button>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-card divide-y divide-gray-200">
+                              {sortedUsers.map((user) => (
+                                <tr
+                                  key={user.id}
+                                  onClick={() => handleUserClick(user.id)}
+                                  className="hover:bg-secondary cursor-pointer transition-colors"
+                                  data-user-id={user.id}
+                                >
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center">
+                                      {user.image ? (
+                                        <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                          <span className="text-primary font-semibold">
+                                            {user.firstName[0]}{user.lastName[0]}
+                                          </span>
+                                        </div>
+                                      )}
+                                      <div className="ml-4">
+                                        <div className="text-sm font-medium text-foreground">
+                                          {user.firstName} {user.lastName}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-foreground">{user.email}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-foreground">{user.jobTitle || '-'}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-foreground">
+                                      {getRoleLabel(user.role)}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {user.enabled ? (
+                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">
+                                        Ativo
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-light text-danger-light-foreground">
+                                        Inativo
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="px-4 py-3 border-t border-border bg-card flex-shrink-0">
+                          <p className="text-xs text-muted-foreground">
+                            Mostrando {sortedUsers.length} de {users.length} pessoa(s)
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
 
-                {/* Summary */}
-                <div className="mt-6 text-center text-muted-foreground">
-                  Mostrando {sortedUsers.length} de {users.length} pessoa(s)
+                    {/* Hierarchy View - 3 Layers: Teams > Job Titles > People */}
+                    {viewMode === 'hierarchy' && (
+                      <div className="space-y-6">
+                        {Object.entries(buildHierarchy()).map(([teamName, jobTitles]) => (
+                          <div key={teamName} className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
+                            <div className="bg-primary/5 px-6 py-4 border-b border-border">
+                              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                <Icon name="group" className="text-xl" />
+                                {teamName}
+                                <span className="text-sm font-normal text-primary">
+                                  ({Object.values(jobTitles).reduce((acc, groupUsers) => acc + groupUsers.length, 0)} pessoas)
+                                </span>
+                              </h3>
+                            </div>
+                            
+                            <div className="p-6 space-y-4">
+                              {Object.entries(jobTitles).map(([jobTitle, groupUsers]) => (
+                                <div key={jobTitle} className="border-l-4 border-on-surface-variant pl-4">
+                                  <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
+                                    <Icon name="hub" className="text-base text-success" />
+                                    {jobTitle}
+                                    <span className="text-sm font-normal text-muted-foreground">({groupUsers.length})</span>
+                                  </h4>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ml-6">
+                                    {groupUsers.map((user) => (
+                                      <div
+                                        key={user.id}
+                                        onClick={() => handleUserClick(user.id)}
+                                        className="flex items-center gap-3 p-3 rounded-[4px] hover:bg-secondary cursor-pointer transition-colors"
+                                        data-user-id={user.id}
+                                      >
+                                        {user.image ? (
+                                          <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span className="text-primary font-semibold text-sm">
+                                              {user.firstName[0]}{user.lastName[0]}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm font-medium text-foreground truncate">
+                                            {user.firstName} {user.lastName}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {viewMode !== 'table' && (
+                      <div className="mt-6 text-center text-muted-foreground">
+                        Mostrando {sortedUsers.length} de {users.length} pessoa(s)
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {!isMobile && selectedUserId && (
+                <div className="w-1/2 min-w-0">
+                  {showEditUserModal ? (
+                    <PersonFormModal
+                      isOpen={showEditUserModal}
+                      onClose={handleCloseModals}
+                      userId={selectedUserId}
+                      onSuccess={handleSuccess}
+                      inPage
+                    />
+                  ) : (
+                    <PersonDetailModal
+                      isOpen={!!selectedUserId}
+                      onClose={handleCloseModals}
+                      userId={selectedUserId}
+                      onEdit={handleEditUser}
+                      onDelete={handleDelete}
+                      inPage
+                    />
+                  )}
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -665,7 +704,7 @@ export default function PeopleTeamsPage() {
         )}
 
       {/* Modals */}
-      {selectedUserId && !showEditUserModal && (
+      {isMobile && selectedUserId && !showEditUserModal && (
         <PersonDetailModal
           isOpen={!!selectedUserId}
           onClose={handleCloseModals}
@@ -683,7 +722,7 @@ export default function PeopleTeamsPage() {
         />
       )}
 
-      {showEditUserModal && selectedUserId && (
+      {isMobile && showEditUserModal && selectedUserId && (
         <PersonFormModal
           isOpen={showEditUserModal}
           onClose={handleCloseModals}
