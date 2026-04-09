@@ -11,7 +11,7 @@ Este arquivo e a referencia maxima para qualquer LLM, agente, automacao ou pesso
 Em caso de divergencia entre este arquivo e qualquer outro documento, prevalece o `CLAUDE.md` da raiz.  
 Arquivos em `docs/` servem como apoio e podem existir como material complementar, mas nao substituem esta spec.  
 Versao funcional atual: `1.0`  
-Data da especificacao: `08/04/2026`
+Data da especificacao: `09/04/2026`
 
 ## Stack
 - **Framework:** Next.js 15 (App Router, React 19, TypeScript)
@@ -132,6 +132,21 @@ Regras complementares:
 - `Configuracoes` deve aparecer apenas para `SUPER_ADMIN`.
 - Mesmo quando a UI exibe um item, a API deve validar perfil, empresa e unidade ativa.
 
+### Boas Praticas de Implementacao
+- O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`.
+- Se o banco ou legado ainda possuir perfis antigos, a aplicacao deve normalizar esses valores para os papeis canonicos antes de decidir sidebar, redirects, badges e permissoes.
+- A normalizacao de papel deve considerar contexto confiavel do usuario, como `email`, `username`, `jobTitle` e papel canonico de sessao; nao deve depender apenas do valor legado bruto.
+- A UI e a API devem usar a mesma regra central de permissao. Nao e permitido manter matriz de acesso diferente entre frontend e backend.
+- O endpoint `/api/auth/me` e a leitura de modulos da empresa devem ser tratados como dados dinamicos de sessao, sem cache compartilhado entre usuarios.
+- Login, logout e troca de contexto autenticado devem invalidar ou limpar cache de autenticacao e de modulos habilitados no cliente.
+- Chaves de cache no cliente que dependem do usuario devem considerar ao menos empresa e contexto autenticado para evitar vazamento visual de sessao anterior.
+- O retorno de autenticacao para a UI deve expor o papel canonico como `role`. Se necessario, o papel legado pode ser exposto apenas como apoio tecnico, por exemplo em `legacyRole`.
+- Redirects padrao do CMMS devem respeitar o perfil: perfis operacionais entram por `Ordens de Servico`; os demais entram por `Dashboard`.
+- Esconder item de menu nao substitui seguranca. Toda rota de pagina e toda API devem validar permissao de leitura ou escrita no servidor.
+- Quando um perfil nao tiver acesso a uma pagina, o sistema deve redirecionar para o destino padrao permitido do perfil, e nao deixar a tela quebrada ou parcialmente carregada.
+- Validacoes de permissao devem sempre considerar `perfil + empresa + unidade ativa`.
+- Mudancas em autenticacao, sidebar, redirects ou permissoes devem ser verificadas com teste navegando no sistema com Playwright, usando pelo menos um login por perfil impactado.
+
 ### Regras Transversais
 - Menus, botoes e acoes devem respeitar perfil do usuario e tambem ser validados nas APIs.
 - Todas as listas principais devem ter busca e filtros.
@@ -155,6 +170,10 @@ Regras complementares:
 - Usuario desativado nao pode acessar.
 - Apos login, o usuario vai para `/hub`.
 - Sessao dura `7 dias`.
+- A sessao deve carregar o papel canonico do usuario.
+- O sistema nao deve reaproveitar cache de `/api/auth/me` entre usuarios diferentes.
+- Login e logout devem limpar cache cliente relacionado a autenticacao e modulos da empresa.
+- A resposta de autenticacao para a UI deve refletir sempre o usuario atual da sessao, sem residuos do usuario anterior.
 
 ### 3. Dashboard
 - Dashboard operacional para `SUPER_ADMIN`, `ADMIN`, `REQUESTER` e `VIEW_ONLY`, respeitando o nivel de leitura de cada perfil.
