@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 
 interface WorkOrderEditModalProps {
@@ -164,7 +165,7 @@ export function WorkOrderEditModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Ordem de Serviço">
-      <form onSubmit={handleSubmit} className="p-4 space-y-3">
+      <form onSubmit={handleSubmit} className="p-4 space-y-3 overflow-y-auto">
         <ModalSection title="Identificação">
           <div>
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Título *</label>
@@ -322,12 +323,13 @@ export function WorkOrderEditModal({
           </div>
         </ModalSection>
 
-        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
           <Button type="submit" disabled={saving}>
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
+            <Icon name="save" className="text-base mr-2" />
+            {saving ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>
       </form>

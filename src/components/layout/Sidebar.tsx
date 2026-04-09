@@ -79,11 +79,9 @@ export function Sidebar() {
     { name: 'RAF', href: '/rafs', icon: 'description', module: 'rafs', adminOnly: true },
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
-    { name: 'Configurações', href: '/admin', icon: 'settings', module: 'settings', adminOnly: true, subItems: [
-      { name: 'Unidades / Filiais', href: '/admin/units' },
-      { name: 'Gestão de Usuários', href: '/admin/users' },
-      ...(userRole === 'SUPER_ADMIN' ? [{ name: 'Administração do Portal', href: '/admin/portal' }] : []),
-    ]},
+    ...(userRole === 'SUPER_ADMIN'
+      ? [{ name: 'Configurações', href: '/admin/portal', icon: 'settings', module: 'settings', adminOnly: true }]
+      : []),
   ]
 
   const navigation = allMenus.filter(menu => {
@@ -91,7 +89,7 @@ export function Sidebar() {
     // Filtrar por módulos habilitados para a empresa
     if (!isModuleEnabled(menu.module)) return false
     if (menu.adminOnly) {
-      return userRole === 'GESTOR' || userRole === 'SUPER_ADMIN'
+      return userRole === 'SUPER_ADMIN'
     }
     if (menu.requireApprove) {
       return hasPermission(userRole as UserRole, menu.module, 'approve')

@@ -247,9 +247,12 @@ export default function StandardMaintenancePlanPage() {
             </div>
           </ModalSection>
 
-          <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)} size="sm">Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving} size="sm">{saving ? 'Salvando...' : 'Criar'}</Button>
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              <Icon name="save" className="text-base mr-2" />
+              {saving ? 'Salvando...' : 'Criar'}
+            </Button>
           </div>
         </div>
       </Modal>

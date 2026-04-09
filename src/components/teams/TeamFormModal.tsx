@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/Button'
 import { User } from '@/types'
 
 interface TeamFormModalProps {
@@ -140,7 +141,7 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={teamId ? 'Editar Equipe' : 'Nova Equipe'}>
       <form onSubmit={handleSubmit}>
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
           <ModalSection title="Identificação">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
@@ -221,22 +222,14 @@ export function TeamFormModal({ isOpen, onClose, teamId, onSuccess }: TeamFormMo
           </ModalSection>
         </div>
 
-        <div className="flex gap-3 pt-4 border-t border-border px-4 pb-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
-          >
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors disabled:opacity-50 ml-auto"
-          >
-            <Icon name="save" className="text-base" />
+          </Button>
+          <Button type="submit" disabled={saving}>
+            <Icon name="save" className="text-base mr-2" />
             {saving ? 'Salvando...' : 'Salvar'}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

@@ -240,11 +240,12 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
         )}
 
         {/* Botões */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-border">
-          <Button variant="outline" onClick={onClose} size="sm">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving} size="sm">
+          <Button onClick={handleSave} disabled={saving}>
+            <Icon name="save" className="text-base mr-2" />
             {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
           </Button>
         </div>

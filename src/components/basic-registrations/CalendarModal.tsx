@@ -355,9 +355,10 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
         </ModalSection>
 
         {/* Rodapé */}
-        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose} size="sm">Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving} size="sm">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            <Icon name="save" className="text-base mr-2" />
             {saving ? 'Salvando...' : (editingItem ? 'Salvar' : 'Criar')}
           </Button>
         </div>

@@ -144,7 +144,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
         </div>
 
         {/* Body */}
-        <div className="py-4 space-y-3 px-4">
+        <div className="flex-1 overflow-y-auto py-4 md:py-6 space-y-4 md:space-y-6 px-4 md:px-6">
           <ModalSection title="Solicitação">
             <Input
               label="Título *"
@@ -236,18 +236,18 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request }: Reques
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
           <Button
             type="button"
             variant="outline"
             onClick={handleClose}
             disabled={loading}
-            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-            {loading ? 'Salvando...' : request ? 'Atualizar' : 'Criar Solicitação'}
+          <Button type="submit" disabled={loading}>
+            <Icon name="save" className="text-base mr-2" />
+            {loading ? 'Salvando...' : request ? 'Salvar' : 'Criar'}
           </Button>
         </div>
       </form>

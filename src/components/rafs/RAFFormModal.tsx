@@ -206,13 +206,13 @@ export function RAFFormModal({ isOpen, onClose, onSuccess }: RAFFormModalProps) 
 
         </div>
 
-        <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
           <Button type="submit" disabled={loading}>
             <Icon name="save" className="text-base mr-2" />
-            {loading ? 'Salvando...' : 'Criar RAF'}
+            {loading ? 'Salvando...' : 'Criar'}
           </Button>
         </div>
       </form>

@@ -157,9 +157,12 @@ export default function PlansPage() {
             Ao criar o plano, o sistema emitirá automaticamente Ordens de Serviço para os ativos com manutenção prevista dentro do período selecionado.
           </div>
 
-          <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowModal(false)} size="sm">Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving} size="sm">{saving ? 'Processando...' : 'Criar'}</Button>
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+            <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              <Icon name="save" className="text-base mr-2" />
+              {saving ? 'Processando...' : 'Criar'}
+            </Button>
           </div>
         </div>
       </Modal>

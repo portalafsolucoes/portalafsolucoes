@@ -617,13 +617,13 @@ export default function StandardAssetsPage() {
               </ModalSection>
 
               {/* Botões */}
-              <div className="flex gap-3 px-4 py-4 border-t border-border">
-                <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
+              <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={saving} className="flex-1">
+                <Button type="submit" disabled={saving}>
                   <Icon name="save" className="text-base mr-2" />
-                  {saving ? 'Salvando...' : editing ? 'Salvar Alterações' : 'Cadastrar'}
+                  {saving ? 'Salvando...' : editing ? 'Salvar' : 'Criar'}
                 </Button>
               </div>
             </form>
