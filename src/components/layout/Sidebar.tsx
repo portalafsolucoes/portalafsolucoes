@@ -32,7 +32,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { isCollapsed, setIsCollapsed } = useSidebar()
-  const { role: userRole, user, companyName } = useAuth()
+  const { role: userRole, user, companyName, isLoading: authLoading } = useAuth()
   const companyLogo = user?.company?.logo || null
   const pendingCount = usePendingCount()
   const { isModuleEnabled } = useCompanyModules()
@@ -144,7 +144,7 @@ export function Sidebar() {
         <div className="px-3 py-3">
           <div className="hidden lg:block">
             {!isCollapsed ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsCollapsed(!isCollapsed)}
                   className="p-2 hover:bg-surface-high rounded-[4px] transition-colors flex-shrink-0"
@@ -152,23 +152,25 @@ export function Sidebar() {
                 >
                   <Icon name="menu" className="text-xl text-on-surface" />
                 </button>
-
                 <Link
                   href="/dashboard"
-                  className="flex min-w-0 flex-1 items-center rounded-[4px] px-2 py-1.5 hover:bg-surface-high transition-colors"
+                  className="flex h-14 min-w-0 flex-1 items-center rounded-[4px] px-2 hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {companyLogo ? (
-                    <div className="relative h-10 w-full">
+                    <div className="relative h-10 w-full min-w-0">
                       <Image
                         src={companyLogo}
                         alt={companyName || APP_NAME}
                         fill
                         className="object-contain object-left"
                         priority
-                        sizes="(max-width: 1024px) 200px, 160px"
+                        unoptimized
+                        sizes="220px"
                       />
                     </div>
+                  ) : authLoading ? (
+                    <div className="h-10 w-full animate-pulse rounded-[4px] bg-surface-high" />
                   ) : (
                     <span className="text-sm font-semibold text-on-surface truncate">
                       {companyName || APP_NAME}
@@ -188,21 +190,24 @@ export function Sidebar() {
 
                 <Link
                   href="/dashboard"
-                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[4px] bg-card hover:bg-surface-high transition-colors"
+                  className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] bg-card hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                   title={companyName || APP_NAME}
                 >
                   {companyLogo ? (
-                    <div className="relative h-7 w-7">
+                    <div className="relative h-9 w-9">
                       <Image
                         src={companyLogo}
                         alt={companyName || APP_NAME}
                         fill
                         className="object-contain"
                         priority
+                        unoptimized
                         sizes="28px"
                       />
                     </div>
+                  ) : authLoading ? (
+                    <div className="h-8 w-8 animate-pulse rounded-[4px] bg-surface-high" />
                   ) : (
                     <span className="text-[10px] font-semibold text-on-surface">
                       {(companyName || APP_NAME).slice(0, 2).toUpperCase()}
@@ -215,26 +220,38 @@ export function Sidebar() {
 
           {/* Mobile Layout */}
           <div className="lg:hidden">
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 hover:bg-surface-high rounded-[4px] transition-colors flex-shrink-0"
+                title="Fechar menu"
+              >
+                <Icon name="close" className="text-xl text-on-surface" />
+              </button>
               {companyLogo ? (
                 <Link
                   href="/dashboard"
-                  className="relative h-10 w-full rounded-[4px] px-2 py-1.5 hover:bg-surface-high transition-colors"
+                  className="flex h-14 w-full items-center rounded-[4px] px-2 hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Image
-                    src={companyLogo}
-                    alt={companyName || APP_NAME}
-                    fill
-                    className="object-contain object-left"
-                    priority
-                    sizes="200px"
-                  />
+                  <div className="relative h-10 w-full min-w-0">
+                    <Image
+                      src={companyLogo}
+                      alt={companyName || APP_NAME}
+                      fill
+                      className="object-contain object-left"
+                      priority
+                      unoptimized
+                      sizes="220px"
+                    />
+                  </div>
                 </Link>
+              ) : authLoading ? (
+                <div className="h-10 w-full animate-pulse rounded-[4px] bg-surface-high" />
               ) : (
                 <Link
                   href="/dashboard"
-                  className="text-sm font-semibold text-on-surface truncate rounded-[4px] px-2 py-1.5 hover:bg-surface-high transition-colors"
+                  className="text-sm font-semibold text-on-surface truncate rounded-[4px] px-2 py-2 hover:bg-surface-high transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {companyName || APP_NAME}

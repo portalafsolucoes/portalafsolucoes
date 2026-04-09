@@ -365,6 +365,16 @@ Padrao visual:
 - **NAO** use icones no titulo do `PageHeader`.
 - O `AppShell` fornece sidebar, header e scroll; o espacamento da pagina e responsabilidade do `PageContainer`.
 
+### Logo da Empresa na Sidebar (OBRIGATORIO)
+
+- A logo no topo esquerdo da sidebar deve vir **exclusivamente** de `user.company.logo` retornado por `/api/auth/me`.
+- **NAO** hardcode logos em `public/`, `imagens/` ou qualquer arquivo local para uso na sidebar principal.
+- A logo deve ficar na mesma linha do botao hamburguer quando a sidebar estiver expandida.
+- A imagem deve aparecer **inteira**, sem corte, respeitando a proporcao original.
+- Use `object-contain` com alinhamento a esquerda para encaixar marcas horizontais.
+- Durante a hidratacao/carregamento inicial, **NAO** exibir o texto fallback `Portal AF Solucoes` no lugar da logo; use placeholder neutro ate os dados do usuario carregarem.
+- O fallback textual com nome da empresa ou app so pode aparecer quando realmente nao existir logo configurada no banco.
+
 ## Modais e Popups (OBRIGATORIO)
 
 Todo modal do sistema DEVE seguir o padrao abaixo. Referencia visual: modal "Adicionar Pessoa".
