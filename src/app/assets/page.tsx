@@ -47,7 +47,7 @@ export default function AssetsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [parentAssetForNew, setParentAssetForNew] = useState<{ id: string; name: string } | undefined>(undefined)
   const [isEditingInPanel, setIsEditingInPanel] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('tree')
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
@@ -154,14 +154,15 @@ export default function AssetsPage() {
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
       {/* Header */}
-      <div className="border-b border-border px-4 py-4 md:px-6 flex-shrink-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           title="Ativos"
           description="Gestao de bens e equipamentos"
+          className="mb-0"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               {/* Search */}
-              <div className="relative">
+              <div className="relative w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -175,18 +176,6 @@ export default function AssetsPage() {
               {/* View Mode Toggle */}
               <div className="flex items-center bg-muted rounded-[4px] p-1">
                 <button
-                  onClick={() => setViewMode('tree')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                    viewMode === 'tree'
-                      ? 'bg-background text-foreground ambient-shadow'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Visualização em Árvore"
-                >
-                  <Icon name="grid_view" className="text-base" />
-                  <span className="hidden md:inline">Árvore</span>
-                </button>
-                <button
                   onClick={() => setViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
                     viewMode === 'table'
@@ -197,6 +186,18 @@ export default function AssetsPage() {
                 >
                   <Icon name="table" className="text-base" />
                   <span className="hidden md:inline">Tabela</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('tree')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                    viewMode === 'tree'
+                      ? 'bg-background text-foreground ambient-shadow'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Visualização em Árvore"
+                >
+                  <Icon name="account_tree" className="text-base" />
+                  <span className="hidden md:inline">Árvore</span>
                 </button>
               </div>
 
@@ -225,13 +226,17 @@ export default function AssetsPage() {
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+              <p className="mt-2 text-muted-foreground">Carregando...</p>
+            </div>
           </div>
         ) : (
           <>
-            {/* Desktop: Tree/Table View with Panels - Inspirado no TracOS */}
+            {/* Desktop: Tree/Table View with Panels */}
             {!isMobile && (
               <>
                 {/* Left Panel - Asset Tree ou Table baseado no viewMode */}
@@ -239,7 +244,7 @@ export default function AssetsPage() {
                   className={`${
                     selectedAsset && !isCreating ? 'w-1/2' : 'w-full'
                   } ${
-                    viewMode === 'tree' ? 'border-r border-border bg-card' : 'bg-transparent'
+                    viewMode === 'tree' ? 'border-r border-border' : ''
                   } transition-all overflow-hidden`}
                 >
                   <div className="h-full flex flex-col overflow-hidden">
@@ -296,9 +301,9 @@ export default function AssetsPage() {
               </>
             )}
 
-            {/* Mobile: Tree/Table View with Modals - Inspirado no TracOS */}
+            {/* Mobile: Tree/Table View with Modals */}
             {isMobile && (
-              <div className={`w-full ${viewMode === 'tree' ? 'border-r border-border bg-card' : 'bg-transparent'} overflow-hidden`}>
+              <div className={`w-full ${viewMode === 'tree' ? 'border-r border-border' : ''} overflow-hidden`}>
                 <div className="h-full flex flex-col overflow-hidden">
                   {viewMode === 'tree' && (
                     <div className="p-3 border-b border-border bg-surface flex-shrink-0">
@@ -309,15 +314,15 @@ export default function AssetsPage() {
                   )}
                   <div className={`flex-1 min-h-0 ${viewMode === 'tree' ? 'overflow-auto' : ''}`}>
                     {viewMode === 'tree' ? (
-                      <AssetTree 
-                        assets={filteredAssets} 
+                      <AssetTree
+                        assets={filteredAssets}
                         onSelectAsset={handleAssetSelect}
                         selectedAssetId={selectedAsset?.id}
                         onAddSubAsset={handleAddSubAsset}
                       />
                     ) : (
-                      <AssetTable 
-                        assets={filteredAssets} 
+                      <AssetTable
+                        assets={filteredAssets}
                         onSelectAsset={handleAssetSelect}
                         selectedAssetId={selectedAsset?.id}
                         onEdit={handleEdit}
@@ -330,6 +335,7 @@ export default function AssetsPage() {
             )}
           </>
         )}
+        </div>
       </div>
 
       {/* Modals for Mobile */}

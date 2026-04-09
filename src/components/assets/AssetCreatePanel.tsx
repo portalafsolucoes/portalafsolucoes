@@ -398,7 +398,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
   return (
     <div className="h-full flex flex-col bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-on-surface-variant/10">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         <h2 className="text-xl font-bold text-foreground">
           {parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Cadastrar novo Ativo'}
         </h2>
@@ -644,7 +644,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           </div>
 
           {/* Características Dinâmicas */}
-          <div className="pt-3 border-t border-on-surface-variant/10">
+          <div className="pt-3 border-t border-border">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-foreground">Características</label>
               <button type="button" onClick={addCharacteristicRow} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium">
@@ -752,7 +752,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
                 </span>
               </div>
             </div>
-            <div className="pt-3 border-t border-on-surface-variant/10">
+            <div className="pt-3 border-t border-border">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Score GUT:</span>
                 <div className="flex items-center gap-2">
@@ -839,7 +839,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         </Section>
 
         {/* Botões */}
-        <div className="flex gap-3 pt-4 border-t border-on-surface-variant/10">
+        <div className="flex gap-3 pt-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>

@@ -10,6 +10,7 @@ import { PersonFormModal } from '@/components/people/PersonFormModal'
 import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
 import { TeamFormModal } from '@/components/teams/TeamFormModal'
 import { Card, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 import { ExportButton } from '@/components/ui/ExportButton'
@@ -51,7 +52,7 @@ type SortDirection = 'asc' | 'desc'
 export default function PeopleTeamsPage() {
   const activeTab: 'people' | 'teams' = 'people'
   const isMobile = useIsMobile()
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
   
   // People states
   const [users, setUsers] = useState<User[]>([])
@@ -264,14 +265,15 @@ export default function PeopleTeamsPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        <div className="px-4 py-4 md:px-6 flex-shrink-0">
+        <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
           <PageHeader
             title={pageTitle}
             description={pageDescription}
+            className="mb-0"
             actions={
               activeTab === 'people' ? (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <div className="relative">
+                  <div className="relative w-64">
                     <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
                     <input
                       type="text"
@@ -284,18 +286,6 @@ export default function PeopleTeamsPage() {
 
                   <div className="flex items-center bg-muted rounded-[4px] p-1">
                     <button
-                      onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                        viewMode === 'grid'
-                          ? 'bg-background text-foreground ambient-shadow'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                      title="Visualização em Grade"
-                    >
-                      <Icon name="grid_view" className="text-base" />
-                      <span className="hidden md:inline">Grade</span>
-                    </button>
-                    <button
                       onClick={() => setViewMode('table')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
                         viewMode === 'table'
@@ -306,6 +296,18 @@ export default function PeopleTeamsPage() {
                     >
                       <Icon name="table" className="text-base" />
                       <span className="hidden md:inline">Tabela</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                        viewMode === 'grid'
+                          ? 'bg-background text-foreground ambient-shadow'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Visualização em Grade"
+                    >
+                      <Icon name="grid_view" className="text-base" />
+                      <span className="hidden md:inline">Grade</span>
                     </button>
                     <button
                       onClick={() => setViewMode('hierarchy')}
@@ -338,13 +340,10 @@ export default function PeopleTeamsPage() {
 
                   <ExportButton data={filteredUsers} entity="users" />
 
-                  <button
-                    onClick={() => setShowNewUserModal(true)}
-                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors whitespace-nowrap"
-                  >
-                    <Icon name="add" className="text-xl" />
+                  <Button onClick={() => setShowNewUserModal(true)} className="whitespace-nowrap">
+                    <Icon name="add" className="mr-2 text-base" />
                     Adicionar
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 flex-wrap">
@@ -363,28 +362,33 @@ export default function PeopleTeamsPage() {
 
         {/* People Tab Content */}
         {activeTab === 'people' && (
-          <div className="flex flex-1 overflow-hidden px-4 pb-4 pt-1 md:px-6 md:pb-6">
-            <div className={`flex flex-1 min-h-0 overflow-hidden ${isTableSplitView ? 'border-t border-border bg-card' : ''}`}>
+          <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
               <div
                 className={`${
                   showPeopleSidePanel ? 'w-1/2 min-w-0' : 'w-full'
-                } transition-all overflow-hidden ${isTableSplitView ? 'bg-card' : ''}`}
+                } transition-all overflow-hidden flex flex-col`}
               >
                 {loadingUsers ? (
-                  <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                    <p className="mt-2 text-muted-foreground">Carregando...</p>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                      <p className="mt-2 text-muted-foreground">Carregando...</p>
+                    </div>
                   </div>
                 ) : filteredUsers.length === 0 ? (
-                  <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
-                    <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
-                    <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
+                  <div className="flex-1 flex items-center justify-center p-12 text-center">
+                    <div>
+                      <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
+                      <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
+                    </div>
                   </div>
                 ) : (
                   <>
                     {/* Grid View */}
                     {viewMode === 'grid' && (
+                      <div className="overflow-auto flex-1 p-4 md:p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sortedUsers.map((user) => (
                           <div
@@ -442,14 +446,18 @@ export default function PeopleTeamsPage() {
                           </div>
                         ))}
                       </div>
+                      <div className="mt-4 text-center text-xs text-muted-foreground">
+                        Mostrando {sortedUsers.length} de {users.length} pessoa(s)
+                      </div>
+                      </div>
                     )}
 
                     {/* Table View */}
                     {viewMode === 'table' && (
-                      <div className={`${showPeopleSidePanel ? 'h-full flex flex-col bg-card overflow-hidden' : 'bg-card rounded-[4px] ambient-shadow overflow-hidden'}`}>
+                      <div className="h-full flex flex-col bg-card overflow-hidden">
                         <div className="flex-1 overflow-auto min-h-0">
                           <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-secondary">
+                            <thead className="sticky top-0 bg-secondary z-10">
                               <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                   <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
@@ -536,16 +544,12 @@ export default function PeopleTeamsPage() {
                             </tbody>
                           </table>
                         </div>
-                        <div className="px-4 py-3 border-t border-border bg-card flex-shrink-0">
-                          <p className="text-xs text-muted-foreground">
-                            Mostrando {sortedUsers.length} de {users.length} pessoa(s)
-                          </p>
-                        </div>
                       </div>
                     )}
 
                     {/* Hierarchy View - 3 Layers: Teams > Job Titles > People */}
                     {viewMode === 'hierarchy' && (
+                      <div className="overflow-auto flex-1 p-4 md:p-6">
                       <div className="space-y-6">
                         {Object.entries(buildHierarchy()).map(([teamName, jobTitles]) => (
                           <div key={teamName} className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
@@ -600,13 +604,12 @@ export default function PeopleTeamsPage() {
                           </div>
                         ))}
                       </div>
-                    )}
-
-                    {viewMode !== 'table' && (
                       <div className="mt-6 text-center text-muted-foreground">
                         Mostrando {sortedUsers.length} de {users.length} pessoa(s)
                       </div>
+                      </div>
                     )}
+
                   </>
                 )}
               </div>

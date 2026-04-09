@@ -100,7 +100,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
           </div>
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
               <p className="mt-2 text-muted-foreground">Carregando...</p>
             </div>
           </div>
@@ -111,7 +111,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
     return (
       <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Pessoa">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
       </Modal>

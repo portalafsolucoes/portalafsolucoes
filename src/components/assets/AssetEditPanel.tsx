@@ -412,8 +412,8 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
   const selectClass = "w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring text-sm"
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-on-surface-variant/10">
-      <div className="flex items-center justify-between p-4 border-b border-on-surface-variant/10">
+    <div className="h-full flex flex-col bg-card border-l border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         <h2 className="text-xl font-bold text-foreground">Editar Ativo</h2>
         <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
           <Icon name="close" className="text-xl text-muted-foreground" />
@@ -585,7 +585,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           </div>
 
           {/* Características Dinâmicas */}
-          <div className="pt-3 border-t border-on-surface-variant/10">
+          <div className="pt-3 border-t border-border">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-foreground">Características</label>
               <button type="button" onClick={addCharacteristicRow} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium">
@@ -693,7 +693,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
                 </span>
               </div>
             </div>
-            <div className="pt-3 border-t border-on-surface-variant/10">
+            <div className="pt-3 border-t border-border">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Score GUT:</span>
                 <div className="flex items-center gap-2">
@@ -787,7 +787,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         </Section>
 
         {/* Botões */}
-        <div className="flex gap-3 pt-4 border-t border-on-surface-variant/10">
+        <div className="flex gap-3 pt-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={loading} className="flex-1">
             <Icon name="save" className="text-base mr-2" />

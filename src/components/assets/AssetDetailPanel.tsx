@@ -101,9 +101,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   }
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-on-surface-variant/10">
+    <div className="h-full flex flex-col bg-card border-l border-border">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-on-surface-variant/10">
+      <div className="flex items-start justify-between p-4 border-b border-border">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-xl font-bold text-foreground">{asset.name}</h2>
@@ -142,7 +142,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
           <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
             {/* Ações */}
-            <div className="p-4 border-b border-on-surface-variant/10 space-y-2">
+            <div className="p-4 border-b border-border space-y-2">
               <button 
                 onClick={() => onEdit(asset)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
@@ -161,7 +161,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Imagem do Ativo */}
         {asset.image && (
-          <div className="p-4 border-b border-on-surface-variant/10">
+          <div className="p-4 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground mb-2">Imagem Principal</h3>
             <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
               <img 
@@ -174,7 +174,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         )}
 
         {/* Identificação */}
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Identificação</h3>
           {asset.description && (
             <div className="mb-3">
@@ -246,7 +246,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* Localização e Organização */}
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Localização</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.location && (
@@ -278,7 +278,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Dados Técnicos */}
         {(asset.manufacturer || asset.modelName || asset.serialNumber || asset.hasCounter) && (
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Dados Técnicos</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.manufacturer && (
@@ -329,7 +329,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Financeiro */}
         {(asset.acquisitionCost || asset.purchaseValue || asset.hourlyCost || asset.purchaseDate) && (
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Financeiro e Aquisição</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.purchaseValue != null && (
@@ -374,7 +374,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Garantia */}
         {(asset.warrantyPeriod || asset.warrantyDate) && (
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Garantia</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.warrantyPeriod != null && (
@@ -394,7 +394,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         )}
 
         {/* Datas */}
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
               <p className="text-xs text-muted-foreground">Criado em</p>
@@ -416,7 +416,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* Matriz GUT - Criticidade */}
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
             <Icon name="monitoring" className="text-base text-primary" />
             Matriz GUT (Criticidade)
@@ -483,7 +483,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* QR Code */}
-        <div className="p-4 border-b border-on-surface-variant/10">
+        <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">QR Code do Ativo</h3>
           <div className="flex flex-col items-center bg-secondary rounded-[4px] p-4">
             <QRCodeSVG 
@@ -500,7 +500,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Arquivos Anexos */}
         {asset.files && asset.files.length > 0 && (
-          <div className="p-4 border-b border-on-surface-variant/10">
+          <div className="p-4 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Icon name="attach_file" className="text-base" />
               Arquivos Anexos ({asset.files.length})
@@ -560,7 +560,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Arquivos Anexados */}
         {asset.files && asset.files.length > 1 && (
-          <div className="p-4 border-t border-on-surface-variant/10">
+          <div className="p-4 border-t border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3">Documentos</h3>
             <div className="space-y-2">
               {asset.files.slice(1).map((file, index) => (
