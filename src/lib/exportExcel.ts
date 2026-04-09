@@ -57,6 +57,26 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   }, obj)
 }
 
+function formatDateValue(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toLocaleDateString('pt-BR')
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    return new Date(value).toLocaleDateString('pt-BR')
+  }
+
+  return ''
+}
+
+function formatShortIdValue(value: unknown): string {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value).slice(0, 8)
+  }
+
+  return ''
+}
+
 // Configurações pré-definidas para entidades comuns
 export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename: string }> = {
   'work-orders': {
@@ -68,8 +88,8 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'priority', header: 'Prioridade' },
       { key: 'type', header: 'Tipo' },
       { key: 'asset.name', header: 'Ativo' },
-      { key: 'createdAt', header: 'Criado em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
-      { key: 'completedOn', header: 'Concluído em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+      { key: 'createdAt', header: 'Criado em', transform: formatDateValue },
+      { key: 'completedOn', header: 'Concluído em', transform: formatDateValue },
     ],
   },
   assets: {
@@ -83,7 +103,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'modelName', header: 'Modelo' },
       { key: 'serialNumber', header: 'Nº Série' },
       { key: 'protheusCode', header: 'Cód. Protheus' },
-      { key: 'createdAt', header: 'Criado em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+      { key: 'createdAt', header: 'Criado em', transform: formatDateValue },
     ],
   },
   'standard-assets': {
@@ -96,7 +116,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'modelName', header: 'Modelo' },
       { key: 'priority', header: 'Prioridade' },
       { key: 'shiftCode', header: 'Turno' },
-      { key: 'createdAt', header: 'Criado em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+      { key: 'createdAt', header: 'Criado em', transform: formatDateValue },
     ],
   },
   'asset-criticality': {
@@ -116,11 +136,11 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
   requests: {
     filename: 'Solicitacoes',
     columns: [
-      { key: 'id', header: 'ID', transform: (v) => v?.slice(0, 8) || '' },
+      { key: 'id', header: 'ID', transform: formatShortIdValue },
       { key: 'title', header: 'Título' },
       { key: 'status', header: 'Status' },
       { key: 'priority', header: 'Prioridade' },
-      { key: 'createdAt', header: 'Criado em', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+      { key: 'createdAt', header: 'Criado em', transform: formatDateValue },
     ],
   },
   users: {
@@ -141,7 +161,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'rafNumber', header: 'Número' },
       { key: 'area', header: 'Área' },
       { key: 'equipment', header: 'Equipamento' },
-      { key: 'occurrenceDate', header: 'Data Ocorrência', transform: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+      { key: 'occurrenceDate', header: 'Data Ocorrência', transform: formatDateValue },
       { key: 'failureDescription', header: 'Descrição da Falha' },
     ],
   },
