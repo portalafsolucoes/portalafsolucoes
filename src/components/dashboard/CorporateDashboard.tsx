@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 interface UnitSummary {
   unit: { id: string; name: string; code: string }
@@ -41,14 +42,7 @@ export function CorporateDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Título */}
-      <div className="flex items-center gap-3">
-        <Icon name="business" className="h-7 w-7 text-foreground" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard Corporativo</h1>
-          <p className="text-sm text-muted-foreground">Visão consolidada de todas as unidades</p>
-        </div>
-      </div>
+      <PageHeader icon="business" title="Dashboard Corporativo" description="Visão consolidada de todas as unidades" />
 
       {/* Totais Corporativos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">

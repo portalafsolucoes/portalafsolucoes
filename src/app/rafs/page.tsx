@@ -211,6 +211,7 @@ export default function RAFsPage() {
           <>
         {/* Header */}
         <PageHeader
+          icon="troubleshoot"
           title="Relatórios de Análise de Falha (RAF)"
           description="Gerencie os relatórios de análise de falha do sistema"
           actions={

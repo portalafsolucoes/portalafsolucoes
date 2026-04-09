@@ -203,6 +203,7 @@ export default function TreePage() {
     <PageContainer>
       <div className="space-y-4">
         <PageHeader
+          icon="account_tree"
           title="Árvore"
           description="Navegação hierárquica de ativos"
         />

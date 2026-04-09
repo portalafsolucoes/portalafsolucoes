@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { getStatusColor } from '@/lib/utils'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { AssetTree } from '@/components/assets/AssetTree'
 import { AssetTable } from '@/components/assets/AssetTable'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -156,74 +157,75 @@ export default function AssetsPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-      {/* Header - Inspirado no TracOS da Tractian */}
+      {/* Header */}
       <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div className="flex items-center gap-3 md:gap-4 flex-1 w-full sm:w-auto">
-            <h1 className="text-lg md:text-xl font-bold text-foreground">Ativos</h1>
-            
-            {/* Search */}
-            <div className="flex-1 max-w-md relative">
-              <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Buscar ativos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
+        <PageHeader
+          icon="inventory_2"
+          title="Ativos"
+          description="Gestao de bens e equipamentos"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Search */}
+              <div className="relative">
+                <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar ativos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* View Mode Toggle - Estilo TracOS */}
-            <div className="flex items-center bg-muted rounded-[4px] p-1">
-              <button
-                onClick={() => setViewMode('tree')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                  viewMode === 'tree'
-                    ? 'bg-background text-foreground ambient-shadow'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                title="Visualização em Árvore"
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-muted rounded-[4px] p-1">
+                <button
+                  onClick={() => setViewMode('tree')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                    viewMode === 'tree'
+                      ? 'bg-background text-foreground ambient-shadow'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Visualização em Árvore"
+                >
+                  <Icon name="grid_view" className="text-base" />
+                  <span className="hidden md:inline">Árvore</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                    viewMode === 'table'
+                      ? 'bg-background text-foreground ambient-shadow'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Visualização em Tabela"
+                >
+                  <Icon name="table" className="text-base" />
+                  <span className="hidden md:inline">Tabela</span>
+                </button>
+              </div>
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <Icon name="grid_view" className="text-base" />
-                <span className="hidden md:inline">Árvore</span>
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                  viewMode === 'table'
-                    ? 'bg-background text-foreground ambient-shadow'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                title="Visualização em Tabela"
-              >
-                <Icon name="table" className="text-base" />
-                <span className="hidden md:inline">Tabela</span>
-              </button>
+                <option value="all">Todos os Status</option>
+                <option value="OPERATIONAL">Operacional</option>
+                <option value="DOWN">Parado</option>
+                <option value="IN_REPAIR">Em Reparo</option>
+                <option value="INACTIVE">Inativo</option>
+              </select>
+
+              <ExportButton data={filteredAssets} entity="assets" />
+              <Button onClick={handleAddNewAsset} className="whitespace-nowrap">
+                <Icon name="add" className="mr-2 text-base" />
+                Adicionar
+              </Button>
             </div>
-
-            {/* Status Filter - Estilo TracOS */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">Todos os Status</option>
-              <option value="OPERATIONAL">Operacional</option>
-              <option value="DOWN">Parado</option>
-              <option value="IN_REPAIR">Em Reparo</option>
-              <option value="INACTIVE">Inativo</option>
-            </select>
-
-            <ExportButton data={filteredAssets} entity="assets" />
-            <Button onClick={handleAddNewAsset} className="whitespace-nowrap">
-              <Icon name="add" className="mr-2 text-base" />
-              Adicionar
-            </Button>
-          </div>
-        </div>
+          }
+        />
       </div>
 
       {/* Main Content */}

@@ -166,6 +166,7 @@ export default function CriticalityPage() {
     <PageContainer>
         {/* Header */}
           <PageHeader
+            icon="priority_high"
             title="Análise de Criticidade de Ativos"
             description="Priorização baseada em Matriz GUT, solicitações, ordens de serviço e falhas"
             actions={

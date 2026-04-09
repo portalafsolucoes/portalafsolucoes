@@ -160,6 +160,7 @@ export default function WorkOrdersPage() {
         ) : (
           <>
         <PageHeader
+          icon="engineering"
           title="Ordens de Serviço (OS)"
           description="Gerencie todas as ordens de manutenção"
           actions={

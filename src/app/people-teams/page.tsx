@@ -177,7 +177,7 @@ export default function PeopleTeamsPage() {
     <PageContainer>
         {/* Header with Tabs */}
         <div className="mb-6">
-          <PageHeader title="Pessoas e Equipes" />
+          <PageHeader icon="groups" title="Pessoas e Equipes" description="Gerencie pessoas, equipes e permissões" />
           
           {/* Tabs */}
           <div className="border-b border-border">

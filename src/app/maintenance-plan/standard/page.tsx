@@ -116,6 +116,7 @@ export default function StandardMaintenancePlanPage() {
     <PageContainer>
       <div className="space-y-6">
         <PageHeader
+          icon="build"
           title="Manutenção Padrão"
           description="Planos de manutenção padrão por família"
         />

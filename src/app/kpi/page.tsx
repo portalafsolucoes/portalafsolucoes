@@ -82,6 +82,7 @@ export default function KpiPage() {
     <PageContainer>
       <div className="space-y-6">
         <PageHeader
+          icon="trending_up"
           title="KPI - Indicadores Chave de Performance"
           description="Confiabilidade, Processo e Custo"
         />

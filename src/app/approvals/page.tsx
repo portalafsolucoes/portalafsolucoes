@@ -145,6 +145,7 @@ export default function ApprovalsPage() {
   return (
     <PageContainer>
         <PageHeader
+          icon="check_circle"
           title="Aprovações de Solicitações"
           description={userRole === 'SUPER_ADMIN'
             ? 'Você pode ver e aprovar TODAS as solicitações pendentes'

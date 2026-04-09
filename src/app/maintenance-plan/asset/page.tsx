@@ -111,6 +111,7 @@ export default function AssetMaintenancePlanPage() {
     <PageContainer>
       <div className="space-y-6">
         <PageHeader
+          icon="settings"
           title="Manutenção do Bem"
           description="Planos de manutenção por bem/ativo individual"
         />

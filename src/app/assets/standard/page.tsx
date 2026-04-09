@@ -5,6 +5,7 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 
@@ -286,25 +287,29 @@ export default function StandardAssetsPage() {
     <PageContainer>
         {/* Header */}
         <div className="border-b border-border bg-card px-4 md:px-6 py-4 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
-              <h1 className="text-lg md:text-xl font-bold text-foreground">Bens Padrão</h1>
-              <div className="flex-1 max-w-md relative">
-                <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Buscar por família, nome, fabricante..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+          <PageHeader
+            icon="category"
+            title="Bens Padrão"
+            description="Cadastro de bens padrão para pré-preenchimento"
+            actions={
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex-1 max-w-md relative">
+                  <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por família, nome, fabricante..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <Button onClick={handleNew} className="whitespace-nowrap">
+                  <Icon name="add" className="mr-2 text-base" />
+                  Novo Bem Padrão
+                </Button>
               </div>
-            </div>
-            <Button onClick={handleNew} className="whitespace-nowrap">
-              <Icon name="add" className="mr-2 text-base" />
-              Novo Bem Padrão
-            </Button>
-          </div>
+            }
+          />
         </div>
 
         {/* Table */}
