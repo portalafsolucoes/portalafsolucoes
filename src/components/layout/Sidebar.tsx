@@ -105,7 +105,7 @@ export function Sidebar() {
         setExpandedMenus(prev => prev.includes(item.name) ? prev : [...prev, item.name])
       }
     })
-  }, [pathname, userRole])
+  }, [navigation, pathname, userRole])
 
   const toggleExpanded = (name: string) => {
     setExpandedMenus(prev =>
@@ -153,9 +153,13 @@ export function Sidebar() {
                   <Icon name="menu" className="text-xl text-on-surface" />
                 </button>
 
-                <Link href="/dashboard" className="flex items-center flex-1 min-w-0" onClick={() => setMobileMenuOpen(false)}>
+                <Link
+                  href="/dashboard"
+                  className="flex min-w-0 flex-1 items-center rounded-[4px] px-2 py-1.5 hover:bg-surface-high transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   {companyLogo ? (
-                    <div className="relative w-full h-10">
+                    <div className="relative h-10 w-full">
                       <Image
                         src={companyLogo}
                         alt={companyName || APP_NAME}
@@ -173,13 +177,39 @@ export function Sidebar() {
                 </Link>
               </div>
             ) : (
-              <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="p-2 hover:bg-surface-high rounded-[4px] transition-colors w-full flex justify-center"
-                title="Expandir sidebar"
-              >
-                <Icon name="menu" className="text-xl text-on-surface" />
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="p-2 hover:bg-surface-high rounded-[4px] transition-colors w-full flex justify-center"
+                  title="Expandir sidebar"
+                >
+                  <Icon name="menu" className="text-xl text-on-surface" />
+                </button>
+
+                <Link
+                  href="/dashboard"
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[4px] bg-card hover:bg-surface-high transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                  title={companyName || APP_NAME}
+                >
+                  {companyLogo ? (
+                    <div className="relative h-7 w-7">
+                      <Image
+                        src={companyLogo}
+                        alt={companyName || APP_NAME}
+                        fill
+                        className="object-contain"
+                        priority
+                        sizes="28px"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-semibold text-on-surface">
+                      {(companyName || APP_NAME).slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </Link>
+              </div>
             )}
           </div>
 
@@ -187,7 +217,11 @@ export function Sidebar() {
           <div className="lg:hidden">
             <div className="flex items-center">
               {companyLogo ? (
-                <div className="relative w-full h-10">
+                <Link
+                  href="/dashboard"
+                  className="relative h-10 w-full rounded-[4px] px-2 py-1.5 hover:bg-surface-high transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <Image
                     src={companyLogo}
                     alt={companyName || APP_NAME}
@@ -196,11 +230,15 @@ export function Sidebar() {
                     priority
                     sizes="200px"
                   />
-                </div>
+                </Link>
               ) : (
-                <span className="text-sm font-semibold text-on-surface truncate">
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-semibold text-on-surface truncate rounded-[4px] px-2 py-1.5 hover:bg-surface-high transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   {companyName || APP_NAME}
-                </span>
+                </Link>
               )}
             </div>
           </div>

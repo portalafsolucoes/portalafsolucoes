@@ -43,6 +43,8 @@ interface RelatedEntity {
   name: string
 }
 
+type RelatedEntityValue = RelatedEntity | RelatedEntity[] | null
+
 interface AssetRow {
   id: string
   name: string
@@ -52,8 +54,13 @@ interface AssetRow {
   gutGravity: number | null
   gutUrgency: number | null
   gutTendency: number | null
-  Location: RelatedEntity | null
-  AssetCategory: RelatedEntity | null
+  Location: RelatedEntityValue
+  AssetCategory: RelatedEntityValue
+}
+
+function pickRelatedEntity(value: RelatedEntityValue): RelatedEntity | null {
+  if (!value) return null
+  return Array.isArray(value) ? value[0] ?? null : value
 }
 
 function normalizeText(value: string | null | undefined) {
@@ -207,6 +214,9 @@ export async function GET(request: NextRequest) {
     const maxRafs = Math.max(...Object.values(rafCounts), 1)
 
     const criticalities: AssetCriticality[] = (assets as AssetRow[]).map(asset => {
+      const location = pickRelatedEntity(asset.Location)
+      const category = pickRelatedEntity(asset.AssetCategory)
+
       // GUT Score (1-5 cada, máx = 125, normalizado para 0-100)
       const g = asset.gutGravity || 1
       const u = asset.gutUrgency || 1
@@ -249,8 +259,8 @@ export async function GET(request: NextRequest) {
         customId: asset.customId,
         area: asset.area,
         status: asset.status,
-        location: asset.Location ? { id: asset.Location.id, name: asset.Location.name } : null,
-        category: asset.AssetCategory ? { id: asset.AssetCategory.id, name: asset.AssetCategory.name } : null,
+        location,
+        category,
         gutGravity: g,
         gutUrgency: u,
         gutTendency: t,
