@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
@@ -26,6 +27,18 @@ interface AssetDetail {
   workOrders: any[]
   requests: any[]
   rafs: any[]
+}
+
+function findTreeNode(nodes: TreeNode[], nodeId: string): TreeNode | null {
+  for (const node of nodes) {
+    if (node.id === nodeId) return node
+    if (node.children?.length) {
+      const childNode = findTreeNode(node.children, nodeId)
+      if (childNode) return childNode
+    }
+  }
+
+  return null
 }
 
 export default function TreePage() {
@@ -190,7 +203,7 @@ export default function TreePage() {
           }}
         >
           {hasChildren ? (
-            isExpanded ? <Icon name="expand_more" className=".5 text-sm.5 flex-shrink-0" /> : <Icon name="chevron_right" className=".5 text-sm.5 flex-shrink-0" />
+            isExpanded ? <Icon name="expand_more" className="text-sm flex-shrink-0" /> : <Icon name="chevron_right" className="text-sm flex-shrink-0" />
           ) : (
             <span className="w-3.5" />
           )}
@@ -211,133 +224,159 @@ export default function TreePage() {
     )
   }
 
+  const selectedAssetNode = selectedAsset ? findTreeNode(treeData, selectedAsset) : null
+
   return (
-    <PageContainer>
-      <div className="space-y-4">
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
+          className="mb-0"
           title="Árvore"
           description="Navegação hierárquica de ativos"
+          actions={
+            isAdmin && availableUnits.length > 1 ? (
+              <select
+                value={selectedUnit}
+                onChange={e => selectUnit(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Selecione a unidade...</option>
+                {availableUnits.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            ) : undefined
+          }
         />
+      </div>
 
-        {/* Seletor de Unidade — apenas para admin com múltiplas unidades */}
-        {isAdmin && availableUnits.length > 1 && (
-          <div className="flex items-center gap-3 p-3 bg-card rounded-[4px]">
-            <label className="text-sm font-medium text-foreground">Unidade:</label>
-            <select
-              value={selectedUnit}
-              onChange={e => selectUnit(e.target.value)}
-              className="flex-1 max-w-xs px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Selecione a unidade...</option>
-              {availableUnits.map((u: any) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {!selectedUnit ? (
-          <div className="rounded-[4px] bg-card p-12 text-center text-muted-foreground">
-            Selecione uma unidade para visualizar a árvore de ativos.
-          </div>
-        ) : loading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Painel Esquerdo: Árvore */}
-            <div className="lg:col-span-1 rounded-[4px] bg-card overflow-hidden">
-              <div className="p-3 border-b border-border bg-muted/30">
-                <h3 className="text-sm font-medium text-foreground">Estrutura de Ativos</h3>
-              </div>
-              <div className="overflow-y-auto max-h-[calc(100vh-300px)] p-2">
-                {treeData.length === 0 ? (
-                  <p className="text-center text-muted-foreground text-sm py-8">Nenhum ativo cadastrado nesta unidade.</p>
-                ) : (
-                  treeData.map(node => renderNode(node))
-                )}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          {!selectedUnit ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center px-6">
+                <p className="text-muted-foreground">Selecione uma unidade para visualizar a árvore de ativos.</p>
               </div>
             </div>
-
-            {/* Painel Direito: Detalhes */}
-            <div className="lg:col-span-2 rounded-[4px] bg-card overflow-hidden">
-              <div className="p-3 border-b border-border bg-muted/30">
-                <h3 className="text-sm font-medium text-foreground">
-                  {selectedAsset ? 'Detalhes do Ativo' : 'Selecione um ativo'}
-                </h3>
-              </div>
-              <div className="p-4 overflow-y-auto max-h-[calc(100vh-300px)]">
-                {!selectedAsset ? (
-                  <p className="text-center text-muted-foreground py-8">Clique em um ativo na árvore para ver OSs, SSs e ações pendentes.</p>
-                ) : detailLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
-                  </div>
-                ) : assetDetail ? (
-                  <div className="space-y-6">
-                    {/* OSs Abertas */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <Icon name="construction" className="text-base" /> Ordens de Serviço ({assetDetail.workOrders.length})
-                      </h4>
-                      {assetDetail.workOrders.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">Nenhuma OS aberta.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {assetDetail.workOrders.map((wo: any) => (
-                            <div key={wo.id} className="flex items-center justify-between p-2 rounded-[4px] text-sm">
-                              <span className="font-medium">{wo.title}</span>
-                              <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(wo.status)}`}>{wo.status}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* SSs Abertas */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <Icon name="assignment" className="text-base" /> Solicitações ({assetDetail.requests.length})
-                      </h4>
-                      {assetDetail.requests.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">Nenhuma SS aberta.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {assetDetail.requests.map((ss: any) => (
-                            <div key={ss.id} className="flex items-center justify-between p-2 rounded-[4px] text-sm">
-                              <span className="font-medium">{ss.title}</span>
-                              <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(ss.status)}`}>{ss.status}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Ações Pendentes RAFs */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <Icon name="warning" className="text-base" /> Ações Pendentes RAF ({assetDetail.rafs.length})
-                      </h4>
-                      {assetDetail.rafs.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">Nenhuma ação pendente.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {assetDetail.rafs.map((raf: any) => (
-                            <div key={raf.id} className="p-2 rounded-[4px] text-sm">
-                              <span className="font-medium">{raf.rafNumber}</span>
-                              <span className="text-muted-foreground ml-2">{raf.equipment}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
+          ) : loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                <p className="mt-2 text-muted-foreground">Carregando...</p>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              <div className={`${selectedAsset ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
+                <div className="h-full flex flex-col bg-card overflow-hidden">
+                  <div className="flex items-center justify-between p-4 border-b border-border">
+                    <div>
+                      <h2 className="text-xl font-bold text-foreground">Estrutura de Ativos</h2>
+                      <p className="text-sm text-muted-foreground">Expanda áreas e centros de trabalho para navegar na hierarquia.</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-auto min-h-0 p-2">
+                    {treeData.length === 0 ? (
+                      <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                        Nenhum ativo cadastrado nesta unidade.
+                      </div>
+                    ) : (
+                      treeData.map(node => renderNode(node))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedAsset && (
+                <div className="w-1/2 min-w-0">
+                  <div className="h-full flex flex-col bg-card border-l border-border">
+                    <div className="flex items-start justify-between p-4 border-b border-border">
+                      <div>
+                        <h2 className="text-xl font-bold text-foreground">{selectedAssetNode?.name || 'Detalhes do Ativo'}</h2>
+                        <p className="text-sm text-muted-foreground">Ordens, solicitações e RAFs relacionadas ao ativo selecionado.</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAsset('')
+                          setAssetDetail(null)
+                        }}
+                      >
+                        <Icon name="close" className="text-base" />
+                      </Button>
+                    </div>
+
+                    {detailLoading ? (
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                          <p className="mt-2 text-muted-foreground">Carregando...</p>
+                        </div>
+                      </div>
+                    ) : assetDetail ? (
+                      <div className="flex-1 overflow-y-auto min-h-0">
+                        <div className="p-4 border-b border-border">
+                          <h3 className="text-sm font-semibold text-foreground mb-3">Ordens de Serviço ({assetDetail.workOrders.length})</h3>
+                          {assetDetail.workOrders.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Nenhuma OS aberta.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {assetDetail.workOrders.map((wo: any) => (
+                                <div key={wo.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-[4px] text-sm">
+                                  <span className="font-medium text-foreground">{wo.title}</span>
+                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(wo.status)}`}>{wo.status}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-4 border-b border-border">
+                          <h3 className="text-sm font-semibold text-foreground mb-3">Solicitações ({assetDetail.requests.length})</h3>
+                          {assetDetail.requests.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Nenhuma SS aberta.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {assetDetail.requests.map((ss: any) => (
+                                <div key={ss.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-[4px] text-sm">
+                                  <span className="font-medium text-foreground">{ss.title}</span>
+                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(ss.status)}`}>{ss.status}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-4">
+                          <h3 className="text-sm font-semibold text-foreground mb-3">Ações Pendentes RAF ({assetDetail.rafs.length})</h3>
+                          {assetDetail.rafs.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Nenhuma ação pendente.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {assetDetail.rafs.map((raf: any) => (
+                                <div key={raf.id} className="p-3 border border-border rounded-[4px] text-sm">
+                                  <span className="font-medium text-foreground">{raf.rafNumber}</span>
+                                  <span className="text-muted-foreground ml-2">{raf.equipment}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                        Clique em um ativo na árvore para ver OSs, SSs e ações pendentes.
+                      ) : (
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </PageContainer>
   )
