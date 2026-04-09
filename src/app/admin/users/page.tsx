@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
+import { ModalSection } from '@/components/ui/ModalSection'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { getRoleDisplayName } from '@/lib/permissions'
@@ -295,174 +297,193 @@ export default function AdminUsersPage() {
   if (authLoading) return null
 
   return (
-    <PageContainer>
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
+          className="mb-0"
           title="Gestão de Usuários"
           description="Crie usuários, defina papéis e atribua unidades"
           actions={
-            <button
-              onClick={openCreate}
-              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors"
-            >
-              <Icon name="person_add" className="text-xl" />
-              Novo Usuário
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-64">
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar usuários..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Todos os Papéis</option>
+                {ALL_ROLES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              <select
+                value={unitFilter}
+                onChange={(e) => setUnitFilter(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Todas as Unidades</option>
+                {units.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+              <Button onClick={openCreate} size="sm">
+                <Icon name="person_add" className="mr-1 text-base" />
+                Novo Usuário
+              </Button>
+            </div>
           }
         />
+      </div>
 
-        {/* Filters */}
-        <div className="bg-card rounded-[4px] ambient-shadow p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xl" />
-              <input
-                type="text"
-                placeholder="Buscar por nome, email ou cargo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="">Todos os Papéis</option>
-              {ALL_ROLES.map(r => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-            <select
-              value={unitFilter}
-              onChange={(e) => setUnitFilter(e.target.value)}
-              className="px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="">Todas as Unidades</option>
-              {units.map(u => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          <div className="w-full transition-all overflow-hidden flex flex-col">
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                  <p className="mt-2 text-muted-foreground">Carregando...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col bg-card overflow-hidden">
+                <div className="flex-1 overflow-auto min-h-0">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="sticky top-0 bg-secondary z-10">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidades</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-card divide-y divide-gray-200">
+                      {filteredUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-16 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <Icon name="group" className="text-4xl text-muted-foreground" />
+                              <h3 className="text-sm font-medium text-foreground">Nenhum usuário encontrado</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {users.length === 0
+                                  ? 'Crie o primeiro usuário para começar.'
+                                  : 'Ajuste os filtros para encontrar outro usuário.'}
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <tr key={user.id} className="hover:bg-secondary cursor-pointer transition-colors">
+                            <td className="px-6 py-4 text-sm text-foreground">
+                              <div className="flex items-center gap-3">
+                                {user.image ? (
+                                  <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <span className="text-primary font-semibold">
+                                      {user.firstName[0]}{user.lastName[0]}
+                                    </span>
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="font-medium text-foreground">
+                                    {user.firstName} {user.lastName}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                                  {user.jobTitle && (
+                                    <div className="text-xs text-muted-foreground">{user.jobTitle}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-foreground">
+                                {getRoleDisplayName(user.role as UserRole)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-foreground">
+                              {user.units.length === 0 ? (
+                                <span className="text-muted-foreground italic">Sem unidade</span>
+                              ) : (
+                                <div className="flex flex-wrap gap-1">
+                                  {user.units.map(unit => (
+                                    <span
+                                      key={unit.id}
+                                      className="px-2 py-0.5 text-xs rounded-full bg-secondary text-foreground"
+                                    >
+                                      {unit.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                              {user.enabled ? (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-success/10 text-success">
+                                  Ativo
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-danger/10 text-danger">
+                                  Inativo
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openAssign(user)}
+                                  title="Gerenciar unidades"
+                                >
+                                  <Icon name="apartment" className="mr-1 text-base" />
+                                  Unidades
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEdit(user)}
+                                  title="Editar"
+                                >
+                                  <Icon name="edit" className="mr-1 text-base" />
+                                  Editar
+                                </Button>
+                                {user.id !== currentUser?.id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setDeleteUser(user)}
+                                    title="Excluir"
+                                    className="text-danger hover:bg-danger/10 hover:text-danger"
+                                  >
+                                    <Icon name="delete" className="mr-1 text-base" />
+                                    Excluir
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Table */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
-            <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum usuário encontrado</h3>
-            <p className="text-muted-foreground">Crie o primeiro usuário para começar.</p>
-          </div>
-        ) : (
-          <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-on-surface-variant/10">
-              <thead className="bg-surface-low">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidades</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-on-surface-variant/10">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-surface-low/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {user.image ? (
-                          <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-primary font-semibold">
-                              {user.firstName[0]}{user.lastName[0]}
-                            </span>
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {user.firstName} {user.lastName}
-                          </div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                          {user.jobTitle && (
-                            <div className="text-xs text-muted-foreground">{user.jobTitle}</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-foreground">
-                        {getRoleDisplayName(user.role as UserRole)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {user.units.length === 0 ? (
-                        <span className="text-sm text-muted-foreground italic">Sem unidade</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {user.units.map(unit => (
-                            <span
-                              key={unit.id}
-                              className="px-2 py-0.5 text-xs rounded-full bg-surface-highest text-foreground"
-                            >
-                              {unit.name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {user.enabled ? (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-success/10 text-success">
-                          Ativo
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-danger/10 text-danger">
-                          Inativo
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openAssign(user)}
-                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-[4px] transition-colors"
-                          title="Gerenciar unidades"
-                        >
-                          <Icon name="apartment" className="text-lg" />
-                        </button>
-                        <button
-                          onClick={() => openEdit(user)}
-                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-[4px] transition-colors"
-                          title="Editar"
-                        >
-                          <Icon name="edit" className="text-lg" />
-                        </button>
-                        {user.id !== currentUser?.id && (
-                          <button
-                            onClick={() => setDeleteUser(user)}
-                            className="p-2 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-[4px] transition-colors"
-                            title="Excluir"
-                          >
-                            <Icon name="delete" className="text-lg" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div className="px-6 py-3 text-sm text-muted-foreground border-t border-on-surface-variant/10">
-              {filteredUsers.length} de {users.length} usuário(s)
-            </div>
-          </div>
-        )}
+      </div>
 
       {/* User Form Modal */}
       <Modal
@@ -471,175 +492,164 @@ export default function AdminUsersPage() {
         title={editingUser ? 'Editar Usuário' : 'Novo Usuário'}
         size="xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          {formError && (
-            <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
-              {formError}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Nome <span className="text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.firstName}
-                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                required
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Sobrenome <span className="text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.lastName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                required
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Email <span className="text-danger">*</span>
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                required
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                {editingUser ? 'Nova Senha (em branco para manter)' : 'Senha'} {!editingUser && <span className="text-danger">*</span>}
-              </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                required={!editingUser}
-                minLength={6}
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Telefone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Cargo</label>
-              <input
-                type="text"
-                value={formData.jobTitle}
-                onChange={(e) => setFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Papel <span className="text-danger">*</span>
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              >
-                {ALL_ROLES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Taxa por Hora (R$)</label>
-              <input
-                type="number"
-                value={formData.rate}
-                onChange={(e) => setFormData(prev => ({ ...prev, rate: e.target.value }))}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* Unidades - checkbox list */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Unidades de Acesso
-            </label>
-            {units.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
-            ) : (
-              <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
-                {units.map(unit => (
-                  <label key={unit.id} className="flex items-center gap-2 cursor-pointer hover:bg-surface-low px-2 py-1 rounded">
-                    <input
-                      type="checkbox"
-                      checked={formData.unitIds.includes(unit.id)}
-                      onChange={() => toggleFormUnit(unit.id)}
-                      className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
-                    />
-                    <span className="text-sm text-foreground">{unit.name}</span>
-                  </label>
-                ))}
+        <form onSubmit={handleSubmit}>
+          <div className="p-4 space-y-3">
+            {formError && (
+              <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
+                {formError}
               </div>
             )}
-            {formData.unitIds.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {formData.unitIds.length} unidade(s) selecionada(s)
-              </p>
-            )}
+
+            <ModalSection title="Identificação">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Nome <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Sobrenome <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Email <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    {editingUser ? 'Nova Senha' : 'Senha'} {!editingUser && <span className="text-danger">*</span>}
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    required={!editingUser}
+                    minLength={6}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Telefone</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cargo</label>
+                  <input
+                    type="text"
+                    value={formData.jobTitle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              </div>
+            </ModalSection>
+
+            <ModalSection title="Acesso">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Papel <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {ALL_ROLES.map(r => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Taxa por Hora (R$)</label>
+                  <input
+                    type="number"
+                    value={formData.rate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, rate: e.target.value }))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Unidades de Acesso
+                  </label>
+                  {units.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
+                  ) : (
+                    <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
+                      {units.map(unit => (
+                        <label key={unit.id} className="flex items-center gap-2 cursor-pointer hover:bg-secondary px-2 py-1 rounded-[4px]">
+                          <input
+                            type="checkbox"
+                            checked={formData.unitIds.includes(unit.id)}
+                            onChange={() => toggleFormUnit(unit.id)}
+                            className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
+                          />
+                          <span className="text-sm text-foreground">{unit.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {formData.unitIds.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formData.unitIds.length} unidade(s) selecionada(s)
+                    </p>
+                  )}
+                </div>
+                <div className="md:col-span-2 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="form-enabled"
+                    checked={formData.enabled}
+                    onChange={(e) => setFormData(prev => ({ ...prev, enabled: e.target.checked }))}
+                    className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
+                  />
+                  <label htmlFor="form-enabled" className="text-sm font-medium text-foreground">
+                    Usuário ativo
+                  </label>
+                </div>
+              </div>
+            </ModalSection>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="form-enabled"
-              checked={formData.enabled}
-              onChange={(e) => setFormData(prev => ({ ...prev, enabled: e.target.checked }))}
-              className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
-            />
-            <label htmlFor="form-enabled" className="text-sm font-medium text-foreground">
-              Usuário ativo
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-on-surface-variant/10">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-6 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
-            >
+          <div className="flex gap-3 px-4 py-4 border-t border-border">
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1">
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors disabled:opacity-50"
-            >
-              <Icon name="save" className="text-base" />
-              {saving ? 'Salvando...' : 'Salvar'}
-            </button>
+            </Button>
+            <Button type="submit" disabled={saving} className="flex-1">
+              <Icon name="save" className="text-base mr-2" />
+              {saving ? 'Salvando...' : editingUser ? 'Salvar Alterações' : 'Salvar'}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -651,49 +661,44 @@ export default function AdminUsersPage() {
         title={`Unidades - ${assignUser?.firstName} ${assignUser?.lastName}`}
         size="md"
       >
-        <div className="p-6">
-          <p className="text-sm text-muted-foreground mb-4">
-            Selecione as unidades que este usuário terá acesso:
-          </p>
+        <div className="p-4 space-y-3">
+          <ModalSection title="Unidades Disponíveis">
+            <p className="text-sm text-muted-foreground mb-4">
+              Selecione as unidades que este usuário terá acesso:
+            </p>
 
-          {units.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {units.map(unit => (
-                <label
-                  key={unit.id}
-                  className="flex items-center gap-3 p-3 border border-input rounded-[4px] cursor-pointer hover:bg-surface-low transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={assignUnitIds.includes(unit.id)}
-                    onChange={() => toggleAssignUnit(unit.id)}
-                    className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
-                  />
-                  <Icon name="apartment" className="text-lg text-muted-foreground" />
-                  <span className="text-foreground">{unit.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
+            {units.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {units.map(unit => (
+                  <label
+                    key={unit.id}
+                    className="flex items-center gap-3 p-3 border border-input rounded-[4px] cursor-pointer hover:bg-secondary transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={assignUnitIds.includes(unit.id)}
+                      onChange={() => toggleAssignUnit(unit.id)}
+                      className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
+                    />
+                    <Icon name="apartment" className="text-lg text-muted-foreground" />
+                    <span className="text-foreground">{unit.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </ModalSection>
+        </div>
 
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-on-surface-variant/10">
-            <button
-              onClick={() => setAssignUser(null)}
-              className="px-6 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSaveAssign}
-              disabled={savingAssign}
-              className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors disabled:opacity-50"
-            >
-              <Icon name="save" className="text-base" />
-              {savingAssign ? 'Salvando...' : 'Salvar'}
-            </button>
-          </div>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={() => setAssignUser(null)} className="flex-1">
+            Cancelar
+          </Button>
+          <Button onClick={handleSaveAssign} disabled={savingAssign} className="flex-1">
+            <Icon name="save" className="text-base mr-2" />
+            {savingAssign ? 'Salvando...' : 'Salvar Alterações'}
+          </Button>
         </div>
       </Modal>
 
@@ -704,7 +709,7 @@ export default function AdminUsersPage() {
         title="Confirmar Exclusão"
         size="sm"
       >
-        <div className="p-6">
+        <div className="p-4">
           <p className="text-foreground mb-2">
             Tem certeza que deseja excluir o usuário:
           </p>
@@ -714,20 +719,14 @@ export default function AdminUsersPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Esta ação não pode ser desfeita.
           </p>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setDeleteUser(null)}
-              className="px-4 py-2 border border-input rounded-[4px] text-foreground hover:bg-secondary transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
-            >
-              Excluir
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={() => setDeleteUser(null)} className="flex-1">
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleDelete} className="flex-1">
+            Excluir
+          </Button>
         </div>
       </Modal>
     </PageContainer>
