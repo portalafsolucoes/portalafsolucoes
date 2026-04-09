@@ -46,10 +46,12 @@ export async function GET(request: NextRequest) {
       .order('createdAt', { ascending: false })
       .range(skip, skip + limit - 1)
 
-    // Filtrar por unidade ativa (session) — admin pode fazer override via query param
     const unitIdParam = searchParams.get('unitId')
-    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
-    if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+    // Inventário de ativos é corporativo por empresa; só filtra por unidade se solicitado explicitamente.
+    if (unitIdParam) {
+      const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+      if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
+    }
 
     if (locationId) query = query.eq('locationId', locationId)
     if (status) query = query.eq('status', status)
@@ -205,7 +207,7 @@ export async function POST(request: NextRequest) {
 
     // Criar o ativo
     const now = new Date().toISOString()
-    const insertData: Record<string, any> = {
+    const insertData: Record<string, unknown> = {
       id: assetId,
       name,
       description: description || undefined,

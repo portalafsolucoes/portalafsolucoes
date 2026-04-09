@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const unitIdParam = searchParams.get('unitId')
     const sortBy = searchParams.get('sortBy') || 'totalScore'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
-    const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+    const effectiveUnitId = unitIdParam ? getEffectiveUnitId(session, unitIdParam) : null
 
     // Buscar todos os ativos com campos GUT
     let assetsQuery = supabase
