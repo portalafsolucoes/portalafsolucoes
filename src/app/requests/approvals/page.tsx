@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
+import { useAuth } from '@/hooks/useAuth'
+import { hasPermission } from '@/lib/permissions'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
 import { formatDate } from '@/lib/utils'
 import { ApprovalModal } from '@/components/approvals/ApprovalModal'
@@ -35,6 +38,8 @@ interface Request {
 type TabType = 'pending' | 'approved' | 'rejected'
 
 export default function RequestApprovalsPage() {
+  const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('pending')
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(false)
@@ -42,8 +47,16 @@ export default function RequestApprovalsPage() {
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
+    if (authLoading || !user) return
+    if (!hasPermission(user, 'approvals', 'view')) {
+      router.replace(getDefaultCmmsPath(user))
+    }
+  }, [authLoading, router, user])
+
+  useEffect(() => {
+    if (!user || !hasPermission(user, 'approvals', 'view')) return
     loadRequests()
-  }, [activeTab])
+  }, [activeTab, user])
 
   const loadRequests = async () => {
     setLoading(true)
@@ -99,21 +112,21 @@ export default function RequestApprovalsPage() {
   }
 
   const renderPendingTable = () => (
-    <div className="overflow-x-auto">
+    <>
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-surface">
+        <thead className="sticky top-0 bg-secondary z-10">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Título</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Prioridade</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Solicitante</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Equipe</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Criado em</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Solicitante</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Equipe</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criado em</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-gray-200">
           {requests.map((request) => (
-            <tr key={request.id} className="hover:bg-surface">
+            <tr key={request.id} className="hover:bg-secondary cursor-pointer">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-foreground">{request.title}</div>
                 {request.description && (
@@ -155,26 +168,26 @@ export default function RequestApprovalsPage() {
           <p>Nenhuma solicitação pendente</p>
         </div>
       )}
-    </div>
+    </>
   )
 
   const renderApprovedTable = () => (
-    <div className="overflow-x-auto">
+    <>
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-surface">
+        <thead className="sticky top-0 bg-secondary z-10">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Título</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Tipo</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Técnico</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status Execução</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Aprovado por</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Aprovado em</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Técnico</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status Execução</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Aprovado por</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Aprovado em</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-gray-200">
           {requests.map((request) => (
-            <tr key={request.id} className="hover:bg-surface">
+            <tr key={request.id} className="hover:bg-secondary cursor-pointer">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-foreground">{request.title}</div>
               </td>
@@ -233,24 +246,24 @@ export default function RequestApprovalsPage() {
           <p>Nenhuma solicitação aprovada</p>
         </div>
       )}
-    </div>
+    </>
   )
 
   const renderRejectedTable = () => (
-    <div className="overflow-x-auto">
+    <>
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-surface">
+        <thead className="sticky top-0 bg-secondary z-10">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Título</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Solicitante</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rejeitado por</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Motivo</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Solicitante</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Rejeitado por</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Motivo</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-gray-200">
           {requests.map((request) => (
-            <tr key={request.id} className="hover:bg-surface">
+            <tr key={request.id} className="hover:bg-secondary cursor-pointer">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-foreground">{request.title}</div>
               </td>
@@ -285,70 +298,78 @@ export default function RequestApprovalsPage() {
           <p>Nenhuma solicitação rejeitada</p>
         </div>
       )}
-    </div>
+    </>
   )
 
+  if (authLoading || !user || !hasPermission(user, 'approvals', 'view')) {
+    return null
+  }
+
   return (
-    <PageContainer>
+    <PageContainer variant="full" className="overflow-hidden p-0">
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
+          className="mb-0"
           title="Aprovações de Solicitações"
           description="Gerencie aprovações, rejeições e acompanhe o status"
         />
+      </div>
 
-        {/* Tabs */}
-        <div className="border-b border-border mb-6">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('pending')}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                ${activeTab === 'pending'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }
-              `}
-            >
-              <Icon name="schedule" className="text-xl inline mr-2" />
-              Pendentes
-              {activeTab === 'pending' && ` (${requests.length})`}
-            </button>
-            <button
-              onClick={() => setActiveTab('approved')}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                ${activeTab === 'approved'
-                  ? 'border-on-surface-variant text-success'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }
-              `}
-            >
-              <Icon name="check_circle" className="text-xl inline mr-2" />
-              Aprovadas
-              {activeTab === 'approved' && ` (${requests.length})`}
-            </button>
-            <button
-              onClick={() => setActiveTab('rejected')}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                ${activeTab === 'rejected'
-                  ? 'border-on-surface text-danger'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }
-              `}
-            >
-              <Icon name="cancel" className="text-xl inline mr-2" />
-              Rejeitadas
-              {activeTab === 'rejected' && ` (${requests.length})`}
-            </button>
-          </nav>
-        </div>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card flex-col">
+          {/* Tabs */}
+          <div className="border-b border-border flex-shrink-0">
+            <nav className="-mb-px flex space-x-8 px-4 md:px-6">
+              <button
+                onClick={() => setActiveTab('pending')}
+                className={`
+                  py-3 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${activeTab === 'pending'
+                    ? 'border-on-surface text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }
+                `}
+              >
+                <Icon name="schedule" className="text-xl inline mr-2" />
+                Pendentes
+                {activeTab === 'pending' && ` (${requests.length})`}
+              </button>
+              <button
+                onClick={() => setActiveTab('approved')}
+                className={`
+                  py-3 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${activeTab === 'approved'
+                    ? 'border-on-surface text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }
+                `}
+              >
+                <Icon name="check_circle" className="text-xl inline mr-2" />
+                Aprovadas
+                {activeTab === 'approved' && ` (${requests.length})`}
+              </button>
+              <button
+                onClick={() => setActiveTab('rejected')}
+                className={`
+                  py-3 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${activeTab === 'rejected'
+                    ? 'border-on-surface text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }
+                `}
+              >
+                <Icon name="cancel" className="text-xl inline mr-2" />
+                Rejeitadas
+                {activeTab === 'rejected' && ` (${requests.length})`}
+              </button>
+            </nav>
+          </div>
 
-        {/* Content */}
-        <Card>
-          <CardContent className="p-0">
+          {/* Content */}
+          <div className="flex-1 overflow-auto min-h-0">
             {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-on-surface-variant mx-auto"></div>
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
                 <p className="text-muted-foreground mt-4">Carregando...</p>
               </div>
             ) : (
@@ -358,8 +379,9 @@ export default function RequestApprovalsPage() {
                 {activeTab === 'rejected' && renderRejectedTable()}
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
       {/* Modal */}
       {showModal && selectedRequest && (
