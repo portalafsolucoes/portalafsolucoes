@@ -1,4 +1,4 @@
-# CMM Gestor de Manutencao
+# Spec Canonica do Projeto - CMM Gestor de Manutencao
 
 ## Repositorio GitHub
 https://github.com/portalafsolucoes/portalafsolucoes
@@ -6,7 +6,10 @@ https://github.com/portalafsolucoes/portalafsolucoes
 ## Produto
 Portal AF Solucoes - Gestao de Manutencao (CMMS), multiempresa e multiunidade, com foco em controle operacional, planejamento, execucao e analise da manutencao.
 
-Documento funcional de referencia: `docs/spec.md`  
+Localizacao oficial da spec: `CLAUDE.md` na raiz do projeto  
+Este arquivo e a referencia maxima para qualquer LLM, agente, automacao ou pessoa trabalhando neste repositorio.  
+Em caso de divergencia entre este arquivo e qualquer outro documento, prevalece o `CLAUDE.md` da raiz.  
+Arquivos em `docs/` servem como apoio e podem existir como material complementar, mas nao substituem esta spec.  
 Versao funcional atual: `1.0`  
 Data da especificacao: `08/04/2026`
 
@@ -37,7 +40,6 @@ public/         # Arquivos estaticos
 scripts/        # Scripts utilitarios
 tests/          # Testes E2E (Playwright)
 docs/           # Documentacao funcional e tecnica
-gep/            # Modulo GEP (variaveis de processo)
 ```
 
 ## Regras de Produto
@@ -47,66 +49,88 @@ gep/            # Modulo GEP (variaveis de processo)
 - Usuarios de uma empresa nunca devem acessar dados de outra.
 - Dentro de cada empresa, os dados sao organizados por unidade.
 - A maior parte das listagens e metricas deve ser filtrada pela unidade ativa.
-- Apenas `Super Admin` e `Gestor` podem trocar de unidade, e somente se tiverem acesso a mais de uma.
+- Apenas `SUPER_ADMIN` e `ADMIN` podem trocar de unidade, e somente se tiverem acesso a mais de uma.
 
 ### Perfis de Usuario
-O sistema possui 7 perfis:
-- `Super Admin`
-- `Gestor`
-- `Planejador`
-- `Mecanico`
-- `Eletricista`
-- `Operador`
-- `Construtor Civil`
+O sistema possui 6 perfis:
+- `SUPER_ADMIN`
+- `ADMIN`
+- `TECHNICIAN`
+- `LIMITED_TECHNICIAN`
+- `REQUESTER`
+- `VIEW_ONLY`
 
 ### Resumo de Permissoes
-- `Super Admin`: controle total do sistema, empresas, usuarios, unidades e dashboard corporativo.
-- `Gestor`: gerencia operacao da propria empresa/unidade, aprova solicitacoes, acompanha KPIs, RAF e cadastros.
-- `Planejador`: cria planos, programa manutencoes, gerencia ativos e OS, mas nao aprova solicitacoes.
-- `Mecanico`, `Eletricista` e `Construtor Civil`: executam OS e atuam operacionalmente.
-- `Operador`: abre solicitacoes e acompanha informacoes operacionais.
-- Perfis operacionais nao devem ver dashboard; devem ser redirecionados para a area de OS.
+- `SUPER_ADMIN`: controle total do sistema, empresas, usuarios, unidades e dashboard corporativo.
+- `ADMIN`: gerencia a operacao da propria empresa/unidade, aprova solicitacoes, acompanha indicadores e gerencia cadastros operacionais.
+- `TECHNICIAN`: executa OS atribuidas, pode abrir solicitacoes e consultar itens necessarios ao trabalho.
+- `LIMITED_TECHNICIAN`: atua de forma operacional mais restrita, focado em OS atribuidas e abertura basica de solicitacoes.
+- `REQUESTER`: abre solicitacoes e acompanha apenas suas demandas.
+- `VIEW_ONLY`: possui acesso somente leitura aos modulos permitidos, sem criar, editar, aprovar ou excluir.
 
 ### Tabela de Acesso por Tipo de Usuario
 
-| Item do site | Super Admin | Gestor | Planejador | Mecanico | Eletricista | Operador | Construtor Civil |
-|--------------|-------------|--------|------------|----------|-------------|----------|------------------|
-| Hub / Portal | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Login / Logout | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Dashboard operacional | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| Dashboard corporativo | Sim | Nao | Nao | Nao | Nao | Nao | Nao |
-| Lista de OS | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Criar OS | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Editar OS | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Executar OS | Sim | Sim | Sim | Sim (as suas) | Sim (as suas) | Sim (as suas, se atribuida) | Sim (as suas) |
-| Excluir OS | Sim | Sim | Sim | Nao definido na spec | Nao definido na spec | Nao definido na spec | Nao definido na spec |
-| Detalhes da OS | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Lista de solicitacoes | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Criar solicitacao | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Aprovar / rejeitar solicitacao | Sim | Sim | Nao | Nao | Nao | Nao | Nao |
-| Ativos - visualizar | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Ativos - criar / editar | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| Ativos - excluir | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| Localizacoes | Sim | Sim | Nao | Nao | Nao | Nao | Nao |
-| Pessoas / usuarios | Sim | Sim | Nao | Nao | Nao | Nao | Nao |
-| Equipes | Sim | Sim | Nao definido na spec | Nao | Nao | Nao | Nao |
-| Planos de manutencao | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| Planejamento / programacao | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| Cadastros basicos | Sim | Sim | Nao | Nao | Nao | Nao | Nao |
-| Criticidade de ativos | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| RAF | Sim | Sim | Nao | Nao | Nao | Nao | Nao |
-| KPI | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| GEP | Nao definido na spec | Sim | Sim | Nao definido na spec | Nao definido na spec | Sim | Nao definido na spec |
-| Painel administrativo | Sim | Nao | Nao | Nao | Nao | Nao | Nao |
-| Perfil do usuario | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Exportacao para Excel | Sim | Sim | Sim | Nao | Nao | Nao | Nao |
-| Notificacoes | Sim | Sim | Sim | Sim | Sim | Sim | Sim |
-| Troca de unidade | Sim | Sim | Nao | Nao | Nao | Nao | Nao |
+A sidebar deve ser filtrada por perfil e tambem pelos modulos habilitados da empresa. Abaixo esta a navegacao esperada por perfil. Todos os perfis tambem devem ver `Voltar ao Portal`.
 
-Notas:
-- `Nao definido na spec` indica que a especificacao funcional atual nao detalha esse acesso de forma explicita.
-- Para perfis operacionais, o comportamento padrao e acesso restrito ao fluxo operacional, com redirecionamento inicial para OS.
-- Mesmo quando a UI exibe uma acao, a API deve validar perfil, empresa e unidade ativa.
+#### SUPER_ADMIN
+- `Dashboard`
+- `Arvore`
+- `Pessoas/Equipes`
+- `Cadastros Basicos`
+- `Ativos`
+- `Plano de Manutencao`
+- `Planejamento e Programacao`
+- `Ordens de Servico (OS)`
+- `Solicitacoes (SS)`
+- `Aprovacoes`
+- `RAF`
+- `Localizacoes`
+- `KPI - Indicadores`
+- `Configuracoes`
+
+#### ADMIN
+- `Dashboard`
+- `Arvore`
+- `Pessoas/Equipes`
+- `Cadastros Basicos`
+- `Ativos`
+- `Plano de Manutencao`
+- `Planejamento e Programacao`
+- `Ordens de Servico (OS)`
+- `Solicitacoes (SS)`
+- `Aprovacoes`
+- `RAF`
+- `Localizacoes`
+- `KPI - Indicadores`
+
+#### TECHNICIAN
+- `Ordens de Servico (OS)`
+- `Solicitacoes (SS)`
+- `Ativos`
+
+#### LIMITED_TECHNICIAN
+- `Ordens de Servico (OS)`
+- `Solicitacoes (SS)`
+
+#### REQUESTER
+- `Dashboard`
+- `Solicitacoes (SS)`
+
+#### VIEW_ONLY
+- `Dashboard`
+- `Ordens de Servico (OS)`
+- `Solicitacoes (SS)`
+- `Ativos`
+- `Localizacoes`
+- `Pessoas/Equipes`
+- `KPI - Indicadores`
+
+Regras complementares:
+- `TECHNICIAN` e `LIMITED_TECHNICIAN` nao devem ver `Dashboard`; a entrada no CMMS deve levar direto para `Ordens de Servico`.
+- `Aprovacoes` deve aparecer apenas para `SUPER_ADMIN` e `ADMIN`.
+- `RAF` deve aparecer apenas para `SUPER_ADMIN` e `ADMIN`.
+- `Configuracoes` deve aparecer apenas para `SUPER_ADMIN`.
+- Mesmo quando a UI exibe um item, a API deve validar perfil, empresa e unidade ativa.
 
 ### Regras Transversais
 - Menus, botoes e acoes devem respeitar perfil do usuario e tambem ser validados nas APIs.
@@ -122,7 +146,7 @@ Notas:
 ### 1. Hub
 - Pagina inicial apos login.
 - Exibe modulos disponiveis por empresa.
-- `CMMS` ativo; `GVP` e `GPA` aparecem como "Em breve" quando desabilitados.
+- `CMMS` ativo; outros modulos externos ao CMMS podem aparecer como "Em breve" quando desabilitados.
 
 ### 2. Login e Autenticacao
 - Login por email e senha.
@@ -133,8 +157,8 @@ Notas:
 - Sessao dura `7 dias`.
 
 ### 3. Dashboard
-- Dashboard operacional para `Super Admin`, `Gestor` e `Planejador`.
-- Dashboard corporativo consolidado apenas para `Super Admin`.
+- Dashboard operacional para `SUPER_ADMIN`, `ADMIN`, `REQUESTER` e `VIEW_ONLY`, respeitando o nivel de leitura de cada perfil.
+- Dashboard corporativo consolidado apenas para `SUPER_ADMIN`.
 - Exibe resumo de OS, ativos e solicitacoes.
 
 ### 4. Ordens de Servico (OS)
@@ -149,7 +173,7 @@ Notas:
 ### 5. Solicitacoes de Servico (SS)
 - Qualquer usuario logado pode abrir solicitacao.
 - Status iniciais: `Pendente`.
-- `Super Admin` e `Gestor` podem aprovar ou rejeitar.
+- `SUPER_ADMIN` e `ADMIN` podem aprovar ou rejeitar.
 - Rejeicao exige motivo.
 - Aprovacao pode gerar OS automaticamente.
 - O menu deve exibir badge de pendencias para perfis autorizados.
@@ -167,7 +191,7 @@ Notas:
 - Dados do sistema devem refletir a unidade ativa.
 
 ### 8. Pessoas e Equipes
-- Gestao de usuarios por `Super Admin` e `Gestor`.
+- Gestao de usuarios por `SUPER_ADMIN` e `ADMIN`.
 - Equipes agrupam tecnicos para atribuicao de OS e ativos.
 - Usuarios podem ter multiplas unidades de acesso.
 
@@ -212,7 +236,7 @@ Operacoes padrao:
 
 ### 13. RAF
 - Modulo de analise de falha com `5 Porques`, testes de hipotese e plano de acao.
-- Acesso apenas para `Super Admin` e `Gestor`.
+- Acesso apenas para `SUPER_ADMIN` e `ADMIN`.
 - Numero do RAF deve ser unico.
 
 ### 14. KPI
@@ -233,61 +257,49 @@ Regras:
 - Filtro por periodo.
 - Valores monetarios formatados em `R$`.
 
-### 15. GEP
-- Monitoramento de variaveis de processo em grafico e tabela.
-- Usuarios: `Gestor`, `Planejador` e `Operador`.
-- Deve permitir selecao de setor, variaveis e data.
-- Deve destacar turnos no grafico.
-
-Turnos:
-- `A`: 01h - 07h
-- `B`: 07h - 13h
-- `C`: 13h - 19h
-- `D`: 19h - 01h
-
-### 16. Painel Administrativo
-- Exclusivo do `Super Admin`.
+### 15. Painel Administrativo
+- Exclusivo do `SUPER_ADMIN`.
 - Gestao global de empresas, modulos, unidades e usuarios.
 - Criacao de empresa ja deve criar o primeiro usuario admin.
 - A acao `Módulos` da Administracao do Portal deve habilitar/desabilitar os modulos por empresa e refletir na navegacao real do sistema.
 - Os icones dos modulos no modal e nas APIs devem seguir o padrao `Material Symbols`, igual ao restante da interface.
 
-### 17. Perfil do Usuario
+### 16. Perfil do Usuario
 - Tela somente leitura.
 - Usuario visualiza seus dados, perfil, empresa e permissoes.
 
-### 17.1 Configuracoes do Usuario
+### 16.1 Configuracoes do Usuario
 - O menu do usuario em `Configurações` deve exibir apenas as abas `Perfil` e `Segurança`.
 - **NAO** manter abas `Preferências` ou `Empresa` nesse fluxo por enquanto.
 
-### 18. Pecas e Estoque
+### 17. Pecas e Estoque
 - Modulo atualmente desativado.
 - A pagina deve redirecionar para OS.
 - Futuro: pecas sobressalentes, estoque e uso em OS.
 
-### 19. Arvore Hierarquica
+### 18. Arvore Hierarquica
 - Navegacao visual da estrutura completa de ativos.
 
-### 20. Relatorios e Analiticos
+### 19. Relatorios e Analiticos
 - Modulo em desenvolvimento.
 - Funcionalidades previstas: OS por status, tempo medio de conclusao, custos e ativos por status.
 
-### 21. Integracao com TOTVS/Protheus
+### 20. Integracao com TOTVS/Protheus
 - Importacao e exportacao de dados.
 - Campos integrados costumam usar prefixo `protheusCode`.
 
-### 22. Exportacao de Dados
+### 21. Exportacao de Dados
 - Exportacao para Excel (`.xlsx`) de OS, ativos, solicitacoes, usuarios e RAFs.
 
-### 23. Upload de Arquivos
+### 22. Upload de Arquivos
 - Upload com arrastar e soltar, validacao, pre-visualizacao e limite de quantidade.
 - Uso em OS, solicitacoes, ativos e fotos de execucao.
 
-### 24. Notificacoes
+### 23. Notificacoes
 - Badge de pendencias.
 - Historico de notificacoes com status de leitura.
 
-### 25. Troca de Unidade
+### 24. Troca de Unidade
 - Seletor no cabecalho.
 - Atualiza os dados da interface conforme a unidade ativa.
 
@@ -297,7 +309,6 @@ Turnos:
 - `Ativo`: equipamento, maquina ou bem manutivel
 - `Unidade`: filial, fabrica ou local fisico
 - `RAF`: Relatorio de Analise de Falha
-- `GEP`: Gestao de Variaveis de Processo
 - `KPI`: Indicador de desempenho
 - `MTBF`: Tempo Medio Entre Falhas
 - `MTTR`: Tempo Medio de Reparo
@@ -318,7 +329,6 @@ Turnos:
 - `Criticidade`: Funcionando
 - `RAF`: Funcionando
 - `KPI`: Funcionando
-- `GEP`: Funcionando
 - `Admin`: Funcionando
 - `Perfil`: Funcionando
 - `Pecas/Estoque`: Desativado
@@ -373,30 +383,105 @@ Padrao visual:
 
 ### Padrao de Tela de Listagem (OBRIGATORIO)
 
-Referencia: telas de `Pessoas` e `Ativos`.
+Referencia canonica: telas de `Pessoas` e `Ativos`.
 
-- Toda listagem principal deve concentrar titulo, descricao e controles no topo da pagina usando `PageHeader`.
-- O topo deve usar `PageContainer variant="full" className="overflow-hidden p-0"` quando a tela tiver comportamento de painel, tabela grande ou alternancia de visualizacao.
-- O wrapper do topo deve ser enxuto, sem card branco destacado, usando `px-4 py-4 md:px-6`.
-- A tabela, grade ou arvore deve subir logo abaixo do topo; evite blocos vazios ou espacamento vertical excessivo entre header e conteudo.
-- **NAO** duplique navegacao com abas ou toggles abaixo do header quando a mesma escolha ja existir nos controles superiores.
+#### Estrutura da pagina
 
-#### Ordem dos controles
+```tsx
+<PageContainer variant="full" className="overflow-hidden p-0">
+  {/* Header */}
+  <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
+    <PageHeader title="..." description="..." className="mb-0" actions={...} />
+  </div>
 
-Quando aplicavel, a ordem visual deve ser:
-1. Busca
-2. Alternancia de visualizacao (`Grade`, `Tabela`, `Arvore`, etc.)
-3. Filtros
-4. Exportacao (`Excel`)
-5. Acao primaria (`Adicionar`, `Novo`, etc.)
+  {/* Content */}
+  <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+      {/* Left: tabela/arvore/grade */}
+      <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
+        ...
+      </div>
+      {/* Right: painel lateral */}
+      {hasSidePanel && <div className="w-1/2 min-w-0">...</div>}
+    </div>
+  </div>
+</PageContainer>
+```
+
+Regras:
+- Header wrapper: `border-b border-border px-4 py-3 md:px-6 flex-shrink-0`
+- PageHeader: sempre com `className="mb-0"` para espaçamento compacto
+- Content wrapper: `border-t border-border bg-card` (borda cinza no topo, fundo branco)
+- Sem padding no content wrapper; conteudo preenche ate as bordas
+- Sem `rounded-[4px]` ou `ambient-shadow` em tabelas dentro do split-panel
+- Sem footer de contagem abaixo das tabelas
+
+#### Ordem dos controles no PageHeader
+
+```
+Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao primaria (Adicionar)
+```
+
+- Busca: `relative w-64` com icone `search` interno
+- Toggle: `bg-muted rounded-[4px] p-1`, botoes com `px-3 py-1.5 rounded-[4px] text-sm font-medium`
+- Toggle ativo: `bg-background text-foreground ambient-shadow`
+- Toggle inativo: `text-muted-foreground hover:text-foreground`
+- Ordem do toggle: **Tabela** primeiro, depois Grade, Arvore (tabela e sempre o default)
+- View mode default: `useState<ViewMode>('table')`
+- Filtros: `h-9 px-3 text-sm border border-input rounded-[4px] bg-background`
+- Botao adicionar: usar `<Button>` component, nunca `<button>` raw
 
 #### Tabelas de listagem
 
-- Cabecalhos que representam campos ordenaveis devem permitir reordenacao por clique.
-- Use indicador visual de ordenacao no proprio cabecalho.
-- O visual de referencia da tabela e a tela de `Pessoas`: `min-w-full divide-y divide-gray-200`, `thead` com `bg-secondary`, `tbody` com `bg-card divide-y divide-gray-200`, `th` com `px-6 py-3 text-xs font-medium uppercase tracking-wider` e linhas com `hover:bg-secondary`.
-- Em tabelas operacionais, todas as colunas de dados visiveis devem aceitar reordenacao por clique quando houver valor comparavel; excecoes devem ficar restritas a checkbox, menus de acao e colunas puramente decorativas.
-- A tabela deve comecar imediatamente abaixo do topo, dentro do fluxo principal da pagina.
+- Container: `h-full flex flex-col bg-card overflow-hidden` (sem rounded, sem shadow)
+- Scroll: `flex-1 overflow-auto min-h-0`
+- Table: `min-w-full divide-y divide-gray-200`
+- Thead: `sticky top-0 bg-secondary z-10`
+- Th: `px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider`
+- Tbody: `bg-card divide-y divide-gray-200`
+- Tr: `hover:bg-secondary cursor-pointer transition-colors`
+- Td: `px-6 py-4 whitespace-nowrap text-sm text-foreground`
+- Sem footer de contagem; a tabela termina limpa
+- Colunas ordenaveis: icone `unfold_more` (inativo) ou `arrow_upward`/`arrow_downward` (ativo)
+
+#### Painel lateral (Detail/Edit)
+
+- Container: `h-full flex flex-col bg-card border-l border-border`
+- Header: `flex items-start justify-between p-4 border-b border-border`
+- Titulo: `text-xl font-bold text-foreground`
+- Close: `p-1 hover:bg-muted rounded transition-colors` com icone `close`
+- Tabs: `TabsList className="w-full justify-start border-b rounded-none px-4"`
+- Secoes: `p-4 border-b border-border`
+- Section title: `text-sm font-semibold text-foreground mb-3`
+- Fields grid: `grid grid-cols-2 gap-x-4 gap-y-2`
+- Labels: `text-xs text-muted-foreground`
+- Values: `text-sm text-foreground`
+- Botoes de acao (Editar/Excluir): `w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
+- **NAO** use `border-on-surface-variant/10`; use sempre `border-border`
+
+#### Painel de edicao (inPage)
+
+- Container: `h-full flex flex-col bg-card border-l border-border`
+- Header: `flex items-center justify-between p-4 border-b border-border`
+- Form: `flex flex-1 min-h-0 flex-col` (NUNCA `h-full`, causa overflow)
+- Content: `flex-1 overflow-y-auto p-4 space-y-3`
+- Footer fixo: `flex gap-3 px-4 py-4 border-t border-border`
+- Botoes: ambos com `flex-1` (mesma largura, 50/50)
+- Cancelar: `<Button variant="outline" className="flex-1">Cancelar</Button>`
+- Salvar: `<Button type="submit" className="flex-1"><Icon name="save" /> Salvar Alterações</Button>`
+
+#### Loading state
+
+```tsx
+<div className="flex-1 flex items-center justify-center">
+  <div className="text-center">
+    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+    <p className="mt-2 text-muted-foreground">Carregando...</p>
+  </div>
+</div>
+```
+
+- **NAO** use `border-blue-600`; use `border-on-surface-variant`
 
 ### Logo da Empresa na Sidebar (OBRIGATORIO)
 
@@ -448,7 +533,7 @@ Secao colapsavel usada dentro de todo modal:
 
 Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
 
-### Estrutura padrao de um modal
+### Estrutura padrao de um modal overlay
 
 ```tsx
 <Modal isOpen={open} onClose={onClose} title="Titulo do Modal">
@@ -462,15 +547,14 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
           </div>
         </div>
       </ModalSection>
-
-      <ModalSection title="Secao 2" defaultOpen={false}>
-        {/* campos */}
-      </ModalSection>
     </div>
 
-    <div className="flex justify-end gap-3 px-4 py-4 border-t border-border">
-      <Button variant="outline" onClick={onClose}>Cancelar</Button>
-      <Button type="submit">Salvar</Button>
+    <div className="flex gap-3 px-4 py-4 border-t border-border">
+      <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+      <Button type="submit" className="flex-1">
+        <Icon name="save" className="text-base mr-2" />
+        Salvar Alterações
+      </Button>
     </div>
   </form>
 </Modal>
@@ -481,22 +565,55 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
 - **NAO** adicione `overflow-y-auto` ou `max-h-[75vh]` nos children; o Modal ja controla o scroll
 - **NAO** duplique o botao de fechar (X); o header do Modal ja inclui
 - **NAO** use `size="full"` com layout A4 customizado; use `size="wide"` com `ModalSection`
-- **NAO** use `border-on-surface-variant/10` nos footers; use `border-border`
+- **NAO** use `border-on-surface-variant/10`; use sempre `border-border`
+- **NAO** use `border-blue-600` em spinners; use `border-on-surface-variant`
 - Agrupe campos em `<ModalSection>` com titulos descritivos
 - Labels: `text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1`
 - Inputs: `w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring`
 - Grid: `grid grid-cols-2 md:grid-cols-3 gap-3`
-- Footer: `flex justify-end gap-3 px-4 py-4 border-t border-border`
-- Botoes: Cancelar (outline) a esquerda, Salvar (primary) a direita
-- O modal `Analisar Solicitação` em Aprovações deve usar `title` no `Modal`, `size="wide"` e `ModalSection`; nao pode ter header manual.
+- Footer: `flex gap-3 px-4 py-4 border-t border-border`
+- Botoes: ambos com `flex-1` (mesma largura), Cancelar (outline) a esquerda, Salvar (primary) a direita
+- Texto do botao salvar: "Salvar Alterações" (edicao) ou "Salvar" (criacao), com icone `save`
+- O modal `Analisar Solicitação` em Aprovações deve usar `title` no `Modal`, `size="wide"` e `ModalSection`
 
 ### Excecoes
-- Ativos (Criar/Editar/Detalhe): usam modo `inPage` como painel lateral na arvore
+- Ativos e Pessoas (Criar/Editar/Detalhe em desktop): usam modo `inPage` como painel lateral
 - Modais de confirmacao (`ConfirmationModal`): usam `size="sm"` sem ModalSection
 
+## Mapa de Telas e Modais
+
+| Rota | Titulo | Tipo | Modais/Paineis |
+|------|--------|------|----------------|
+| `/hub` | Hub | Portal | - |
+| `/login` | Login | Form | - |
+| `/dashboard` | Dashboard | Stats | - |
+| `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal |
+| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal |
+| `/work-orders` | Ordens de Servico | Listagem | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal |
+| `/requests` | Solicitacoes | Listagem | RequestFormModal, RequestDetailModal |
+| `/requests/approvals` | Aprovacoes | Listagem | ApprovalModal |
+| `/rafs` | RAF | Listagem | RAFFormModal, RAFViewModal, RAFEditModal |
+| `/locations` | Localizacoes | Listagem | - |
+| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem | CalendarModal, AssetFamilyModal, ResourceModal, GenericStepModal |
+| `/criticality` | Criticidade | Listagem | - |
+| `/maintenance-plan/standard` | Plano Padrao | Listagem | - |
+| `/maintenance-plan/asset` | Plano por Ativo | Listagem | - |
+| `/planning/plans` | Planejamento | Listagem | - |
+| `/planning/schedules` | Programacao | Listagem | - |
+| `/kpi` | KPI | Dashboard | - |
+| `/gep` | GEP | Dashboard | - |
+| `/tree` | Arvore | Visualizacao | AssetDetailPanel |
+| `/admin/portal` | Configuracoes | Admin | - |
+| `/admin/users` | Usuarios | Admin | Modal (form/delete) |
+| `/admin/units` | Unidades | Admin | Modal (form/delete) |
+| `/profile` | Perfil | Detalhe | - |
+| `/settings` | Configuracoes Usuario | Form | - |
+| `/technician/my-tasks` | Minhas Tarefas | Listagem | - |
+
 ## Diretrizes de Implementacao
-- Sempre alinhar novas features com `docs/spec.md`.
-- Quando houver divergencia entre implementacao e spec funcional, priorizar a spec e registrar o gap.
+- Sempre alinhar novas features com este `CLAUDE.md`.
+- Quando houver divergencia entre implementacao e qualquer outro documento, priorizar este `CLAUDE.md` e registrar o gap.
+- Se algum documento em `docs/` estiver diferente desta spec, ele deve ser tratado como desatualizado ate ser sincronizado.
 - Antes de criar fluxo novo, verificar perfil, escopo por empresa/unidade, status envolvidos e criterio de aceite.
 - Em listas, considerar sempre busca, filtros, estado vazio, loading, responsividade e permissao.
 - Em formularios, garantir validacoes de negocio e status inicial correto.
