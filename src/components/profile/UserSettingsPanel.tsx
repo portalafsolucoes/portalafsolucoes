@@ -8,18 +8,15 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { CompanyLogoCard } from '@/components/profile/CompanyLogoCard'
 import { getRoleDescription, getRoleLabel } from '@/components/profile/profile-helpers'
 import type { AuthUser } from '@/hooks/useAuth'
 
-type SettingsTab = 'perfil' | 'seguranca' | 'preferencias' | 'empresa'
+type SettingsTab = 'perfil' | 'seguranca'
 
 type LocationOption = {
   id: string
   name: string
 }
-
-const SETTINGS_STORAGE_KEY = 'cmm:user-settings'
 
 interface UserSettingsPanelProps {
   user: AuthUser
@@ -35,10 +32,7 @@ export function UserSettingsPanel({
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
   const requestedTab = searchParams.get('tab') as SettingsTab | null
-  const canEditCompany = user.role === 'SUPER_ADMIN' || user.role === 'GESTOR'
-  const [activeTab, setActiveTab] = useState<SettingsTab>(
-    requestedTab === 'empresa' && !canEditCompany ? defaultTab : requestedTab || defaultTab
-  )
+  const [activeTab, setActiveTab] = useState<SettingsTab>(requestedTab || defaultTab)
 
   const [locations, setLocations] = useState<LocationOption[]>([])
   const [loadingLocations, setLoadingLocations] = useState(true)
@@ -59,14 +53,6 @@ export function UserSettingsPanel({
     confirmPassword: '',
   })
   const [securityState, setSecurityState] = useState({ saving: false, error: '', success: '' })
-
-  const [preferences, setPreferences] = useState({
-    emailNotifications: true,
-    pendingApprovalsAlerts: true,
-    compactCards: false,
-    showWelcomePanel: true,
-  })
-  const [preferencesState, setPreferencesState] = useState({ saved: false })
 
   useEffect(() => {
     setProfileForm({
@@ -119,37 +105,9 @@ export function UserSettingsPanel({
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const saved = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
-    if (!saved) return
-
-    try {
-      const parsed = JSON.parse(saved)
-      setPreferences((prev) => ({ ...prev, ...parsed }))
-    } catch {
-      // Ignore invalid local storage state
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(preferences))
-    setPreferencesState({ saved: true })
-
-    const timeout = window.setTimeout(() => {
-      setPreferencesState({ saved: false })
-    }, 1800)
-
-    return () => window.clearTimeout(timeout)
-  }, [preferences])
-
-  useEffect(() => {
     if (!requestedTab) return
-    if (requestedTab === 'empresa' && !canEditCompany) return
     setActiveTab(requestedTab)
-  }, [requestedTab, canEditCompany])
+  }, [requestedTab])
 
   const roleLabel = useMemo(() => getRoleLabel(user.role), [user.role])
   const roleDescription = useMemo(() => getRoleDescription(user.role), [user.role])
@@ -274,14 +232,6 @@ export function UserSettingsPanel({
         <TabsTrigger value="seguranca" className="rounded-[4px] border-b-0 px-4 py-2">
           Segurança
         </TabsTrigger>
-        <TabsTrigger value="preferencias" className="rounded-[4px] border-b-0 px-4 py-2">
-          Preferências
-        </TabsTrigger>
-        {canEditCompany && (
-          <TabsTrigger value="empresa" className="rounded-[4px] border-b-0 px-4 py-2">
-            Empresa
-          </TabsTrigger>
-        )}
       </TabsList>
 
       <TabsContent value="perfil" className="space-y-6">
@@ -484,99 +434,6 @@ export function UserSettingsPanel({
           </Card>
         </div>
       </TabsContent>
-
-      <TabsContent value="preferencias" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Icon name="tune" className="text-xl" />
-              Preferências da experiência
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <PreferenceRow
-              title="Notificações por email"
-              description="Mantém avisos importantes de atividade e alterações da conta."
-              checked={preferences.emailNotifications}
-              onChange={(checked) => setPreferences((prev) => ({ ...prev, emailNotifications: checked }))}
-            />
-            <PreferenceRow
-              title="Alertas de solicitações pendentes"
-              description="Prioriza o acompanhamento de aprovações para perfis de gestão."
-              checked={preferences.pendingApprovalsAlerts}
-              onChange={(checked) => setPreferences((prev) => ({ ...prev, pendingApprovalsAlerts: checked }))}
-            />
-            <PreferenceRow
-              title="Cartões compactos"
-              description="Reduz espaçamento visual em páginas com muita informação."
-              checked={preferences.compactCards}
-              onChange={(checked) => setPreferences((prev) => ({ ...prev, compactCards: checked }))}
-            />
-            <PreferenceRow
-              title="Mostrar painel de boas-vindas"
-              description="Exibe orientações iniciais nas áreas de perfil e configurações."
-              checked={preferences.showWelcomePanel}
-              onChange={(checked) => setPreferences((prev) => ({ ...prev, showWelcomePanel: checked }))}
-            />
-
-            <div className="flex items-center justify-between border-t border-border pt-4">
-              <p className="text-sm text-muted-foreground">
-                Essas preferências ficam salvas neste navegador para sua próxima sessão.
-              </p>
-              {preferencesState.saved && (
-                <span className="text-sm font-medium text-success">Preferências salvas</span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {canEditCompany && (
-        <TabsContent value="empresa" className="space-y-6">
-          <CompanyLogoCard
-            companyId={user.companyId}
-            companyName={companyName}
-            currentLogo={user.company?.logo || null}
-            canEdit={canEditCompany}
-          />
-        </TabsContent>
-      )}
     </Tabs>
-  )
-}
-
-function PreferenceRow({
-  title,
-  description,
-  checked,
-  onChange,
-}: {
-  title: string
-  description: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <div className="flex flex-col gap-4 rounded-[4px] border border-border p-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-          checked ? 'bg-primary' : 'bg-surface-high'
-        }`}
-        aria-pressed={checked}
-      >
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
-      </button>
-    </div>
   )
 }

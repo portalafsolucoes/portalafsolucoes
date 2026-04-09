@@ -256,6 +256,10 @@ Turnos:
 - Tela somente leitura.
 - Usuario visualiza seus dados, perfil, empresa e permissoes.
 
+### 17.1 Configuracoes do Usuario
+- O menu do usuario em `Configurações` deve exibir apenas as abas `Perfil` e `Segurança`.
+- **NAO** manter abas `Preferências` ou `Empresa` nesse fluxo por enquanto.
+
 ### 18. Pecas e Estoque
 - Modulo atualmente desativado.
 - A pagina deve redirecionar para OS.
