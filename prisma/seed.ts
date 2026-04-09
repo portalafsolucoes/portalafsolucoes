@@ -9,22 +9,22 @@ const DEFAULT_PASSWORD = 'Teste@123'
 // MÓDULOS DO PORTAL
 // ============================================
 const PORTAL_MODULES = [
-  { slug: 'dashboard', name: 'Dashboard', icon: 'LayoutDashboard', order: 1 },
-  { slug: 'tree', name: 'Árvore de Ativos', icon: 'Network', order: 2 },
-  { slug: 'people-teams', name: 'Pessoas e Equipes', icon: 'Users', order: 3 },
-  { slug: 'basic-registrations', name: 'Cadastros Básicos', icon: 'Database', order: 4 },
-  { slug: 'assets', name: 'Ativos', icon: 'Package', order: 5 },
-  { slug: 'maintenance-plan', name: 'Plano de Manutenção', icon: 'ClipboardList', order: 6 },
-  { slug: 'planning', name: 'Planejamento e Programação', icon: 'CalendarRange', order: 7 },
-  { slug: 'work-orders', name: 'Ordens de Serviço', icon: 'Wrench', order: 8 },
-  { slug: 'requests', name: 'Solicitações de Serviço', icon: 'FileText', order: 9 },
-  { slug: 'approvals', name: 'Aprovações', icon: 'CheckCircle', order: 10 },
-  { slug: 'rafs', name: 'RAF - Análise de Falhas', icon: 'AlertTriangle', order: 11 },
-  { slug: 'locations', name: 'Localizações', icon: 'MapPin', order: 12 },
-  { slug: 'kpi', name: 'KPI - Indicadores', icon: 'BarChart3', order: 13 },
-  { slug: 'gep', name: 'GEP - Variáveis de Processo', icon: 'Activity', order: 14 },
-  { slug: 'analytics', name: 'Análises', icon: 'TrendingUp', order: 15 },
-  { slug: 'settings', name: 'Configurações', icon: 'Settings', order: 16 },
+  { slug: 'dashboard', name: 'Dashboard', icon: 'dashboard', order: 1 },
+  { slug: 'tree', name: 'Árvore de Ativos', icon: 'account_tree', order: 2 },
+  { slug: 'people-teams', name: 'Pessoas e Equipes', icon: 'group', order: 3 },
+  { slug: 'basic-registrations', name: 'Cadastros Básicos', icon: 'tune', order: 4 },
+  { slug: 'assets', name: 'Ativos', icon: 'inventory_2', order: 5 },
+  { slug: 'maintenance-plan', name: 'Plano de Manutenção', icon: 'event_upcoming', order: 6 },
+  { slug: 'planning', name: 'Planejamento e Programação', icon: 'date_range', order: 7 },
+  { slug: 'work-orders', name: 'Ordens de Serviço', icon: 'construction', order: 8 },
+  { slug: 'requests', name: 'Solicitações de Serviço', icon: 'assignment', order: 9 },
+  { slug: 'approvals', name: 'Aprovações', icon: 'check_circle', order: 10 },
+  { slug: 'rafs', name: 'RAF - Análise de Falhas', icon: 'description', order: 11 },
+  { slug: 'locations', name: 'Localizações', icon: 'location_on', order: 12 },
+  { slug: 'kpi', name: 'KPI - Indicadores', icon: 'trending_up', order: 13 },
+  { slug: 'gep', name: 'GEP - Variáveis de Processo', icon: 'monitoring', order: 14 },
+  { slug: 'analytics', name: 'Análises', icon: 'bar_chart', order: 15 },
+  { slug: 'settings', name: 'Configurações', icon: 'settings', order: 16 },
 ]
 
 type SeedUser = {

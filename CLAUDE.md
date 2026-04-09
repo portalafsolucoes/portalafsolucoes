@@ -249,6 +249,8 @@ Turnos:
 - Exclusivo do `Super Admin`.
 - Gestao global de empresas, modulos, unidades e usuarios.
 - Criacao de empresa ja deve criar o primeiro usuario admin.
+- A acao `Módulos` da Administracao do Portal deve habilitar/desabilitar os modulos por empresa e refletir na navegacao real do sistema.
+- Os icones dos modulos no modal e nas APIs devem seguir o padrao `Material Symbols`, igual ao restante da interface.
 
 ### 17. Perfil do Usuario
 - Tela somente leitura.

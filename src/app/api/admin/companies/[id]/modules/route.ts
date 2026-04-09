@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
+import { normalizeModuleForUi, type ModuleRecord } from '@/lib/modules'
+
+type CompanyModuleStateRow = {
+  moduleId: string
+  enabled: boolean
+}
+
+type ModuleSlugRow = {
+  id: string
+  slug: string
+}
 
 /**
  * GET /api/admin/companies/[id]/modules
@@ -34,14 +45,16 @@ export async function GET(
     .eq('companyId', companyId)
 
   const enabledMap = new Map(
-    (companyModules || []).map((cm: any) => [cm.moduleId, cm.enabled])
+    ((companyModules || []) as CompanyModuleStateRow[]).map((cm) => [cm.moduleId, cm.enabled])
   )
 
   // Combinar: todos os módulos com o estado de cada empresa
-  const result = (allModules || []).map((mod: any) => ({
-    ...mod,
-    enabled: enabledMap.get(mod.id) ?? false,
-  }))
+  const result = ((allModules || []) as ModuleRecord[]).map((mod) =>
+    normalizeModuleForUi({
+      ...mod,
+      enabled: enabledMap.get(mod.id) ?? false,
+    })
+  )
 
   return NextResponse.json(result)
 }
@@ -85,7 +98,9 @@ export async function PUT(
 
   // Buscar todos os módulos por slug
   const { data: allModules } = await supabase.from('Module').select('id, slug')
-  const slugToId = new Map((allModules || []).map((m: any) => [m.slug, m.id]))
+  const slugToId = new Map(
+    ((allModules || []) as ModuleSlugRow[]).map((module) => [module.slug, module.id])
+  )
 
   let updated = 0
   for (const mod of modules) {

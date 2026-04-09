@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
+import { useQueryClient } from '@tanstack/react-query'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
@@ -43,8 +44,9 @@ interface ModuleConfig {
 }
 
 export default function AdminPortalPage() {
-  const { role, isLoading: authLoading } = useAuth()
+  const { role, user, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const [companies, setCompanies] = useState<Company[]>([])
   const [stats, setStats] = useState<PortalStats | null>(null)
@@ -199,13 +201,22 @@ export default function AdminPortalPage() {
     if (!modulesCompany) return
     try {
       setSavingModules(true)
-      await fetch(`/api/admin/companies/${modulesCompany.id}/modules`, {
+      const res = await fetch(`/api/admin/companies/${modulesCompany.id}/modules`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           modules: modules.map(m => ({ slug: m.slug, enabled: m.enabled })),
         }),
       })
+
+      if (!res.ok) {
+        throw new Error('Falha ao salvar módulos')
+      }
+
+      if (modulesCompany.id === user?.companyId) {
+        await queryClient.invalidateQueries({ queryKey: ['company-modules'] })
+      }
+
       setModulesCompany(null)
       fetchCompanies()
     } catch {

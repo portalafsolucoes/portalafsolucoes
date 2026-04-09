@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
+import { normalizeModuleForUi, type ModuleRecord } from '@/lib/modules'
+
+type CompanyModuleRow = {
+  module: ModuleRecord | ModuleRecord[] | null
+}
 
 /**
  * GET /api/modules
@@ -28,7 +33,6 @@ export async function GET() {
     `)
     .eq('companyId', session.companyId)
     .eq('enabled', true)
-    .order('module(order)', { ascending: true } as any)
 
   if (error) {
     console.error('Error fetching company modules:', error)
@@ -36,10 +40,11 @@ export async function GET() {
   }
 
   // Flatten: retorna apenas os módulos habilitados
-  const modules = (data || [])
-    .map((cm: any) => cm.module)
-    .filter(Boolean)
-    .sort((a: any, b: any) => a.order - b.order)
+  const modules = ((data || []) as CompanyModuleRow[])
+    .map((cm) => Array.isArray(cm.module) ? cm.module[0] : cm.module)
+    .filter((module): module is ModuleRecord => Boolean(module))
+    .map((module) => normalizeModuleForUi(module))
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
 
   return NextResponse.json(modules)
 }
