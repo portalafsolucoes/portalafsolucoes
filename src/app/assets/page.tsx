@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
@@ -10,6 +11,10 @@ import { AssetTree } from '@/components/assets/AssetTree'
 import { AssetTable } from '@/components/assets/AssetTable'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { useAuth } from '@/hooks/useAuth'
+import { usePermissions } from '@/hooks/usePermissions'
+import { hasPermission } from '@/lib/permissions'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
 // Lazy load: modais e painéis só carregam quando necessário
 const AssetDetailPanel = dynamic(() => import('@/components/assets/AssetDetailPanel').then(m => ({ default: m.AssetDetailPanel })), { ssr: false })
@@ -39,7 +44,10 @@ interface Asset {
 }
 
 export default function AssetsPage() {
+  const router = useRouter()
   const isMobile = useIsMobile()
+  const { user } = useAuth()
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -51,8 +59,16 @@ export default function AssetsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
+    if (!user || !hasPermission(user, 'assets', 'view')) return
     loadAssets()
-  }, [])
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    if (!hasPermission(user, 'assets', 'view')) {
+      router.replace(getDefaultCmmsPath(user))
+    }
+  }, [router, user])
 
   const loadAssets = async () => {
     try {
@@ -151,6 +167,10 @@ export default function AssetsPage() {
     return matchesSearch && matchesStatus
   })
 
+  if (!user || !hasPermission(user, 'assets', 'view')) {
+    return null
+  }
+
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
       {/* Header */}
@@ -215,10 +235,12 @@ export default function AssetsPage() {
               </select>
 
               <ExportButton data={filteredAssets} entity="assets" />
-              <Button onClick={handleAddNewAsset} className="whitespace-nowrap">
-                <Icon name="add" className="mr-2 text-base" />
-                Adicionar
-              </Button>
+              {canCreate('assets') && (
+                <Button onClick={handleAddNewAsset} className="whitespace-nowrap">
+                  <Icon name="add" className="mr-2 text-base" />
+                  Adicionar
+                </Button>
+              )}
             </div>
           }
         />
@@ -261,15 +283,15 @@ export default function AssetsPage() {
                           assets={filteredAssets}
                           onSelectAsset={handleAssetSelect}
                           selectedAssetId={selectedAsset?.id}
-                          onAddSubAsset={handleAddSubAsset}
+                          onAddSubAsset={canCreate('assets') ? handleAddSubAsset : undefined}
                         />
                       ) : (
                         <AssetTable
                           assets={filteredAssets}
                           onSelectAsset={handleAssetSelect}
                           selectedAssetId={selectedAsset?.id}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
+                          onEdit={canEdit('assets') ? handleEdit : undefined}
+                          onDelete={canDelete('assets') ? handleDelete : undefined}
                         />
                       )}
                     </div>
@@ -318,15 +340,15 @@ export default function AssetsPage() {
                         assets={filteredAssets}
                         onSelectAsset={handleAssetSelect}
                         selectedAssetId={selectedAsset?.id}
-                        onAddSubAsset={handleAddSubAsset}
+                        onAddSubAsset={canCreate('assets') ? handleAddSubAsset : undefined}
                       />
                     ) : (
                       <AssetTable
                         assets={filteredAssets}
                         onSelectAsset={handleAssetSelect}
                         selectedAssetId={selectedAsset?.id}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
+                        onEdit={canEdit('assets') ? handleEdit : undefined}
+                        onDelete={canDelete('assets') ? handleDelete : undefined}
                       />
                     )}
                   </div>

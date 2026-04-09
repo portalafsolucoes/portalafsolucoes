@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -15,6 +16,10 @@ import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useAuth } from '@/hooks/useAuth'
+import { usePermissions } from '@/hooks/usePermissions'
+import { hasPermission } from '@/lib/permissions'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
 type ViewMode = 'grid' | 'table' | 'hierarchy'
 
@@ -50,8 +55,11 @@ type SortField = 'name' | 'email' | 'jobTitle' | 'role' | 'enabled'
 type SortDirection = 'asc' | 'desc'
 
 export default function PeopleTeamsPage() {
-  const activeTab: 'people' | 'teams' = 'people'
+  const router = useRouter()
+  const activeTab = 'people' as 'people' | 'teams'
   const isMobile = useIsMobile()
+  const { user } = useAuth()
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [viewMode, setViewMode] = useState<ViewMode>('table')
   
   // People states
@@ -105,12 +113,20 @@ export default function PeopleTeamsPage() {
   }, [])
 
   useEffect(() => {
+    if (!user || !hasPermission(user, 'people-teams', 'view')) return
     if (activeTab === 'people') {
       void fetchUsers()
     } else {
       void fetchTeams()
     }
-  }, [activeTab, fetchTeams, fetchUsers])
+  }, [activeTab, fetchTeams, fetchUsers, user])
+
+  useEffect(() => {
+    if (!user) return
+    if (!hasPermission(user, 'people-teams', 'view')) {
+      router.replace(getDefaultCmmsPath(user))
+    }
+  }, [router, user])
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase()
@@ -263,6 +279,10 @@ export default function PeopleTeamsPage() {
   const showPeopleSidePanel = !isMobile && !!selectedUserId
   const isTableSplitView = showPeopleSidePanel && viewMode === 'table'
 
+  if (!user || !hasPermission(user, 'people-teams', 'view')) {
+    return null
+  }
+
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
         <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
@@ -340,20 +360,24 @@ export default function PeopleTeamsPage() {
 
                   <ExportButton data={filteredUsers} entity="users" />
 
-                  <Button onClick={() => setShowNewUserModal(true)} className="whitespace-nowrap">
-                    <Icon name="add" className="mr-2 text-base" />
-                    Adicionar
-                  </Button>
+                  {canCreate('people-teams') && (
+                    <Button onClick={() => setShowNewUserModal(true)} className="whitespace-nowrap">
+                      <Icon name="add" className="mr-2 text-base" />
+                      Adicionar
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => setShowNewTeamModal(true)}
-                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors whitespace-nowrap"
-                  >
-                    <Icon name="add" className="text-xl" />
-                    Nova Equipe
-                  </button>
+                  {canCreate('people-teams') && (
+                    <button
+                      onClick={() => setShowNewTeamModal(true)}
+                      className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-[4px] hover:bg-primary-graphite transition-colors whitespace-nowrap"
+                    >
+                      <Icon name="add" className="text-xl" />
+                      Nova Equipe
+                    </button>
+                  )}
                 </div>
               )
             }
@@ -629,8 +653,8 @@ export default function PeopleTeamsPage() {
                       isOpen={!!selectedUserId}
                       onClose={handleCloseModals}
                       userId={selectedUserId}
-                      onEdit={handleEditUser}
-                      onDelete={handleDelete}
+                      onEdit={canEdit('people-teams') ? handleEditUser : () => {}}
+                      onDelete={canDelete('people-teams') ? handleDelete : () => {}}
                       inPage
                     />
                   )}
@@ -712,12 +736,12 @@ export default function PeopleTeamsPage() {
           isOpen={!!selectedUserId}
           onClose={handleCloseModals}
           userId={selectedUserId}
-          onEdit={handleEditUser}
-          onDelete={handleDelete}
+          onEdit={canEdit('people-teams') ? handleEditUser : () => {}}
+          onDelete={canDelete('people-teams') ? handleDelete : () => {}}
         />
       )}
 
-      {showNewUserModal && (
+      {showNewUserModal && canCreate('people-teams') && (
         <PersonFormModal
           isOpen={showNewUserModal}
           onClose={handleCloseModals}
@@ -739,12 +763,12 @@ export default function PeopleTeamsPage() {
           isOpen={!!selectedTeamId}
           onClose={handleCloseModals}
           teamId={selectedTeamId}
-          onEdit={handleEditTeam}
-          onDelete={handleDelete}
+          onEdit={canEdit('people-teams') ? handleEditTeam : () => {}}
+          onDelete={canDelete('people-teams') ? handleDelete : () => {}}
         />
       )}
 
-      {showNewTeamModal && (
+      {showNewTeamModal && canCreate('people-teams') && (
         <TeamFormModal
           isOpen={showNewTeamModal}
           onClose={handleCloseModals}
