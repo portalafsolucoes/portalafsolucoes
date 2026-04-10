@@ -10,6 +10,7 @@ import { ModalSection } from '@/components/ui/ModalSection'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import AssetPlanDetailPanel from '@/components/asset-plans/AssetPlanDetailPanel'
 
 /* ------------------------------------------------------------------ */
 /*  Tipos locais                                                       */
@@ -54,18 +55,22 @@ export default function AssetMaintenancePlanPage() {
   const [assetPlans, setAssetPlans] = useState<any[]>([])
   const [search, setSearch] = useState('')
 
-  // --- modal de criação ---
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  // --- painel de detalhe ---
+  const [selectedPlan, setSelectedPlan] = useState<any | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
+  // --- modal de criação/edição ---
+  const [showFormModal, setShowFormModal] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [tasks, setTasks] = useState<TaskRow[]>([emptyTask()])
   const [saving, setSaving] = useState(false)
+  const [loadingPlan, setLoadingPlan] = useState(false)
   const [error, setError] = useState('')
 
   // --- dependências de select ---
   const [serviceTypes, setServiceTypes] = useState<any[]>([])
   const [assets, setAssets] = useState<any[]>([])
-  const [maintenanceAreas, setMaintenanceAreas] = useState<any[]>([])
-  const [maintenanceTypes, setMaintenanceTypes] = useState<any[]>([])
   const [calendars, setCalendars] = useState<any[]>([])
   const [genericSteps, setGenericSteps] = useState<any[]>([])
   const [resources, setResources] = useState<any[]>([])
@@ -85,6 +90,10 @@ export default function AssetMaintenancePlanPage() {
   // --- campos auto derivados do ativo ---
   const [assetFamily, setAssetFamily] = useState<any>(null)
   const [assetFamilyModel, setAssetFamilyModel] = useState<any>(null)
+
+  // --- campos auto derivados do tipo de serviço ---
+  const [derivedArea, setDerivedArea] = useState<any>(null)
+  const [derivedMaintType, setDerivedMaintType] = useState<any>(null)
 
   // --- manutenção padrão ---
   const [isStandard, setIsStandard] = useState<'sim' | 'nao' | ''>('')
@@ -142,25 +151,35 @@ export default function AssetMaintenancePlanPage() {
     setAssetPlans(data.data || [])
   }
 
+  /* ---------------------------------------------------------------- */
+  /*  Selecionar plano para detalhe                                    */
+  /* ---------------------------------------------------------------- */
+
+  const handleSelectPlan = async (planId: string) => {
+    setLoadingDetail(true)
+    try {
+      const res = await fetch(`/api/maintenance-plans/asset/${planId}`)
+      const json = await res.json()
+      if (res.ok) setSelectedPlan(json.data)
+    } catch { /* silent */ }
+    setLoadingDetail(false)
+  }
+
   const loadDependencies = async () => {
-    const [stRes, assRes, maRes, mtRes, calRes, stepsRes, resRes, famRes, modelsRes] = await Promise.all([
+    const [stRes, assRes, calRes, stepsRes, resRes, famRes, modelsRes] = await Promise.all([
       fetch('/api/basic-registrations/service-types'),
       fetch('/api/assets?limit=1000'),
-      fetch('/api/basic-registrations/maintenance-areas'),
-      fetch('/api/basic-registrations/maintenance-types'),
       fetch('/api/basic-registrations/calendars'),
       fetch('/api/basic-registrations/generic-steps'),
       fetch('/api/basic-registrations/resources'),
       fetch('/api/basic-registrations/asset-families'),
       fetch('/api/basic-registrations/asset-family-models'),
     ])
-    const [stData, assData, maData, mtData, calData, stepsData, resData, famData, modelsData] = await Promise.all([
-      stRes.json(), assRes.json(), maRes.json(), mtRes.json(), calRes.json(), stepsRes.json(), resRes.json(), famRes.json(), modelsRes.json()
+    const [stData, assData, calData, stepsData, resData, famData, modelsData] = await Promise.all([
+      stRes.json(), assRes.json(), calRes.json(), stepsRes.json(), resRes.json(), famRes.json(), modelsRes.json()
     ])
     setServiceTypes(stData.data || [])
     setAssets(assData.data || [])
-    setMaintenanceAreas(maData.data || [])
-    setMaintenanceTypes(mtData.data || [])
     setCalendars(calData.data || [])
     setGenericSteps(stepsData.data || [])
     setResources(resData.data || [])
@@ -185,10 +204,10 @@ export default function AssetMaintenancePlanPage() {
   }, [])
 
   useEffect(() => {
-    if (showCreateModal) {
+    if (showFormModal && !editingId) {
       fetchNextSequence(formData.assetId || '', formData.serviceTypeId || '')
     }
-  }, [showCreateModal, formData.assetId, formData.serviceTypeId, fetchNextSequence])
+  }, [showFormModal, editingId, formData.assetId, formData.serviceTypeId, fetchNextSequence])
 
   /* ---------------------------------------------------------------- */
   /*  Derivar família e tipo modelo do ativo selecionado               */
@@ -213,22 +232,106 @@ export default function AssetMaintenancePlanPage() {
   }, [formData.assetId, assets, families, familyModels])
 
   /* ---------------------------------------------------------------- */
+  /*  Derivar área e tipo de manutenção do tipo de serviço             */
+  /* ---------------------------------------------------------------- */
+
+  useEffect(() => {
+    if (!formData.serviceTypeId) {
+      setDerivedArea(null)
+      setDerivedMaintType(null)
+      return
+    }
+    const st = serviceTypes.find((s: any) => s.id === formData.serviceTypeId)
+    if (st) {
+      setDerivedArea(st.maintenanceArea || null)
+      setDerivedMaintType(st.maintenanceType || null)
+      // Auto-preencher os IDs no formData
+      setFormData(prev => ({
+        ...prev,
+        maintenanceAreaId: st.maintenanceAreaId || st.maintenanceArea?.id || '',
+        maintenanceTypeId: st.maintenanceTypeId || st.maintenanceType?.id || '',
+      }))
+    } else {
+      setDerivedArea(null)
+      setDerivedMaintType(null)
+    }
+  }, [formData.serviceTypeId, serviceTypes])
+
+  /* ---------------------------------------------------------------- */
   /*  Abrir / fechar modal                                             */
   /* ---------------------------------------------------------------- */
 
   const openCreate = () => {
+    setEditingId(null)
     setFormData({})
     setTasks([emptyTask()])
     setError('')
     setNextSequence(null)
     setAssetFamily(null)
     setAssetFamilyModel(null)
+    setDerivedArea(null)
+    setDerivedMaintType(null)
     setIsStandard('')
     if (!depsLoaded) {
       loadDependencies()
       setDepsLoaded(true)
     }
-    setShowCreateModal(true)
+    setShowFormModal(true)
+  }
+
+  const openEdit = async (planId: string) => {
+    setEditingId(planId)
+    setFormData({})
+    setTasks([emptyTask()])
+    setError('')
+    setNextSequence(null)
+    setAssetFamily(null)
+    setAssetFamilyModel(null)
+    setDerivedArea(null)
+    setDerivedMaintType(null)
+    setIsStandard('')
+    if (!depsLoaded) {
+      loadDependencies()
+      setDepsLoaded(true)
+    }
+    setShowFormModal(true)
+    setLoadingPlan(true)
+    try {
+      const res = await fetch(`/api/maintenance-plans/asset/${planId}`)
+      const json = await res.json()
+      if (!res.ok) { setError(json.error || 'Erro ao carregar plano'); setLoadingPlan(false); return }
+      const plan = json.data
+      setFormData({
+        assetId: plan.assetId || '',
+        serviceTypeId: plan.serviceTypeId || '',
+        maintenanceAreaId: plan.maintenanceAreaId || '',
+        maintenanceTypeId: plan.maintenanceTypeId || '',
+        name: plan.name || '',
+        calendarId: plan.calendarId || '',
+        maintenanceTime: plan.maintenanceTime ?? '',
+        timeUnit: plan.timeUnit || '',
+        period: plan.period || '',
+        trackingType: plan.trackingType || 'TIME',
+        lastMaintenanceDate: plan.lastMaintenanceDate ? plan.lastMaintenanceDate.split('T')[0] : '',
+      })
+      setNextSequence(plan.sequence ?? null)
+      setIsStandard(plan.isStandard ? 'sim' : 'nao')
+      if (plan.tasks && plan.tasks.length > 0) {
+        setTasks(plan.tasks.map((t: any) => ({
+          key: t.id || crypto.randomUUID(),
+          description: t.description || '',
+          executionTime: t.executionTime ?? '',
+          steps: (t.steps || []).map((s: any) => ({ stepId: s.stepId, order: s.order })),
+          resources: (t.resources || []).map((r: any) => ({
+            resourceId: r.resourceId,
+            resourceCount: r.resourceCount ?? 1,
+            quantity: r.quantity ?? 0,
+            unit: r.unit || 'UN',
+          })),
+        })))
+      }
+    } catch { setError('Erro ao carregar plano') }
+    setLoadingPlan(false)
   }
 
   /* ---------------------------------------------------------------- */
@@ -368,17 +471,30 @@ export default function AssetMaintenancePlanPage() {
         isStandard: isStandard === 'sim',
       }
 
-      // Criar plano
-      const planRes = await fetch('/api/maintenance-plans/asset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const planResult = await planRes.json()
-      if (!planRes.ok) { setError(planResult.error || 'Erro ao salvar plano'); setSaving(false); return }
+      let planId: string
 
-      const planId = planResult.data?.id
-      if (!planId) { setError('Erro: plano criado sem ID'); setSaving(false); return }
+      if (editingId) {
+        // Atualizar plano existente
+        const planRes = await fetch(`/api/maintenance-plans/asset/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const planResult = await planRes.json()
+        if (!planRes.ok) { setError(planResult.error || 'Erro ao atualizar plano'); setSaving(false); return }
+        planId = editingId
+      } else {
+        // Criar plano
+        const planRes = await fetch('/api/maintenance-plans/asset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const planResult = await planRes.json()
+        if (!planRes.ok) { setError(planResult.error || 'Erro ao salvar plano'); setSaving(false); return }
+        planId = planResult.data?.id
+        if (!planId) { setError('Erro: plano criado sem ID'); setSaving(false); return }
+      }
 
       // Salvar tarefas (se houver tarefas preenchidas)
       const validTasks = tasks.filter(t => t.description.trim())
@@ -403,14 +519,14 @@ export default function AssetMaintenancePlanPage() {
         })
         if (!tasksRes.ok) {
           const tasksErr = await tasksRes.json()
-          setError(tasksErr.error || 'Plano criado, mas erro ao salvar tarefas')
+          setError(tasksErr.error || `Plano ${editingId ? 'atualizado' : 'criado'}, mas erro ao salvar tarefas`)
           setSaving(false)
           loadData()
           return
         }
       }
 
-      setShowCreateModal(false)
+      setShowFormModal(false)
       loadData()
     } catch { setError('Erro de conexão') }
     setSaving(false)
@@ -422,8 +538,18 @@ export default function AssetMaintenancePlanPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir este plano?')) return
-    await fetch(`/api/maintenance-plans/asset/${id}`, { method: 'DELETE' })
-    loadData()
+    try {
+      const res = await fetch(`/api/maintenance-plans/asset/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json()
+        alert(json.error || 'Erro ao excluir plano')
+        return
+      }
+      if (selectedPlan?.id === id) setSelectedPlan(null)
+      loadData()
+    } catch {
+      alert('Erro de conexão ao excluir plano')
+    }
   }
 
   /* ---------------------------------------------------------------- */
@@ -435,6 +561,7 @@ export default function AssetMaintenancePlanPage() {
   const filteredAsset = assetPlans.filter(p =>
     !search || p.name?.toLowerCase().includes(search.toLowerCase()) ||
     p.asset?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    p.asset?.protheusCode?.toLowerCase().includes(search.toLowerCase()) ||
     p.asset?.tag?.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -480,37 +607,46 @@ export default function AssetMaintenancePlanPage() {
         />
       </div>
 
+      {/* Tabela + Painel */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          <div className="w-full transition-all overflow-hidden flex flex-col">
+          <div className={`${selectedPlan ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
             <div className="flex-1 overflow-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="sticky top-0 bg-secondary z-10">
                   <tr>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Bem (TAG)</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Código</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do Bem</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo Serviço</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Seq.</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome Manutenção</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Frequência</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo de Controle</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativa?</th>
                     <th className="text-right px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider w-24">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="bg-card divide-y divide-gray-200">
                   {filteredAsset.length === 0 ? (
-                    <tr><td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">Nenhum plano de manutenção do bem cadastrado.</td></tr>
+                    <tr><td colSpan={9} className="px-6 py-8 text-center text-muted-foreground">Nenhum plano de manutenção do bem cadastrado.</td></tr>
                   ) : filteredAsset.map(p => (
-                    <tr key={p.id} className="hover:bg-secondary cursor-pointer">
-                      <td className="px-6 py-3 text-sm font-mono">{p.asset?.tag || '-'}</td>
+                    <tr key={p.id} className={`hover:bg-secondary cursor-pointer transition-colors ${selectedPlan?.id === p.id ? 'bg-secondary' : ''}`} onClick={() => handleSelectPlan(p.id)}>
+                      <td className="px-6 py-3 text-sm font-mono">
+                        {p.asset?.protheusCode || '-'}
+                        {p.asset?.tag && <span className="ml-1 text-xs text-muted-foreground">({p.asset.tag})</span>}
+                      </td>
                       <td className="px-6 py-3 text-sm">{p.asset?.name}</td>
                       <td className="px-6 py-3 text-sm">{p.serviceType?.name}</td>
                       <td className="px-6 py-3 text-sm">{p.sequence}</td>
                       <td className="px-6 py-3 text-sm font-medium">{p.name || '-'}</td>
                       <td className="px-6 py-3 text-sm">{p.maintenanceTime ? `${p.maintenanceTime} ${p.timeUnit}` : '-'}</td>
+                      <td className="px-6 py-3 text-sm">{p.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo'}</td>
                       <td className="px-6 py-3 text-sm">{p.isActive ? 'Sim' : 'Não'}</td>
-                      <td className="px-6 py-3 text-sm text-right">
+                      <td className="px-6 py-3 text-sm text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
+                          {canEdit && (
+                            <button onClick={() => openEdit(p.id)} className="p-1.5 hover:bg-muted rounded transition-colors"><Icon name="edit" className="text-base text-muted-foreground" /></button>
+                          )}
                           <button onClick={() => handleDelete(p.id)} className="p-1.5 hover:bg-danger-light rounded"><Icon name="delete" className="text-base text-danger" /></button>
                         </div>
                       </td>
@@ -520,11 +656,33 @@ export default function AssetMaintenancePlanPage() {
               </table>
             </div>
           </div>
+
+          {/* Painel de detalhe */}
+          {selectedPlan && (
+            <div className="w-1/2 min-w-0">
+              {loadingDetail ? (
+                <div className="h-full flex items-center justify-center bg-card border-l border-border">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
+                    <p className="mt-2 text-muted-foreground">Carregando...</p>
+                  </div>
+                </div>
+              ) : (
+                <AssetPlanDetailPanel
+                  plan={selectedPlan}
+                  onClose={() => setSelectedPlan(null)}
+                  onEdit={(planId) => { setSelectedPlan(null); openEdit(planId) }}
+                  onDelete={(planId) => { setSelectedPlan(null); handleDelete(planId) }}
+                  canEdit={!!canEdit}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Modal de criação */}
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Novo Plano do Bem" size="wide">
+      {/* Modal de criação/edição */}
+      <Modal isOpen={showFormModal} onClose={() => setShowFormModal(false)} title={editingId ? 'Editar Plano do Bem' : 'Novo Plano do Bem'} size="wide">
         <form onSubmit={e => { e.preventDefault(); handleSave() }}>
           <div className="p-4 space-y-3">
             {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
@@ -572,22 +730,26 @@ export default function AssetMaintenancePlanPage() {
                   </select>
                 </div>
 
-                {/* Área de Manutenção */}
+                {/* Área de Manutenção (auto) */}
                 <div>
                   <label className={labelCls}>Área de Manutenção</label>
-                  <select value={formData.maintenanceAreaId || ''} onChange={e => setFormData({ ...formData, maintenanceAreaId: e.target.value })} className={selectCls}>
-                    <option value="">Selecione...</option>
-                    {maintenanceAreas.map((ma: any) => <option key={ma.id} value={ma.id}>{ma.name}</option>)}
-                  </select>
+                  <input
+                    type="text"
+                    readOnly
+                    value={derivedArea?.name || '-'}
+                    className={`${inputCls} bg-muted cursor-not-allowed`}
+                  />
                 </div>
 
-                {/* Tipo de Manutenção */}
+                {/* Tipo de Manutenção (auto) */}
                 <div>
                   <label className={labelCls}>Tipo de Manutenção</label>
-                  <select value={formData.maintenanceTypeId || ''} onChange={e => setFormData({ ...formData, maintenanceTypeId: e.target.value })} className={selectCls}>
-                    <option value="">Selecione...</option>
-                    {maintenanceTypes.map((mt: any) => <option key={mt.id} value={mt.id}>{mt.name}</option>)}
-                  </select>
+                  <input
+                    type="text"
+                    readOnly
+                    value={derivedMaintType?.name || '-'}
+                    className={`${inputCls} bg-muted cursor-not-allowed`}
+                  />
                 </div>
 
                 {/* Sequência (auto) */}
@@ -841,10 +1003,10 @@ export default function AssetMaintenancePlanPage() {
 
           {/* Footer */}
           <div className="flex gap-3 px-4 py-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowCreateModal(false)} className="flex-1">Cancelar</Button>
+            <Button variant="outline" type="button" onClick={() => setShowFormModal(false)} className="flex-1">Cancelar</Button>
             <Button type="submit" disabled={saving} className="flex-1">
               <Icon name="save" className="text-base mr-2" />
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Salvar'}
             </Button>
           </div>
         </form>

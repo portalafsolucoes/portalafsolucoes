@@ -86,6 +86,7 @@ const ENTITY_CONFIG: Record<string, {
     scope: 'company',
     requiredFields: ['code', 'name', 'maintenanceTypeId', 'maintenanceAreaId'],
     orderBy: 'code',
+    selectQuery: '*, maintenanceType:MaintenanceType!maintenanceTypeId(id, name), maintenanceArea:MaintenanceArea!maintenanceAreaId(id, name)',
   },
   'generic-tasks': {
     table: 'GenericTask',

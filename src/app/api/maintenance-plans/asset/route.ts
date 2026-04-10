@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       .from('AssetMaintenancePlan')
       .select(`
         *,
-        asset:Asset!assetId(id, name, tag, familyId, familyModelId,
+        asset:Asset!assetId(id, name, tag, protheusCode, familyId, familyModelId,
           family:AssetFamily!familyId(id, code, name),
           familyModel:AssetFamilyModel!familyModelId(id, name)
         ),
