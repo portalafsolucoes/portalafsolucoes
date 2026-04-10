@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
@@ -26,6 +27,8 @@ export default function PlansPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState('')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -66,6 +69,19 @@ export default function PlansPage() {
       loadData()
     } catch { setError('Erro de conexão') }
     setSaving(false)
+  }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/planning/plans/${deleteId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error || 'Erro ao excluir plano'); setDeleting(false); setDeleteId(null); return }
+      setDeleteId(null)
+      loadData()
+    } catch { alert('Erro de conexão ao excluir plano') }
+    setDeleting(false)
   }
 
   const canEdit = role && hasPermission(role as UserRole, 'planning', 'create')
@@ -137,12 +153,13 @@ export default function PlansPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Fim</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Terminado?</th>
+                      {canEdit && <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>}
                     </tr>
                   </thead>
                   <tbody className="bg-card divide-y divide-gray-200">
                     {filteredPlans.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-16 text-center">
+                        <td colSpan={canEdit ? 8 : 7} className="px-6 py-16 text-center">
                           <div className="flex flex-col items-center gap-3">
                             <Icon name="assignment" className="text-4xl text-muted-foreground" />
                             <h3 className="text-sm font-medium text-foreground">Nenhum plano encontrado</h3>
@@ -159,6 +176,17 @@ export default function PlansPage() {
                         <td className="px-6 py-3 text-sm">{formatDate(p.endDate)}</td>
                         <td className="px-6 py-3 text-sm">{p.status}</td>
                         <td className="px-6 py-3 text-sm">{p.isFinished ? 'Sim' : 'Não'}</td>
+                        {canEdit && (
+                          <td className="px-6 py-3 text-sm text-right">
+                            <button
+                              onClick={e => { e.stopPropagation(); setDeleteId(p.id) }}
+                              className="p-1 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-danger"
+                              title="Excluir plano"
+                            >
+                              <Icon name="delete" className="text-lg" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -208,6 +236,16 @@ export default function PlansPage() {
           </Button>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Excluir Plano"
+        message="Tem certeza que deseja excluir este plano? As OSs pendentes vinculadas também serão excluídas. Planos com OSs já liberadas para execução não podem ser excluídos."
+        confirmText="Excluir"
+        loading={deleting}
+      />
     </PageContainer>
   )
 }

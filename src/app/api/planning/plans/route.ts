@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         userId: session.id,
         companyId: session.companyId,
         unitId,
+        updatedAt: new Date().toISOString(),
       })
       .select()
       .single()

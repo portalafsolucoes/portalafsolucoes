@@ -463,6 +463,10 @@ export default function AssetMaintenancePlanPage() {
   /* ---------------------------------------------------------------- */
 
   const handleSave = async () => {
+    if (!formData.lastMaintenanceDate) {
+      alert('Preencha o campo "Data da Última Manutenção" antes de salvar.')
+      return
+    }
     setSaving(true)
     setError('')
     try {
@@ -844,7 +848,7 @@ export default function AssetMaintenancePlanPage() {
 
                 {/* Data da Última Manutenção */}
                 <div>
-                  <label className={labelCls}>Data da Última Manutenção</label>
+                  <label className={labelCls}>Data da Última Manutenção <span className="text-danger">*</span></label>
                   <input type="date" value={formData.lastMaintenanceDate || ''} onChange={e => setFormData({ ...formData, lastMaintenanceDate: e.target.value })}
                     className={inputCls} />
                 </div>

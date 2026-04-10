@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
         createdById: session.id,
         companyId: session.companyId,
         unitId,
+        updatedAt: new Date().toISOString(),
       })
       .select('*, createdBy:User!createdById(id, firstName, lastName)')
       .single()
