@@ -1,0 +1,7 @@
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: /^Salvar$/ })[22m
+
+    at auditRequests (E:\Google Drive\01 - Desenvolvimento\02 - Projetos\08 - Gestor Manutenção\cmm_gestor_manutencao\auditoria\2026-04-10_19-15-36\worker-d\run-audit.mjs:352:60)
+    at async runForProfile (E:\Google Drive\01 - Desenvolvimento\02 - Projetos\08 - Gestor Manutenção\cmm_gestor_manutencao\auditoria\2026-04-10_19-15-36\worker-d\run-audit.mjs:1433:9)
+    at async main (E:\Google Drive\01 - Desenvolvimento\02 - Projetos\08 - Gestor Manutenção\cmm_gestor_manutencao\auditoria\2026-04-10_19-15-36\worker-d\run-audit.mjs:1577:9)

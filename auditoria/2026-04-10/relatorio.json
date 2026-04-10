@@ -1,0 +1,626 @@
+{
+  "date": "2026-04-10",
+  "baseUrl": "http://localhost:3000",
+  "user": "super.admin@polimix.local",
+  "totalScreens": 25,
+  "totalInteractions": 59,
+  "results": [
+    {
+      "route": "/dashboard",
+      "name": "dashboardDashboard",
+      "title": "Dashboard Corporativo",
+      "screenshot": "screenshots/01-dashboarddashboard.png",
+      "counts": {
+        "buttons": 10,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/01-dashboarddashboard-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/01-dashboarddashboard-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/01-dashboarddashboard-03-location-onlocalizacoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/tree",
+      "name": "account_treeÁrvore",
+      "title": "Árvore",
+      "screenshot": "screenshots/02-account-treearvore.png",
+      "counts": {
+        "buttons": 10,
+        "tables": 0,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/02-account-treearvore-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/02-account-treearvore-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/02-account-treearvore-03-location-onlocalizacoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/people-teams",
+      "name": "groupPessoas/Equipes",
+      "title": "Pessoas",
+      "screenshot": "screenshots/03-grouppessoas-equipes.png",
+      "counts": {
+        "buttons": 20,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/03-grouppessoas-equipes-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/03-grouppessoas-equipes-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/03-grouppessoas-equipes-03-location-onlocalizacoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/maintenance-types",
+      "name": "Tipos de Manutenção",
+      "title": "Tipos de Manutencao",
+      "screenshot": "screenshots/04-tipos-de-manutencao.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/04-tipos-de-manutencao-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/04-tipos-de-manutencao-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/04-tipos-de-manutencao-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/04-tipos-de-manutencao-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/maintenance-areas",
+      "name": "Áreas de Manutenção",
+      "title": "Areas de Manutencao",
+      "screenshot": "screenshots/05-areas-de-manutencao.png",
+      "counts": {
+        "buttons": 14,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/05-areas-de-manutencao-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/05-areas-de-manutencao-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/05-areas-de-manutencao-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/05-areas-de-manutencao-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/service-types",
+      "name": "Tipos de Serviço",
+      "title": "Tipos de Servico",
+      "screenshot": "screenshots/06-tipos-de-servico.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/06-tipos-de-servico-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/06-tipos-de-servico-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/06-tipos-de-servico-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/06-tipos-de-servico-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/calendars",
+      "name": "Calendários",
+      "title": "Calendarios",
+      "screenshot": "screenshots/07-calendarios.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/07-calendarios-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/07-calendarios-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "addAdicionar",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/07-calendarios-05-addadicionar.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/cost-centers",
+      "name": "Centros de Custos",
+      "title": "Centros de Custos",
+      "screenshot": "screenshots/08-centros-de-custos.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/08-centros-de-custos-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/08-centros-de-custos-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/08-centros-de-custos-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/areas",
+      "name": "Áreas",
+      "title": "Portal AF Soluções",
+      "screenshot": "screenshots/09-areas.png",
+      "counts": {
+        "buttons": 4,
+        "tables": 0,
+        "forms": 0
+      },
+      "interactions": []
+    },
+    {
+      "route": "/basic-registrations/work-centers",
+      "name": "Centros de Trabalho",
+      "title": "Centros de Trabalho",
+      "screenshot": "screenshots/10-centros-de-trabalho.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/10-centros-de-trabalho-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/10-centros-de-trabalho-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/10-centros-de-trabalho-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/asset-family-models",
+      "name": "Tipos Modelo",
+      "title": "Tipos Modelo",
+      "screenshot": "screenshots/11-tipos-modelo.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/11-tipos-modelo-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/11-tipos-modelo-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/11-tipos-modelo-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/11-tipos-modelo-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/asset-families",
+      "name": "Famílias de Bens",
+      "title": "Familias de Bens",
+      "screenshot": "screenshots/12-familias-de-bens.png",
+      "counts": {
+        "buttons": 17,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/12-familias-de-bens-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/12-familias-de-bens-02-check-circleaprovacoes1.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/positions",
+      "name": "Posições",
+      "title": "Posicoes",
+      "screenshot": "screenshots/13-posicoes.png",
+      "counts": {
+        "buttons": 14,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/13-posicoes-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/13-posicoes-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/resources",
+      "name": "Recursos",
+      "title": "Recursos",
+      "screenshot": "screenshots/14-recursos.png",
+      "counts": {
+        "buttons": 19,
+        "tables": 2,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/14-recursos-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/14-recursos-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/14-recursos-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/generic-tasks",
+      "name": "Tarefas Genéricas",
+      "title": "Tarefas Genericas",
+      "screenshot": "screenshots/15-tarefas-genericas.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/15-tarefas-genericas-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/15-tarefas-genericas-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/15-tarefas-genericas-03-location-onlocalizacoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/generic-steps",
+      "name": "Etapas Genéricas",
+      "title": "Etapas Genericas",
+      "screenshot": "screenshots/16-etapas-genericas.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/16-etapas-genericas-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/16-etapas-genericas-02-check-circleaprovacoes1.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/characteristics",
+      "name": "Características",
+      "title": "Caracteristicas",
+      "screenshot": "screenshots/17-caracteristicas.png",
+      "counts": {
+        "buttons": 16,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/17-caracteristicas-03-location-onlocalizacoes.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/17-caracteristicas-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/basic-registrations/counter-types",
+      "name": "Tipos de Contador",
+      "title": "Tipos de Contador",
+      "screenshot": "screenshots/18-tipos-de-contador.png",
+      "counts": {
+        "buttons": 15,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/18-tipos-de-contador-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/18-tipos-de-contador-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "settingsConfigurações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/18-tipos-de-contador-04-settingsconfiguracoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/work-orders",
+      "name": "constructionOrdens de Serviço (OS)",
+      "title": "Ordens de Serviço (OS)",
+      "screenshot": "screenshots/19-constructionordens-de-servico-os.png",
+      "counts": {
+        "buttons": 14,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/19-constructionordens-de-servico-os-01-assignmentsolicitacoes-ss.png"
+        }
+      ]
+    },
+    {
+      "route": "/requests",
+      "name": "assignmentSolicitações (SS)",
+      "title": "Solicitações de Serviço (SC)",
+      "screenshot": "screenshots/20-assignmentsolicitacoes-ss.png",
+      "counts": {
+        "buttons": 14,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/20-assignmentsolicitacoes-ss-01-assignmentsolicitacoes-ss.png"
+        }
+      ]
+    },
+    {
+      "route": "/requests/approvals",
+      "name": "check_circleAprovações1",
+      "title": "Aprovações de Solicitações",
+      "screenshot": "screenshots/21-check-circleaprovacoes1.png",
+      "counts": {
+        "buttons": 13,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/21-check-circleaprovacoes1-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "check_circleAprovações1",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/21-check-circleaprovacoes1-02-check-circleaprovacoes1.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/21-check-circleaprovacoes1-03-location-onlocalizacoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/rafs",
+      "name": "descriptionRAF",
+      "title": "Relatórios de Análise de Falha (RAF)",
+      "screenshot": "screenshots/22-descriptionraf.png",
+      "counts": {
+        "buttons": 9,
+        "tables": 0,
+        "forms": 0
+      },
+      "interactions": []
+    },
+    {
+      "route": "/locations",
+      "name": "location_onLocalizações",
+      "title": "Localizações",
+      "screenshot": "screenshots/23-location-onlocalizacoes.png",
+      "counts": {
+        "buttons": 13,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "assignmentSolicitações (SS)",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/23-location-onlocalizacoes-01-assignmentsolicitacoes-ss.png"
+        },
+        {
+          "trigger": "location_onLocalizações",
+          "kind": "navegacao-interna",
+          "screenshot": "modais/23-location-onlocalizacoes-03-location-onlocalizacoes.png"
+        }
+      ]
+    },
+    {
+      "route": "/kpi",
+      "name": "trending_upKPI - Indicadores",
+      "title": "KPI - Indicadores Chave de Performance",
+      "screenshot": "screenshots/24-trending-upkpi-indicadores.png",
+      "counts": {
+        "buttons": 5,
+        "tables": 0,
+        "forms": 0
+      },
+      "interactions": []
+    },
+    {
+      "route": "/admin/portal",
+      "name": "settingsConfigurações",
+      "title": "Administração do Portal",
+      "screenshot": "screenshots/25-settingsconfiguracoes.png",
+      "counts": {
+        "buttons": 11,
+        "tables": 1,
+        "forms": 0
+      },
+      "interactions": [
+        {
+          "trigger": "addNova Empresa",
+          "kind": "modal",
+          "screenshot": "modais/25-settingsconfiguracoes-05-addnova-empresa.png"
+        }
+      ]
+    }
+  ]
+}
