@@ -15,7 +15,9 @@ interface Asset {
   barCode?: string
   description?: string
   acquisitionCost?: number
-  area?: number
+  area?: string
+  areaId?: string | null
+  assetArea?: { id: string; name: string } | null
   image?: string | null
   location?: { id: string; name: string }
   category?: { id: string; name: string }

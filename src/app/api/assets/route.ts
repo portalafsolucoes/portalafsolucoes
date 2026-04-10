@@ -35,6 +35,8 @@ export async function GET(request: NextRequest) {
             description,
             status,
             area,
+            areaId,
+            unitId,
             locationId,
             categoryId,
             parentAssetId,
@@ -68,11 +70,54 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
+    // Enriquecer com dados do bem pai (código + nome)
+    let enrichedAssets = assets || []
+    const parentIds = [...new Set(enrichedAssets.filter(a => a.parentAssetId).map(a => a.parentAssetId))]
+    if (parentIds.length > 0) {
+      const { data: parents } = await supabase
+        .from('Asset')
+        .select('id, protheusCode, name')
+        .in('id', parentIds)
+      const parentMap = new Map((parents || []).map(p => [p.id, p]))
+      enrichedAssets = enrichedAssets.map(a => ({
+        ...a,
+        parentAsset: a.parentAssetId ? parentMap.get(a.parentAssetId) || null : null,
+      }))
+    }
+
+    // Enriquecer com nome da área (via areaId → Area)
+    const areaIds = [...new Set(enrichedAssets.filter(a => a.areaId).map(a => a.areaId))]
+    if (areaIds.length > 0) {
+      const { data: areas } = await supabase
+        .from('Area')
+        .select('id, name')
+        .in('id', areaIds)
+      const areaMap = new Map((areas || []).map(a => [a.id, a]))
+      enrichedAssets = enrichedAssets.map(a => ({
+        ...a,
+        assetArea: a.areaId ? areaMap.get(a.areaId) || null : null,
+      }))
+    }
+
+    // Enriquecer com nome da unidade (via unitId → Location)
+    const unitIds = [...new Set(enrichedAssets.filter(a => a.unitId).map(a => a.unitId))]
+    if (unitIds.length > 0) {
+      const { data: units } = await supabase
+        .from('Location')
+        .select('id, name')
+        .in('id', unitIds)
+      const unitMap = new Map((units || []).map(u => [u.id, u]))
+      enrichedAssets = enrichedAssets.map(a => ({
+        ...a,
+        unit: a.unitId ? unitMap.get(a.unitId) || null : null,
+      }))
+    }
+
     return NextResponse.json(
       summary
-        ? { data: assets || [] }
+        ? { data: enrichedAssets }
         : {
-            data: assets || [],
+            data: enrichedAssets,
             pagination: {
               page,
               limit,
@@ -113,8 +158,8 @@ export async function POST(request: NextRequest) {
     // Campos de classificação e organização
     const protheusCode = formData.get('protheusCode') as string | null
     const tag = formData.get('tag') as string | null
-    const unitIdParam = formData.get('unitId') as string | null
-    const unitId = getEffectiveUnitId(session, unitIdParam) || unitIdParam
+    // unitId é sempre da sessão — ignorar valor do cliente
+    const unitId = getEffectiveUnitId(session, null)
     const areaId = formData.get('areaId') as string | null
     const workCenterId = formData.get('workCenterId') as string | null
     const costCenterId = formData.get('costCenterId') as string | null
@@ -169,16 +214,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar Código do Bem (protheusCode) — único por empresa
-    if (protheusCode) {
+    // Validar que areaId pertence à mesma unitId
+    if (areaId && unitId) {
+      const { data: areaCheck } = await supabase
+        .from('Area').select('id').eq('id', areaId).eq('unitId', unitId).single()
+      if (!areaCheck) {
+        return NextResponse.json({ error: 'Área não pertence à unidade ativa' }, { status: 400 })
+      }
+    }
+
+    // Validar que workCenterId pertence à mesma unitId
+    if (workCenterId && unitId) {
+      const { data: wcCheck } = await supabase
+        .from('WorkCenter').select('id').eq('id', workCenterId).eq('unitId', unitId).single()
+      if (!wcCheck) {
+        return NextResponse.json({ error: 'Centro de Trabalho não pertence à unidade ativa' }, { status: 400 })
+      }
+    }
+
+    // Validar Código do Bem (protheusCode) — único por unidade
+    if (protheusCode && unitId) {
       const { data: existingCode } = await supabase
         .from('Asset')
         .select('id')
-        .eq('companyId', session.companyId)
+        .eq('unitId', unitId)
         .eq('protheusCode', protheusCode)
         .single()
       if (existingCode) {
-        return NextResponse.json({ error: 'Código do Bem já existe nesta empresa' }, { status: 409 })
+        return NextResponse.json({ error: 'Código do Bem já existe nesta unidade' }, { status: 409 })
       }
     }
 

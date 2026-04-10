@@ -42,16 +42,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Campos obrigatórios: familyId, serviceTypeId, name, maintenanceTime, timeUnit, period' }, { status: 400 })
     }
 
-    // Calcular próxima sequência
-    const { data: existing } = await supabase
+    // Calcular próxima sequência por família + tipo modelo + tipo serviço
+    let seqQuery = supabase
       .from('StandardMaintenancePlan')
       .select('sequence')
       .eq('familyId', familyId)
       .eq('serviceTypeId', serviceTypeId)
+    if (familyModelId) {
+      seqQuery = seqQuery.eq('familyModelId', familyModelId)
+    } else {
+      seqQuery = seqQuery.is('familyModelId', null)
+    }
+    const { data: existing } = await seqQuery
       .order('sequence', { ascending: false })
       .limit(1)
     const nextSequence = (existing && existing.length > 0) ? existing[0].sequence + 1 : 1
 
+    const now = new Date().toISOString()
     const { data, error } = await supabase
       .from('StandardMaintenancePlan')
       .insert({
@@ -70,6 +77,8 @@ export async function POST(request: NextRequest) {
         familyModelId: familyModelId || null,
         serviceTypeId,
         companyId: session.companyId,
+        createdAt: now,
+        updatedAt: now,
       })
       .select(`
         *,

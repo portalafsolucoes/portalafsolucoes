@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
-import { getSession } from '@/lib/session'
+import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/storage'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
@@ -105,7 +105,8 @@ export async function PATCH(
     // Campos TOTVS
     const protheusCode = formData.get('protheusCode') as string | null
     const tag = formData.get('tag') as string | null
-    const unitId = formData.get('unitId') as string | null
+    // unitId é sempre da sessão — ignorar valor do cliente
+    const unitId = getEffectiveUnitId(session, null)
     const areaId = formData.get('areaId') as string | null
     const workCenterId = formData.get('workCenterId') as string | null
     const costCenterId = formData.get('costCenterId') as string | null
@@ -161,6 +162,27 @@ export async function PATCH(
       )
     }
 
+    // Validar que areaId pertence à mesma unitId
+    const newAreaId = areaId ? areaId.trim() : null
+    if (newAreaId && unitId) {
+      const { data: areaCheck } = await supabase
+        .from('Area').select('id').eq('id', newAreaId).eq('unitId', unitId).single()
+      if (!areaCheck) {
+        return NextResponse.json({ error: 'Área não pertence à unidade ativa' }, { status: 400 })
+      }
+    }
+
+    // Validar que workCenterId pertence à mesma unitId
+    const newWorkCenterId = formData.get('workCenterId') as string | null
+    const wcToValidate = newWorkCenterId ? newWorkCenterId.trim() : null
+    if (wcToValidate && unitId) {
+      const { data: wcCheck } = await supabase
+        .from('WorkCenter').select('id').eq('id', wcToValidate).eq('unitId', unitId).single()
+      if (!wcCheck) {
+        return NextResponse.json({ error: 'Centro de Trabalho não pertence à unidade ativa' }, { status: 400 })
+      }
+    }
+
     // Processar nova imagem principal
     let imageUrl: string | undefined = asset.image || undefined
     if (mainImage && mainImage.size > 0) {
@@ -194,7 +216,8 @@ export async function PATCH(
     // Campos TOTVS — identificação e classificação
     if (protheusCode !== undefined) updateData.protheusCode = protheusCode || null
     if (tag !== undefined) updateData.tag = tag || null
-    if (unitId !== undefined) updateData.unitId = unitId || null
+    // unitId é sempre da sessão
+    if (unitId) updateData.unitId = unitId
     if (areaId !== undefined) updateData.areaId = areaId || null
     if (workCenterId !== undefined) updateData.workCenterId = workCenterId || null
     if (costCenterId !== undefined) updateData.costCenterId = costCenterId || null

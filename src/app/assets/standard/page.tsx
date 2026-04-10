@@ -9,6 +9,8 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { StandardAssetDetailPanel } from '@/components/standard-assets/StandardAssetDetailPanel'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 
 interface StandardAsset {
   id: string
@@ -118,7 +120,7 @@ const emptyForm = {
   annualCoupValue: '',
 }
 
-type SortField = 'family' | 'name' | 'manufacturer' | 'modelName' | 'priority' | 'shiftCode'
+type SortField = 'family' | 'name' | 'manufacturer' | 'modelType' | 'priority' | 'shiftCode' | 'hasCounter'
 type SortDirection = 'asc' | 'desc'
 
 export default function StandardAssetsPage() {
@@ -139,6 +141,7 @@ export default function StandardAssetsPage() {
   const [formData, setFormData] = useState(emptyForm)
   const [sortField, setSortField] = useState<SortField>('family')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [selectedItem, setSelectedItem] = useState<StandardAsset | null>(null)
 
   useEffect(() => {
     loadData()
@@ -185,6 +188,7 @@ export default function StandardAssetsPage() {
     setEditing(null)
     setFormData(emptyForm)
     setCharacteristicRows([])
+    setSelectedItem(null)
     setModalOpen(true)
   }
 
@@ -336,12 +340,14 @@ export default function StandardAssetsPage() {
           return item.name || ''
         case 'manufacturer':
           return item.manufacturer || ''
-        case 'modelName':
-          return item.modelName || ''
+        case 'modelType':
+          return item.modelType || ''
         case 'priority':
           return item.priority || ''
         case 'shiftCode':
           return item.shiftCode || ''
+        case 'hasCounter':
+          return item.hasCounter ? 'Sim' : 'Não'
         default:
           return ''
       }
@@ -360,6 +366,26 @@ export default function StandardAssetsPage() {
     setSortDirection('asc')
   }
 
+  const isMobile = useIsMobile()
+
+  const handleSelectItem = (item: StandardAsset) => {
+    setSelectedItem(item)
+  }
+
+  const handleClosePanel = () => {
+    setSelectedItem(null)
+  }
+
+  const handleEditFromPanel = (item: StandardAsset) => {
+    handleEdit(item)
+    setSelectedItem(null)
+  }
+
+  const handleDeleteFromPanel = async (id: string) => {
+    await handleDelete(id)
+    setSelectedItem(null)
+  }
+
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
       return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
@@ -373,15 +399,19 @@ export default function StandardAssetsPage() {
     )
   }
 
+  const hasSidePanel = !!selectedItem
+
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        <div className="px-4 py-4 md:px-6 flex-shrink-0">
+        {/* Header */}
+        <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
           <PageHeader
             title="Bens Padrão"
             description="Cadastro de bens padrão para pré-preenchimento"
+            className="mb-0"
             actions={
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative">
+                <div className="relative w-64">
                   <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
                   <input
                     type="text"
@@ -401,89 +431,114 @@ export default function StandardAssetsPage() {
           />
         </div>
 
-        <div className="px-4 pb-4 pt-1 md:px-6 md:pb-6 flex-1 overflow-auto">
+        {/* Content */}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent" />
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                <p className="mt-2 text-muted-foreground">Carregando...</p>
+              </div>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
               <Icon name="inventory_2" className="text-5xl mb-3" />
               <p className="text-lg font-medium">Nenhum Bem Padrão cadastrado</p>
               <p className="text-sm">Cadastre um bem padrão para pré-preencher automaticamente os bens individuais.</p>
             </div>
           ) : (
-            <div className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-secondary sticky top-0">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <button type="button" onClick={() => handleSort('family')} className="flex items-center gap-1">
-                        Família
-                        {renderSortIcon('family')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
-                        Nome
-                        {renderSortIcon('name')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">
-                      <button type="button" onClick={() => handleSort('manufacturer')} className="flex items-center gap-1">
-                        Fabricante
-                        {renderSortIcon('manufacturer')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">
-                      <button type="button" onClick={() => handleSort('modelName')} className="flex items-center gap-1">
-                        Modelo
-                        {renderSortIcon('modelName')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
-                      <button type="button" onClick={() => handleSort('priority')} className="flex items-center gap-1">
-                        Prioridade
-                        {renderSortIcon('priority')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
-                      <button type="button" onClick={() => handleSort('shiftCode')} className="flex items-center gap-1">
-                        Turno
-                        {renderSortIcon('shiftCode')}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-card divide-y divide-gray-200">
-                  {sortedItems.map(item => (
-                    <tr key={item.id} className="hover:bg-secondary transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
-                        {item.family ? `${item.family.code} - ${item.family.name}` : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{item.name || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden md:table-cell">{item.manufacturer || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden md:table-cell">{item.modelName || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.priority || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.shiftCode || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => handleEdit(item)} className="p-1.5 hover:bg-muted rounded-[4px] transition-colors" title="Editar">
-                            <Icon name="edit" className="text-base text-muted-foreground" />
-                          </button>
-                          <button onClick={() => handleDelete(item.id)} className="p-1.5 hover:bg-red-50 rounded-[4px] transition-colors" title="Excluir">
-                            <Icon name="delete" className="text-base text-danger" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Left: Table */}
+              <div className={`${hasSidePanel && !isMobile ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
+                <div className="h-full flex flex-col bg-card overflow-hidden">
+                  <div className="flex-1 overflow-auto min-h-0">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 bg-secondary z-10">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('family')} className="flex items-center gap-1">
+                              Família
+                              {renderSortIcon('family')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                              Nome
+                              {renderSortIcon('name')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">
+                            <button type="button" onClick={() => handleSort('modelType')} className="flex items-center gap-1">
+                              Modelo
+                              {renderSortIcon('modelType')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
+                            <button type="button" onClick={() => handleSort('priority')} className="flex items-center gap-1">
+                              Criticidade
+                              {renderSortIcon('priority')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
+                            <button type="button" onClick={() => handleSort('hasCounter')} className="flex items-center gap-1">
+                              Contador
+                              {renderSortIcon('hasCounter')}
+                            </button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-card divide-y divide-gray-200">
+                        {sortedItems.map(item => (
+                          <tr
+                            key={item.id}
+                            onClick={() => handleSelectItem(item)}
+                            className={`transition-colors cursor-pointer ${selectedItem?.id === item.id ? 'bg-primary/10' : 'hover:bg-secondary'}`}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground text-sm">
+                              {item.family ? `${item.family.code} - ${item.family.name}` : '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{item.name || '-'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden md:table-cell">{item.modelType || '-'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.priority || '-'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.hasCounter ? 'Sim' : 'Não'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Detail Panel (desktop) */}
+              {!isMobile && selectedItem && (
+                <div className="w-1/2 min-w-0">
+                  <StandardAssetDetailPanel
+                    item={selectedItem}
+                    onClose={handleClosePanel}
+                    onEdit={handleEditFromPanel}
+                    onDelete={handleDeleteFromPanel}
+                  />
+                </div>
+              )}
+            </>
           )}
+          </div>
         </div>
+
+        {/* Mobile: Detail Panel as Modal */}
+        {isMobile && selectedItem && (
+          <Modal isOpen={true} onClose={handleClosePanel} title={selectedItem.name || selectedItem.family?.name || 'Bem Padrão'}>
+            <div className="p-4">
+              <StandardAssetDetailPanel
+                item={selectedItem}
+                onClose={handleClosePanel}
+                onEdit={handleEditFromPanel}
+                onDelete={handleDeleteFromPanel}
+              />
+            </div>
+          </Modal>
+        )}
       {/* Modal de Criação/Edição */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Bem Padrão' : 'Novo Bem Padrão'}>
             <form onSubmit={handleSubmit} className="p-4 space-y-3">

@@ -29,7 +29,7 @@ interface Asset {
   assetPriority?: string
   ownershipType?: string
   unitId?: string
-  areaId?: string
+  areaId?: string | null
   workCenterId?: string
   costCenterId?: string
   positionId?: string
@@ -329,7 +329,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
       const stringFields = [
         'protheusCode', 'tag', 'description', 'barCode', 'fixedAssetCode', 'assetPlate',
         'parentAssetId', 'familyId', 'familyModelId', 'assetCategoryType', 'assetPriority', 'ownershipType',
-        'unitId', 'locationId', 'areaId', 'workCenterId', 'costCenterId', 'positionId', 'warehouse', 'shiftCode',
+        'locationId', 'areaId', 'workCenterId', 'costCenterId', 'positionId', 'warehouse', 'shiftCode',
         'manufacturer', 'modelName', 'serialNumber',
         'counterType', 'counterPosition', 'counterLimit', 'dailyVariation',
         'purchaseValue', 'acquisitionCost', 'hourlyCost', 'purchaseDate', 'installationDate',

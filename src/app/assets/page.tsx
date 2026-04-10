@@ -14,7 +14,7 @@ import { ExportButton } from '@/components/ui/ExportButton'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
 import { hasPermission } from '@/lib/permissions'
-import { getDefaultCmmsPath } from '@/lib/user-roles'
+import { getDefaultCmmsPath, isSuperAdminRole } from '@/lib/user-roles'
 
 // Lazy load: modais e painéis só carregam quando necessário
 const AssetDetailPanel = dynamic(() => import('@/components/assets/AssetDetailPanel').then(m => ({ default: m.AssetDetailPanel })), { ssr: false })
@@ -32,11 +32,16 @@ interface Asset {
   status: string
   barCode?: string
   acquisitionCost?: number
-  area?: number
+  area?: string
+  areaId?: string | null
+  assetArea?: { id: string; name: string } | null
+  unitId?: string | null
+  unit?: { id: string; name: string } | null
   location?: { name: string; id: string }
   category?: { name: string; id: string }
   primaryUser?: { firstName: string; lastName: string }
   parentAssetId?: string | null
+  parentAsset?: { id: string; protheusCode?: string; name: string } | null
   childAssets?: Asset[]
   files?: Array<{ id: string; url: string; name: string; mimeType?: string }>
   createdAt: string
@@ -292,6 +297,7 @@ export default function AssetsPage() {
                           selectedAssetId={selectedAsset?.id}
                           onEdit={canEdit('assets') ? handleEdit : undefined}
                           onDelete={canDelete('assets') ? handleDelete : undefined}
+                          showUnit={isSuperAdminRole(user)}
                         />
                       )}
                     </div>
@@ -360,6 +366,7 @@ export default function AssetsPage() {
                         selectedAssetId={selectedAsset?.id}
                         onEdit={canEdit('assets') ? handleEdit : undefined}
                         onDelete={canDelete('assets') ? handleDelete : undefined}
+                        showUnit={isSuperAdminRole(user)}
                       />
                     )}
                   </div>

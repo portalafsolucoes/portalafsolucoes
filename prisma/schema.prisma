@@ -880,7 +880,7 @@ model Asset {
   maintenancePlans       AssetMaintenancePlan[]
 
   @@unique([unitId, tag])
-  @@unique([companyId, protheusCode])
+  @@unique([unitId, protheusCode])
   @@index([companyId])
   @@index([locationId])
   @@index([categoryId])
@@ -999,7 +999,7 @@ model StandardMaintenanceTaskStep {
 
 model StandardMaintenanceTaskResource {
   id               String  @id @default(cuid())
-  resourceCount    Int     @default(1)
+  resourceCount    Float   @default(1)
   quantity         Float   @default(0)
   unit             String  @default("H")
   generatesReserve Boolean @default(true)
@@ -1025,6 +1025,7 @@ model AssetMaintenancePlan {
   isActive            Boolean   @default(true)
   toleranceDays       Int       @default(0)
   considerPlanning    Boolean   @default(true)
+  trackingType        String    @default("TIME")
   protheusCode        String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -1083,7 +1084,7 @@ model AssetMaintenanceTaskStep {
 
 model AssetMaintenanceTaskResource {
   id               String  @id @default(cuid())
-  resourceCount    Int     @default(1)
+  resourceCount    Float   @default(1)
   quantity         Float   @default(0)
   unit             String  @default("H")
   generatesReserve Boolean @default(true)

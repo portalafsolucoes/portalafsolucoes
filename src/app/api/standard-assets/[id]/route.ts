@@ -74,13 +74,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       // Inserir novas
       const charRecords = body.characteristics
         .filter((c: any) => c.characteristicId && c.value)
-        .map((c: any) => ({
-          id: generateId(),
-          standardAssetId: id,
-          characteristicId: c.characteristicId,
-          value: c.value,
-          unit: c.unit || null,
-        }))
+        .map((c: any) => {
+          const now = new Date().toISOString()
+          return {
+            id: generateId(),
+            standardAssetId: id,
+            characteristicId: c.characteristicId,
+            value: c.value,
+            unit: c.unit || null,
+            createdAt: now,
+            updatedAt: now,
+          }
+        })
       if (charRecords.length > 0) {
         await supabase.from('StandardAssetCharacteristic').insert(charRecords)
       }

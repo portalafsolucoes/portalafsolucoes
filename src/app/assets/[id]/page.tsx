@@ -32,7 +32,9 @@ interface Asset {
   status: string
   barCode?: string
   acquisitionCost?: number
-  area?: number
+  area?: string
+  areaId?: string | null
+  assetArea?: { id: string; name: string } | null
   location?: { id: string; name: string }
   category?: { name: string }
   primaryUser?: { firstName: string; lastName: string }

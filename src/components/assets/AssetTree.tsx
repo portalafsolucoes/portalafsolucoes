@@ -11,11 +11,14 @@ interface Asset {
   barCode?: string
   description?: string
   acquisitionCost?: number
-  area?: number
+  area?: string
+  areaId?: string | null
+  assetArea?: { id: string; name: string } | null
   location?: { id: string; name: string }
   category?: { name: string; id: string }
   primaryUser?: { firstName: string; lastName: string }
   parentAssetId?: string | null
+  parentAsset?: { id: string; protheusCode?: string; name: string } | null
   childAssets?: Asset[]
   files?: Array<{ id: string; url: string; name: string; mimeType?: string }>
   createdAt: string

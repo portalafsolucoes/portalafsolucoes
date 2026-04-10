@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
       .from('AssetMaintenancePlan')
       .select(`
         *,
-        asset:Asset!assetId(id, name, tag),
+        asset:Asset!assetId(id, name, tag, familyId, familyModelId,
+          family:AssetFamily!familyId(id, code, name),
+          familyModel:AssetFamilyModel!familyModelId(id, name)
+        ),
         serviceType:ServiceType!serviceTypeId(id, code, name),
         maintenanceArea:MaintenanceArea!maintenanceAreaId(id, name),
         maintenanceType:MaintenanceType!maintenanceTypeId(id, name),
@@ -44,7 +47,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { assetId, serviceTypeId, name, maintenanceAreaId, maintenanceTypeId,
             lastMaintenanceDate, calendarId, maintenanceTime, timeUnit, period,
-            isStandard, standardPlanId, toleranceDays, considerPlanning } = body
+            isStandard, standardPlanId, toleranceDays, considerPlanning,
+            trackingType } = body
 
     if (!assetId || !serviceTypeId) {
       return NextResponse.json({ error: 'assetId e serviceTypeId são obrigatórios' }, { status: 400 })
@@ -71,6 +75,7 @@ export async function POST(request: NextRequest) {
       standardData = stdPlan
     }
 
+    const now = new Date().toISOString()
     const insertData: any = {
       id: generateId(),
       sequence: nextSequence,
@@ -90,7 +95,10 @@ export async function POST(request: NextRequest) {
       maintenanceAreaId: maintenanceAreaId || null,
       maintenanceTypeId: maintenanceTypeId || null,
       calendarId: calendarId || standardData?.calendarId || null,
+      trackingType: trackingType || standardData?.trackingType || 'TIME',
       companyId: session.companyId,
+      createdAt: now,
+      updatedAt: now,
     }
 
     const { data, error } = await supabase

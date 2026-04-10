@@ -383,7 +383,10 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
         showModal && customModalRender({
           editingItem,
           onClose: () => setShowModal(false),
-          onSaved: fetchItems,
+          onSaved: () => {
+            invalidateCrudData(requestUrl)
+            fetchItems()
+          },
         })
       ) : (
         <Modal

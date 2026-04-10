@@ -10,10 +10,15 @@ interface Asset {
   name: string
   description?: string
   status: string
-  area?: number
+  area?: string
+  areaId?: string | null
+  assetArea?: { id: string; name: string } | null
   location?: { name: string; id: string }
   category?: { name: string; id: string }
   parentAssetId?: string | null
+  parentAsset?: { id: string; protheusCode?: string; name: string } | null
+  unitId?: string | null
+  unit?: { id: string; name: string } | null
   protheusCode?: string
   tag?: string
   createdAt: string
@@ -26,6 +31,7 @@ interface AssetTableProps {
   selectedAssetId?: string
   onEdit?: (asset: Asset) => void
   onDelete?: (assetId: string) => void
+  showUnit?: boolean
 }
 
 type SortField = 'name' | 'protheusCode' | 'status' | 'area' | 'createdAt'
@@ -61,10 +67,11 @@ const statusConfig: Record<string, { label: string; icon: string; className: str
 
 export function AssetTable({ 
   assets, 
-  onSelectAsset, 
+  onSelectAsset,
   selectedAssetId,
   onEdit,
-  onDelete 
+  onDelete,
+  showUnit
 }: AssetTableProps) {
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -86,7 +93,7 @@ export function AssetTable({
         comparison = a.status.localeCompare(b.status)
         break
       case 'area':
-        comparison = (a.area || 0) - (b.area || 0)
+        comparison = (a.assetArea?.name || a.area || '').localeCompare(b.assetArea?.name || b.area || '')
         break
       case 'createdAt':
         comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -180,6 +187,13 @@ export function AssetTable({
                 />
               </th>
               
+              {/* Unidade (apenas SUPER_ADMIN) */}
+              {showUnit && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <span>Unidade</span>
+                </th>
+              )}
+
               {/* Código do Bem */}
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
@@ -202,8 +216,13 @@ export function AssetTable({
                 </button>
               </th>
               
+              {/* Bem Pai */}
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <span>Bem Pai</span>
+              </th>
+
               {/* Status */}
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 onClick={() => handleSort('status')}
               >
@@ -247,7 +266,7 @@ export function AssetTable({
           <tbody className="bg-card divide-y divide-gray-200">
             {sortedAssets.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
+                <td colSpan={showUnit ? 9 : 8} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Icon name="inventory_2" className="text-5xl opacity-20" />
                     <p className="text-sm">Nenhum ativo encontrado</p>
@@ -280,6 +299,15 @@ export function AssetTable({
                       />
                     </td>
                     
+                    {/* Unidade */}
+                    {showUnit && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-foreground">
+                          {asset.unit?.name || '-'}
+                        </span>
+                      </td>
+                    )}
+
                     {/* Código do Bem */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-foreground font-mono">
@@ -304,6 +332,22 @@ export function AssetTable({
                       </div>
                     </td>
                     
+                    {/* Bem Pai */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {asset.parentAsset ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm text-foreground font-mono">
+                            {asset.parentAsset.protheusCode || '-'}
+                          </span>
+                          <span className="text-xs text-muted-foreground line-clamp-1">
+                            {asset.parentAsset.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </td>
+
                     {/* Status */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`
@@ -318,7 +362,7 @@ export function AssetTable({
                     {/* Área */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-foreground">
-                        {asset.area || '-'}
+                        {asset.assetArea?.name || asset.area || '-'}
                       </span>
                     </td>
                     

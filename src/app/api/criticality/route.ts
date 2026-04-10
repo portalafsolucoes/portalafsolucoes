@@ -51,10 +51,13 @@ interface AssetRow {
   customId: string | null
   area: string | null
   status: string
+  locationId: string | null
+  parentAssetId: string | null
   gutGravity: number | null
   gutUrgency: number | null
   gutTendency: number | null
   Location: RelatedEntityValue
+  Unit: RelatedEntityValue
   AssetCategory: RelatedEntityValue
 }
 
@@ -92,10 +95,12 @@ export async function GET(request: NextRequest) {
         area,
         status,
         locationId,
+        parentAssetId,
         gutGravity,
         gutUrgency,
         gutTendency,
         Location:locationId (id, name),
+        Unit:unitId (id, name),
         AssetCategory:categoryId (id, name)
       `)
       .eq('companyId', session.companyId)
@@ -213,8 +218,64 @@ export async function GET(request: NextRequest) {
     const maxWorkOrders = Math.max(...Object.values(workOrderCounts), 1)
     const maxRafs = Math.max(...Object.values(rafCounts), 1)
 
-    const criticalities: AssetCriticality[] = (assets as AssetRow[]).map(asset => {
-      const location = pickRelatedEntity(asset.Location)
+    // Resolver localização herdada de ativos pais
+    const assetsTyped = assets as AssetRow[]
+    const assetsById = new Map<string, AssetRow>()
+    for (const asset of assetsTyped) {
+      assetsById.set(asset.id, asset)
+    }
+
+    // Coletar IDs de pais que não estão na lista atual
+    const missingParentIds = new Set<string>()
+    for (const asset of assetsTyped) {
+      if (!asset.locationId && asset.parentAssetId && !assetsById.has(asset.parentAssetId)) {
+        missingParentIds.add(asset.parentAssetId)
+      }
+    }
+
+    // Buscar localização dos pais ausentes (até 3 níveis de hierarquia)
+    const parentLocationCache = new Map<string, RelatedEntity | null>()
+    let idsToFetch = Array.from(missingParentIds)
+    for (let level = 0; level < 3 && idsToFetch.length > 0; level++) {
+      const { data: parentAssets } = await supabase
+        .from('Asset')
+        .select('id, locationId, parentAssetId, Location:locationId (id, name)')
+        .in('id', idsToFetch)
+
+      const nextIds: string[] = []
+      for (const pa of parentAssets || []) {
+        const loc = pickRelatedEntity(pa.Location as RelatedEntityValue)
+        if (loc) {
+          parentLocationCache.set(pa.id, loc)
+        } else if (pa.parentAssetId && !assetsById.has(pa.parentAssetId) && !parentLocationCache.has(pa.parentAssetId)) {
+          nextIds.push(pa.parentAssetId)
+          // Armazenar referência para resolver depois
+          parentLocationCache.set(pa.id, null)
+        }
+      }
+      idsToFetch = nextIds
+    }
+
+    const resolveLocation = (asset: AssetRow): RelatedEntity | null => {
+      const direct = pickRelatedEntity(asset.Location)
+      if (direct) return direct
+      // Herdar do ativo pai
+      if (asset.parentAssetId) {
+        const parent = assetsById.get(asset.parentAssetId)
+        if (parent) {
+          const parentLoc = resolveLocation(parent)
+          if (parentLoc) return parentLoc
+        } else {
+          const cached = parentLocationCache.get(asset.parentAssetId)
+          if (cached) return cached
+        }
+      }
+      // Fallback: usar a unidade do ativo
+      return pickRelatedEntity(asset.Unit)
+    }
+
+    const criticalities: AssetCriticality[] = assetsTyped.map(asset => {
+      const location = resolveLocation(asset)
       const category = pickRelatedEntity(asset.AssetCategory)
 
       // GUT Score (1-5 cada, máx = 125, normalizado para 0-100)

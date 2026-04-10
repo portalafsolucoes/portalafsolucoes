@@ -48,9 +48,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Já existe um Bem Padrão cadastrado para esta família' }, { status: 409 })
     }
 
+    const now = new Date().toISOString()
     const record = {
       id: generateId(),
       companyId: session.companyId,
+      createdAt: now,
+      updatedAt: now,
       familyId: body.familyId,
       name: body.name || null,
       costCenterCode: body.costCenterCode || null,
@@ -95,6 +98,8 @@ export async function POST(request: NextRequest) {
           characteristicId: c.characteristicId,
           value: c.value,
           unit: c.unit || null,
+          createdAt: now,
+          updatedAt: now,
         }))
       if (charRecords.length > 0) {
         await supabase.from('StandardAssetCharacteristic').insert(charRecords)

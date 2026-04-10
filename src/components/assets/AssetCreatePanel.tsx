@@ -318,7 +318,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
       const stringFields = [
         'protheusCode', 'tag', 'description', 'barCode', 'fixedAssetCode', 'assetPlate',
         'parentAssetId', 'familyId', 'familyModelId', 'assetCategoryType', 'assetPriority', 'ownershipType',
-        'unitId', 'locationId', 'areaId', 'workCenterId', 'costCenterId', 'positionId', 'warehouse', 'shiftCode',
+        'locationId', 'areaId', 'workCenterId', 'costCenterId', 'positionId', 'warehouse', 'shiftCode',
         'manufacturer', 'modelName', 'serialNumber',
         'counterType', 'counterPosition', 'counterLimit', 'dailyVariation',
         'purchaseValue', 'acquisitionCost', 'hourlyCost', 'purchaseDate', 'installationDate',

@@ -12,7 +12,7 @@ interface Asset {
   description?: string
   barCode?: string
   acquisitionCost?: number
-  area?: number
+  area?: string
   status: string
   locationId?: string
   categoryId?: string
@@ -278,7 +278,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
               type="number"
               step="0.01"
               value={formData.area || ''}
-              onChange={(e) => setFormData({ ...formData, area: e.target.value ? parseFloat(e.target.value) : undefined })}
+              onChange={(e) => setFormData({ ...formData, area: e.target.value || undefined })}
               placeholder="0.00"
             />
           </div>
