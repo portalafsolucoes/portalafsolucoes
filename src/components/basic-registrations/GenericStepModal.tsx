@@ -10,6 +10,7 @@ interface GenericStepModalProps {
   editingItem: any | null
   onClose: () => void
   onSaved: () => void
+  inPage?: boolean
 }
 
 interface StepOption {
@@ -17,7 +18,7 @@ interface StepOption {
   order: number
 }
 
-export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepModalProps) {
+export function GenericStepModal({ editingItem, onClose, onSaved, inPage = false }: GenericStepModalProps) {
   const [name, setName] = useState('')
   const [optionType, setOptionType] = useState('NONE')
   const [protheusCode, setProtheusCode] = useState('')
@@ -114,142 +115,179 @@ export function GenericStepModal({ editingItem, onClose, onSaved }: GenericStepM
     setSaving(false)
   }
 
+  const title = editingItem ? 'Editar Etapas Genéricas' : 'Novo Etapas Genéricas'
+
+  const formContent = (
+    <>
+      {error && (
+        <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
+          {error}
+        </div>
+      )}
+
+      <ModalSection title="Etapa">
+        <div className="grid grid-cols-2 gap-3">
+          {/* Descrição */}
+          <div className="col-span-2">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              Descrição <span className="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Ex: Abastecer redutor com óleo novo"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Tipo de Opção */}
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              Tipo de Opção
+            </label>
+            <select
+              value={optionType}
+              onChange={e => setOptionType(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="NONE">Nenhuma</option>
+              <option value="RESPONSE">Resposta</option>
+              <option value="OPTION">Opção</option>
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {optionType === 'NONE' && 'Etapa simples — apenas confirma conclusão'}
+              {optionType === 'RESPONSE' && 'O executante deverá digitar um valor (texto/número) ao executar esta etapa'}
+              {optionType === 'OPTION' && 'O executante deverá escolher entre as opções cadastradas abaixo'}
+            </p>
+          </div>
+
+          {/* Código Protheus */}
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              Código Protheus
+            </label>
+            <input
+              type="text"
+              value={protheusCode}
+              onChange={e => setProtheusCode(e.target.value)}
+              placeholder="Ex: ABA001"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+      </ModalSection>
+
+      {/* Gerenciamento de Opções — só aparece quando OPTION */}
+      {optionType !== 'NONE' && (
+        <ModalSection title="Opções" defaultOpen={true}>
+          {optionType === 'OPTION' && (
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Opções Disponíveis <span className="text-danger">*</span>
+              </label>
+
+              {/* Lista de opções existentes */}
+              {options.length > 0 && (
+                <div className="space-y-1">
+                  {options.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
+                      <Icon name="drag_indicator" className="text-sm text-muted-foreground shrink-0" />
+                      <span className="flex-1 text-sm text-foreground">{opt.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeOption(i)}
+                        className="p-1 hover:bg-danger-light rounded transition-colors"
+                        title="Remover opção"
+                      >
+                        <Icon name="delete" className="text-sm text-danger" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Adicionar nova opção */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newOptionLabel}
+                  onChange={e => setNewOptionLabel(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOption())}
+                  placeholder="Ex: OK, NOK, Normal, Baixo..."
+                  className="flex-1 px-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Button type="button" size="sm" variant="outline" onClick={addOption} disabled={!newOptionLabel.trim()}>
+                  <Icon name="add" className="text-sm mr-1" /> Adicionar
+                </Button>
+              </div>
+
+              {options.length < 2 && (
+                <p className="text-xs text-amber-600">
+                  Adicione pelo menos 2 opções para que o executante possa escolher.
+                </p>
+              )}
+            </div>
+          )}
+
+          {optionType === 'RESPONSE' && (
+            <p className="text-sm text-muted-foreground">
+              O executante deverá digitar um valor ao executar esta etapa. Nenhuma configuração adicional necessária.
+            </p>
+          )}
+        </ModalSection>
+      )}
+    </>
+  )
+
+  const footer = (
+    <div className="flex gap-3 px-4 py-4 border-t border-border">
+      <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+        Cancelar
+      </Button>
+      <Button type="submit" disabled={saving} className="flex-1">
+        <Icon name="save" className="text-base mr-2" />
+        {saving ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Salvar')}
+      </Button>
+    </div>
+  )
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleSave()
+  }
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {formContent}
+          </div>
+          {footer}
+        </form>
+      </div>
+    )
+  }
+
   return (
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={editingItem ? 'Editar Etapas Genéricas' : 'Novo Etapas Genéricas'}
+      title={title}
     >
-      <div className="space-y-4">
-        {error && (
-          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
-            {error}
-          </div>
-        )}
-
-        <ModalSection title="Etapa">
-          <div className="grid grid-cols-2 gap-3">
-            {/* Descrição */}
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Descrição <span className="text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ex: Abastecer redutor com óleo novo"
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* Tipo de Opção */}
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Tipo de Opção
-              </label>
-              <select
-                value={optionType}
-                onChange={e => setOptionType(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="NONE">Nenhuma</option>
-                <option value="RESPONSE">Resposta</option>
-                <option value="OPTION">Opção</option>
-              </select>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {optionType === 'NONE' && 'Etapa simples — apenas confirma conclusão'}
-                {optionType === 'RESPONSE' && 'O executante deverá digitar um valor (texto/número) ao executar esta etapa'}
-                {optionType === 'OPTION' && 'O executante deverá escolher entre as opções cadastradas abaixo'}
-              </p>
-            </div>
-
-            {/* Código Protheus */}
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Código Protheus
-              </label>
-              <input
-                type="text"
-                value={protheusCode}
-                onChange={e => setProtheusCode(e.target.value)}
-                placeholder="Ex: ABA001"
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
-        </ModalSection>
-
-        {/* Gerenciamento de Opções — só aparece quando OPTION */}
-        {optionType !== 'NONE' && (
-          <ModalSection title="Opções" defaultOpen={true}>
-            {optionType === 'OPTION' && (
-              <div className="space-y-3">
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Opções Disponíveis <span className="text-danger">*</span>
-                </label>
-
-                {/* Lista de opções existentes */}
-                {options.length > 0 && (
-                  <div className="space-y-1">
-                    {options.map((opt, i) => (
-                      <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
-                        <Icon name="drag_indicator" className="text-sm text-muted-foreground shrink-0" />
-                        <span className="flex-1 text-sm text-foreground">{opt.label}</span>
-                        <button
-                          onClick={() => removeOption(i)}
-                          className="p-1 hover:bg-danger-light rounded transition-colors"
-                          title="Remover opção"
-                        >
-                          <Icon name="delete" className="text-sm text-danger" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Adicionar nova opção */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newOptionLabel}
-                    onChange={e => setNewOptionLabel(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOption())}
-                    placeholder="Ex: OK, NOK, Normal, Baixo..."
-                    className="flex-1 px-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  <Button size="sm" variant="outline" onClick={addOption} disabled={!newOptionLabel.trim()}>
-                    <Icon name="add" className="text-sm mr-1" /> Adicionar
-                  </Button>
-                </div>
-
-                {options.length < 2 && (
-                  <p className="text-xs text-amber-600">
-                    Adicione pelo menos 2 opções para que o executante possa escolher.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {optionType === 'RESPONSE' && (
-              <p className="text-sm text-muted-foreground">
-                O executante deverá digitar um valor ao executar esta etapa. Nenhuma configuração adicional necessária.
-              </p>
-            )}
-          </ModalSection>
-        )}
-
-        {/* Botões */}
-        <div className="flex gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={saving} className="flex-1">
-            <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Salvar')}
-          </Button>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4">
+          {formContent}
         </div>
-      </div>
+        {footer}
+      </form>
     </Modal>
   )
 }

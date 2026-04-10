@@ -54,9 +54,10 @@ interface CalendarModalProps {
   editingItem: any | null
   onClose: () => void
   onSaved: () => void
+  inPage?: boolean
 }
 
-export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalProps) {
+export function CalendarModal({ editingItem, onClose, onSaved, inPage = false }: CalendarModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState('WORK')
@@ -181,178 +182,220 @@ export function CalendarModal({ editingItem, onClose, onSaved }: CalendarModalPr
     setSaving(false)
   }
 
+  const title = editingItem ? 'Editar Calendário' : 'Novo Calendário'
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleSave()
+  }
+
+  const formContent = (
+    <>
+      {error && (
+        <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
+          {error}
+        </div>
+      )}
+
+      <ModalSection title="Informações Básicas">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              Nome <span className="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Ex: Calendário Operacional"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo</label>
+            <select
+              value={type}
+              onChange={e => setType(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="WORK">Mão de Obra</option>
+              <option value="EQUIPMENT">Equipamento</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Código Protheus</label>
+            <input
+              type="text"
+              value={protheusCode}
+              onChange={e => setProtheusCode(e.target.value)}
+              placeholder="Ex: M03"
+              className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+      </ModalSection>
+
+      <ModalSection title="Horários por Dia da Semana">
+        <div className="space-y-2">
+          {workDays.weekDays.map(dayConfig => (
+            <div
+              key={dayConfig.day}
+              className={`border rounded-[4px] p-3 transition-colors ${dayConfig.active ? 'border-border bg-card' : 'border-border/50 bg-muted/30'}`}
+            >
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={dayConfig.active}
+                    onChange={e => updateDay(dayConfig.day, {
+                      active: e.target.checked,
+                      shifts: e.target.checked && dayConfig.shifts.length === 0
+                        ? [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '17:00' }]
+                        : dayConfig.shifts,
+                    })}
+                    className="rounded border-border"
+                  />
+                  <span className={`text-sm font-medium w-32 ${dayConfig.active ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {dayConfig.label}
+                  </span>
+                </label>
+
+                {dayConfig.active ? (
+                  <div className="flex-1 flex flex-wrap items-center gap-2">
+                    {dayConfig.shifts.map((shift, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 bg-muted rounded-[4px] px-2 py-1">
+                        <input
+                          type="time"
+                          value={shift.start}
+                          onChange={e => updateShift(dayConfig.day, idx, 'start', e.target.value)}
+                          className="w-24 text-sm bg-transparent focus:outline-none text-foreground"
+                        />
+                        <span className="text-muted-foreground text-xs">–</span>
+                        <input
+                          type="time"
+                          value={shift.end}
+                          onChange={e => updateShift(dayConfig.day, idx, 'end', e.target.value)}
+                          className="w-24 text-sm bg-transparent focus:outline-none text-foreground"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeShift(dayConfig.day, idx)}
+                          className="p-0.5 hover:bg-danger-light rounded transition-colors"
+                          title="Remover turno"
+                        >
+                          <Icon name="delete" className="text-sm text-danger" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addShift(dayConfig.day)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground rounded-[4px] transition-colors"
+                      title="Adicionar turno"
+                    >
+                      <Icon name="add" className="text-sm" /> Turno
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground italic">Dia não útil</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ModalSection>
+
+      <ModalSection title="Feriados">
+        <div className="space-y-2">
+          {workDays.holidays.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">Nenhum feriado cadastrado.</p>
+          )}
+          {workDays.holidays.map((h, idx) => (
+            <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-[4px]">
+              <span className="text-sm text-foreground font-mono">{h.date}</span>
+              <span className="text-muted-foreground">—</span>
+              <span className="text-sm text-foreground flex-1">{h.name}</span>
+              <button
+                type="button"
+                onClick={() => removeHoliday(idx)}
+                className="p-1 hover:bg-danger-light rounded transition-colors"
+                title="Remover feriado"
+              >
+                <Icon name="delete" className="text-sm text-danger" />
+              </button>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="date"
+              value={newHolidayDate}
+              onChange={e => setNewHolidayDate(e.target.value)}
+              className="px-2 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <input
+              type="text"
+              value={newHolidayName}
+              onChange={e => setNewHolidayName(e.target.value)}
+              placeholder="Nome do feriado"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addHoliday() } }}
+              className="flex-1 px-2 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={addHoliday}
+              disabled={!newHolidayDate || !newHolidayName.trim()}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-[4px] bg-card hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Icon name="add" className="text-sm" /> Adicionar
+            </button>
+          </div>
+        </div>
+      </ModalSection>
+    </>
+  )
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {formContent}
+          </div>
+          <div className="flex gap-3 px-4 py-4 border-t border-border">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+            <Button type="submit" disabled={saving} className="flex-1">
+              <Icon name="save" className="text-base mr-2" />
+              {saving ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Salvar')}
+            </Button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
   return (
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={editingItem ? 'Editar Calendário' : 'Novo Calendário'}
+      title={title}
     >
       <div className="p-4 space-y-3">
-        {error && (
-          <div className="p-3 bg-danger-light text-danger-light-foreground rounded-[4px] text-sm">
-            {error}
-          </div>
-        )}
-
-        <ModalSection title="Informações Básicas">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Nome <span className="text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ex: Calendário Operacional"
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tipo</label>
-              <select
-                value={type}
-                onChange={e => setType(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="WORK">Mão de Obra</option>
-                <option value="EQUIPMENT">Equipamento</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição</label>
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Código Protheus</label>
-              <input
-                type="text"
-                value={protheusCode}
-                onChange={e => setProtheusCode(e.target.value)}
-                placeholder="Ex: M03"
-                className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
-        </ModalSection>
-
-        <ModalSection title="Horários por Dia da Semana">
-          <div className="space-y-2">
-            {workDays.weekDays.map(dayConfig => (
-              <div
-                key={dayConfig.day}
-                className={`border rounded-[4px] p-3 transition-colors ${dayConfig.active ? 'border-border bg-card' : 'border-border/50 bg-muted/30'}`}
-              >
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={dayConfig.active}
-                      onChange={e => updateDay(dayConfig.day, {
-                        active: e.target.checked,
-                        shifts: e.target.checked && dayConfig.shifts.length === 0
-                          ? [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '17:00' }]
-                          : dayConfig.shifts,
-                      })}
-                      className="rounded border-border"
-                    />
-                    <span className={`text-sm font-medium w-32 ${dayConfig.active ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {dayConfig.label}
-                    </span>
-                  </label>
-
-                  {dayConfig.active ? (
-                    <div className="flex-1 flex flex-wrap items-center gap-2">
-                      {dayConfig.shifts.map((shift, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5 bg-muted rounded-[4px] px-2 py-1">
-                          <input
-                            type="time"
-                            value={shift.start}
-                            onChange={e => updateShift(dayConfig.day, idx, 'start', e.target.value)}
-                            className="w-24 text-sm bg-transparent focus:outline-none text-foreground"
-                          />
-                          <span className="text-muted-foreground text-xs">–</span>
-                          <input
-                            type="time"
-                            value={shift.end}
-                            onChange={e => updateShift(dayConfig.day, idx, 'end', e.target.value)}
-                            className="w-24 text-sm bg-transparent focus:outline-none text-foreground"
-                          />
-                          <button
-                            onClick={() => removeShift(dayConfig.day, idx)}
-                            className="p-0.5 hover:bg-danger-light rounded transition-colors"
-                            title="Remover turno"
-                          >
-                            <Icon name="delete" className="text-sm text-danger" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        onClick={() => addShift(dayConfig.day)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground rounded-[4px] transition-colors"
-                        title="Adicionar turno"
-                      >
-                        <Icon name="add" className="text-sm" /> Turno
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground italic">Dia não útil</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </ModalSection>
-
-        <ModalSection title="Feriados">
-          <div className="space-y-2">
-            {workDays.holidays.length === 0 && (
-              <p className="text-xs text-muted-foreground italic">Nenhum feriado cadastrado.</p>
-            )}
-            {workDays.holidays.map((h, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-muted/40 rounded-[4px]">
-                <span className="text-sm text-foreground font-mono">{h.date}</span>
-                <span className="text-muted-foreground">—</span>
-                <span className="text-sm text-foreground flex-1">{h.name}</span>
-                <button
-                  onClick={() => removeHoliday(idx)}
-                  className="p-1 hover:bg-danger-light rounded transition-colors"
-                  title="Remover feriado"
-                >
-                  <Icon name="delete" className="text-sm text-danger" />
-                </button>
-              </div>
-            ))}
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="date"
-                value={newHolidayDate}
-                onChange={e => setNewHolidayDate(e.target.value)}
-                className="px-2 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <input
-                type="text"
-                value={newHolidayName}
-                onChange={e => setNewHolidayName(e.target.value)}
-                placeholder="Nome do feriado"
-                onKeyDown={e => { if (e.key === 'Enter') addHoliday() }}
-                className="flex-1 px-2 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <button
-                onClick={addHoliday}
-                disabled={!newHolidayDate || !newHolidayName.trim()}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-[4px] bg-card hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Icon name="add" className="text-sm" /> Adicionar
-              </button>
-            </div>
-          </div>
-        </ModalSection>
+        {formContent}
 
         {/* Rodapé */}
         <div className="flex gap-3 px-4 py-4 border-t border-border">

@@ -18,3 +18,4 @@ Leia primeiro `CONVENTIONS.md`.
 - Usar `docs/AI_SETUP.md` como inventario canonico de MCPs e skills
 - Manter a raiz do repositorio limpa: documentacao auxiliar em `docs/` e auditorias/evidencias em `auditoria/`
 - Nunca criar arquivos soltos de Markdown, screenshot ou relatorio na raiz
+- Ao substituir codigo sem remove-lo, registrar em `docs/DEPRECATIONS.md`

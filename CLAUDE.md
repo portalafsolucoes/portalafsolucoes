@@ -48,6 +48,13 @@
 - Em caso de divergencia, seguir `docs/SPEC.md` e `.claude/rules/*.md` e registrar o gap
 - Se algum documento auxiliar estiver diferente da spec ou das rules, trata-lo como desatualizado ate ser sincronizado
 
+## Deprecacao e Limpeza
+- Quando um componente ou arquivo for substituido mas mantido temporariamente, registrar em `docs/DEPRECATIONS.md`
+- Cada entrada deve conter: arquivo, motivo, substituto, data e condicao para remocao
+- Antes de remover codigo deprecado, verificar que nenhum import depende dele
+- Ao concluir migracoes, revisar `docs/DEPRECATIONS.md` e limpar entradas ja resolvidas
+- Nao manter codigo morto sem registro; ou remove imediatamente ou documenta para remocao futura
+
 ## Tooling de IA
 - `CONVENTIONS.md` e a referencia compartilhada entre agentes
 - `AGENTS.md` e o ponto de entrada para Codex e agentes genericos

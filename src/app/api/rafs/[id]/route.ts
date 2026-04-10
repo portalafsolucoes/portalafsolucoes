@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 // GET - Buscar RAF por ID
 export async function GET(
@@ -50,8 +51,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // Verificar se é admin
-    if (session.role !== 'GESTOR' && session.role !== 'SUPER_ADMIN') {
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Apenas administradores podem editar RAFs' }, { status: 403 })
     }
 
@@ -76,7 +76,8 @@ export async function PUT(
         fiveWhys: body.fiveWhys || [],
         hypothesisTests: body.hypothesisTests || [],
         failureType: body.failureType || 'RANDOM',
-        actionPlan: body.actionPlan || []
+        actionPlan: body.actionPlan || [],
+        updatedAt: new Date().toISOString()
       })
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -103,8 +104,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // Verificar se é admin
-    if (session.role !== 'GESTOR' && session.role !== 'SUPER_ADMIN') {
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Apenas administradores podem deletar RAFs' }, { status: 403 })
     }
 

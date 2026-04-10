@@ -18,6 +18,7 @@ Este repositorio usa `CONVENTIONS.md` como fluxo compartilhado entre agentes.
 - Nao adicionar segredos, tokens ou caminhos pessoais ao repositorio
 - Manter a raiz limpa: documentacao auxiliar vai para `docs/` e evidencias de auditoria para `auditoria/`
 - Nunca criar arquivos soltos de Markdown, screenshot ou relatorio na raiz do projeto
+- Ao substituir codigo sem remove-lo, registrar em `docs/DEPRECATIONS.md` com arquivo, motivo, substituto, data e condicao de remocao
 
 ## Tooling Compartilhado
 - Skills canonicas no repositorio: `ui-ux-pro-max` e `playwright-skill`

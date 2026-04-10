@@ -223,14 +223,6 @@ Operacoes padrao:
 - Editar
 - Excluir
 
-Interacao:
-- Desktop: layout split-panel com tabela a esquerda e painel lateral a direita
-- Clicar em linha abre painel de detalhe; do detalhe, Editar abre formulario no mesmo painel
-- Adicionar abre formulario de criacao no painel lateral
-- Mobile: modais overlay para detalhe, edicao e criacao
-- Exclusao via dialogo de confirmacao overlay
-- Tabela sem coluna de acoes; acoes ficam no painel de detalhe
-
 ### 12. Criticidade de Ativos
 - Classificacao por metodo GUT
 - Faixa de resultado de `1` a `125`
@@ -239,7 +231,6 @@ Interacao:
 - Modulo de analise de falha com `5 Porques`, testes de hipotese e plano de acao
 - Acesso apenas para `SUPER_ADMIN` e `ADMIN`
 - Numero do RAF deve ser unico
-- Criacao e edicao pela tela devem persistir com sucesso no contexto da empresa ativa, sem falhar por campos tecnicos de auditoria
 
 ### 14. KPI
 Indicadores principais:

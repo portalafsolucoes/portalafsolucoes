@@ -23,11 +23,18 @@
 - Mudanca de convencao geral do projeto, stack, comandos ou fluxo operacional: atualizar `CLAUDE.md`
 - Mudanca de inventario de MCPs, skills ou onboarding de agentes: atualizar `docs/AI_SETUP.md`, `AGENTS.md` e `.github/copilot-instructions.md` quando aplicavel
 - Mudanca na organizacao de arquivos auxiliares ou no uso da raiz do repositorio: atualizar `README.md`, `CLAUDE.md`, `AGENTS.md` e `.github/copilot-instructions.md`
+- Mudanca que substitui componente ou arquivo sem remove-lo: registrar em `docs/DEPRECATIONS.md`
 
 ## Fechamento de Entrega
 - Ao concluir uma entrega, registrar em `docs/SPEC.md` o que ficou implementado e qualquer detalhe relevante de comportamento
 - Declarar gaps, limites ou pendencias quando a implementacao nao cobrir a spec inteira
 - Validar com `lint`, `test` e/ou `build` conforme o impacto
+
+## Deprecacao e Codigo Substituido
+- Todo codigo substituido mas mantido temporariamente deve ser registrado em `docs/DEPRECATIONS.md`
+- O registro deve conter: arquivo, motivo da deprecacao, substituto, data e condicao para remocao
+- Nenhum LLM ou desenvolvedor deve deixar codigo morto sem registro
+- Ao concluir uma entrega que depreca codigo, atualizar `docs/DEPRECATIONS.md` no mesmo ciclo
 
 ## Arquivos de Entrada por Ferramenta
 - Claude Code: `CLAUDE.md` + `.claude/rules/*.md`

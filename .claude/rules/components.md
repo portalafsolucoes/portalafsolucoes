@@ -246,6 +246,10 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
 - Modais de confirmacao (`ConfirmationModal`, `ConfirmDialog`): usam `size="sm"` sem `ModalSection`, permanecem overlay
 - Nenhum outro modal deve usar overlay no desktop. Todo detalhe, edicao e criacao abre no painel lateral direito
 
+### Deprecacao de Componentes de UI
+- Componentes de UI substituidos mas mantidos temporariamente devem ser registrados em `docs/DEPRECATIONS.md`
+- Nao usar componentes deprecados em codigo novo; sempre usar o substituto documentado
+
 ### Split-panel como padrao universal para listagens (OBRIGATORIO)
 Toda tela de listagem DEVE usar o padrao split-panel no desktop para TODOS os fluxos (detalhe, edicao, criacao, execucao, finalizacao):
 - Clicar em uma linha da tabela abre o painel de detalhe na metade direita (w-1/2)
@@ -273,7 +277,7 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 | `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal | - |
 | `/rafs` | RAF | Listagem split-panel | RAFViewModal, RAFEditModal, RAFFormModal | ConfirmationModal |
 | `/locations` | Localizacoes | Listagem | - | - |
-| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem | - | - |
+| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem split-panel | GenericDetailPanel, GenericEditPanel, CalendarModal, ResourceModal, AssetFamilyModal, GenericStepModal | ConfirmDialog |
 | `/criticality` | Criticidade | Listagem | - | - |
 | `/maintenance-plan/standard` | Plano Padrao | Listagem | - | - |
 | `/maintenance-plan/asset` | Plano por Ativo | Listagem | - | - |

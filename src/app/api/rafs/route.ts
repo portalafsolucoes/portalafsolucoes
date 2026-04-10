@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 // GET - Listar todos os RAFs
 export async function GET(request: NextRequest) {
@@ -51,12 +52,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // Verificar se é admin
-    if (session.role !== 'GESTOR' && session.role !== 'SUPER_ADMIN') {
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Apenas administradores podem criar RAFs' }, { status: 403 })
     }
 
     const body = await request.json()
+    const now = new Date().toISOString()
 
     const { data: raf, error } = await supabase
       .from('FailureAnalysisReport')
@@ -79,7 +80,8 @@ export async function POST(request: NextRequest) {
         failureType: body.failureType || 'RANDOM',
         actionPlan: body.actionPlan || [],
         companyId: session.companyId,
-        createdById: session.id
+        createdById: session.id,
+        updatedAt: now
       })
       .select('*, createdBy:User!createdById(id, firstName, lastName, email)')
       .single()
