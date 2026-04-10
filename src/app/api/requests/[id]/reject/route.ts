@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 export async function POST(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function POST(
     }
 
     // Verificar se usuário é admin
-    if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+    if (!isAdminRole(session)) {
       return NextResponse.json(
         { error: 'Apenas administradores podem rejeitar solicitações' },
         { status: 403 }
@@ -32,31 +33,12 @@ export async function POST(
       .eq('companyId', session.companyId)
       .eq('status', 'PENDING')
       .single()
-    
+
     if (fetchError || !maintenanceRequest) {
       return NextResponse.json(
         { error: 'Solicitação não encontrada ou já processada' },
         { status: 404 }
       )
-    }
-
-
-    // Se for ADMIN (não SUPER_ADMIN), verificar se é líder da equipe atribuída
-    if (session.role === 'GESTOR') {
-      const { data: userTeams } = await supabase
-        .from('Team')
-        .select('id')
-        .eq('leaderId', session.id)
-        .eq('companyId', session.companyId)
-
-      const isTeamLeader = userTeams?.some(team => team.id === maintenanceRequest.teamId) || false
-      
-      if (!isTeamLeader) {
-        return NextResponse.json(
-          { error: 'Você só pode rejeitar solicitações atribuídas à sua equipe' },
-          { status: 403 }
-        )
-      }
     }
 
     // Atualizar Request para REJECTED

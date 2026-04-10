@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
+import { isAdminRole } from '@/lib/user-roles'
 
 /**
  * GET /api/admin/units
  * Lista unidades da empresa do admin logado.
- * Apenas SUPER_ADMIN e GESTOR podem acessar.
+ * Apenas SUPER_ADMIN e ADMIN podem acessar.
  */
 export async function GET() {
   const session = await getSession()
@@ -13,7 +14,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

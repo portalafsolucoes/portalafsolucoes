@@ -10,6 +10,7 @@ import { ModalSection } from '@/components/ui/ModalSection'
 import { useAuth } from '@/hooks/useAuth'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
+import { isAdminRole } from '@/lib/user-roles'
 
 interface Unit {
   id: string
@@ -222,7 +223,7 @@ export default function AdminUnitsPage() {
   const [deleteUnit, setDeleteUnit] = useState<Unit | null>(null)
 
   useEffect(() => {
-    if (!authLoading && role !== 'SUPER_ADMIN' && role !== 'GESTOR') {
+    if (!authLoading && !isAdminRole(role)) {
       router.push('/dashboard')
     }
   }, [authLoading, role, router])

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { generateInternalId } from '@/lib/workOrderUtils'
+import { isAdminRole } from '@/lib/user-roles'
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +15,7 @@ export async function POST(
     }
 
     // Verificar se usuário é admin
-    if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+    if (!isAdminRole(session)) {
       return NextResponse.json(
         { error: 'Apenas administradores podem aprovar solicitações' },
         { status: 403 }

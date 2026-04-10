@@ -1,72 +1,76 @@
+import { normalizeUserRole } from '@/lib/user-roles'
+
 export function getRoleLabel(role: string) {
-  switch (role) {
+  switch (normalizeUserRole(role)) {
     case 'SUPER_ADMIN':
       return 'Super Administrador'
-    case 'GESTOR':
-      return 'Gestor'
-    case 'PLANEJADOR':
-      return 'Planejador'
-    case 'MECANICO':
-      return 'Mecânico'
-    case 'ELETRICISTA':
-      return 'Eletricista'
-    case 'OPERADOR':
-      return 'Operador'
-    case 'CONSTRUTOR_CIVIL':
-      return 'Construtor Civil'
+    case 'ADMIN':
+      return 'Administrador'
+    case 'TECHNICIAN':
+      return 'Técnico'
+    case 'LIMITED_TECHNICIAN':
+      return 'Técnico Limitado'
+    case 'REQUESTER':
+      return 'Solicitante'
+    case 'VIEW_ONLY':
+      return 'Somente Consulta'
     default:
       return role
   }
 }
 
 export function getRoleBadgeClass(role: string) {
-  switch (role) {
+  switch (normalizeUserRole(role)) {
     case 'SUPER_ADMIN':
       return 'bg-surface-low text-foreground border-border'
-    case 'GESTOR':
+    case 'ADMIN':
       return 'bg-primary/10 text-foreground border-border'
-    case 'PLANEJADOR':
-      return 'bg-primary/10 text-foreground border-border'
-    case 'OPERADOR':
+    case 'TECHNICIAN':
       return 'bg-success-light text-success-light-foreground border-border'
-    case 'CONSTRUTOR_CIVIL':
+    case 'LIMITED_TECHNICIAN':
       return 'bg-muted text-foreground border-border'
+    case 'REQUESTER':
+      return 'bg-primary-dim/10 text-foreground border-border'
+    case 'VIEW_ONLY':
+      return 'bg-surface-low text-muted-foreground border-border'
     default:
       return 'bg-surface-low text-foreground border-border'
   }
 }
 
 export function getAvatarClass(role: string) {
-  switch (role) {
+  switch (normalizeUserRole(role)) {
     case 'SUPER_ADMIN':
       return 'bg-primary-graphite'
-    case 'GESTOR':
+    case 'ADMIN':
       return 'bg-primary'
-    case 'PLANEJADOR':
-      return 'bg-primary'
-    case 'OPERADOR':
+    case 'TECHNICIAN':
       return 'bg-success'
+    case 'LIMITED_TECHNICIAN':
+      return 'bg-on-surface-variant'
+    case 'REQUESTER':
+      return 'bg-primary-dim'
+    case 'VIEW_ONLY':
+      return 'bg-surface-high'
     default:
       return 'bg-primary-graphite'
   }
 }
 
 export function getRoleDescription(role: string) {
-  switch (role) {
+  switch (normalizeUserRole(role)) {
     case 'SUPER_ADMIN':
       return 'Controle total do sistema, empresas, unidades, usuários e módulos.'
-    case 'GESTOR':
+    case 'ADMIN':
       return 'Gerencia a operação da empresa, aprova solicitações e acompanha indicadores.'
-    case 'PLANEJADOR':
-      return 'Planeja manutenções, agendas e planos preventivos da unidade.'
-    case 'MECANICO':
+    case 'TECHNICIAN':
       return 'Executa ordens de serviço atribuídas e registra atividades de campo.'
-    case 'ELETRICISTA':
-      return 'Executa ordens de serviço elétricas e acompanha a operação atribuída.'
-    case 'OPERADOR':
+    case 'LIMITED_TECHNICIAN':
+      return 'Executa ordens de serviço com escopo restrito e acompanha atividades atribuídas.'
+    case 'REQUESTER':
       return 'Abre solicitações e acompanha o fluxo operacional do dia a dia.'
-    case 'CONSTRUTOR_CIVIL':
-      return 'Atua em ordens de serviço civis e acompanha as atividades atribuídas.'
+    case 'VIEW_ONLY':
+      return 'Acesso somente leitura aos módulos permitidos, sem criar, editar ou aprovar.'
     default:
       return 'Perfil de acesso configurado para sua conta.'
   }

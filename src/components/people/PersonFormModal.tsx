@@ -57,6 +57,10 @@ interface UserPayload {
   password?: string
 }
 
+function isValidUserEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+}
+
 function PanelSection({
   title,
   defaultOpen = true,
@@ -218,6 +222,16 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
 
     if (!userId && !formData.password) {
       alert('A senha é obrigatória para novos usuários')
+      return
+    }
+
+    if (!isValidUserEmail(formData.email)) {
+      alert('Informe um email válido com domínio completo, por exemplo nome@empresa.com')
+      return
+    }
+
+    if (formData.password && formData.email.trim().toLowerCase() === formData.password.trim().toLowerCase()) {
+      alert('Email e senha não podem ser iguais')
       return
     }
 

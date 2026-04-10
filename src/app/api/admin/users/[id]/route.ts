@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
+import { isAdminRole } from '@/lib/user-roles'
+
+type UnitSummary = {
+  id: string
+  name: string
+}
+
+type UserUnitRow = {
+  unitId: string
+  unit: UnitSummary | null
+}
+
+type UserUpdateData = Record<string, unknown> & {
+  password?: string
+  username?: string
+}
 
 /**
  * GET /api/admin/users/[id]
@@ -16,7 +32,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -39,13 +55,14 @@ export async function GET(
     .select('unitId, unit:Location!unitId(id, name)')
     .eq('userId', id)
 
-  const { password, ...userSafe } = user
+  const userSafe = { ...user }
+  delete userSafe.password
 
   return NextResponse.json({
     data: {
       ...userSafe,
-      units: (userUnits || []).map((uu: any) => uu.unit),
-      unitIds: (userUnits || []).map((uu: any) => uu.unitId),
+      units: ((userUnits || []) as UserUnitRow[]).flatMap((uu) => (uu.unit ? [uu.unit] : [])),
+      unitIds: ((userUnits || []) as UserUnitRow[]).map((uu) => uu.unitId),
     },
   })
 }
@@ -63,7 +80,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -74,6 +91,7 @@ export async function PUT(
     phone, jobTitle, rate, enabled, calendarId, locationId,
     unitIds, // string[] - novas unidades
   } = body
+  const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 
   // Verificar que o usuário existe na empresa
   const { data: existing } = await supabase
@@ -87,12 +105,31 @@ export async function PUT(
     return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
   }
 
+  if (!firstName || !lastName || !normalizedEmail) {
+    return NextResponse.json({ error: 'Campos obrigatórios: email, nome e sobrenome' }, { status: 400 })
+  }
+
+  if (!validateEmail(normalizedEmail)) {
+    return NextResponse.json({ error: 'Informe um email válido com domínio completo, por exemplo nome@empresa.com' }, { status: 400 })
+  }
+
+  if (password) {
+    const passwordValidation = validatePassword(password)
+    if (!passwordValidation.valid) {
+      return NextResponse.json({ error: 'Senha deve ter pelo menos 8 caracteres' }, { status: 400 })
+    }
+
+    if (normalizedEmail === password.trim().toLowerCase()) {
+      return NextResponse.json({ error: 'Email e senha não podem ser iguais' }, { status: 400 })
+    }
+  }
+
   // Verificar email duplicado
-  if (email && email !== existing.email) {
+  if (normalizedEmail !== existing.email) {
     const { data: emailExists } = await supabase
       .from('User')
       .select('id')
-      .eq('email', email)
+      .eq('email', normalizedEmail)
       .single()
 
     if (emailExists) {
@@ -100,13 +137,13 @@ export async function PUT(
     }
   }
 
-  const updateData: any = {
+  const updateData: UserUpdateData = {
     updatedAt: new Date().toISOString(),
   }
 
   if (firstName !== undefined) updateData.firstName = firstName
   if (lastName !== undefined) updateData.lastName = lastName
-  if (email !== undefined) updateData.email = email
+  if (normalizedEmail !== undefined) updateData.email = normalizedEmail
   if (role !== undefined) updateData.role = role
   if (phone !== undefined) updateData.phone = phone || null
   if (jobTitle !== undefined) updateData.jobTitle = jobTitle || null
@@ -119,8 +156,8 @@ export async function PUT(
     updateData.password = await hashPassword(password)
   }
 
-  if (email && email !== existing.email) {
-    updateData.username = email.split('@')[0]
+  if (normalizedEmail !== existing.email) {
+    updateData.username = normalizedEmail.split('@')[0]
   }
 
   const { error: updateError } = await supabase
@@ -178,7 +215,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

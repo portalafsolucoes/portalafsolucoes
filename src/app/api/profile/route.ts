@@ -110,10 +110,25 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
+      if (locationId) {
+        const { data: location, error: locationError } = await supabase
+          .from('Location')
+          .select('id')
+          .eq('id', locationId)
+          .eq('companyId', session.companyId)
+          .maybeSingle()
+
+        if (locationError || !location) {
+          return NextResponse.json(
+            { error: 'Localização principal inválida para a empresa ativa.' },
+            { status: 400 }
+          )
+        }
+      }
+
       updateData.firstName = firstName.trim()
       updateData.lastName = lastName.trim()
       updateData.email = email.trim().toLowerCase()
-      updateData.username = email.trim().split('@')[0]
       updateData.phone = phone?.trim() || null
       updateData.jobTitle = jobTitle?.trim() || null
       updateData.locationId = locationId || null
@@ -151,6 +166,7 @@ export async function PATCH(request: NextRequest) {
       .from('User')
       .update(updateData)
       .eq('id', session.id)
+      .eq('companyId', session.companyId)
       .select(`
         id,
         email,
@@ -163,6 +179,15 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (updateError || !updatedUser) {
+      console.error('Profile update error:', updateError)
+
+      if (updateError?.code === '23505') {
+        return NextResponse.json(
+          { error: 'Já existe outro registro com os dados informados.' },
+          { status: 409 }
+        )
+      }
+
       return NextResponse.json({ error: 'Erro ao atualizar perfil.' }, { status: 500 })
     }
 

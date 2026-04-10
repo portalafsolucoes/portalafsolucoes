@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 /**
  * API de Sincronização com TOTVS/Protheus
@@ -17,8 +18,8 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    // Apenas SUPER_ADMIN e GESTOR podem sincronizar
-    if (!['SUPER_ADMIN', 'GESTOR'].includes(session.role)) {
+    // Apenas SUPER_ADMIN e ADMIN podem sincronizar
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Acesso restrito' }, { status: 403 })
     }
 

@@ -1,12 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
+import { isAdminRole } from '@/lib/user-roles'
+
+type AdminUserRow = {
+  id: string
+  [key: string]: unknown
+}
+
+type UnitSummary = {
+  id: string
+  name: string
+}
+
+type UserUnitRow = {
+  userId: string
+  unit: UnitSummary | null
+}
+
+type EnrichedAdminUser = AdminUserRow & {
+  units: UnitSummary[]
+}
 
 /**
  * GET /api/admin/users
  * Lista usuários da empresa com informações de unidades.
- * Apenas SUPER_ADMIN e GESTOR.
+ * Apenas SUPER_ADMIN e ADMIN.
  */
 export async function GET(request: NextRequest) {
   const session = await getSession()
@@ -14,7 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -34,7 +54,12 @@ export async function GET(request: NextRequest) {
     .order('firstName')
 
   if (roleFilter) {
-    query = query.eq('role', roleFilter)
+    const roles = roleFilter.split(',').map(r => r.trim()).filter(Boolean)
+    if (roles.length === 1) {
+      query = query.eq('role', roles[0])
+    } else {
+      query = query.in('role', roles)
+    }
   }
 
   if (enabledFilter !== null && enabledFilter !== undefined) {
@@ -49,7 +74,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Buscar vínculos UserUnit para cada usuário
-  const userIds = (users || []).map((u: any) => u.id)
+  const userIds = ((users || []) as AdminUserRow[]).map((u) => u.id)
 
   const { data: userUnits } = await supabase
     .from('UserUnit')
@@ -57,21 +82,23 @@ export async function GET(request: NextRequest) {
     .in('userId', userIds.length > 0 ? userIds : ['__none__'])
 
   // Mapear unidades por usuário
-  const unitsByUser: Record<string, any[]> = {}
-  for (const uu of (userUnits || [])) {
+  const unitsByUser: Record<string, UnitSummary[]> = {}
+  for (const uu of (userUnits || []) as UserUnitRow[]) {
     if (!unitsByUser[uu.userId]) unitsByUser[uu.userId] = []
-    unitsByUser[uu.userId].push(uu.unit)
+    if (uu.unit) {
+      unitsByUser[uu.userId].push(uu.unit)
+    }
   }
 
-  let enriched = (users || []).map((u: any) => ({
+  let enriched: EnrichedAdminUser[] = ((users || []) as AdminUserRow[]).map((u) => ({
     ...u,
     units: unitsByUser[u.id] || [],
   }))
 
   // Filtrar por unidade se solicitado
   if (unitFilter) {
-    enriched = enriched.filter((u: any) =>
-      u.units.some((unit: any) => unit.id === unitFilter)
+    enriched = enriched.filter((u) =>
+      u.units.some((unit) => unit.id === unitFilter)
     )
   }
 
@@ -81,7 +108,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/admin/users
  * Cria um novo usuário com role e unidades vinculadas.
- * Apenas SUPER_ADMIN e GESTOR.
+ * Apenas SUPER_ADMIN e ADMIN.
  */
 export async function POST(request: NextRequest) {
   const session = await getSession()
@@ -89,7 +116,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -99,20 +126,30 @@ export async function POST(request: NextRequest) {
     phone, jobTitle, rate, calendarId, locationId,
     unitIds, // string[] - unidades a vincular
   } = body
+  const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
 
   if (!email || !password || !firstName || !lastName) {
     return NextResponse.json({ error: 'Campos obrigatórios: email, senha, nome e sobrenome' }, { status: 400 })
   }
 
-  if (password.length < 6) {
-    return NextResponse.json({ error: 'Senha deve ter pelo menos 6 caracteres' }, { status: 400 })
+  if (!validateEmail(normalizedEmail)) {
+    return NextResponse.json({ error: 'Informe um email válido com domínio completo, por exemplo nome@empresa.com' }, { status: 400 })
+  }
+
+  const passwordValidation = validatePassword(password)
+  if (!passwordValidation.valid) {
+    return NextResponse.json({ error: 'Senha deve ter pelo menos 8 caracteres' }, { status: 400 })
+  }
+
+  if (normalizedEmail === password.trim().toLowerCase()) {
+    return NextResponse.json({ error: 'Email e senha não podem ser iguais' }, { status: 400 })
   }
 
   // Verificar email duplicado
   const { data: existing } = await supabase
     .from('User')
     .select('id')
-    .eq('email', email)
+    .eq('email', normalizedEmail)
     .single()
 
   if (existing) {
@@ -120,7 +157,7 @@ export async function POST(request: NextRequest) {
   }
 
   const hashedPassword = await hashPassword(password)
-  let username = email.split('@')[0]
+  let username = normalizedEmail.split('@')[0]
 
   const { data: existingUsername } = await supabase
     .from('User')
@@ -129,7 +166,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (existingUsername) {
-    username = email.replace('@', '_at_').replace(/\./g, '_')
+    username = normalizedEmail.replace('@', '_at_').replace(/\./g, '_')
   }
 
   const userId = generateId()
@@ -142,12 +179,12 @@ export async function POST(request: NextRequest) {
     .from('User')
     .insert({
       id: userId,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       firstName,
       lastName,
       username,
-      role: role || 'MECANICO',
+      role: role || 'TECHNICIAN',
       phone: phone || null,
       jobTitle: jobTitle || null,
       rate: rate || 0,

@@ -13,6 +13,7 @@ import {
   getRoleDescription,
   getRoleLabel,
 } from '@/components/profile/profile-helpers'
+import { isAdminRole } from '@/lib/user-roles'
 
 export default function ProfilePage() {
   const { user, isLoading, companyName } = useAuth()
@@ -39,7 +40,7 @@ export default function ProfilePage() {
   const fullName = `${user.firstName} ${user.lastName}`.trim()
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
   const roleLabel = getRoleLabel(user.role)
-  const canManageBrand = user.role === 'SUPER_ADMIN' || user.role === 'GESTOR'
+  const canManageBrand = isAdminRole(user.role)
 
   return (
     <PageContainer>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se usuário pode ver aprovações
-    if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+    if (!isAdminRole(session)) {
       return NextResponse.json(
         { error: 'Apenas administradores podem ver aprovações' },
         { status: 403 }

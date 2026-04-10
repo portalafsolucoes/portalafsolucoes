@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 import { getRoleDisplayName } from '@/lib/permissions'
 import type { UserRole } from '@/lib/permissions'
+import { isAdminRole } from '@/lib/user-roles'
 
 interface UserUnit {
   id: string
@@ -39,13 +40,22 @@ interface UnitOption {
 
 const ALL_ROLES: { value: string; label: string }[] = [
   { value: 'SUPER_ADMIN', label: 'Super Administrador' },
-  { value: 'GESTOR', label: 'Gestor' },
-  { value: 'PLANEJADOR', label: 'Planejador' },
-  { value: 'MECANICO', label: 'Mecânico' },
-  { value: 'ELETRICISTA', label: 'Eletricista' },
-  { value: 'OPERADOR', label: 'Operador' },
-  { value: 'CONSTRUTOR_CIVIL', label: 'Construtor Civil' },
+  { value: 'ADMIN', label: 'Administrador' },
+  { value: 'TECHNICIAN', label: 'Técnico' },
+  { value: 'LIMITED_TECHNICIAN', label: 'Técnico Limitado' },
+  { value: 'REQUESTER', label: 'Solicitante' },
+  { value: 'VIEW_ONLY', label: 'Somente Consulta' },
 ]
+
+// Mapeia role canônico para valores legados armazenados no banco
+const CANONICAL_TO_LEGACY_ROLES: Record<string, string> = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN,GESTOR,PLANEJADOR',
+  TECHNICIAN: 'TECHNICIAN,MECANICO',
+  LIMITED_TECHNICIAN: 'LIMITED_TECHNICIAN,ELETRICISTA,CONSTRUTOR_CIVIL',
+  REQUESTER: 'REQUESTER,OPERADOR',
+  VIEW_ONLY: 'VIEW_ONLY',
+}
 
 // ─── User Detail Panel ────────────────────────────────────────────────────────
 
@@ -451,7 +461,7 @@ export default function AdminUsersPage() {
   const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null)
 
   useEffect(() => {
-    if (!authLoading && currentRole !== 'SUPER_ADMIN' && currentRole !== 'GESTOR') {
+    if (!authLoading && !isAdminRole(currentRole)) {
       router.push('/dashboard')
     }
   }, [authLoading, currentRole, router])
@@ -466,7 +476,7 @@ export default function AdminUsersPage() {
     try {
       setLoading(true)
       const params = new URLSearchParams()
-      if (roleFilter) params.append('role', roleFilter)
+      if (roleFilter) params.append('role', CANONICAL_TO_LEGACY_ROLES[roleFilter] ?? roleFilter)
       if (unitFilter) params.append('unitId', unitFilter)
 
       const res = await fetch(`/api/admin/users?${params}`)

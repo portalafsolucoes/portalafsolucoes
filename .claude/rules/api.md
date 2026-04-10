@@ -28,6 +28,8 @@ globs: src/app/api/**,src/actions/**
 - Em sucesso, preferir respostas JSON consistentes; neste repo os consumidores frequentemente esperam `{ data: ... }`
 - Em falhas, retornar JSON com `error` e status HTTP coerente (`400`, `401`, `403`, `404`, `409`, `500`)
 - Toda acao que altera dados deve validar payload, status permitidos e relacoes obrigatorias antes de persistir
+- Campos sensiveis como `password` nunca podem retornar para a UI, nem em listagens, nem em detalhes, nem em respostas de edicao
+- APIs de usuario devem normalizar email e rejeitar payloads com email sem dominio completo ou com email igual a senha
 
 ## Sincronizacao de Documentacao
 - Toda mudanca de contrato, permissao, validacao ou comportamento de rota/action deve atualizar a secao funcional correspondente em `docs/SPEC.md`
@@ -52,3 +54,5 @@ globs: src/app/api/**,src/actions/**
 - `TECHNICIAN` e `LIMITED_TECHNICIAN` nao devem cair no `Dashboard`; o destino inicial e `Ordens de Servico`
 - A troca de unidade so pode ser oferecida a `SUPER_ADMIN` e `ADMIN`, e somente quando houver mais de uma unidade acessivel
 - O menu do usuario em `Configuracoes` deve expor apenas as abas `Perfil` e `Seguranca`
+- O salvamento de `Configuracoes > Perfil` nao deve sobrescrever campos tecnicos internos nao editaveis no formulario, como `username`
+- Quando `Configuracoes > Perfil` receber `locationId`, a API deve validar que a localizacao pertence a empresa ativa da sessao

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
+import { normalizeUserRole } from '@/lib/user-roles'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { GenericCrudTable, type ColumnConfig } from '@/components/basic-registrations/GenericCrudTable'
@@ -64,13 +65,12 @@ interface TabConfig {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  GESTOR: 'Gestor',
-  PLANEJADOR: 'Planejador',
-  MECANICO: 'Mecanico',
-  ELETRICISTA: 'Eletricista',
-  OPERADOR: 'Operador',
-  CONSTRUTOR_CIVIL: 'Construtor Civil',
+  SUPER_ADMIN: 'Super Administrador',
+  ADMIN: 'Administrador',
+  TECHNICIAN: 'Técnico',
+  LIMITED_TECHNICIAN: 'Técnico Limitado',
+  REQUESTER: 'Solicitante',
+  VIEW_ONLY: 'Somente Consulta',
 }
 
 function PeopleSummarySection({ users }: { users: any[] }) {
@@ -94,14 +94,14 @@ function PeopleSummarySection({ users }: { users: any[] }) {
   const groupedByRole = useMemo(() => {
     const groups: Record<string, any[]> = {}
     for (const user of filtered) {
-      const role = user.role || 'SEM_CARGO'
+      const role = normalizeUserRole(user.role) || 'SEM_CARGO'
       if (!groups[role]) groups[role] = []
       groups[role].push(user)
     }
     return groups
   }, [filtered])
 
-  const roleOrder = ['MECANICO', 'ELETRICISTA', 'OPERADOR', 'CONSTRUTOR_CIVIL', 'PLANEJADOR', 'GESTOR', 'SUPER_ADMIN']
+  const roleOrder = ['TECHNICIAN', 'LIMITED_TECHNICIAN', 'REQUESTER', 'VIEW_ONLY', 'ADMIN', 'SUPER_ADMIN']
   const sortedRoles = Object.keys(groupedByRole).sort((a, b) => {
     const ia = roleOrder.indexOf(a)
     const ib = roleOrder.indexOf(b)

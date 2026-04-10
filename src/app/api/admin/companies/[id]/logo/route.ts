@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
 import { uploadFile, deleteFileByUrl } from '@/lib/storage'
+import { isAdminRole, isSuperAdminRole } from '@/lib/user-roles'
 
 /**
  * PATCH /api/admin/companies/[id]/logo
  * Upload ou atualiza a logo de uma empresa.
- * Acessível por SUPER_ADMIN ou GESTOR da mesma empresa.
+ * Acessível por SUPER_ADMIN (qualquer empresa) ou ADMIN (apenas a própria empresa).
  */
 export async function PATCH(
   request: NextRequest,
@@ -20,12 +21,11 @@ export async function PATCH(
 
     const { id: companyId } = await params
 
-    // SUPER_ADMIN pode editar qualquer empresa; GESTOR só a própria
-    if (session.role === 'GESTOR' && session.companyId !== companyId) {
+    // SUPER_ADMIN pode editar qualquer empresa; ADMIN só a própria
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
-
-    if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+    if (!isSuperAdminRole(session) && session.companyId !== companyId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -116,11 +116,10 @@ export async function DELETE(
 
     const { id: companyId } = await params
 
-    if (session.role === 'GESTOR' && session.companyId !== companyId) {
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
-
-    if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+    if (!isSuperAdminRole(session) && session.companyId !== companyId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

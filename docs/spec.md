@@ -108,7 +108,9 @@ Regras complementares:
 
 ### Boas Praticas de Implementacao com Impacto Funcional
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
-- Se o banco ou legado ainda possuir perfis antigos, a aplicacao deve normalizar esses valores para os papeis canonicos antes de decidir sidebar, redirects, badges e permissoes
+- Se o banco ou legado ainda possuir perfis antigos (`GESTOR`, `PLANEJADOR`, `MECANICO`, `ELETRICISTA`, `CONSTRUTOR_CIVIL`, `OPERADOR`), a aplicacao deve normalizar esses valores para os papeis canonicos antes de decidir sidebar, redirects, badges e permissoes
+- A borda de compatibilidade legado->canonico esta em `src/lib/user-roles.ts`. Os helpers `isAdminRole`, `isApproverRole`, `normalizeUserRole`, `getRoleDisplayName` devem ser reutilizados em toda nova checagem; nao reimplementar logica de papel localmente
+- Papeis legados armazenados no banco sao aceitos pelo sistema, porem toda decisao de acesso deve usar o papel canonico derivado da sessao (`session.canonicalRole`)
 - A normalizacao de papel deve considerar contexto confiavel do usuario, como `email`, `username`, `jobTitle` e papel canonico de sessao; nao deve depender apenas do valor legado bruto
 - A UI e a API devem usar a mesma regra central de permissao. Nao e permitido manter matriz de acesso diferente entre frontend e backend
 - O endpoint `/api/auth/me` e a leitura de modulos da empresa devem ser tratados como dados dinamicos de sessao, sem cache compartilhado entre usuarios
@@ -142,6 +144,9 @@ Regras complementares:
 - Nao existe cadastro publico
 - Apenas administradores criam usuarios
 - Usuario desativado nao pode acessar
+- O sistema nunca deve exibir senha em tabelas, detalhes, formularios de edicao, exports ou respostas de API
+- Nenhum fluxo de cadastro/edicao pode aceitar senha no campo de email; email deve ser valido com dominio completo, por exemplo `nome@empresa.com`
+- Email e senha nao podem ser iguais no cadastro ou na edicao de usuarios
 - Apos login, o usuario vai para `/hub`
 - Sessao dura `7 dias`
 - A sessao deve carregar o papel canonico do usuario
@@ -187,6 +192,7 @@ Regras complementares:
 - Gestao de usuarios por `SUPER_ADMIN` e `ADMIN`
 - Equipes agrupam tecnicos para atribuicao de OS e ativos
 - Usuarios podem ter multiplas unidades de acesso
+- Formularios de pessoa devem exigir email valido com dominio completo e nunca reapresentar senha salva; no modo de edicao, o campo de senha deve permanecer vazio e opcional
 
 ### 9. Planos de Manutencao
 - Planos padrao por familia de ativos
@@ -273,6 +279,8 @@ Regras:
 ### 16.1 Configuracoes do Usuario
 - O menu do usuario em `Configuracoes` deve exibir apenas as abas `Perfil` e `Seguranca`
 - **NAO** manter abas `Preferencias` ou `Empresa` nesse fluxo por enquanto
+- A aba `Perfil` deve permitir salvar nome, sobrenome, email, telefone, cargo e localizacao principal sem falhar por campos tecnicos internos que nao fazem parte do formulario
+- A localizacao principal salva em `Configuracoes > Perfil` deve pertencer a empresa ativa
 
 ### 17. Pecas e Estoque
 - Modulo atualmente desativado

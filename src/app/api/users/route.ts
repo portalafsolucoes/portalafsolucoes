@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
+
+type UserListRow = Record<string, unknown> & {
+  calendar?: {
+    name?: string | null
+  } | null
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -63,7 +69,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const result = (users || []).map((u: any) => ({
+    const result = ((users || []) as UserListRow[]).map((u) => ({
       ...u,
       calendarName: u.calendar?.name || null,
     }))
@@ -92,6 +98,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { email, password, firstName, lastName, role, phone, jobTitle, rate, calendarId, locationId, unitIds } = body
+    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
@@ -100,10 +107,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!validateEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: 'Informe um email válido com domínio completo, por exemplo nome@empresa.com' },
+        { status: 400 }
+      )
+    }
+
+    const passwordValidation = validatePassword(password)
+    if (!passwordValidation.valid) {
+      return NextResponse.json(
+        { error: 'A senha deve ter pelo menos 8 caracteres' },
+        { status: 400 }
+      )
+    }
+
+    if (normalizedEmail === password.trim().toLowerCase()) {
+      return NextResponse.json(
+        { error: 'Email e senha não podem ser iguais' },
+        { status: 400 }
+      )
+    }
+
     const { data: existingUser, error: checkError } = await supabase
       .from('User')
       .select('id')
-      .eq('email', email)
+      .eq('email', normalizedEmail)
       .single()
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -122,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await hashPassword(password)
-    let username = email.split('@')[0]
+    let username = normalizedEmail.split('@')[0]
 
     // Verificar se o username já existe e gerar um único
     const { data: existingUsername } = await supabase
@@ -132,7 +161,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existingUsername) {
-      username = email.replace('@', '_at_').replace(/\./g, '_')
+      username = normalizedEmail.replace('@', '_at_').replace(/\./g, '_')
     }
 
     const now = new Date().toISOString()
@@ -145,7 +174,7 @@ export async function POST(request: NextRequest) {
       .from('User')
       .insert({
         id: userId,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         firstName,
         lastName,

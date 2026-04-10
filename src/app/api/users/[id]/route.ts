@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
+
+type UserUpdateData = Record<string, unknown> & {
+  password?: string
+  username?: string
+}
 
 export async function GET(
   request: NextRequest,
@@ -63,7 +68,8 @@ export async function GET(
     if (tmError) throw tmError
 
     // Montar resposta completa
-    const { password, ...userSafe } = user
+    const userSafe = { ...user }
+    delete userSafe.password
     const userData = {
       ...userSafe,
       location,
@@ -99,6 +105,7 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, locationId, calendarId, unitIds } = body
+    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 
     // Verificar se o usuário existe e pertence à empresa
     const { data: existingUser, error: findError } = await supabase
@@ -112,12 +119,43 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    if (!firstName || !lastName || !normalizedEmail) {
+      return NextResponse.json(
+        { error: 'Nome, sobrenome e email são obrigatórios' },
+        { status: 400 }
+      )
+    }
+
+    if (!validateEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: 'Informe um email válido com domínio completo, por exemplo nome@empresa.com' },
+        { status: 400 }
+      )
+    }
+
+    if (password) {
+      const passwordValidation = validatePassword(password)
+      if (!passwordValidation.valid) {
+        return NextResponse.json(
+          { error: 'A senha deve ter pelo menos 8 caracteres' },
+          { status: 400 }
+        )
+      }
+
+      if (normalizedEmail === password.trim().toLowerCase()) {
+        return NextResponse.json(
+          { error: 'Email e senha não podem ser iguais' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Verificar se o email já está em uso por outro usuário
-    if (email && email !== existingUser.email) {
+    if (normalizedEmail !== existingUser.email) {
       const { data: emailExists } = await supabase
         .from('User')
         .select('id')
-        .eq('email', email)
+        .eq('email', normalizedEmail)
         .single()
 
       if (emailExists) {
@@ -128,10 +166,10 @@ export async function PUT(
       }
     }
 
-    const updateData: any = {
+    const updateData: UserUpdateData = {
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       role,
       phone,
       jobTitle,
@@ -147,8 +185,8 @@ export async function PUT(
     }
 
     // Atualizar username se o email mudou
-    if (email && email !== existingUser.email) {
-      updateData.username = email.split('@')[0]
+    if (normalizedEmail !== existingUser.email) {
+      updateData.username = normalizedEmail.split('@')[0]
     }
 
     const { data: user, error: updateError } = await supabase

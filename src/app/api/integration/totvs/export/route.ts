@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 /**
  * API de Exportação para formato TOTVS/Protheus
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    if (!['SUPER_ADMIN', 'GESTOR'].includes(session.role)) {
+    if (!isAdminRole(session)) {
       return NextResponse.json({ error: 'Acesso restrito' }, { status: 403 })
     }
 

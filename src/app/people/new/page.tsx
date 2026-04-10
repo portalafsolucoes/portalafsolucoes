@@ -205,12 +205,11 @@ export default function NewPersonPage() {
                   className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="SUPER_ADMIN">Super Administrador</option>
-                  <option value="GESTOR">Gestor</option>
-                  <option value="PLANEJADOR">Planejador</option>
-                  <option value="MECANICO">Mecânico</option>
-                  <option value="ELETRICISTA">Eletricista</option>
-                  <option value="OPERADOR">Operador</option>
-                  <option value="CONSTRUTOR_CIVIL">Construtor Civil</option>
+                  <option value="ADMIN">Administrador</option>
+                  <option value="TECHNICIAN">Técnico</option>
+                  <option value="LIMITED_TECHNICIAN">Técnico Limitado</option>
+                  <option value="REQUESTER">Solicitante</option>
+                  <option value="VIEW_ONLY">Somente Consulta</option>
                 </select>
               </div>
               <div>

@@ -9,6 +9,15 @@ import { PersonFormModal } from '@/components/people/PersonFormModal'
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 
+const CANONICAL_TO_LEGACY_ROLES: Record<string, string> = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN,GESTOR,PLANEJADOR',
+  TECHNICIAN: 'TECHNICIAN,MECANICO',
+  LIMITED_TECHNICIAN: 'LIMITED_TECHNICIAN,ELETRICISTA,CONSTRUTOR_CIVIL',
+  REQUESTER: 'REQUESTER,OPERADOR',
+  VIEW_ONLY: 'VIEW_ONLY',
+}
+
 export default function PeoplePage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,8 +35,8 @@ export default function PeoplePage() {
     try {
       setLoading(true)
       const params = new URLSearchParams()
-      if (roleFilter) params.append('role', roleFilter)
-      
+      if (roleFilter) params.append('role', CANONICAL_TO_LEGACY_ROLES[roleFilter] ?? roleFilter)
+
       const response = await fetch(`/api/users?${params}`)
       const data = await response.json()
       
@@ -109,12 +118,11 @@ export default function PeoplePage() {
             >
               <option value="">Todos os Papéis</option>
               <option value="SUPER_ADMIN">Super Administrador</option>
-              <option value="GESTOR">Gestor</option>
-              <option value="PLANEJADOR">Planejador</option>
-              <option value="MECANICO">Mecânico</option>
-              <option value="ELETRICISTA">Eletricista</option>
-              <option value="OPERADOR">Operador</option>
-              <option value="CONSTRUTOR_CIVIL">Construtor Civil</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="TECHNICIAN">Técnico</option>
+              <option value="LIMITED_TECHNICIAN">Técnico Limitado</option>
+              <option value="REQUESTER">Solicitante</option>
+              <option value="VIEW_ONLY">Somente Consulta</option>
             </select>
           </div>
         </div>

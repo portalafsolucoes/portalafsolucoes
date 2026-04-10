@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isAdminRole } from '@/lib/user-roles'
 
 // GET - Retorna apenas a contagem de requests pendentes (otimizado para sidebar badge)
 export async function GET() {
@@ -8,7 +9,7 @@ export async function GET() {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+    if (!isAdminRole(session)) {
       return NextResponse.json({ count: 0 })
     }
 

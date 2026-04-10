@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
+import { isAdminRole } from '@/lib/user-roles'
 
 /**
  * PUT /api/admin/units/[id]
@@ -15,7 +16,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -73,7 +74,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'GESTOR') {
+  if (!isAdminRole(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

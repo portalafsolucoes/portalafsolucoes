@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         firstName,
         lastName,
         username,
-        role: 'GESTOR',
+        role: 'ADMIN',
         companyId: company.id,
         enabled: true,
         createdAt: now,
