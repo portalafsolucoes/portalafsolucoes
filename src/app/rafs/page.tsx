@@ -63,7 +63,7 @@ export default function RAFsPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
-  const [filterArea, setFilterArea] = useState('Contaminar')
+  const [filterArea] = useState('Contaminar')
   const [enableAreaFilter, setEnableAreaFilter] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [rafToDelete, setRafToDelete] = useState<string | null>(null)
@@ -266,7 +266,8 @@ export default function RAFsPage() {
                     {filteredRAFs.map((raf) => (
                       <div
                         key={raf.id}
-                        className="bg-card rounded-[4px] ambient-shadow p-3 hover:shadow-md transition-all"
+                        onClick={() => handleView(raf.id)}
+                        className={`bg-card rounded-[4px] ambient-shadow p-3 hover:shadow-md transition-all cursor-pointer ${selectedRAF?.id === raf.id ? 'ring-2 ring-primary' : ''}`}
                       >
                         <div className="flex flex-col gap-2">
                           <div className="flex items-start justify-between gap-2">
@@ -304,35 +305,6 @@ export default function RAFsPage() {
                               <span className="truncate">{raf.panelOperator}</span>
                             </div>
                           </div>
-
-                          <div className="flex gap-1 pt-1 border-t border-border">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleView(raf.id)}
-                              className="flex-1 text-[10px] px-2 py-1 h-7"
-                            >
-                              <Icon name="visibility" className="text-sm mr-1" />
-                              Ver
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(raf.id)}
-                              className="flex-1 text-[10px] px-2 py-1 h-7"
-                            >
-                              <Icon name="edit" className="text-sm mr-1" />
-                              Editar
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(raf.id)}
-                              className="flex-1 text-[10px] px-2 py-1 h-7 text-danger hover:bg-danger-light"
-                            >
-                              <Icon name="delete" className="text-sm" />
-                            </Button>
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -362,32 +334,27 @@ export default function RAFsPage() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Tipo
                           </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Ações
-                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-card divide-y divide-gray-200">
                         {filteredRAFs.map((raf) => (
-                          <tr key={raf.id} onClick={() => handleView(raf.id)} className="hover:bg-secondary cursor-pointer transition-colors">
+                          <tr
+                            key={raf.id}
+                            onClick={() => handleView(raf.id)}
+                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedRAF?.id === raf.id ? 'bg-secondary' : ''}`}
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 <Icon name="description" className="text-base text-primary" />
                                 <span className="text-sm font-semibold text-foreground">{raf.rafNumber}</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm text-muted-foreground">{raf.area}</span>
-                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{raf.area}</td>
                             <td className="px-6 py-4 max-w-xs">
                               <div className="text-sm text-foreground truncate">{raf.equipment}</div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm text-muted-foreground">{formatDate(raf.occurrenceDate)}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm text-muted-foreground">{raf.panelOperator}</span>
-                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(raf.occurrenceDate)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{raf.panelOperator}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                                 raf.failureType === 'REPETITIVE'
@@ -396,31 +363,6 @@ export default function RAFsPage() {
                               }`}>
                                 {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
                               </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleView(raf.id) }}
-                                  className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
-                                  title="Visualizar"
-                                >
-                                  <Icon name="visibility" className="text-base" />
-                                </button>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleEdit(raf.id) }}
-                                  className="p-1.5 text-muted-foreground hover:bg-secondary rounded transition-colors"
-                                  title="Editar"
-                                >
-                                  <Icon name="edit" className="text-base" />
-                                </button>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleDelete(raf.id) }}
-                                  className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Icon name="delete" className="text-base" />
-                                </button>
-                              </div>
                             </td>
                           </tr>
                         ))}
@@ -454,6 +396,8 @@ export default function RAFsPage() {
                     onClose={() => setSelectedRAF(null)}
                     raf={selectedRAF}
                     inPage
+                    onEdit={(id) => handleEdit(id)}
+                    onDelete={(id) => handleDelete(id)}
                   />
                 ) : null}
               </div>
@@ -470,6 +414,8 @@ export default function RAFsPage() {
             setSelectedRAF(null)
           }}
           raf={selectedRAF}
+          onEdit={(id) => { setShowMobileViewModal(false); handleEdit(id) }}
+          onDelete={(id) => { setShowMobileViewModal(false); handleDelete(id) }}
         />
       )}
       {isMobile && showEditModal && rafToEdit && (
