@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { useAuth } from '@/hooks/useAuth'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 
 interface Company {
@@ -45,21 +46,336 @@ interface ModuleConfig {
   enabled: boolean
 }
 
+// ─── Company Detail Panel ───────────────────────────────────────────────────
+
+interface CompanyDetailPanelProps {
+  company: Company
+  onClose: () => void
+  onEdit: () => void
+  onDelete: (company: Company) => void
+  onManageLogo: (company: Company) => void
+  onManageModules: (company: Company) => void
+}
+
+function CompanyDetailPanel({
+  company,
+  onClose,
+  onEdit,
+  onDelete,
+  onManageLogo,
+  onManageModules,
+}: CompanyDetailPanelProps) {
+  return (
+    <div className="h-full flex flex-col bg-card border-l border-border">
+      {/* Header */}
+      <div className="flex items-start justify-between p-4 border-b border-border">
+        <h2 className="text-xl font-bold text-foreground">{company.name}</h2>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-muted rounded transition-colors"
+        >
+          <Icon name="close" className="text-xl text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Action buttons */}
+        <div className="p-4 border-b border-border space-y-2">
+          <button
+            onClick={onEdit}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+          >
+            <Icon name="edit" className="text-base" />
+            Editar
+          </button>
+          <button
+            onClick={() => onManageLogo(company)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+          >
+            <Icon name="image" className="text-base" />
+            Gerenciar Logo
+          </button>
+          <button
+            onClick={() => onManageModules(company)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+          >
+            <Icon name="extension" className="text-base" />
+            Configurar Módulos
+          </button>
+          <button
+            onClick={() => onDelete(company)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
+          >
+            <Icon name="delete" className="text-base" />
+            Excluir
+          </button>
+        </div>
+
+        {/* Logo */}
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Logo</h3>
+          <div className="flex items-center gap-3">
+            {company.logo ? (
+              <div className="relative w-24 h-12 rounded-[4px] overflow-hidden bg-secondary flex-shrink-0">
+                <Image
+                  src={company.logo}
+                  alt={company.name}
+                  fill
+                  className="object-contain"
+                  sizes="96px"
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-12 rounded-[4px] bg-secondary flex items-center justify-center flex-shrink-0">
+                <Icon name="image" className="text-2xl text-muted-foreground" />
+              </div>
+            )}
+            <span className="text-sm text-muted-foreground">
+              {company.logo ? 'Logo configurada' : 'Sem logo'}
+            </span>
+          </div>
+        </div>
+
+        {/* Data */}
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground">E-mail</p>
+              <p className="text-sm text-foreground">{company.email || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Telefone</p>
+              <p className="text-sm text-foreground">{company.phone || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Website</p>
+              <p className="text-sm text-foreground">{company.website || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Criada em</p>
+              <p className="text-sm text-foreground">
+                {new Date(company.createdAt).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Usuários</p>
+              <p className="text-sm text-foreground">{company.userCount}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Módulos ativos</p>
+              <p className="text-sm text-foreground">{company.moduleCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Company Form Panel / Modal ──────────────────────────────────────────────
+
+interface CompanyFormData {
+  companyName: string
+  companyEmail: string
+  companyPhone: string
+  adminFirstName: string
+  adminLastName: string
+  adminEmail: string
+  adminPassword: string
+}
+
+interface CompanyFormPanelProps {
+  inPage?: boolean
+  onClose: () => void
+  onSubmit: (e: React.FormEvent) => void
+  formData: CompanyFormData
+  onChange: (field: keyof CompanyFormData, value: string) => void
+  saving: boolean
+  error: string
+  isEdit?: boolean
+}
+
+function CompanyFormPanel({
+  inPage,
+  onClose,
+  onSubmit,
+  formData,
+  onChange,
+  saving,
+  error,
+  isEdit,
+}: CompanyFormPanelProps) {
+  const formContent = (
+    <form onSubmit={onSubmit} className={inPage ? 'flex flex-1 min-h-0 flex-col' : undefined}>
+      <div className={inPage ? 'flex-1 overflow-y-auto p-4 space-y-3' : 'p-4 space-y-3'}>
+        {error && (
+          <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
+            {error}
+          </div>
+        )}
+
+        <ModalSection title="Dados da Empresa">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Nome da Empresa <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.companyName}
+                onChange={(e) => onChange('companyName', e.target.value)}
+                required
+                placeholder="Ex: Acme Ltda"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                E-mail da Empresa
+              </label>
+              <input
+                type="email"
+                value={formData.companyEmail}
+                onChange={(e) => onChange('companyEmail', e.target.value)}
+                placeholder="contato@empresa.com"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Telefone
+              </label>
+              <input
+                type="text"
+                value={formData.companyPhone}
+                onChange={(e) => onChange('companyPhone', e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+        </ModalSection>
+
+        {!isEdit && (
+          <ModalSection title="Administrador Inicial">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Nome <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.adminFirstName}
+                  onChange={(e) => onChange('adminFirstName', e.target.value)}
+                  required={!isEdit}
+                  placeholder="Nome"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Sobrenome <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.adminLastName}
+                  onChange={(e) => onChange('adminLastName', e.target.value)}
+                  required={!isEdit}
+                  placeholder="Sobrenome"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  E-mail do Admin <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.adminEmail}
+                  onChange={(e) => onChange('adminEmail', e.target.value)}
+                  required={!isEdit}
+                  placeholder="admin@empresa.com"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Senha <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={formData.adminPassword}
+                  onChange={(e) => onChange('adminPassword', e.target.value)}
+                  required={!isEdit}
+                  minLength={8}
+                  placeholder="Mínimo 8 caracteres"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+          </ModalSection>
+        )}
+      </div>
+
+      <div className={`flex gap-3 px-4 py-4 border-t border-border${inPage ? ' flex-shrink-0' : ''}`}>
+        <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={saving} className="flex-1">
+          <Icon name="save" className="text-base mr-2" />
+          {saving ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Salvar'}
+        </Button>
+      </div>
+    </form>
+  )
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <h2 className="text-xl font-bold text-foreground">
+            {isEdit ? 'Editar Empresa' : 'Nova Empresa'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-muted rounded transition-colors"
+          >
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
+        </div>
+        {formContent}
+      </div>
+    )
+  }
+
+  return formContent
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default function AdminPortalPage() {
   const { role, user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile()
 
   const [companies, setCompanies] = useState<Company[]>([])
   const [stats, setStats] = useState<PortalStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [statsLoading, setStatsLoading] = useState(true)
 
-  // Create company modal
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState('')
-  const [createForm, setCreateForm] = useState({
+  // Split-panel state
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const hasSidePanel = !isMobile && (selectedCompany !== null || isCreating)
+
+  // Company form
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [createForm, setCreateForm] = useState<CompanyFormData>({
     companyName: '',
     companyEmail: '',
     companyPhone: '',
@@ -81,6 +397,10 @@ export default function AdminPortalPage() {
   const [logoError, setLogoError] = useState('')
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
+
+  // Delete confirmation
+  const [deleteCompany, setDeleteCompany] = useState<Company | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!authLoading && role !== 'SUPER_ADMIN') {
@@ -125,25 +445,77 @@ export default function AdminPortalPage() {
     }
   }, [role, fetchCompanies, fetchStats])
 
-  // --- Create Company ---
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  const openCreate = () => {
+    setSelectedCompany(null)
+    setIsEditing(false)
+    setFormError('')
+    setCreateForm({
+      companyName: '',
+      companyEmail: '',
+      companyPhone: '',
+      adminFirstName: '',
+      adminLastName: '',
+      adminEmail: '',
+      adminPassword: '',
+    })
+    setIsCreating(true)
+  }
+
+  const handleSelectCompany = (company: Company) => {
+    setIsCreating(false)
+    setIsEditing(false)
+    setFormError('')
+    setSelectedCompany(company)
+  }
+
+  const handleEditOpen = () => {
+    if (!selectedCompany) return
+    setCreateForm({
+      companyName: selectedCompany.name,
+      companyEmail: selectedCompany.email || '',
+      companyPhone: selectedCompany.phone || '',
+      adminFirstName: '',
+      adminLastName: '',
+      adminEmail: '',
+      adminPassword: '',
+    })
+    setFormError('')
+    setIsEditing(true)
+    setIsCreating(false)
+  }
+
+  const handleCloseSidePanel = () => {
+    setSelectedCompany(null)
+    setIsCreating(false)
+    setIsEditing(false)
+    setFormError('')
+  }
+
+  const handleFormChange = (field: keyof CompanyFormData, value: string) => {
+    setCreateForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Create company
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault()
-    setCreateError('')
+    setFormError('')
 
     if (!createForm.companyName.trim() || !createForm.adminEmail.trim() ||
         !createForm.adminFirstName.trim() || !createForm.adminLastName.trim() ||
         !createForm.adminPassword.trim()) {
-      setCreateError('Preencha todos os campos obrigatórios')
+      setFormError('Preencha todos os campos obrigatórios')
       return
     }
 
     if (createForm.adminPassword.length < 8) {
-      setCreateError('A senha deve ter no mínimo 8 caracteres')
+      setFormError('A senha deve ter no mínimo 8 caracteres')
       return
     }
 
     try {
-      setCreating(true)
+      setSaving(true)
       const res = await fetch('/api/admin/companies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,30 +525,85 @@ export default function AdminPortalPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setCreateError(data.error || 'Erro ao criar empresa')
+        setFormError(data.error || 'Erro ao criar empresa')
         return
       }
 
-      setShowCreateModal(false)
-      setCreateForm({
-        companyName: '',
-        companyEmail: '',
-        companyPhone: '',
-        adminFirstName: '',
-        adminLastName: '',
-        adminEmail: '',
-        adminPassword: '',
-      })
+      setIsCreating(false)
       fetchCompanies()
       fetchStats()
     } catch {
-      setCreateError('Erro de conexão')
+      setFormError('Erro de conexão')
     } finally {
-      setCreating(false)
+      setSaving(false)
     }
   }
 
-  // --- Modules ---
+  // Edit company (only name/email/phone)
+  const handleEditCompany = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedCompany) return
+    setFormError('')
+
+    if (!createForm.companyName.trim()) {
+      setFormError('Nome da empresa é obrigatório')
+      return
+    }
+
+    try {
+      setSaving(true)
+      const res = await fetch(`/api/admin/companies/${selectedCompany.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: createForm.companyName,
+          email: createForm.companyEmail || null,
+          phone: createForm.companyPhone || null,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setFormError(data.error || 'Erro ao atualizar empresa')
+        return
+      }
+
+      // Refresh and update selected company
+      await fetchCompanies()
+      const updated = { ...selectedCompany, name: createForm.companyName, email: createForm.companyEmail || null, phone: createForm.companyPhone || null }
+      setSelectedCompany(updated)
+      setIsEditing(false)
+    } catch {
+      setFormError('Erro de conexão')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Delete company
+  const handleDeleteCompany = async () => {
+    if (!deleteCompany) return
+    try {
+      setDeleting(true)
+      const res = await fetch(`/api/admin/companies/${deleteCompany.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'Erro ao excluir empresa')
+        return
+      }
+      setDeleteCompany(null)
+      if (selectedCompany?.id === deleteCompany.id) setSelectedCompany(null)
+      fetchCompanies()
+      fetchStats()
+    } catch {
+      alert('Erro de conexão')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // Modules
   const openModules = async (company: Company) => {
     setModulesCompany(company)
     setModulesLoading(true)
@@ -228,7 +655,7 @@ export default function AdminPortalPage() {
     }
   }
 
-  // --- Logo Upload ---
+  // Logo Upload
   const openLogoModal = (company: Company) => {
     setLogoCompany(company)
     setLogoError('')
@@ -239,13 +666,11 @@ export default function AdminPortalPage() {
     const file = e.target.files?.[0]
     if (!file || !logoCompany) return
 
-    // Validar tipo
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'].includes(file.type)) {
       setLogoError('Use JPG, PNG, WebP ou SVG')
       return
     }
 
-    // Validar tamanho (2MB)
     if (file.size > 2 * 1024 * 1024) {
       setLogoError('A logo deve ter no máximo 2MB')
       return
@@ -271,11 +696,13 @@ export default function AdminPortalPage() {
       }
 
       setLogoPreview(data.logo)
-      // Atualizar a lista local
       setCompanies(prev =>
         prev.map(c => c.id === logoCompany.id ? { ...c, logo: data.logo } : c)
       )
       setLogoCompany(prev => prev ? { ...prev, logo: data.logo } : null)
+      if (selectedCompany?.id === logoCompany.id) {
+        setSelectedCompany(prev => prev ? { ...prev, logo: data.logo } : null)
+      }
     } catch {
       setLogoError('Erro de conexão')
     } finally {
@@ -305,6 +732,9 @@ export default function AdminPortalPage() {
         prev.map(c => c.id === logoCompany.id ? { ...c, logo: null } : c)
       )
       setLogoCompany(prev => prev ? { ...prev, logo: null } : null)
+      if (selectedCompany?.id === logoCompany.id) {
+        setSelectedCompany(prev => prev ? { ...prev, logo: null } : null)
+      }
     } catch {
       setLogoError('Erro de conexão')
     } finally {
@@ -324,21 +754,21 @@ export default function AdminPortalPage() {
     { label: 'Solicitações', value: stats.requests, icon: 'assignment', color: 'text-teal-600 bg-teal-100' },
   ] : []
 
+  // Determine what the right panel shows
+  const showRightPanel = hasSidePanel
+  const showEditForm = !isMobile && (isCreating || (selectedCompany && isEditing))
+  const showDetailPanel = !isMobile && selectedCompany && !isEditing && !isCreating
+
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
+      {/* Header */}
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           title="Administração do Portal"
           description="Gerencie empresas, módulos e visualize estatísticas globais"
           className="mb-0"
           actions={
-            <Button
-              onClick={() => {
-                setCreateError('')
-                setShowCreateModal(true)
-              }}
-              size="sm"
-            >
+            <Button onClick={openCreate} size="sm">
               <Icon name="add" className="mr-1 text-base" />
               Nova Empresa
             </Button>
@@ -346,297 +776,259 @@ export default function AdminPortalPage() {
         />
       </div>
 
+      {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          <div className="w-full overflow-auto p-4 md:p-6">
-            {statsLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
-                {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={i} className="bg-card rounded-[4px] ambient-shadow p-4 animate-pulse">
-                    <div className="h-10 bg-secondary rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : stats && (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
-                {statCards.map((card) => (
-                  <div key={card.label} className="bg-card rounded-[4px] ambient-shadow p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-8 h-8 rounded-[4px] flex items-center justify-center ${card.color}`}>
-                        <Icon name={card.icon} className="text-lg" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-foreground">{card.value}</div>
-                    <div className="text-xs text-muted-foreground">{card.label}</div>
-                  </div>
-                ))}
-              </div>
-            )}
 
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-foreground">Empresas Cadastradas</h2>
-              {companies.length > 0 && (
-                <span className="text-sm text-muted-foreground">{companies.length} empresa(s)</span>
+          {/* Left panel */}
+          <div className={`${showRightPanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
+            <div className="flex-1 overflow-auto p-4 md:p-6 min-h-0">
+
+              {/* Stats */}
+              {statsLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <div key={i} className="bg-card rounded-[4px] ambient-shadow p-4 animate-pulse">
+                      <div className="h-10 bg-secondary rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : stats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+                  {statCards.map((card) => (
+                    <div key={card.label} className="bg-card rounded-[4px] ambient-shadow p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-8 h-8 rounded-[4px] flex items-center justify-center ${card.color}`}>
+                          <Icon name={card.icon} className="text-lg" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-bold text-foreground">{card.value}</div>
+                      <div className="text-xs text-muted-foreground">{card.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Table section heading */}
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-foreground">Empresas Cadastradas</h2>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                    <p className="mt-2 text-muted-foreground">Carregando...</p>
+                  </div>
+                </div>
+              ) : companies.length === 0 ? (
+                <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+                  <Icon name="domain" className="text-6xl text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma empresa cadastrada</h3>
+                  <p className="text-muted-foreground mb-4">Adicione a primeira empresa para começar.</p>
+                  <Button onClick={openCreate}>
+                    <Icon name="add" className="mr-1 text-base" />
+                    Nova Empresa
+                  </Button>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col bg-card overflow-hidden">
+                  <div className="flex-1 overflow-auto min-h-0">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 bg-secondary z-10">
+                        <tr>
+                          <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Empresa
+                          </th>
+                          <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Contato
+                          </th>
+                          <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Usuários
+                          </th>
+                          <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Módulos
+                          </th>
+                          <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Criada em
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-card divide-y divide-gray-200">
+                        {companies.map((company) => (
+                          <tr
+                            key={company.id}
+                            onClick={() => handleSelectCompany(company)}
+                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
+                          >
+                            <td className="px-6 py-4 text-sm text-foreground">
+                              <div className="flex items-center gap-3">
+                                {company.logo ? (
+                                  <div className="relative w-10 h-10 rounded-[4px] overflow-hidden flex-shrink-0 bg-secondary">
+                                    <Image
+                                      src={company.logo}
+                                      alt={company.name}
+                                      fill
+                                      className="object-contain"
+                                      sizes="40px"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <Icon name="domain" className="text-xl text-primary" />
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="font-semibold text-foreground">{company.name}</div>
+                                  {company.website && (
+                                    <div className="text-xs text-muted-foreground">{company.website}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-foreground">
+                              <div>{company.email || '—'}</div>
+                              <div className="text-xs text-muted-foreground">{company.phone || ''}</div>
+                            </td>
+                            <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
+                                <Icon name="group" className="text-base text-muted-foreground" />
+                                {company.userCount}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
+                                <Icon name="extension" className="text-base text-muted-foreground" />
+                                {company.moduleCount}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-muted-foreground">
+                              {new Date(company.createdAt).toLocaleDateString('pt-BR')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
             </div>
-
-            {loading ? (
-              <div className="flex-1 flex items-center justify-center py-16">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                  <p className="mt-2 text-muted-foreground">Carregando...</p>
-                </div>
-              </div>
-            ) : companies.length === 0 ? (
-              <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
-                <Icon name="domain" className="text-6xl text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma empresa cadastrada</h3>
-                <p className="text-muted-foreground mb-4">Adicione a primeira empresa para começar.</p>
-                <Button
-                  onClick={() => {
-                    setCreateError('')
-                    setShowCreateModal(true)
-                  }}
-                >
-                  <Icon name="add" className="mr-1 text-base" />
-                  Nova Empresa
-                </Button>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col bg-card overflow-hidden">
-                <div className="flex-1 overflow-auto min-h-0">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="sticky top-0 bg-secondary z-10">
-                      <tr>
-                        <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Empresa
-                        </th>
-                        <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Contato
-                        </th>
-                        <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Usuários
-                        </th>
-                        <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Módulos
-                        </th>
-                        <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Criada em
-                        </th>
-                        <th className="text-right px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Ações
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-card divide-y divide-gray-200">
-                      {companies.map((company) => (
-                        <tr key={company.id} className="hover:bg-secondary cursor-pointer transition-colors">
-                          <td className="px-6 py-4 text-sm text-foreground">
-                            <div className="flex items-center gap-3">
-                              {company.logo ? (
-                                <div className="relative w-10 h-10 rounded-[4px] overflow-hidden flex-shrink-0 bg-secondary">
-                                  <Image
-                                    src={company.logo}
-                                    alt={company.name}
-                                    fill
-                                    className="object-contain"
-                                    sizes="40px"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <Icon name="domain" className="text-xl text-primary" />
-                                </div>
-                              )}
-                              <div>
-                                <div className="font-semibold text-foreground">{company.name}</div>
-                                {company.website && (
-                                  <div className="text-xs text-muted-foreground">{company.website}</div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-foreground">
-                            <div>{company.email || '—'}</div>
-                            <div className="text-xs text-muted-foreground">{company.phone || ''}</div>
-                          </td>
-                          <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
-                              <Icon name="group" className="text-base text-muted-foreground" />
-                              {company.userCount}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
-                              <Icon name="extension" className="text-base text-muted-foreground" />
-                              {company.moduleCount}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-muted-foreground">
-                            {new Date(company.createdAt).toLocaleDateString('pt-BR')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openLogoModal(company)}
-                                title="Gerenciar logo"
-                              >
-                                <Icon name="image" className="mr-1 text-base" />
-                                Logo
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openModules(company)}
-                                title="Configurar módulos"
-                              >
-                                <Icon name="extension" className="mr-1 text-base" />
-                                Módulos
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Right panel — desktop only */}
+          {showRightPanel && !isMobile && (
+            <div className="w-1/2 min-w-0">
+              {showEditForm && (
+                <CompanyFormPanel
+                  inPage
+                  isEdit={isEditing}
+                  onClose={handleCloseSidePanel}
+                  onSubmit={isEditing ? handleEditCompany : handleCreateCompany}
+                  formData={createForm}
+                  onChange={handleFormChange}
+                  saving={saving}
+                  error={formError}
+                />
+              )}
+              {showDetailPanel && selectedCompany && (
+                <CompanyDetailPanel
+                  company={selectedCompany}
+                  onClose={handleCloseSidePanel}
+                  onEdit={handleEditOpen}
+                  onDelete={(c) => setDeleteCompany(c)}
+                  onManageLogo={openLogoModal}
+                  onManageModules={openModules}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Create Company Modal */}
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Nova Empresa"
-        size="wide"
-      >
-        <form onSubmit={handleCreateCompany}>
-          <div className="p-4 space-y-3">
-            {createError && (
-              <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
-                {createError}
-              </div>
-            )}
+      {/* ── Mobile modals ─────────────────────────────────────────────────────── */}
 
-            <ModalSection title="Dados da Empresa">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Nome da Empresa <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.companyName}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, companyName: e.target.value }))}
-                    required
-                    placeholder="Ex: Acme Ltda"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    E-mail da Empresa
-                  </label>
-                  <input
-                    type="email"
-                    value={createForm.companyEmail}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, companyEmail: e.target.value }))}
-                    placeholder="contato@empresa.com"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Telefone
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.companyPhone}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, companyPhone: e.target.value }))}
-                    placeholder="(11) 99999-9999"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-              </div>
-            </ModalSection>
-
-            <ModalSection title="Administrador Inicial">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Nome <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.adminFirstName}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, adminFirstName: e.target.value }))}
-                    required
-                    placeholder="Nome"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Sobrenome <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.adminLastName}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, adminLastName: e.target.value }))}
-                    required
-                    placeholder="Sobrenome"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    E-mail do Admin <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={createForm.adminEmail}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, adminEmail: e.target.value }))}
-                    required
-                    placeholder="admin@empresa.com"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Senha <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={createForm.adminPassword}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, adminPassword: e.target.value }))}
-                    required
-                    minLength={8}
-                    placeholder="Mínimo 8 caracteres"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-              </div>
-            </ModalSection>
+      {isMobile && selectedCompany && !isEditing && (
+        <Modal
+          isOpen
+          onClose={handleCloseSidePanel}
+          title={selectedCompany.name}
+          size="wide"
+        >
+          <div className="p-4 space-y-2">
+            <button
+              onClick={handleEditOpen}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            >
+              <Icon name="edit" className="text-base" />
+              Editar
+            </button>
+            <button
+              onClick={() => { openLogoModal(selectedCompany); handleCloseSidePanel() }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+            >
+              <Icon name="image" className="text-base" />
+              Gerenciar Logo
+            </button>
+            <button
+              onClick={() => { openModules(selectedCompany); handleCloseSidePanel() }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+            >
+              <Icon name="extension" className="text-base" />
+              Configurar Módulos
+            </button>
+            <button
+              onClick={() => { setDeleteCompany(selectedCompany); handleCloseSidePanel() }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
+            >
+              <Icon name="delete" className="text-base" />
+              Excluir
+            </button>
           </div>
-
-          <div className="flex gap-3 px-4 py-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={creating} className="flex-1">
-              <Icon name="save" className="text-base mr-2" />
-              {creating ? 'Salvando...' : 'Salvar'}
-            </Button>
+          <div className="p-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground">E-mail</p>
+                <p className="text-sm text-foreground">{selectedCompany.email || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Telefone</p>
+                <p className="text-sm text-foreground">{selectedCompany.phone || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Website</p>
+                <p className="text-sm text-foreground">{selectedCompany.website || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Criada em</p>
+                <p className="text-sm text-foreground">
+                  {new Date(selectedCompany.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
           </div>
-        </form>
-      </Modal>
+        </Modal>
+      )}
 
-      {/* Logo Upload Modal */}
+      {isMobile && (isCreating || (selectedCompany && isEditing)) && (
+        <Modal
+          isOpen
+          onClose={handleCloseSidePanel}
+          title={isEditing ? 'Editar Empresa' : 'Nova Empresa'}
+          size="wide"
+        >
+          <CompanyFormPanel
+            isEdit={isEditing}
+            onClose={handleCloseSidePanel}
+            onSubmit={isEditing ? handleEditCompany : handleCreateCompany}
+            formData={createForm}
+            onChange={handleFormChange}
+            saving={saving}
+            error={formError}
+          />
+        </Modal>
+      )}
+
+      {/* Logo Upload Modal (always overlay) */}
       <Modal
         isOpen={!!logoCompany}
         onClose={() => { setLogoCompany(null); setLogoPreview(null); setLogoError('') }}
@@ -718,7 +1110,7 @@ export default function AdminPortalPage() {
         </div>
       </Modal>
 
-      {/* Modules Config Modal */}
+      {/* Modules Config Modal (always overlay) */}
       <Modal
         isOpen={!!modulesCompany}
         onClose={() => setModulesCompany(null)}
@@ -789,6 +1181,32 @@ export default function AdminPortalPage() {
             </Button>
           </div>
         )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteCompany}
+        onClose={() => setDeleteCompany(null)}
+        title="Confirmar Exclusão"
+        size="sm"
+      >
+        <div className="p-4">
+          <p className="text-foreground mb-2">
+            Tem certeza que deseja excluir a empresa:
+          </p>
+          <p className="font-semibold text-foreground mb-4">{deleteCompany?.name}</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Esta ação não pode ser desfeita.
+          </p>
+        </div>
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button variant="outline" onClick={() => setDeleteCompany(null)} className="flex-1">
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleDeleteCompany} disabled={deleting} className="flex-1">
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </div>
       </Modal>
     </PageContainer>
   )

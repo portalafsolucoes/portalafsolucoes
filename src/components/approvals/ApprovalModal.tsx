@@ -35,9 +35,10 @@ interface ApprovalModalProps {
   request: Request
   onClose: () => void
   onSuccess: () => void
+  inPage?: boolean
 }
 
-export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProps) {
+export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: ApprovalModalProps) {
   const [action, setAction] = useState<'approve' | 'reject' | null>(null)
   const [convertToWorkOrder, setConvertToWorkOrder] = useState(false)
   const [assignedToId, setAssignedToId] = useState('')
@@ -143,263 +144,296 @@ export function ApprovalModal({ request, onClose, onSuccess }: ApprovalModalProp
 
   const currentRequest = requestDetails || request
 
-  return (
-    <Modal isOpen={true} onClose={onClose} title="Analisar Solicitação" size="wide">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          handleSubmit()
-        }}
-      >
-        <div className="p-4 space-y-3">
-          <ModalSection title="Identificação">
-            <div className="space-y-3">
-              <div className="rounded-[4px] border border-border bg-surface-low p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-lg font-semibold text-foreground">{request.title}</p>
-                    {currentRequest.description && (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
-                        {currentRequest.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className={`rounded-full px-3 py-1.5 text-xs font-medium ${getPriorityColor(request.priority)}`}>
-                      {getPriorityLabel(request.priority)}
-                    </span>
-                    <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-info-light-foreground">
-                      {request.status}
-                    </span>
-                  </div>
+  const formContent = (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        handleSubmit()
+      }}
+      className={inPage ? 'flex flex-1 min-h-0 flex-col' : undefined}
+    >
+      <div className={inPage ? 'flex-1 overflow-y-auto p-4 space-y-3' : 'p-4 space-y-3'}>
+        <ModalSection title="Identificação">
+          <div className="space-y-3">
+            <div className="rounded-[4px] border border-border bg-surface-low p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold text-foreground">{request.title}</p>
+                  {currentRequest.description && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                      {currentRequest.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`rounded-full px-3 py-1.5 text-xs font-medium ${getPriorityColor(request.priority)}`}>
+                    {getPriorityLabel(request.priority)}
+                  </span>
+                  <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-info-light-foreground">
+                    {request.status}
+                  </span>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {request.createdBy && (
-                  <InfoCard
-                    icon="person"
-                    label="Solicitado por"
-                    value={`${request.createdBy.firstName} ${request.createdBy.lastName}`}
-                    extra={request.createdBy.email}
-                  />
-                )}
-                {request.team && (
-                  <InfoCard
-                    icon="group"
-                    label="Equipe atribuída"
-                    value={request.team.name}
-                  />
-                )}
-                {currentRequest.asset && (
-                  <InfoCard
-                    icon="inventory_2"
-                    label="Ativo"
-                    value={currentRequest.asset.name}
-                  />
-                )}
-                {currentRequest.location && (
-                  <InfoCard
-                    icon="location_on"
-                    label="Localização"
-                    value={currentRequest.location.name}
-                  />
-                )}
-                {request.dueDate && (
-                  <InfoCard
-                    icon="calendar_today"
-                    label="Data desejada"
-                    value={formatDate(request.dueDate)}
-                  />
-                )}
-                <InfoCard
-                  icon="schedule"
-                  label="Criado em"
-                  value={formatDate(request.createdAt)}
-                />
-              </div>
             </div>
-          </ModalSection>
 
-          {currentRequest.files && currentRequest.files.length > 0 && (
-            <ModalSection title={`Anexos (${currentRequest.files.length})`} defaultOpen={false}>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {currentRequest.files.map((file) => (
-                  <div key={file.id} className="rounded-[4px] border border-border bg-card p-3">
-                    {file.type?.startsWith('image/') ? (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {request.createdBy && (
+                <InfoCard
+                  icon="person"
+                  label="Solicitado por"
+                  value={`${request.createdBy.firstName} ${request.createdBy.lastName}`}
+                  extra={request.createdBy.email}
+                />
+              )}
+              {request.team && (
+                <InfoCard
+                  icon="group"
+                  label="Equipe atribuída"
+                  value={request.team.name}
+                />
+              )}
+              {currentRequest.asset && (
+                <InfoCard
+                  icon="inventory_2"
+                  label="Ativo"
+                  value={currentRequest.asset.name}
+                />
+              )}
+              {currentRequest.location && (
+                <InfoCard
+                  icon="location_on"
+                  label="Localização"
+                  value={currentRequest.location.name}
+                />
+              )}
+              {request.dueDate && (
+                <InfoCard
+                  icon="calendar_today"
+                  label="Data desejada"
+                  value={formatDate(request.dueDate)}
+                />
+              )}
+              <InfoCard
+                icon="schedule"
+                label="Criado em"
+                value={formatDate(request.createdAt)}
+              />
+            </div>
+          </div>
+        </ModalSection>
+
+        {currentRequest.files && currentRequest.files.length > 0 && (
+          <ModalSection title={`Anexos (${currentRequest.files.length})`} defaultOpen={false}>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {currentRequest.files.map((file) => (
+                <div key={file.id} className="rounded-[4px] border border-border bg-card p-3">
+                  {file.type?.startsWith('image/') ? (
+                    <button
+                      type="button"
+                      onClick={() => setImageViewer({ url: file.url, name: file.name })}
+                      className="block w-full text-left"
+                    >
+                      <img
+                        src={file.url}
+                        alt={file.name}
+                        className="h-32 w-full rounded-[4px] border border-input object-cover"
+                      />
+                      <p className="mt-2 truncate text-sm font-medium text-foreground">{file.name}</p>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Icon name="description" className="text-2xl text-muted-foreground" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setImageViewer({ url: file.url, name: file.name })}
-                        className="block w-full text-left"
+                        onClick={() => window.open(file.url, '_blank')}
+                        className="rounded-[4px] p-1.5 text-primary transition-colors hover:bg-primary/5"
+                        title="Baixar"
                       >
-                        <img
-                          src={file.url}
-                          alt={file.name}
-                          className="h-32 w-full rounded-[4px] border border-input object-cover"
-                        />
-                        <p className="mt-2 truncate text-sm font-medium text-foreground">{file.name}</p>
+                        <Icon name="download" className="text-base" />
                       </button>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Icon name="description" className="text-2xl text-muted-foreground" />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => window.open(file.url, '_blank')}
-                          className="rounded-[4px] p-1.5 text-primary transition-colors hover:bg-primary/5"
-                          title="Baixar"
-                        >
-                          <Icon name="download" className="text-base" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ModalSection>
-          )}
-
-          <ModalSection title="Decisão">
-            <div className="space-y-3">
-              {error && (
-                <div className="rounded-[4px] border border-red-200 bg-danger-light p-3 text-sm text-danger">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAction('approve')
-                    setRejectionReason('')
-                    setError(null)
-                  }}
-                  className={`rounded-[4px] border p-4 text-left transition-colors ${
-                    action === 'approve'
-                      ? 'border-green-500 bg-success-light'
-                      : 'border-input hover:bg-surface-low'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <Icon name="check_circle" className={`text-2xl ${action === 'approve' ? 'text-success' : 'text-muted-foreground'}`} />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Aprovar solicitação</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Libera a solicitação e permite atribuir execução imediatamente.
-                      </p>
                     </div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAction('reject')
-                    setConvertToWorkOrder(false)
-                    setAssignedToId('')
-                    setError(null)
-                  }}
-                  className={`rounded-[4px] border p-4 text-left transition-colors ${
-                    action === 'reject'
-                      ? 'border-red-500 bg-danger-light'
-                      : 'border-input hover:bg-surface-low'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <Icon name="cancel" className={`text-2xl ${action === 'reject' ? 'text-danger' : 'text-muted-foreground'}`} />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Rejeitar solicitação</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Exige justificativa para encerrar a análise sem aprovação.
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              {action === 'approve' && (
-                <div className="space-y-3 rounded-[4px] border border-green-200 bg-success-light p-4">
-                  <label className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={convertToWorkOrder}
-                      onChange={(e) => {
-                        setConvertToWorkOrder(e.target.checked)
-                        if (e.target.checked) setAssignedToId('')
-                      }}
-                      className="mt-0.5 h-4 w-4 rounded border-input text-success focus:ring-ring"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Converter em Ordem de Serviço (OS)</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Ao marcar esta opção, o sistema cria automaticamente uma OS.
-                      </p>
-                    </div>
-                  </label>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {convertToWorkOrder ? 'Atribuir Técnico à OS (opcional)' : 'Atribuir Técnico *'}
-                    </label>
-                    <select
-                      value={assignedToId}
-                      onChange={(e) => setAssignedToId(e.target.value)}
-                      className="w-full rounded-[4px] border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      disabled={loadingTechs}
-                    >
-                      <option value="">{convertToWorkOrder ? 'Atribuir depois...' : 'Selecione um técnico...'}</option>
-                      {technicians.map((tech) => (
-                        <option key={tech.id} value={tech.id}>
-                          {tech.firstName} {tech.lastName} - {tech.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  )}
                 </div>
-              )}
-
-              {action === 'reject' && (
-                <div className="space-y-3 rounded-[4px] border border-red-200 bg-danger-light p-4">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Motivo da Rejeição *
-                    </label>
-                    <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      rows={5}
-                      className="w-full rounded-[4px] border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="Descreva o motivo da rejeição..."
-                    />
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           </ModalSection>
+        )}
+
+        <ModalSection title="Decisão">
+          <div className="space-y-3">
+            {error && (
+              <div className="rounded-[4px] border border-red-200 bg-danger-light p-3 text-sm text-danger">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAction('approve')
+                  setRejectionReason('')
+                  setError(null)
+                }}
+                className={`rounded-[4px] border p-4 text-left transition-colors ${
+                  action === 'approve'
+                    ? 'border-green-500 bg-success-light'
+                    : 'border-input hover:bg-surface-low'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <Icon name="check_circle" className={`text-2xl ${action === 'approve' ? 'text-success' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Aprovar solicitação</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Libera a solicitação e permite atribuir execução imediatamente.
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAction('reject')
+                  setConvertToWorkOrder(false)
+                  setAssignedToId('')
+                  setError(null)
+                }}
+                className={`rounded-[4px] border p-4 text-left transition-colors ${
+                  action === 'reject'
+                    ? 'border-red-500 bg-danger-light'
+                    : 'border-input hover:bg-surface-low'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <Icon name="cancel" className={`text-2xl ${action === 'reject' ? 'text-danger' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Rejeitar solicitação</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Exige justificativa para encerrar a análise sem aprovação.
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {action === 'approve' && (
+              <div className="space-y-3 rounded-[4px] border border-green-200 bg-success-light p-4">
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={convertToWorkOrder}
+                    onChange={(e) => {
+                      setConvertToWorkOrder(e.target.checked)
+                      if (e.target.checked) setAssignedToId('')
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-input text-success focus:ring-ring"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Converter em Ordem de Serviço (OS)</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Ao marcar esta opção, o sistema cria automaticamente uma OS.
+                    </p>
+                  </div>
+                </label>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {convertToWorkOrder ? 'Atribuir Técnico à OS (opcional)' : 'Atribuir Técnico *'}
+                  </label>
+                  <select
+                    value={assignedToId}
+                    onChange={(e) => setAssignedToId(e.target.value)}
+                    className="w-full rounded-[4px] border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    disabled={loadingTechs}
+                  >
+                    <option value="">{convertToWorkOrder ? 'Atribuir depois...' : 'Selecione um técnico...'}</option>
+                    {technicians.map((tech) => (
+                      <option key={tech.id} value={tech.id}>
+                        {tech.firstName} {tech.lastName} - {tech.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {action === 'reject' && (
+              <div className="space-y-3 rounded-[4px] border border-red-200 bg-danger-light p-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Motivo da Rejeição *
+                  </label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    rows={5}
+                    className="w-full rounded-[4px] border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Descreva o motivo da rejeição..."
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </ModalSection>
+      </div>
+
+      <div className="flex gap-3 px-4 py-4 border-t border-border">
+        <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          disabled={!action || loading}
+          className={`flex-1 ${
+            action === 'approve'
+              ? 'bg-success text-white hover:bg-green-700'
+              : action === 'reject'
+              ? 'bg-danger text-white hover:bg-red-700'
+              : ''
+          }`}
+        >
+          {loading ? 'Processando...' : action === 'approve' ? 'Confirmar Aprovação' : 'Confirmar Rejeição'}
+        </Button>
+      </div>
+    </form>
+  )
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        {/* Header */}
+        <div className="flex items-start justify-between p-4 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">Analisar Solicitação</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-muted rounded transition-colors"
+          >
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
         </div>
 
-        <div className="flex gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={!action || loading}
-            className={`flex-1 ${
-              action === 'approve'
-                ? 'bg-success text-white hover:bg-green-700'
-                : action === 'reject'
-                ? 'bg-danger text-white hover:bg-red-700'
-                : ''
-            }`}
-          >
-            {loading ? 'Processando...' : action === 'approve' ? 'Confirmar Aprovação' : 'Confirmar Rejeição'}
-          </Button>
-        </div>
-      </form>
+        {formContent}
+
+        {imageViewer && (
+          <ImageViewerModal
+            isOpen={!!imageViewer}
+            onClose={() => setImageViewer(null)}
+            imageUrl={imageViewer.url}
+            imageName={imageViewer.name}
+          />
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Analisar Solicitação" size="wide">
+      {formContent}
 
       {imageViewer && (
         <ImageViewerModal

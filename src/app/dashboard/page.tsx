@@ -81,7 +81,7 @@ export default function DashboardPage() {
           <div className="w-full overflow-auto p-4 md:p-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-b-2 border-border border-b-on-surface-variant"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-on-surface-variant border-r-transparent"></div>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

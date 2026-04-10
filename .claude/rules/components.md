@@ -273,22 +273,22 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 | `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal | ConfirmDialog |
 | `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal | ConfirmDialog |
 | `/work-orders` | Ordens de Servico | Listagem split-panel | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal | ConfirmDialog |
-| `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal, RequestFormModal | ConfirmDialog |
-| `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal | - |
+| `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal(inPage), RequestFormModal(inPage) | ConfirmDialog |
+| `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal(inPage) | - |
 | `/rafs` | RAF | Listagem split-panel | RAFViewModal, RAFEditModal, RAFFormModal | ConfirmationModal |
-| `/locations` | Localizacoes | Listagem | - | - |
+| `/locations` | Localizacoes | Listagem split-panel | LocationDetailPanel, LocationFormPanel | ConfirmDialog |
 | `/basic-registrations/[entity]` | Cadastros Basicos | Listagem split-panel | GenericDetailPanel, GenericEditPanel, CalendarModal, ResourceModal, AssetFamilyModal, GenericStepModal | ConfirmDialog |
-| `/criticality` | Criticidade | Listagem | - | - |
-| `/maintenance-plan/standard` | Plano Padrao | Listagem | - | - |
-| `/maintenance-plan/asset` | Plano por Ativo | Listagem | - | - |
-| `/planning/plans` | Planejamento | Listagem | - | - |
-| `/planning/schedules` | Programacao | Listagem | - | - |
+| `/criticality` | Criticidade | Listagem split-panel | CriticalityDetailPanel, CriticalityEditPanel | ConfirmDialog |
+| `/maintenance-plan/standard` | Plano Padrao | Listagem split-panel | PlanDetailPanel, PlanFormPanel(inPage) | ConfirmDialog |
+| `/maintenance-plan/asset` | Plano por Ativo | Listagem split-panel | AssetPlanDetailPanel, AssetPlanFormPanel(inPage) | ConfirmDialog |
+| `/planning/plans` | Planejamento | Listagem split-panel | PlanDetailPanel, PlanFormPanel | ConfirmDialog |
+| `/planning/schedules` | Programacao | Listagem split-panel | ScheduleDetailPanel, ScheduleFormPanel | ConfirmDialog |
 | `/kpi` | KPI | Dashboard | - | - |
 | `/gep` | GEP | Dashboard | - | - |
 | `/tree` | Arvore | Visualizacao | AssetDetailPanel | - |
-| `/admin/portal` | Configuracoes | Admin | - | - |
-| `/admin/users` | Usuarios | Admin | - | - |
-| `/admin/units` | Unidades | Admin | - | - |
+| `/admin/portal` | Configuracoes | Admin split-panel | CompanyDetailPanel, CompanyFormPanel | ConfirmDialog |
+| `/admin/users` | Usuarios | Admin split-panel | AdminUserDetailPanel, AdminUserFormPanel | ConfirmDialog |
+| `/admin/units` | Unidades | Admin split-panel | UnitDetailPanel, UnitFormPanel | ConfirmDialog |
 | `/profile` | Perfil | Detalhe | - | - |
 | `/settings` | Configuracoes Usuario | Form | - | - |
-| `/technician/my-tasks` | Minhas Tarefas | Listagem | - | - |
+| `/technician/my-tasks` | Minhas Tarefas | Listagem split-panel | TaskDetailPanel | ConfirmDialog |

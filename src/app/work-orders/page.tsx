@@ -5,9 +5,7 @@ import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuth } from '@/hooks/useAuth'
-import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
@@ -51,15 +49,15 @@ export default function WorkOrdersPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingWorkOrderId, setEditingWorkOrderId] = useState<string>('')
   const [showExecuteModal, setShowExecuteModal] = useState(false)
-  const [workOrderToExecute, setWorkOrderToExecute] = useState<any>(null)
+  const [workOrderToExecute, setWorkOrderToExecute] = useState<WorkOrder | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [workOrderToDelete, setWorkOrderToDelete] = useState<WorkOrder | null>(null)
   const [deleting, setDeleting] = useState(false)
   const { user: currentUser } = useAuth()
-  const { canCreate: canCreateWO, canEdit: canEditWO, canDelete: canDeleteWO } = usePermissions()
+  const { canCreate: canCreateWO } = usePermissions()
   const isMobile = useIsMobile()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
-  const [workOrderToFinalize, setWorkOrderToFinalize] = useState<any>(null)
+  const [workOrderToFinalize, setWorkOrderToFinalize] = useState<WorkOrder | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   useEffect(() => {
@@ -75,11 +73,6 @@ export default function WorkOrdersPage() {
     }
     loadWorkOrders()
   }, [currentUser, statusFilter, systemStatusFilter])
-
-  const isAssignedExecutor = (workOrder: any) => {
-    if (!currentUser?.id) return false
-    return workOrder.assignedToId === currentUser.id
-  }
 
   const loadWorkOrders = async () => {
     try {
@@ -105,19 +98,9 @@ export default function WorkOrdersPage() {
     setSelectedWorkOrderId(workOrderId)
   }
 
-  const handleEdit = (workOrder: any) => {
+  const handleEdit = (workOrder: WorkOrder) => {
     setEditingWorkOrderId(workOrder.id)
     setShowEditModal(true)
-  }
-
-  const handleExecute = (workOrder: WorkOrder) => {
-    setWorkOrderToExecute(workOrder)
-    setShowExecuteModal(true)
-  }
-
-  const openDeleteDialog = (workOrder: WorkOrder) => {
-    setWorkOrderToDelete(workOrder)
-    setShowDeleteDialog(true)
   }
 
   const handleDelete = async () => {
@@ -270,95 +253,50 @@ export default function WorkOrdersPage() {
                     {filteredWorkOrders.map((wo) => {
                       const displayId = wo.externalId || wo.internalId || wo.customId || wo.id.slice(0, 8)
                       return (
-                        <div key={wo.id} className="bg-card rounded-[4px] md:rounded-[4px] ambient-shadow p-4 md:p-6 hover:shadow-md hover:border-border transition-all duration-200">
-                          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-4">
-                            <div onClick={() => handleView(wo.id)} className="flex-1 cursor-pointer">
-                              <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
-                                <h3 className="text-base md:text-lg font-bold text-foreground">{displayId}</h3>
-                                {wo.systemStatus === 'IN_SYSTEM' ? (
-                                  <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-success-light text-success-light-foreground">
-                                    Sistema
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-surface-high text-foreground">
-                                    Fora
-                                  </span>
-                                )}
-                                <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
-                                  {wo.status}
-                                </span>
-                                <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
-                                  {wo.priority}
-                                </span>
-                              </div>
-                              <p className="text-foreground font-semibold mb-2 text-sm md:text-base">{wo.title}</p>
-                              {wo.description && (
-                                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 line-clamp-2">{wo.description}</p>
-                              )}
-                              <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
-                                {wo.asset && (
-                                  <span className="flex items-center gap-1 md:gap-1.5">
-                                    <Icon name="inventory_2" className="text-sm md:text-base" />
-                                    <span className="truncate max-w-[120px] md:max-w-none">Ativo: {wo.asset.name}</span>
-                                  </span>
-                                )}
-                                {wo.location && (
-                                  <span className="flex items-center gap-1 md:gap-1.5">
-                                    <Icon name="location_on" className="text-sm md:text-base" />
-                                    <span className="truncate max-w-[100px] md:max-w-none">Local: {wo.location.name}</span>
-                                  </span>
-                                )}
-                                <span className="flex items-center gap-1 md:gap-1.5">
-                                  <Icon name="calendar_today" className="text-sm md:text-base" />
-                                  <span className="whitespace-nowrap">{formatDate(wo.createdAt)}</span>
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-1.5 md:gap-2 flex-shrink-0 justify-end md:justify-start">
-                              <button
-                                onClick={() => handleView(wo.id)}
-                                className="p-1.5 md:p-2 text-primary hover:bg-primary/5 rounded-[4px] transition-colors"
-                                title="Visualizar"
-                              >
-                                <Icon name="visibility" className="text-base md:text-xl" />
-                              </button>
-                              {isAssignedExecutor(wo) && wo.status !== 'COMPLETE' && (
-                                <button
-                                  onClick={() => handleExecute(wo)}
-                                  className="p-1.5 md:p-2 text-success hover:bg-success-light rounded-[4px] transition-colors"
-                                  title="Executar"
-                                >
-                                  <Icon name="play_arrow" className="text-base md:text-xl" />
-                                </button>
-                              )}
-                              {canEditWO('work-orders') && wo.status !== 'COMPLETE' && (
-                                <button
-                                  onClick={() => { setWorkOrderToFinalize(wo); setShowFinalizeModal(true); }}
-                                  className="p-1.5 md:p-2 text-foreground hover:bg-muted rounded-[4px] transition-colors"
-                                  title="Finalizar OS"
-                                >
-                                  <Icon name="check_circle" className="text-base md:text-xl" />
-                                </button>
-                              )}
-                              {canEditWO('work-orders') && (
-                                <button
-                                  onClick={() => handleEdit(wo)}
-                                  className="p-1.5 md:p-2 text-muted-foreground hover:bg-secondary rounded-[4px] transition-colors"
-                                  title="Editar"
-                                >
-                                  <Icon name="edit" className="text-base md:text-xl" />
-                                </button>
-                              )}
-                              {canDeleteWO('work-orders') && (
-                                <button
-                                  onClick={() => openDeleteDialog(wo)}
-                                  className="p-1.5 md:p-2 text-danger hover:bg-danger-light rounded-[4px] transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Icon name="delete" className="text-base md:text-xl" />
-                                </button>
-                              )}
-                            </div>
+                        <div
+                          key={wo.id}
+                          onClick={() => handleView(wo.id)}
+                          className="bg-card rounded-[4px] ambient-shadow p-4 md:p-6 hover:shadow-md hover:border-border transition-all duration-200 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
+                            <h3 className="text-base md:text-lg font-bold text-foreground">{displayId}</h3>
+                            {wo.systemStatus === 'IN_SYSTEM' ? (
+                              <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-success-light text-success-light-foreground">
+                                Sistema
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-surface-high text-foreground">
+                                Fora
+                              </span>
+                            )}
+                            <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
+                              {wo.status}
+                            </span>
+                            <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
+                              {wo.priority}
+                            </span>
+                          </div>
+                          <p className="text-foreground font-semibold mb-2 text-sm md:text-base">{wo.title}</p>
+                          {wo.description && (
+                            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 line-clamp-2">{wo.description}</p>
+                          )}
+                          <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
+                            {wo.asset && (
+                              <span className="flex items-center gap-1 md:gap-1.5">
+                                <Icon name="inventory_2" className="text-sm md:text-base" />
+                                <span className="truncate max-w-[120px] md:max-w-none">Ativo: {wo.asset.name}</span>
+                              </span>
+                            )}
+                            {wo.location && (
+                              <span className="flex items-center gap-1 md:gap-1.5">
+                                <Icon name="location_on" className="text-sm md:text-base" />
+                                <span className="truncate max-w-[100px] md:max-w-none">Local: {wo.location.name}</span>
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1 md:gap-1.5">
+                              <Icon name="calendar_today" className="text-sm md:text-base" />
+                              <span className="whitespace-nowrap">{formatDate(wo.createdAt)}</span>
+                            </span>
                           </div>
                         </div>
                       )
@@ -378,7 +316,6 @@ export default function WorkOrdersPage() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativo</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criado</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="bg-card divide-y divide-gray-200">
@@ -416,46 +353,8 @@ export default function WorkOrdersPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                 {wo.asset?.name || '-'}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 {formatDate(wo.createdAt)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleView(wo.id) }}
-                                    className="p-1.5 text-primary hover:bg-primary/5 rounded transition-colors"
-                                    title="Visualizar"
-                                  >
-                                    <Icon name="visibility" className="text-base" />
-                                  </button>
-                                  {isAssignedExecutor(wo) && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleExecute(wo) }}
-                                      className="p-1.5 text-success hover:bg-success-light rounded transition-colors"
-                                      title={wo.status === 'COMPLETE' ? 'Editar Execução' : 'Executar'}
-                                    >
-                                      <Icon name="play_arrow" className="text-base" />
-                                    </button>
-                                  )}
-                                  {canEditWO('work-orders') && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleEdit(wo) }}
-                                      className="p-1.5 text-muted-foreground hover:bg-secondary rounded transition-colors"
-                                      title="Editar"
-                                    >
-                                      <Icon name="edit" className="text-base" />
-                                    </button>
-                                  )}
-                                  {canDeleteWO('work-orders') && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); openDeleteDialog(wo) }}
-                                      className="p-1.5 text-danger hover:bg-danger-light rounded transition-colors"
-                                      title="Excluir"
-                                    >
-                                      <Icon name="delete" className="text-base" />
-                                    </button>
-                                  )}
-                                </div>
                               </td>
                             </tr>
                           )

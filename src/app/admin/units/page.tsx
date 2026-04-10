@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { useAuth } from '@/hooks/useAuth'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 
 interface Unit {
@@ -19,18 +20,206 @@ interface Unit {
   createdAt: string
 }
 
+// ─── Unit Detail Panel ────────────────────────────────────────────────────────
+
+interface UnitDetailPanelProps {
+  unit: Unit
+  onClose: () => void
+  onEdit: () => void
+  onDelete: (unit: Unit) => void
+}
+
+function UnitDetailPanel({ unit, onClose, onEdit, onDelete }: UnitDetailPanelProps) {
+  return (
+    <div className="h-full flex flex-col bg-card border-l border-border">
+      {/* Header */}
+      <div className="flex items-start justify-between p-4 border-b border-border">
+        <h2 className="text-xl font-bold text-foreground">{unit.name}</h2>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-muted rounded transition-colors"
+        >
+          <Icon name="close" className="text-xl text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Action buttons */}
+        <div className="p-4 border-b border-border space-y-2">
+          <button
+            onClick={onEdit}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+          >
+            <Icon name="edit" className="text-base" />
+            Editar
+          </button>
+          <button
+            onClick={() => onDelete(unit)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-[4px] hover:bg-destructive/10 transition-colors text-sm"
+          >
+            <Icon name="delete" className="text-base" />
+            Excluir
+          </button>
+        </div>
+
+        {/* Data */}
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <div className="col-span-2">
+              <p className="text-xs text-muted-foreground">Endereço</p>
+              <p className="text-sm text-foreground">{unit.address || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Membros</p>
+              <p className="text-sm text-foreground">{unit.memberCount}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Ativos</p>
+              <p className="text-sm text-foreground">{unit.assetCount}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Criada em</p>
+              <p className="text-sm text-foreground">
+                {new Date(unit.createdAt).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Unit Form Panel ──────────────────────────────────────────────────────────
+
+interface UnitFormData {
+  name: string
+  address: string
+}
+
+interface UnitFormPanelProps {
+  inPage?: boolean
+  isEdit: boolean
+  formData: UnitFormData
+  saving: boolean
+  error: string
+  onClose: () => void
+  onSubmit: (e: React.FormEvent) => void
+  onChange: (field: keyof UnitFormData, value: string) => void
+}
+
+function UnitFormPanel({
+  inPage,
+  isEdit,
+  formData,
+  saving,
+  error,
+  onClose,
+  onSubmit,
+  onChange,
+}: UnitFormPanelProps) {
+  const formContent = (
+    <form onSubmit={onSubmit} className={inPage ? 'flex flex-1 min-h-0 flex-col' : undefined}>
+      <div className={inPage ? 'flex-1 overflow-y-auto p-4 space-y-3' : 'p-4 space-y-3'}>
+        {error && (
+          <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
+            {error}
+          </div>
+        )}
+
+        <ModalSection title="Dados da Unidade">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
+              <label htmlFor="unit-name" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Nome da Unidade <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                id="unit-name"
+                value={formData.name}
+                onChange={(e) => onChange('name', e.target.value)}
+                required
+                placeholder="Ex: Unidade São Paulo"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label htmlFor="unit-address" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Endereço
+              </label>
+              <input
+                type="text"
+                id="unit-address"
+                value={formData.address}
+                onChange={(e) => onChange('address', e.target.value)}
+                placeholder="Ex: Av. Paulista, 1000 - São Paulo/SP"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+        </ModalSection>
+      </div>
+
+      <div className={`flex gap-3 px-4 py-4 border-t border-border${inPage ? ' flex-shrink-0' : ''}`}>
+        <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={saving} className="flex-1">
+          <Icon name="save" className="text-base mr-2" />
+          {saving ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Salvar'}
+        </Button>
+      </div>
+    </form>
+  )
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <h2 className="text-xl font-bold text-foreground">
+            {isEdit ? 'Editar Unidade' : 'Nova Unidade'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-muted rounded transition-colors"
+          >
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
+        </div>
+        {formContent}
+      </div>
+    )
+  }
+
+  return formContent
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AdminUnitsPage() {
   const { role, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  const isMobile = useIsMobile()
+
   const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
-  const [formData, setFormData] = useState({ name: '', address: '' })
-  const [saving, setSaving] = useState(false)
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Split-panel state
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const hasSidePanel = !isMobile && (selectedUnit !== null || isCreating)
+
+  // Form state
+  const [formData, setFormData] = useState<UnitFormData>({ name: '', address: '' })
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
+
+  // Delete confirmation
+  const [deleteUnit, setDeleteUnit] = useState<Unit | null>(null)
 
   useEffect(() => {
     if (!authLoading && role !== 'SUPER_ADMIN' && role !== 'GESTOR') {
@@ -55,37 +244,59 @@ export default function AdminUnitsPage() {
     }
   }
 
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+
   const openCreate = () => {
-    setEditingUnit(null)
+    setSelectedUnit(null)
+    setIsEditing(false)
     setFormData({ name: '', address: '' })
-    setError('')
-    setShowForm(true)
+    setFormError('')
+    setIsCreating(true)
   }
 
-  const openEdit = (unit: Unit) => {
-    setEditingUnit(unit)
-    setFormData({ name: unit.name, address: unit.address || '' })
-    setError('')
-    setShowForm(true)
+  const handleSelectUnit = (unit: Unit) => {
+    setIsCreating(false)
+    setIsEditing(false)
+    setFormError('')
+    setSelectedUnit(unit)
+  }
+
+  const handleEditOpen = () => {
+    if (!selectedUnit) return
+    setFormData({ name: selectedUnit.name, address: selectedUnit.address || '' })
+    setFormError('')
+    setIsEditing(true)
+    setIsCreating(false)
+  }
+
+  const handleCloseSidePanel = () => {
+    setSelectedUnit(null)
+    setIsCreating(false)
+    setIsEditing(false)
+    setFormError('')
+  }
+
+  const handleFormChange = (field: keyof UnitFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim()) {
-      setError('Nome é obrigatório')
+      setFormError('Nome é obrigatório')
       return
     }
 
     try {
       setSaving(true)
-      setError('')
+      setFormError('')
 
-      const url = editingUnit
-        ? `/api/admin/units/${editingUnit.id}`
+      const url = isEditing && selectedUnit
+        ? `/api/admin/units/${selectedUnit.id}`
         : '/api/admin/units'
 
       const res = await fetch(url, {
-        method: editingUnit ? 'PUT' : 'POST',
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
@@ -93,30 +304,36 @@ export default function AdminUnitsPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Erro ao salvar')
+        setFormError(data.error || 'Erro ao salvar')
         return
       }
 
-      setShowForm(false)
-      fetchUnits()
+      await fetchUnits()
+      if (isEditing && selectedUnit) {
+        const updated = { ...selectedUnit, name: formData.name, address: formData.address || null }
+        setSelectedUnit(updated)
+        setIsEditing(false)
+      } else {
+        setIsCreating(false)
+      }
     } catch {
-      setError('Erro de conexão')
+      setFormError('Erro de conexão')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteUnit) return
     try {
-      const res = await fetch(`/api/admin/units/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/units/${deleteUnit.id}`, { method: 'DELETE' })
       const data = await res.json()
-
       if (!res.ok) {
         alert(data.error || 'Erro ao excluir')
         return
       }
-
-      setDeleteConfirm(null)
+      setDeleteUnit(null)
+      if (selectedUnit?.id === deleteUnit.id) setSelectedUnit(null)
       fetchUnits()
     } catch {
       alert('Erro de conexão')
@@ -127,12 +344,14 @@ export default function AdminUnitsPage() {
 
   const filteredUnits = units.filter((unit) => {
     const search = searchTerm.toLowerCase()
-
     return (
       unit.name.toLowerCase().includes(search) ||
       (unit.address || '').toLowerCase().includes(search)
     )
   })
+
+  const showEditForm = !isMobile && (isCreating || (selectedUnit !== null && isEditing))
+  const showDetailPanel = !isMobile && selectedUnit !== null && !isEditing && !isCreating
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -164,7 +383,9 @@ export default function AdminUnitsPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          <div className="w-full transition-all overflow-hidden flex flex-col">
+
+          {/* Left panel */}
+          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
             {loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -183,13 +404,12 @@ export default function AdminUnitsPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Membros</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativos</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criada em</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="bg-card divide-y divide-gray-200">
                       {filteredUnits.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-6 py-16 text-center">
+                          <td colSpan={5} className="px-6 py-16 text-center">
                             <div className="flex flex-col items-center gap-3">
                               <Icon name="apartment" className="text-4xl text-muted-foreground" />
                               <h3 className="text-sm font-medium text-foreground">Nenhuma unidade encontrada</h3>
@@ -203,7 +423,11 @@ export default function AdminUnitsPage() {
                         </tr>
                       ) : (
                         filteredUnits.map((unit) => (
-                          <tr key={unit.id} className="hover:bg-secondary cursor-pointer transition-colors">
+                          <tr
+                            key={unit.id}
+                            onClick={() => handleSelectUnit(unit)}
+                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
+                          >
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                               <div className="flex items-center gap-3">
                                 <div className="size-10 rounded-[4px] bg-primary/10 flex items-center justify-center">
@@ -224,18 +448,6 @@ export default function AdminUnitsPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                               {new Date(unit.createdAt).toLocaleDateString('pt-BR')}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => openEdit(unit)}>
-                                  <Icon name="edit" className="mr-1 text-base" />
-                                  Editar
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(unit.id)} className="text-danger hover:bg-danger/10 hover:text-danger">
-                                  <Icon name="delete" className="mr-1 text-base" />
-                                  Excluir
-                                </Button>
-                              </div>
-                            </td>
                           </tr>
                         ))
                       )}
@@ -245,86 +457,125 @@ export default function AdminUnitsPage() {
               </div>
             )}
           </div>
+
+          {/* Right panel — desktop only */}
+          {hasSidePanel && !isMobile && (
+            <div className="w-1/2 min-w-0">
+              {showEditForm && (
+                <UnitFormPanel
+                  inPage
+                  isEdit={isEditing}
+                  formData={formData}
+                  saving={saving}
+                  error={formError}
+                  onClose={handleCloseSidePanel}
+                  onSubmit={handleSubmit}
+                  onChange={handleFormChange}
+                />
+              )}
+              {showDetailPanel && selectedUnit && (
+                <UnitDetailPanel
+                  unit={selectedUnit}
+                  onClose={handleCloseSidePanel}
+                  onEdit={handleEditOpen}
+                  onDelete={(u) => setDeleteUnit(u)}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Form Modal */}
-      <Modal
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        title={editingUnit ? 'Editar Unidade' : 'Nova Unidade'}
-        size="md"
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="p-4 space-y-3">
-            {error && (
-              <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
-                {error}
-              </div>
-            )}
+      {/* ── Mobile modals ─────────────────────────────────────────────────────── */}
 
-            <ModalSection title="Dados da Unidade">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="md:col-span-2">
-                  <label htmlFor="name" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Nome da Unidade <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                    placeholder="Ex: Unidade São Paulo"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="address" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Endereço
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="Ex: Av. Paulista, 1000 - São Paulo/SP"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
+      {isMobile && selectedUnit && !isEditing && (
+        <Modal
+          isOpen
+          onClose={handleCloseSidePanel}
+          title={selectedUnit.name}
+          size="wide"
+        >
+          <div className="p-4 space-y-2">
+            <button
+              onClick={handleEditOpen}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            >
+              <Icon name="edit" className="text-base" />
+              Editar
+            </button>
+            <button
+              onClick={() => { setDeleteUnit(selectedUnit); handleCloseSidePanel() }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-[4px] hover:bg-destructive/10 transition-colors text-sm"
+            >
+              <Icon name="delete" className="text-base" />
+              Excluir
+            </button>
+          </div>
+          <div className="p-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div className="col-span-2">
+                <p className="text-xs text-muted-foreground">Endereço</p>
+                <p className="text-sm text-foreground">{selectedUnit.address || '—'}</p>
               </div>
-            </ModalSection>
+              <div>
+                <p className="text-xs text-muted-foreground">Membros</p>
+                <p className="text-sm text-foreground">{selectedUnit.memberCount}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Ativos</p>
+                <p className="text-sm text-foreground">{selectedUnit.assetCount}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Criada em</p>
+                <p className="text-sm text-foreground">
+                  {new Date(selectedUnit.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
           </div>
+        </Modal>
+      )}
 
-          <div className="flex gap-3 px-4 py-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving} className="flex-1">
-              <Icon name="save" className="text-base mr-2" />
-              {saving ? 'Salvando...' : editingUnit ? 'Salvar Alterações' : 'Salvar'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {isMobile && (isCreating || (selectedUnit && isEditing)) && (
+        <Modal
+          isOpen
+          onClose={handleCloseSidePanel}
+          title={isEditing ? 'Editar Unidade' : 'Nova Unidade'}
+          size="md"
+        >
+          <UnitFormPanel
+            isEdit={isEditing}
+            formData={formData}
+            saving={saving}
+            error={formError}
+            onClose={handleCloseSidePanel}
+            onSubmit={handleSubmit}
+            onChange={handleFormChange}
+          />
+        </Modal>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={!!deleteUnit}
+        onClose={() => setDeleteUnit(null)}
         title="Confirmar Exclusão"
         size="sm"
       >
         <div className="p-4">
           <p className="text-foreground mb-2">
-            Tem certeza que deseja excluir esta unidade? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir a unidade:
+          </p>
+          <p className="font-semibold text-foreground mb-4">{deleteUnit?.name}</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Esta ação não pode ser desfeita.
           </p>
         </div>
         <div className="flex gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="flex-1">
+          <Button variant="outline" onClick={() => setDeleteUnit(null)} className="flex-1">
             Cancelar
           </Button>
-          <Button variant="danger" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1">
+          <Button variant="danger" onClick={handleDelete} className="flex-1">
             Excluir
           </Button>
         </div>

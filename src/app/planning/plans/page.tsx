@@ -1,74 +1,99 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { ModalSection } from '@/components/ui/ModalSection'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useIsMobile } from '@/hooks/useMediaQuery'
+
+const PlanDetailPanel = dynamic(
+  () => import('@/components/planning/PlanDetailPanel').then(m => ({ default: m.PlanDetailPanel })),
+  { ssr: false }
+)
+const PlanFormPanel = dynamic(
+  () => import('@/components/planning/PlanFormPanel').then(m => ({ default: m.PlanFormPanel })),
+  { ssr: false }
+)
+
+interface Plan {
+  id: string
+  planNumber?: number
+  description?: string
+  planDate?: string
+  startDate?: string
+  endDate?: string
+  status?: string
+  isFinished?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
 
 export default function PlansPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { canCreate, canDelete } = usePermissions()
+  const isMobile = useIsMobile()
   const role = user?.role ?? ''
 
-  const [plans, setPlans] = useState<any[]>([])
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-
-  // Modal
-  const [showModal, setShowModal] = useState(false)
-  const [formData, setFormData] = useState<Record<string, any>>({})
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [result, setResult] = useState('')
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (authLoading || !user) return
-    if (!hasPermission(role as UserRole, 'planning', 'view')) { router.push('/dashboard'); return }
+    if (!hasPermission(role as UserRole, 'planning', 'view')) {
+      router.push('/dashboard')
+      return
+    }
+    loadData()
   }, [authLoading, user, role])
 
-  useEffect(() => { if (role) loadData() }, [role])
-
   const loadData = async () => {
-    const res = await fetch('/api/planning/plans')
-    const data = await res.json()
-    setPlans(data.data || [])
-  }
-
-  const openCreate = () => {
-    setFormData({})
-    setError('')
-    setResult('')
-    setShowModal(true)
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    setError('')
-    setResult('')
+    setLoading(true)
     try {
-      const res = await fetch('/api/planning/plans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
+      const res = await fetch('/api/planning/plans')
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Erro'); setSaving(false); return }
-      if (data.generatedCount !== undefined) {
-        setResult(`Plano criado! ${data.generatedCount} OS(s) gerada(s).`)
-      }
-      setShowModal(false)
-      loadData()
-    } catch { setError('Erro de conexão') }
-    setSaving(false)
+      setPlans(data.data || [])
+    } catch {
+      setPlans([])
+    }
+    setLoading(false)
+  }
+
+  const handleSelectPlan = (plan: Plan) => {
+    setIsCreating(false)
+    setSelectedPlan(plan)
+  }
+
+  const handleClosePanel = () => {
+    setSelectedPlan(null)
+    setIsCreating(false)
+  }
+
+  const handleCreate = () => {
+    setSelectedPlan(null)
+    setIsCreating(true)
+  }
+
+  const handleSaved = (generatedCount?: number) => {
+    setIsCreating(false)
+    loadData()
+    if (generatedCount !== undefined) {
+      // generatedCount available for future toast/feedback
+    }
   }
 
   const handleDelete = async () => {
@@ -77,14 +102,20 @@ export default function PlansPage() {
     try {
       const res = await fetch(`/api/planning/plans/${deleteId}`, { method: 'DELETE' })
       const data = await res.json()
-      if (!res.ok) { alert(data.error || 'Erro ao excluir plano'); setDeleting(false); setDeleteId(null); return }
+      if (!res.ok) {
+        alert(data.error || 'Erro ao excluir plano')
+        setDeleting(false)
+        setDeleteId(null)
+        return
+      }
+      if (selectedPlan?.id === deleteId) setSelectedPlan(null)
       setDeleteId(null)
       loadData()
-    } catch { alert('Erro de conexão ao excluir plano') }
+    } catch {
+      alert('Erro de conexão ao excluir plano')
+    }
     setDeleting(false)
   }
-
-  const canEdit = role && hasPermission(role as UserRole, 'planning', 'create')
 
   const filteredPlans = plans.filter(p => {
     if (!search) return true
@@ -96,13 +127,15 @@ export default function PlansPage() {
     )
   })
 
+  const hasSidePanel = !isMobile && (selectedPlan !== null || isCreating)
+
   if (authLoading || !user) {
     return (
       <PageContainer variant="full" className="overflow-hidden p-0">
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-b-2 border-on-surface-variant border-r-transparent" />
-            <span className="text-sm text-muted-foreground">Carregando...</span>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+            <p className="mt-2 text-muted-foreground">Carregando...</p>
           </div>
         </div>
       </PageContainer>
@@ -111,6 +144,7 @@ export default function PlansPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
+      {/* Header */}
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           title="Plano de Manutenção"
@@ -118,8 +152,9 @@ export default function PlansPage() {
           className="mb-0"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Search */}
               <div className="relative w-64">
-                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Buscar planos..."
@@ -128,9 +163,11 @@ export default function PlansPage() {
                   className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-              {canEdit && (
-                <Button onClick={openCreate} size="sm">
-                  <Icon name="add" className="text-base mr-1" /> Novo Plano
+              {/* Add button */}
+              {canCreate('planning') && (
+                <Button onClick={handleCreate}>
+                  <Icon name="add" className="mr-2 text-base" />
+                  Novo Plano
                 </Button>
               )}
             </div>
@@ -138,105 +175,116 @@ export default function PlansPage() {
         />
       </div>
 
+      {/* Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          <div className="w-full transition-all overflow-hidden flex flex-col">
-            <div className="h-full flex flex-col bg-card overflow-hidden">
-              <div className="flex-1 overflow-auto min-h-0">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="sticky top-0 bg-secondary z-10">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Plano</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Início</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Fim</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Terminado?</th>
-                      {canEdit && <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-card divide-y divide-gray-200">
-                    {filteredPlans.length === 0 ? (
-                      <tr>
-                        <td colSpan={canEdit ? 8 : 7} className="px-6 py-16 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <Icon name="assignment" className="text-4xl text-muted-foreground" />
-                            <h3 className="text-sm font-medium text-foreground">Nenhum plano encontrado</h3>
-                            <p className="text-sm text-muted-foreground">Nenhum plano emitido ainda.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : filteredPlans.map(p => (
-                      <tr key={p.id} className="hover:bg-secondary cursor-pointer">
-                        <td className="px-6 py-3 text-sm font-mono">#{p.planNumber}</td>
-                        <td className="px-6 py-3 text-sm">{formatDate(p.planDate)}</td>
-                        <td className="px-6 py-3 text-sm font-medium">{p.description}</td>
-                        <td className="px-6 py-3 text-sm">{formatDate(p.startDate)}</td>
-                        <td className="px-6 py-3 text-sm">{formatDate(p.endDate)}</td>
-                        <td className="px-6 py-3 text-sm">{p.status}</td>
-                        <td className="px-6 py-3 text-sm">{p.isFinished ? 'Sim' : 'Não'}</td>
-                        {canEdit && (
-                          <td className="px-6 py-3 text-sm text-right">
-                            <button
-                              onClick={e => { e.stopPropagation(); setDeleteId(p.id) }}
-                              className="p-1 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-danger"
-                              title="Excluir plano"
-                            >
-                              <Icon name="delete" className="text-lg" />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                <p className="mt-2 text-muted-foreground">Carregando...</p>
               </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Left: table */}
+              <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
+                <div className="h-full flex flex-col bg-card overflow-hidden">
+                  <div className="flex-1 overflow-auto min-h-0">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 bg-secondary z-10">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Plano</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Início</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Fim</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Terminado?</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-card divide-y divide-gray-200">
+                        {filteredPlans.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="px-6 py-16 text-center">
+                              <div className="flex flex-col items-center gap-3">
+                                <Icon name="assignment" className="text-4xl text-muted-foreground" />
+                                <h3 className="text-sm font-medium text-foreground">Nenhum plano encontrado</h3>
+                                <p className="text-sm text-muted-foreground">Nenhum plano emitido ainda.</p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : filteredPlans.map(p => (
+                          <tr
+                            key={p.id}
+                            onClick={() => handleSelectPlan(p)}
+                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedPlan?.id === p.id ? 'bg-secondary' : ''}`}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{p.planNumber}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{p.description}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(p.startDate || '')}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(p.endDate || '')}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.status}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.isFinished ? 'Sim' : 'Não'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: panel (desktop only) */}
+              {!isMobile && isCreating && (
+                <div className="w-1/2 min-w-0">
+                  <PlanFormPanel
+                    onClose={handleClosePanel}
+                    onSaved={handleSaved}
+                    inPage
+                  />
+                </div>
+              )}
+              {!isMobile && !isCreating && selectedPlan && (
+                <div className="w-1/2 min-w-0">
+                  <PlanDetailPanel
+                    plan={selectedPlan}
+                    onClose={handleClosePanel}
+                    onDelete={() => setDeleteId(selectedPlan.id)}
+                    canDelete={canDelete('planning')}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Novo Plano de Manutenção" size="wide">
-        <div className="p-4 space-y-3">
-          {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
-          {result && <div className="p-3 bg-success/10 text-success rounded-[4px] text-sm">{result}</div>}
+      {/* Mobile modals */}
+      {isMobile && isCreating && (
+        <Modal isOpen onClose={handleClosePanel} title="Novo Plano de Manutenção" hideHeader noPadding>
+          <PlanFormPanel
+            onClose={handleClosePanel}
+            onSaved={handleSaved}
+          />
+        </Modal>
+      )}
+      {isMobile && selectedPlan && !isCreating && (
+        <Modal
+          isOpen
+          onClose={handleClosePanel}
+          title={selectedPlan.planNumber ? `#${selectedPlan.planNumber}` : 'Plano'}
+          hideHeader
+          noPadding
+        >
+          <PlanDetailPanel
+            plan={selectedPlan}
+            onClose={handleClosePanel}
+            onDelete={() => setDeleteId(selectedPlan.id)}
+            canDelete={canDelete('planning')}
+          />
+        </Modal>
+      )}
 
-          <ModalSection title="Plano">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div className="col-span-2 md:col-span-3">
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição <span className="text-danger">*</span></label>
-                <input type="text" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}
-                  placeholder="Ex: Plano Lubrificação Abril 2026"
-                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Início <span className="text-danger">*</span></label>
-                <input type="date" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Fim <span className="text-danger">*</span></label>
-                <input type="date" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-            </div>
-          </ModalSection>
-
-          <div className="p-3 bg-muted rounded-[4px] text-xs text-muted-foreground">
-            Ao criar o plano, o sistema emitirá automaticamente Ordens de Serviço para os ativos com manutenção prevista dentro do período selecionado.
-          </div>
-        </div>
-
-        <div className="flex gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={() => setShowModal(false)} className="flex-1">Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving} className="flex-1">
-            <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Processando...' : 'Salvar'}
-          </Button>
-        </div>
-      </Modal>
-
+      {/* Delete confirmation */}
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}

@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { useAuth } from '@/hooks/useAuth'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 import { getRoleDisplayName } from '@/lib/permissions'
 import type { UserRole } from '@/lib/permissions'
@@ -46,9 +47,378 @@ const ALL_ROLES: { value: string; label: string }[] = [
   { value: 'CONSTRUTOR_CIVIL', label: 'Construtor Civil' },
 ]
 
+// ─── User Detail Panel ────────────────────────────────────────────────────────
+
+interface UserDetailPanelProps {
+  user: AdminUser
+  currentUserId?: string
+  onClose: () => void
+  onEdit: () => void
+  onDelete: (user: AdminUser) => void
+  onManageUnits: (user: AdminUser) => void
+}
+
+function UserDetailPanel({
+  user,
+  currentUserId,
+  onClose,
+  onEdit,
+  onDelete,
+  onManageUnits,
+}: UserDetailPanelProps) {
+  return (
+    <div className="h-full flex flex-col bg-card border-l border-border">
+      {/* Header */}
+      <div className="flex items-start justify-between p-4 border-b border-border">
+        <h2 className="text-xl font-bold text-foreground">
+          {user.firstName} {user.lastName}
+        </h2>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-muted rounded transition-colors"
+        >
+          <Icon name="close" className="text-xl text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Action buttons */}
+        <div className="p-4 border-b border-border space-y-2">
+          <button
+            onClick={onEdit}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+          >
+            <Icon name="edit" className="text-base" />
+            Editar
+          </button>
+          <button
+            onClick={() => onManageUnits(user)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+          >
+            <Icon name="apartment" className="text-base" />
+            Gerenciar Unidades
+          </button>
+          {user.id !== currentUserId && (
+            <button
+              onClick={() => onDelete(user)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-[4px] hover:bg-destructive/10 transition-colors text-sm"
+            >
+              <Icon name="delete" className="text-base" />
+              Excluir
+            </button>
+          )}
+        </div>
+
+        {/* Avatar + basic info */}
+        <div className="p-4 border-b border-border flex items-center gap-4">
+          {user.image ? (
+            <img src={user.image} alt="" className="w-14 h-14 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-primary font-semibold text-lg">
+                {user.firstName[0]}{user.lastName[0]}
+              </span>
+            </div>
+          )}
+          <div>
+            <p className="text-sm font-semibold text-foreground">{user.firstName} {user.lastName}</p>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
+            {user.jobTitle && <p className="text-xs text-muted-foreground">{user.jobTitle}</p>}
+          </div>
+        </div>
+
+        {/* Data */}
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Papel</p>
+              <p className="text-sm text-foreground">
+                {getRoleDisplayName(user.role as UserRole)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="text-sm text-foreground">
+                {user.enabled ? (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-success/10 text-success">
+                    Ativo
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-danger/10 text-danger">
+                    Inativo
+                  </span>
+                )}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Telefone</p>
+              <p className="text-sm text-foreground">{user.phone || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Criado em</p>
+              <p className="text-sm text-foreground">
+                {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Units */}
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Unidades</h3>
+          {user.units.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">Sem unidade vinculada</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {user.units.map(unit => (
+                <span
+                  key={unit.id}
+                  className="px-2 py-0.5 text-xs rounded-full bg-secondary text-foreground"
+                >
+                  {unit.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── User Form Panel ──────────────────────────────────────────────────────────
+
+interface UserFormData {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  phone: string
+  jobTitle: string
+  role: string
+  rate: string
+  enabled: boolean
+  unitIds: string[]
+}
+
+interface UserFormPanelProps {
+  inPage?: boolean
+  isEdit: boolean
+  formData: UserFormData
+  units: UnitOption[]
+  saving: boolean
+  error: string
+  onClose: () => void
+  onSubmit: (e: React.FormEvent) => void
+  onChange: <K extends keyof UserFormData>(field: K, value: UserFormData[K]) => void
+  onToggleUnit: (unitId: string) => void
+}
+
+function UserFormPanel({
+  inPage,
+  isEdit,
+  formData,
+  units,
+  saving,
+  error,
+  onClose,
+  onSubmit,
+  onChange,
+  onToggleUnit,
+}: UserFormPanelProps) {
+  const formContent = (
+    <form onSubmit={onSubmit} className={inPage ? 'flex flex-1 min-h-0 flex-col' : undefined}>
+      <div className={inPage ? 'flex-1 overflow-y-auto p-4 space-y-3' : 'p-4 space-y-3'}>
+        {error && (
+          <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
+            {error}
+          </div>
+        )}
+
+        <ModalSection title="Identificação">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Nome <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => onChange('firstName', e.target.value)}
+                required
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Sobrenome <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => onChange('lastName', e.target.value)}
+                required
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Email <span className="text-danger">*</span>
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => onChange('email', e.target.value)}
+                required
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                {isEdit ? 'Nova Senha' : 'Senha'} {!isEdit && <span className="text-danger">*</span>}
+              </label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => onChange('password', e.target.value)}
+                required={!isEdit}
+                minLength={6}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Telefone</label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => onChange('phone', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cargo</label>
+              <input
+                type="text"
+                value={formData.jobTitle}
+                onChange={(e) => onChange('jobTitle', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+        </ModalSection>
+
+        <ModalSection title="Acesso">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Papel <span className="text-danger">*</span>
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => onChange('role', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {ALL_ROLES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Taxa por Hora (R$)</label>
+              <input
+                type="number"
+                value={formData.rate}
+                onChange={(e) => onChange('rate', e.target.value)}
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Unidades de Acesso
+              </label>
+              {units.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
+              ) : (
+                <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
+                  {units.map(unit => (
+                    <label key={unit.id} className="flex items-center gap-2 cursor-pointer hover:bg-secondary px-2 py-1 rounded-[4px]">
+                      <input
+                        type="checkbox"
+                        checked={formData.unitIds.includes(unit.id)}
+                        onChange={() => onToggleUnit(unit.id)}
+                        className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
+                      />
+                      <span className="text-sm text-foreground">{unit.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {formData.unitIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.unitIds.length} unidade(s) selecionada(s)
+                </p>
+              )}
+            </div>
+            <div className="md:col-span-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="form-enabled"
+                checked={formData.enabled}
+                onChange={(e) => onChange('enabled', e.target.checked)}
+                className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
+              />
+              <label htmlFor="form-enabled" className="text-sm font-medium text-foreground">
+                Usuário ativo
+              </label>
+            </div>
+          </div>
+        </ModalSection>
+      </div>
+
+      <div className={`flex gap-3 px-4 py-4 border-t border-border${inPage ? ' flex-shrink-0' : ''}`}>
+        <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={saving} className="flex-1">
+          <Icon name="save" className="text-base mr-2" />
+          {saving ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Salvar'}
+        </Button>
+      </div>
+    </form>
+  )
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <h2 className="text-xl font-bold text-foreground">
+            {isEdit ? 'Editar Usuário' : 'Novo Usuário'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-muted rounded transition-colors"
+          >
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
+        </div>
+        {formContent}
+      </div>
+    )
+  }
+
+  return formContent
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AdminUsersPage() {
   const { role: currentRole, isLoading: authLoading, user: currentUser } = useAuth()
   const router = useRouter()
+  const isMobile = useIsMobile()
 
   const [users, setUsers] = useState<AdminUser[]>([])
   const [units, setUnits] = useState<UnitOption[]>([])
@@ -57,18 +427,22 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
 
+  // Split-panel state
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const hasSidePanel = !isMobile && (selectedUser !== null || isCreating)
+
   // Form state
-  const [showForm, setShowForm] = useState(false)
-  const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     firstName: '', lastName: '', email: '', password: '',
     phone: '', jobTitle: '', role: 'MECANICO', rate: '0',
-    enabled: true, unitIds: [] as string[],
+    enabled: true, unitIds: [],
   })
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
-  // Unit assignment modal
+  // Unit assignment modal (always overlay)
   const [assignUser, setAssignUser] = useState<AdminUser | null>(null)
   const [assignUnitIds, setAssignUnitIds] = useState<string[]>([])
   const [savingAssign, setSavingAssign] = useState(false)
@@ -85,6 +459,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers()
     fetchUnits()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter, unitFilter])
 
   const fetchUsers = async () => {
@@ -108,6 +483,7 @@ export default function AdminUsersPage() {
     try {
       const res = await fetch('/api/admin/units')
       const data = await res.json()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setUnits((data.data || []).map((u: any) => ({ id: u.id, name: u.name })))
     } catch {
       console.error('Error loading units')
@@ -124,27 +500,34 @@ export default function AdminUsersPage() {
     )
   })
 
-  // --- Form handlers ---
+  // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const openCreate = () => {
-    setEditingUser(null)
+    setSelectedUser(null)
+    setIsEditing(false)
     setFormData({
       firstName: '', lastName: '', email: '', password: '',
       phone: '', jobTitle: '', role: 'MECANICO', rate: '0',
       enabled: true, unitIds: [],
     })
     setFormError('')
-    setShowForm(true)
+    setIsCreating(true)
   }
 
-  const openEdit = async (user: AdminUser) => {
-    // Fetch full user with unitIds
+  const handleSelectUser = (user: AdminUser) => {
+    setIsCreating(false)
+    setIsEditing(false)
+    setFormError('')
+    setSelectedUser(user)
+  }
+
+  const handleEditOpen = async () => {
+    if (!selectedUser) return
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`)
+      const res = await fetch(`/api/admin/users/${selectedUser.id}`)
       const data = await res.json()
       const u = data.data
 
-      setEditingUser(user)
       setFormData({
         firstName: u.firstName,
         lastName: u.lastName,
@@ -158,10 +541,31 @@ export default function AdminUsersPage() {
         unitIds: u.unitIds || [],
       })
       setFormError('')
-      setShowForm(true)
+      setIsEditing(true)
+      setIsCreating(false)
     } catch {
       alert('Erro ao carregar dados do usuário')
     }
+  }
+
+  const handleCloseSidePanel = () => {
+    setSelectedUser(null)
+    setIsCreating(false)
+    setIsEditing(false)
+    setFormError('')
+  }
+
+  const handleFormChange = <K extends keyof UserFormData>(field: K, value: UserFormData[K]) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleToggleFormUnit = (unitId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      unitIds: prev.unitIds.includes(unitId)
+        ? prev.unitIds.filter(id => id !== unitId)
+        : [...prev.unitIds, unitId],
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,7 +574,7 @@ export default function AdminUsersPage() {
       setFormError('Nome, sobrenome e email são obrigatórios')
       return
     }
-    if (!editingUser && !formData.password) {
+    if (!isEditing && !formData.password) {
       setFormError('Senha é obrigatória para novos usuários')
       return
     }
@@ -179,6 +583,7 @@ export default function AdminUsersPage() {
       setSaving(true)
       setFormError('')
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const body: any = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -195,12 +600,12 @@ export default function AdminUsersPage() {
         body.password = formData.password
       }
 
-      const url = editingUser
-        ? `/api/admin/users/${editingUser.id}`
+      const url = isEditing && selectedUser
+        ? `/api/admin/users/${selectedUser.id}`
         : '/api/admin/users'
 
       const res = await fetch(url, {
-        method: editingUser ? 'PUT' : 'POST',
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
@@ -212,8 +617,15 @@ export default function AdminUsersPage() {
         return
       }
 
-      setShowForm(false)
-      fetchUsers()
+      await fetchUsers()
+      if (isEditing && selectedUser) {
+        // Refresh selected user data
+        const refreshed = { ...selectedUser, ...body, units: selectedUser.units }
+        setSelectedUser(refreshed)
+        setIsEditing(false)
+      } else {
+        setIsCreating(false)
+      }
     } catch {
       setFormError('Erro de conexão')
     } finally {
@@ -221,8 +633,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  // --- Unit assignment ---
-
+  // Unit assignment
   const openAssign = (user: AdminUser) => {
     setAssignUser(user)
     setAssignUnitIds(user.units.map(u => u.id))
@@ -230,7 +641,6 @@ export default function AdminUsersPage() {
 
   const handleSaveAssign = async () => {
     if (!assignUser) return
-
     try {
       setSavingAssign(true)
       const res = await fetch(`/api/admin/users/${assignUser.id}/units`, {
@@ -238,13 +648,11 @@ export default function AdminUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ unitIds: assignUnitIds }),
       })
-
       if (!res.ok) {
         const data = await res.json()
         alert(data.error || 'Erro ao salvar')
         return
       }
-
       setAssignUser(null)
       fetchUsers()
     } catch {
@@ -262,39 +670,28 @@ export default function AdminUsersPage() {
     )
   }
 
-  // --- Delete ---
-
+  // Delete
   const handleDelete = async () => {
     if (!deleteUser) return
-
     try {
       const res = await fetch(`/api/admin/users/${deleteUser.id}`, { method: 'DELETE' })
       const data = await res.json()
-
       if (!res.ok) {
         alert(data.error || 'Erro ao excluir')
         return
       }
-
       setDeleteUser(null)
+      if (selectedUser?.id === deleteUser.id) setSelectedUser(null)
       fetchUsers()
     } catch {
       alert('Erro de conexão')
     }
   }
 
-  // --- Form unit toggle ---
-
-  const toggleFormUnit = (unitId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      unitIds: prev.unitIds.includes(unitId)
-        ? prev.unitIds.filter(id => id !== unitId)
-        : [...prev.unitIds, unitId],
-    }))
-  }
-
   if (authLoading) return null
+
+  const showEditForm = !isMobile && (isCreating || (selectedUser !== null && isEditing))
+  const showDetailPanel = !isMobile && selectedUser !== null && !isEditing && !isCreating
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -346,7 +743,9 @@ export default function AdminUsersPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          <div className="w-full transition-all overflow-hidden flex flex-col">
+
+          {/* Left panel */}
+          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
             {loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -364,13 +763,12 @@ export default function AdminUsersPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidades</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="bg-card divide-y divide-gray-200">
                       {filteredUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-16 text-center">
+                          <td colSpan={4} className="px-6 py-16 text-center">
                             <div className="flex flex-col items-center gap-3">
                               <Icon name="group" className="text-4xl text-muted-foreground" />
                               <h3 className="text-sm font-medium text-foreground">Nenhum usuário encontrado</h3>
@@ -384,7 +782,11 @@ export default function AdminUsersPage() {
                         </tr>
                       ) : (
                         filteredUsers.map((user) => (
-                          <tr key={user.id} className="hover:bg-secondary cursor-pointer transition-colors">
+                          <tr
+                            key={user.id}
+                            onClick={() => handleSelectUser(user)}
+                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
+                          >
                             <td className="px-6 py-4 text-sm text-foreground">
                               <div className="flex items-center gap-3">
                                 {user.image ? (
@@ -439,40 +841,6 @@ export default function AdminUsersPage() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openAssign(user)}
-                                  title="Gerenciar unidades"
-                                >
-                                  <Icon name="apartment" className="mr-1 text-base" />
-                                  Unidades
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEdit(user)}
-                                  title="Editar"
-                                >
-                                  <Icon name="edit" className="mr-1 text-base" />
-                                  Editar
-                                </Button>
-                                {user.id !== currentUser?.id && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setDeleteUser(user)}
-                                    title="Excluir"
-                                    className="text-danger hover:bg-danger/10 hover:text-danger"
-                                  >
-                                    <Icon name="delete" className="mr-1 text-base" />
-                                    Excluir
-                                  </Button>
-                                )}
-                              </div>
-                            </td>
                           </tr>
                         ))
                       )}
@@ -482,183 +850,130 @@ export default function AdminUsersPage() {
               </div>
             )}
           </div>
+
+          {/* Right panel — desktop only */}
+          {hasSidePanel && !isMobile && (
+            <div className="w-1/2 min-w-0">
+              {showEditForm && (
+                <UserFormPanel
+                  inPage
+                  isEdit={isEditing}
+                  formData={formData}
+                  units={units}
+                  saving={saving}
+                  error={formError}
+                  onClose={handleCloseSidePanel}
+                  onSubmit={handleSubmit}
+                  onChange={handleFormChange}
+                  onToggleUnit={handleToggleFormUnit}
+                />
+              )}
+              {showDetailPanel && selectedUser && (
+                <UserDetailPanel
+                  user={selectedUser}
+                  currentUserId={currentUser?.id}
+                  onClose={handleCloseSidePanel}
+                  onEdit={handleEditOpen}
+                  onDelete={(u) => setDeleteUser(u)}
+                  onManageUnits={openAssign}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* User Form Modal */}
-      <Modal
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        title={editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-        size="xl"
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="p-4 space-y-3">
-            {formError && (
-              <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">
-                {formError}
-              </div>
+      {/* ── Mobile modals ─────────────────────────────────────────────────────── */}
+
+      {isMobile && selectedUser && !isEditing && (
+        <Modal
+          isOpen
+          onClose={handleCloseSidePanel}
+          title={`${selectedUser.firstName} ${selectedUser.lastName}`}
+          size="wide"
+        >
+          <div className="p-4 space-y-2">
+            <button
+              onClick={handleEditOpen}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            >
+              <Icon name="edit" className="text-base" />
+              Editar
+            </button>
+            <button
+              onClick={() => { openAssign(selectedUser); handleCloseSidePanel() }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+            >
+              <Icon name="apartment" className="text-base" />
+              Gerenciar Unidades
+            </button>
+            {selectedUser.id !== currentUser?.id && (
+              <button
+                onClick={() => { setDeleteUser(selectedUser); handleCloseSidePanel() }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-[4px] hover:bg-destructive/10 transition-colors text-sm"
+              >
+                <Icon name="delete" className="text-base" />
+                Excluir
+              </button>
             )}
-
-            <ModalSection title="Identificação">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Nome <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Sobrenome <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Email <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    {editingUser ? 'Nova Senha' : 'Senha'} {!editingUser && <span className="text-danger">*</span>}
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    required={!editingUser}
-                    minLength={6}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Telefone</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cargo</label>
-                  <input
-                    type="text"
-                    value={formData.jobTitle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
+          </div>
+          <div className="p-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Papel</p>
+                <p className="text-sm text-foreground">{getRoleDisplayName(selectedUser.role as UserRole)}</p>
               </div>
-            </ModalSection>
-
-            <ModalSection title="Acesso">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Papel <span className="text-danger">*</span>
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    {ALL_ROLES.map(r => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Taxa por Hora (R$)</label>
-                  <input
-                    type="number"
-                    value={formData.rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, rate: e.target.value }))}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Unidades de Acesso
-                  </label>
-                  {units.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
+              <div>
+                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-sm text-foreground">
+                  {selectedUser.enabled ? (
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-success/10 text-success">Ativo</span>
                   ) : (
-                    <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
-                      {units.map(unit => (
-                        <label key={unit.id} className="flex items-center gap-2 cursor-pointer hover:bg-secondary px-2 py-1 rounded-[4px]">
-                          <input
-                            type="checkbox"
-                            checked={formData.unitIds.includes(unit.id)}
-                            onChange={() => toggleFormUnit(unit.id)}
-                            className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
-                          />
-                          <span className="text-sm text-foreground">{unit.name}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-danger/10 text-danger">Inativo</span>
                   )}
-                  {formData.unitIds.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formData.unitIds.length} unidade(s) selecionada(s)
-                    </p>
-                  )}
-                </div>
-                <div className="md:col-span-2 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="form-enabled"
-                    checked={formData.enabled}
-                    onChange={(e) => setFormData(prev => ({ ...prev, enabled: e.target.checked }))}
-                    className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
-                  />
-                  <label htmlFor="form-enabled" className="text-sm font-medium text-foreground">
-                    Usuário ativo
-                  </label>
-                </div>
+                </p>
               </div>
-            </ModalSection>
+              <div>
+                <p className="text-xs text-muted-foreground">Telefone</p>
+                <p className="text-sm text-foreground">{selectedUser.phone || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Unidades</p>
+                <p className="text-sm text-foreground">
+                  {selectedUser.units.length === 0 ? '—' : selectedUser.units.map(u => u.name).join(', ')}
+                </p>
+              </div>
+            </div>
           </div>
+        </Modal>
+      )}
 
-          <div className="flex gap-3 px-4 py-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving} className="flex-1">
-              <Icon name="save" className="text-base mr-2" />
-              {saving ? 'Salvando...' : editingUser ? 'Salvar Alterações' : 'Salvar'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {isMobile && (isCreating || (selectedUser && isEditing)) && (
+        <Modal
+          isOpen
+          onClose={handleCloseSidePanel}
+          title={isEditing ? 'Editar Usuário' : 'Novo Usuário'}
+          size="xl"
+        >
+          <UserFormPanel
+            isEdit={isEditing}
+            formData={formData}
+            units={units}
+            saving={saving}
+            error={formError}
+            onClose={handleCloseSidePanel}
+            onSubmit={handleSubmit}
+            onChange={handleFormChange}
+            onToggleUnit={handleToggleFormUnit}
+          />
+        </Modal>
+      )}
 
-      {/* Unit Assignment Modal */}
+      {/* Unit Assignment Modal (always overlay) */}
       <Modal
         isOpen={!!assignUser}
         onClose={() => setAssignUser(null)}
-        title={`Unidades - ${assignUser?.firstName} ${assignUser?.lastName}`}
+        title={`Unidades — ${assignUser?.firstName} ${assignUser?.lastName}`}
         size="md"
       >
         <div className="p-4 space-y-3">
@@ -666,7 +981,6 @@ export default function AdminUsersPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Selecione as unidades que este usuário terá acesso:
             </p>
-
             {units.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">Nenhuma unidade cadastrada</p>
             ) : (
@@ -690,7 +1004,6 @@ export default function AdminUsersPage() {
             )}
           </ModalSection>
         </div>
-
         <div className="flex gap-3 px-4 py-4 border-t border-border">
           <Button variant="outline" onClick={() => setAssignUser(null)} className="flex-1">
             Cancelar

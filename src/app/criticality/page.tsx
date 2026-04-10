@@ -1,14 +1,27 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
-import { ModalSection } from '@/components/ui/ModalSection'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { useIsMobile } from '@/hooks/useMediaQuery'
+import { usePermissions } from '@/hooks/usePermissions'
 
+const CriticalityDetailPanel = dynamic(
+  () => import('@/components/criticality/CriticalityDetailPanel').then((m) => ({ default: m.CriticalityDetailPanel })),
+  { ssr: false }
+)
+const CriticalityEditPanel = dynamic(
+  () => import('@/components/criticality/CriticalityEditPanel').then((m) => ({ default: m.CriticalityEditPanel })),
+  { ssr: false }
+)
+
+// Mobile overlays
+const Modal = dynamic(() => import('@/components/ui/Modal').then((m) => ({ default: m.Modal })), { ssr: false })
+const ModalSection = dynamic(() => import('@/components/ui/ModalSection').then((m) => ({ default: m.ModalSection })), { ssr: false })
 
 interface AssetCriticality {
   id: string
@@ -42,52 +55,72 @@ const classificationConfig = {
     color: 'bg-primary-graphite',
     textColor: 'text-foreground',
     bgLight: 'bg-surface-low',
-    borderColor: 'border-border',
-    icon: 'warning'
+    icon: 'warning',
   },
   warning: {
     label: 'Alerta',
     color: 'bg-on-surface-variant',
     textColor: 'text-muted-foreground',
     bgLight: 'bg-surface',
-    borderColor: 'border-border',
-    icon: 'error'
+    icon: 'error',
   },
   ok: {
     label: 'OK',
     color: 'bg-on-surface-variant',
     textColor: 'text-muted-foreground',
     bgLight: 'bg-surface',
-    borderColor: 'border-border',
-    icon: 'check_circle'
+    icon: 'check_circle',
+  },
+}
+
+type SortField =
+  | 'status'
+  | 'name'
+  | 'location'
+  | 'gutScore'
+  | 'openRequestsCount'
+  | 'openWorkOrdersCount'
+  | 'rafCount'
+  | 'totalScore'
+
+function SortIcon({ field, sortBy, sortOrder }: { field: SortField; sortBy: SortField; sortOrder: 'asc' | 'desc' }) {
+  if (sortBy !== field) {
+    return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
   }
+  return (
+    <Icon
+      name={sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+      className="text-sm text-foreground"
+    />
+  )
 }
 
 export default function CriticalityPage() {
+  const isMobile = useIsMobile()
+  const { canEdit } = usePermissions()
+
   const [assets, setAssets] = useState<AssetCriticality[]>([])
   const [summary, setSummary] = useState<Summary>({ critical: 0, warning: 0, ok: 0, total: 0 })
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'critical' | 'warning' | 'ok'>('all')
-  const [sortBy, setSortBy] = useState<'status' | 'name' | 'location' | 'gutScore' | 'openRequestsCount' | 'openWorkOrdersCount' | 'rafCount' | 'totalScore'>('totalScore')
+  const [sortBy, setSortBy] = useState<SortField>('totalScore')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  
-  // Estado para edição GUT
-  const [editingAsset, setEditingAsset] = useState<AssetCriticality | null>(null)
-  const [editGutValues, setEditGutValues] = useState({ gutGravity: 1, gutUrgency: 1, gutTendency: 1 })
-  const [saving, setSaving] = useState(false)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showInfo, setShowInfo] = useState(false)
+
+  // Split-panel state
+  const [selectedAsset, setSelectedAsset] = useState<AssetCriticality | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const hasSidePanel = !isMobile && selectedAsset !== null
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (filter !== 'all') params.set('classification', filter)
-
       const response = await fetch(`/api/criticality?${params}`)
       const result = await response.json()
-      
       if (result.data) {
         setAssets(result.data)
         setSummary(result.summary)
@@ -103,74 +136,30 @@ export default function CriticalityPage() {
     void fetchData()
   }, [fetchData])
 
-  const toggleSort = (field: typeof sortBy) => {
+  const toggleSort = (field: SortField) => {
     if (sortBy === field) {
-      setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')
+      setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
     } else {
       setSortBy(field)
       setSortOrder(field === 'status' || field === 'name' || field === 'location' ? 'asc' : 'desc')
     }
   }
 
-  // Funções para edição GUT
-  const openGutEditor = (asset: AssetCriticality, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditingAsset(asset)
-    setEditGutValues({
-      gutGravity: asset.gutGravity,
-      gutUrgency: asset.gutUrgency,
-      gutTendency: asset.gutTendency
-    })
+  const handleSelectAsset = (asset: AssetCriticality) => {
+    setIsEditing(false)
+    setSelectedAsset(asset)
   }
 
-  const closeGutEditor = () => {
-    setEditingAsset(null)
-    setEditGutValues({ gutGravity: 1, gutUrgency: 1, gutTendency: 1 })
-  }
-
-  const saveGutValues = async () => {
-    if (!editingAsset) return
-    
-    setSaving(true)
-    try {
-      const formData = new FormData()
-      // Precisamos enviar o nome também pois é requerido na API
-      formData.append('name', editingAsset.name)
-      formData.append('gutGravity', editGutValues.gutGravity.toString())
-      formData.append('gutUrgency', editGutValues.gutUrgency.toString())
-      formData.append('gutTendency', editGutValues.gutTendency.toString())
-
-      const response = await fetch(`/api/assets/${editingAsset.id}`, {
-        method: 'PATCH',
-        body: formData
+  const handleEditSuccess = () => {
+    setIsEditing(false)
+    void fetchData()
+    // Refresh selected asset data from updated list
+    if (selectedAsset) {
+      setSelectedAsset((prev) => {
+        const updated = assets.find((a) => a.id === prev?.id)
+        return updated ?? prev
       })
-
-      if (response.ok) {
-        closeGutEditor()
-        fetchData() // Recarregar dados
-      } else {
-        const data = await response.json()
-        alert(data.error || 'Erro ao salvar valores GUT')
-      }
-    } catch (error) {
-      console.error('Erro ao salvar:', error)
-      alert('Erro ao conectar ao servidor')
-    } finally {
-      setSaving(false)
     }
-  }
-
-  const SortIcon = ({ field }: { field: typeof sortBy }) => {
-    if (sortBy !== field) {
-      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
-    }
-
-    return (
-      <Icon
-        name={sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
-        className="text-sm text-foreground"
-      />
-    )
   }
 
   const visibleAssets = assets.filter((asset) => {
@@ -184,32 +173,23 @@ export default function CriticalityPage() {
   })
 
   const sortedAssets = [...visibleAssets].sort((a, b) => {
-    const modifier = sortOrder === 'asc' ? 1 : -1
-
+    const mod = sortOrder === 'asc' ? 1 : -1
     switch (sortBy) {
-      case 'status':
-        return a.status.localeCompare(b.status) * modifier
-      case 'name':
-        return a.name.localeCompare(b.name) * modifier
-      case 'location':
-        return (a.location?.name || '').localeCompare(b.location?.name || '') * modifier
-      case 'gutScore':
-        return (a.gutScore - b.gutScore) * modifier
-      case 'openRequestsCount':
-        return (a.openRequestsCount - b.openRequestsCount) * modifier
-      case 'openWorkOrdersCount':
-        return (a.openWorkOrdersCount - b.openWorkOrdersCount) * modifier
-      case 'rafCount':
-        return (a.rafCount - b.rafCount) * modifier
-      case 'totalScore':
-        return (a.totalScore - b.totalScore) * modifier
-      default:
-        return 0
+      case 'status': return a.status.localeCompare(b.status) * mod
+      case 'name': return a.name.localeCompare(b.name) * mod
+      case 'location': return (a.location?.name || '').localeCompare(b.location?.name || '') * mod
+      case 'gutScore': return (a.gutScore - b.gutScore) * mod
+      case 'openRequestsCount': return (a.openRequestsCount - b.openRequestsCount) * mod
+      case 'openWorkOrdersCount': return (a.openWorkOrdersCount - b.openWorkOrdersCount) * mod
+      case 'rafCount': return (a.rafCount - b.rafCount) * mod
+      case 'totalScore': return (a.totalScore - b.totalScore) * mod
+      default: return 0
     }
   })
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
+      {/* Header */}
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           className="mb-0"
@@ -241,423 +221,350 @@ export default function CriticalityPage() {
               <button
                 onClick={() => setShowInfo(!showInfo)}
                 className="px-3 py-2 rounded-[4px] hover:bg-accent/10 transition-colors"
-                title="Sobre o sistema"
+                title="Sobre o sistema de criticidade"
               >
                 <Icon name="info" className="text-xl" />
               </button>
-              <button
+              <Button
                 onClick={fetchData}
                 disabled={loading}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors flex items-center gap-2"
+                variant="outline"
+                className="flex items-center gap-2"
               >
-                <Icon name="refresh" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <Icon name="refresh" className={`text-base ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
-              </button>
+              </Button>
             </div>
           }
         />
       </div>
 
+      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          <div className="w-full transition-all overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto min-h-0">
-              <div className="px-4 py-4 md:px-6">
-                {showInfo && (
-                  <div className="mb-4 p-4 bg-surface rounded-[4px]">
-                    <h3 className="font-semibold text-foreground mb-2">Como funciona a análise de criticidade?</h3>
-                    <div className="text-sm text-foreground space-y-2">
-                      <p><strong>Matriz GUT (35% do score):</strong> Gravidade × Urgência × Tendência (1-5 cada)</p>
-                      <p><strong>Solicitações Abertas (20%):</strong> Quantidade de SS pendentes/aprovadas</p>
-                      <p><strong>Ordens de Serviço (20%):</strong> Quantidade de OS em aberto/andamento</p>
-                      <p><strong>Relatórios de Falha (15%):</strong> Quantidade de RAFs registradas</p>
-                      <p><strong>Status do Ativo (10%):</strong> DOWN = crítico, OPERATIONAL = ok</p>
-                      <div className="flex gap-4 mt-3 pt-3 border-t border-border">
-                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary-graphite"></span> Crítico: ≥70 pontos</span>
-                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-on-surface-variant"></span> Alerta: 40-69 pontos</span>
-                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-on-surface-variant"></span> OK: &lt;40 pontos</span>
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
+                <p className="mt-2 text-muted-foreground">Carregando...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Left: table */}
+              <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
+                <div className="flex-1 overflow-auto min-h-0">
+                  {/* Summary cards + info panel */}
+                  <div className="px-4 py-4 md:px-6">
+                    {showInfo && (
+                      <div className="mb-4 p-4 bg-surface rounded-[4px]">
+                        <h3 className="font-semibold text-foreground mb-2">Como funciona a análise de criticidade?</h3>
+                        <div className="text-sm text-foreground space-y-2">
+                          <p><strong>Matriz GUT (35% do score):</strong> Gravidade × Urgência × Tendência (1-5 cada)</p>
+                          <p><strong>Solicitações Abertas (20%):</strong> Quantidade de SS pendentes/aprovadas</p>
+                          <p><strong>Ordens de Serviço (20%):</strong> Quantidade de OS em aberto/andamento</p>
+                          <p><strong>Relatórios de Falha (15%):</strong> Quantidade de RAFs registradas</p>
+                          <p><strong>Status do Ativo (10%):</strong> DOWN = crítico, OPERATIONAL = ok</p>
+                          <div className="flex gap-4 mt-3 pt-3 border-t border-border">
+                            <span className="flex items-center gap-1">
+                              <span className="w-3 h-3 rounded-full bg-primary-graphite" /> Crítico: ≥70 pontos
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-3 h-3 rounded-full bg-on-surface-variant" /> Alerta: 40-69 pontos
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-3 h-3 rounded-full bg-on-surface-variant" /> OK: &lt;40 pontos
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">
+                      <button
+                        onClick={() => setFilter('all')}
+                        className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Total</span>
+                          <Icon name="monitoring" className="text-xl text-primary" />
+                        </div>
+                        <p className="text-3xl font-bold text-foreground mt-2">{summary.total}</p>
+                      </button>
+                      <button
+                        onClick={() => setFilter('critical')}
+                        className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'critical' ? 'border-on-surface bg-surface-low' : 'border-border hover:border-border'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-foreground">Críticos</span>
+                          <Icon name="warning" className="text-xl text-muted-foreground" />
+                        </div>
+                        <p className="text-3xl font-bold text-foreground mt-2">{summary.critical}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Ação imediata</p>
+                      </button>
+                      <button
+                        onClick={() => setFilter('warning')}
+                        className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'warning' ? 'border-on-surface-variant bg-surface' : 'border-border hover:border-border'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Em Alerta</span>
+                          <Icon name="error" className="text-xl text-muted-foreground" />
+                        </div>
+                        <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.warning}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Monitorar</p>
+                      </button>
+                      <button
+                        onClick={() => setFilter('ok')}
+                        className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'ok' ? 'border-border bg-surface' : 'border-border hover:border-border'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">OK</span>
+                          <Icon name="check_circle" className="text-xl text-muted-foreground" />
+                        </div>
+                        <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.ok}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Normal</p>
+                      </button>
                     </div>
                   </div>
-                )}
 
-                <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-4">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Total de Ativos</span>
-                      <Icon name="monitoring" className="text-xl text-primary" />
-                    </div>
-                    <p className="text-3xl font-bold text-foreground mt-2">{summary.total}</p>
-                  </button>
+                  {/* Table */}
+                  <div className="h-full flex flex-col bg-card overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 bg-secondary z-10">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('status')} className="flex items-center gap-1">
+                              Status
+                              <SortIcon field="status" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('name')} className="flex items-center gap-1">
+                              Ativo
+                              <SortIcon field="name" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('location')} className="flex items-center gap-1">
+                              Localização
+                              <SortIcon field="location" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('gutScore')} className="flex items-center justify-center gap-1 w-full">
+                              GUT <SortIcon field="gutScore" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('openRequestsCount')} className="flex items-center justify-center gap-1 w-full">
+                              <Icon name="assignment" className="text-base" /> SS
+                              <SortIcon field="openRequestsCount" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('openWorkOrdersCount')} className="flex items-center justify-center gap-1 w-full">
+                              <Icon name="construction" className="text-base" /> OS
+                              <SortIcon field="openWorkOrdersCount" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('rafCount')} className="flex items-center justify-center gap-1 w-full">
+                              <Icon name="warning" className="text-base" /> RAF
+                              <SortIcon field="rafCount" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => toggleSort('totalScore')} className="flex items-center justify-center gap-1 w-full">
+                              Score <SortIcon field="totalScore" sortBy={sortBy} sortOrder={sortOrder} />
+                            </button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-card divide-y divide-gray-200">
+                        {sortedAssets.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
+                              Nenhum ativo encontrado
+                            </td>
+                          </tr>
+                        ) : (
+                          sortedAssets.map((asset) => {
+                            const config = classificationConfig[asset.classification]
+                            const isSelected = selectedAsset?.id === asset.id
 
-                  <button
-                    onClick={() => setFilter('critical')}
-                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'critical' ? 'border-on-surface bg-surface-low' : 'border-border hover:border-border'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Críticos</span>
-                      <Icon name="warning" className="text-xl text-muted-foreground" />
-                    </div>
-                    <p className="text-3xl font-bold text-foreground mt-2">{summary.critical}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Requer ação imediata</p>
-                  </button>
-
-                  <button
-                    onClick={() => setFilter('warning')}
-                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'warning' ? 'border-on-surface-variant bg-surface' : 'border-border hover:border-border'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Em Alerta</span>
-                      <Icon name="error" className="text-xl text-muted-foreground" />
-                    </div>
-                    <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.warning}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Monitorar de perto</p>
-                  </button>
-
-                  <button
-                    onClick={() => setFilter('ok')}
-                    className={`p-4 rounded-[4px] border-2 transition-all ${filter === 'ok' ? 'border-border bg-surface' : 'border-border hover:border-border'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">OK</span>
-                      <Icon name="check_circle" className="text-xl text-muted-foreground" />
-                    </div>
-                    <p className="text-3xl font-bold text-muted-foreground mt-2">{summary.ok}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Operação normal</p>
-                  </button>
-                </div>
-              </div>
-
-              <div className="h-full flex flex-col bg-card overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="sticky top-0 bg-secondary z-10">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('status')} className="flex items-center gap-1">
-                          Status
-                          <SortIcon field="status" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('name')} className="flex items-center gap-1">
-                          Ativo
-                          <SortIcon field="name" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('location')} className="flex items-center gap-1">
-                          Localização
-                          <SortIcon field="location" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('gutScore')} className="flex items-center justify-center gap-1 w-full">
-                          GUT <SortIcon field="gutScore" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('openRequestsCount')} className="flex items-center justify-center gap-1 w-full">
-                          <Icon name="assignment" className="text-base" /> SS <SortIcon field="openRequestsCount" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('openWorkOrdersCount')} className="flex items-center justify-center gap-1 w-full">
-                          <Icon name="construction" className="text-base" /> OS <SortIcon field="openWorkOrdersCount" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('rafCount')} className="flex items-center justify-center gap-1 w-full">
-                          <Icon name="warning" className="text-base" /> RAF
-                          <SortIcon field="rafCount" />
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        <button type="button" onClick={() => toggleSort('totalScore')} className="flex items-center justify-center gap-1 w-full">
-                          Score <SortIcon field="totalScore" />
-                        </button>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-card divide-y divide-gray-200">
-                    {loading ? (
-                      <tr>
-                        <td colSpan={8} className="px-6 py-12 text-center">
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-b-2 border-b-on-surface-variant" />
-                            <p className="mt-2 text-muted-foreground">Carregando...</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : sortedAssets.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
-                          Nenhum ativo encontrado
-                        </td>
-                      </tr>
-                    ) : (
-                      sortedAssets.map((asset) => {
-                        const config = classificationConfig[asset.classification]
-                        const iconName = config.icon
-                        const isExpanded = expandedId === asset.id
-
-                        return (
-                          <React.Fragment key={asset.id}>
-                            <tr
-                              className={`hover:bg-secondary cursor-pointer transition-colors ${config.bgLight}`}
-                              onClick={() => setExpandedId(isExpanded ? null : asset.id)}
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  <span className={`w-3 h-3 rounded-full ${config.color}`}></span>
-                                  <Icon name={iconName} className={`text-xl ${config.textColor}`} />
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div>
-                                  <p className="font-medium text-foreground">{asset.name}</p>
-                                  {asset.customId && (
-                                    <p className="text-xs text-muted-foreground">{asset.customId}</p>
-                                  )}
-                                  {asset.status === 'DOWN' && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-high text-foreground mt-1">
-                                      PARADO
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                                {asset.location?.name || '-'}
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <div className="flex flex-col items-center group relative">
+                            return (
+                              <tr
+                                key={asset.id}
+                                className={`hover:bg-secondary cursor-pointer transition-colors ${isSelected ? 'bg-secondary' : config.bgLight}`}
+                                onClick={() => handleSelectAsset(asset)}
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`w-3 h-3 rounded-full ${config.color}`} />
+                                    <Icon name={config.icon} className={`text-xl ${config.textColor}`} />
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div>
+                                    <p className="font-medium text-foreground">{asset.name}</p>
+                                    {asset.customId && (
+                                      <p className="text-xs text-muted-foreground">{asset.customId}</p>
+                                    )}
+                                    {asset.status === 'DOWN' && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-high text-foreground mt-1">
+                                        PARADO
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                  {asset.location?.name || '-'}
+                                </td>
+                                <td className="px-6 py-4 text-center">
                                   <span className="font-bold text-foreground">{asset.gutScore}</span>
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="block text-xs text-muted-foreground">
                                     {asset.gutGravity}×{asset.gutUrgency}×{asset.gutTendency}
                                   </span>
-                                  <button
-                                    onClick={(e) => openGutEditor(asset, e)}
-                                    className="absolute -top-1 -right-1 p-1 bg-primary text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/90"
-                                    title="Editar valores GUT"
-                                  >
-                                    <Icon name="edit" className="text-sm" />
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openRequestsCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
-                                  {asset.openRequestsCount}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openWorkOrdersCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
-                                  {asset.openWorkOrdersCount}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.rafCount > 0 ? 'bg-surface-high text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
-                                  {asset.rafCount}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-[4px] ${config.color} text-white font-bold text-lg`}>
-                                  {asset.totalScore}
-                                </div>
-                              </td>
-                            </tr>
-                            {isExpanded && (
-                              <tr key={`${asset.id}-expanded`} className={config.bgLight}>
-                                <td colSpan={8} className="px-6 py-4">
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="p-3 bg-white rounded-[4px] border border-border">
-                                      <p className="text-xs text-muted-foreground mb-1">Área</p>
-                                      <p className="font-medium">{asset.area || 'Não definida'}</p>
-                                    </div>
-                                    <div className="p-3 bg-white rounded-[4px] border border-border">
-                                      <p className="text-xs text-muted-foreground mb-1">Categoria</p>
-                                      <p className="font-medium">{asset.category?.name || 'Não definida'}</p>
-                                    </div>
-                                    <div className="p-3 bg-white rounded-[4px] border border-border">
-                                      <p className="text-xs text-muted-foreground mb-1">Gravidade (G)</p>
-                                      <div className="flex items-center gap-1">
-                                        {[1,2,3,4,5].map(n => (
-                                          <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutGravity ? 'bg-primary-graphite' : 'bg-surface-high'}`}></span>
-                                        ))}
-                                        <span className="ml-2 font-bold">{asset.gutGravity}</span>
-                                      </div>
-                                    </div>
-                                    <div className="p-3 bg-white rounded-[4px] border border-border">
-                                      <p className="text-xs text-muted-foreground mb-1">Urgência (U)</p>
-                                      <div className="flex items-center gap-1">
-                                        {[1,2,3,4,5].map(n => (
-                                          <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutUrgency ? 'bg-on-surface-variant' : 'bg-surface-high'}`}></span>
-                                        ))}
-                                        <span className="ml-2 font-bold">{asset.gutUrgency}</span>
-                                      </div>
-                                    </div>
-                                    <div className="p-3 bg-white rounded-[4px] border border-border">
-                                      <p className="text-xs text-muted-foreground mb-1">Tendência (T)</p>
-                                      <div className="flex items-center gap-1">
-                                        {[1,2,3,4,5].map(n => (
-                                          <span key={n} className={`w-4 h-4 rounded ${n <= asset.gutTendency ? 'bg-on-surface-variant' : 'bg-surface-high'}`}></span>
-                                        ))}
-                                        <span className="ml-2 font-bold">{asset.gutTendency}</span>
-                                      </div>
-                                    </div>
-                                    <div className="p-3 bg-white rounded-[4px] border border-border col-span-3">
-                                      <p className="text-xs text-muted-foreground mb-1">Recomendação</p>
-                                      <p className="font-medium">
-                                        {asset.classification === 'critical' && 'Ação imediata necessária. Priorizar manutenção corretiva ou preventiva.'}
-                                        {asset.classification === 'warning' && 'Monitorar de perto. Agendar manutenção preventiva em breve.'}
-                                        {asset.classification === 'ok' && 'Manter rotina de manutenção preventiva programada.'}
-                                      </p>
-                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openRequestsCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                                    {asset.openRequestsCount}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.openWorkOrdersCount > 0 ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                                    {asset.openWorkOrdersCount}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${asset.rafCount > 0 ? 'bg-surface-high text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                                    {asset.rafCount}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-[4px] ${config.color} text-white font-bold text-lg`}>
+                                    {asset.totalScore}
                                   </div>
                                 </td>
                               </tr>
-                            )}
-                          </React.Fragment>
-                        )
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal de Edição GUT */}
-      <Modal
-        isOpen={!!editingAsset}
-        onClose={closeGutEditor}
-        title={`Editar Matriz GUT — ${editingAsset?.name || ''}`}
-        size="md"
-      >
-        <div className="p-4 space-y-3">
-          <ModalSection title="Valores GUT">
-            <div className="space-y-4">
-              {/* Gravidade */}
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Gravidade (G) - Impacto se falhar
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setEditGutValues({ ...editGutValues, gutGravity: value })}
-                      className={`w-10 h-10 rounded-[4px] font-bold transition-all ${
-                        editGutValues.gutGravity === value
-                          ? 'bg-primary-graphite text-white ring-2 ring-gray-400'
-                          : 'bg-secondary hover:bg-surface-high text-muted-foreground'
-                      }`}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {editGutValues.gutGravity === 1 && 'Sem gravidade'}
-                  {editGutValues.gutGravity === 2 && 'Pouco grave'}
-                  {editGutValues.gutGravity === 3 && 'Grave'}
-                  {editGutValues.gutGravity === 4 && 'Muito grave'}
-                  {editGutValues.gutGravity === 5 && 'Extremamente grave'}
-                </p>
-              </div>
-
-              {/* Urgência */}
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Urgência (U) - Tempo para resolver
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setEditGutValues({ ...editGutValues, gutUrgency: value })}
-                      className={`w-10 h-10 rounded-[4px] font-bold transition-all ${
-                        editGutValues.gutUrgency === value
-                          ? 'bg-on-surface-variant text-white ring-2 ring-gray-400'
-                          : 'bg-secondary hover:bg-surface-low text-muted-foreground'
-                      }`}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {editGutValues.gutUrgency === 1 && 'Pode esperar'}
-                  {editGutValues.gutUrgency === 2 && 'Pouco urgente'}
-                  {editGutValues.gutUrgency === 3 && 'Urgente'}
-                  {editGutValues.gutUrgency === 4 && 'Muito urgente'}
-                  {editGutValues.gutUrgency === 5 && 'Ação imediata'}
-                </p>
-              </div>
-
-              {/* Tendência */}
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Tendência (T) - Piora se não tratado
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setEditGutValues({ ...editGutValues, gutTendency: value })}
-                      className={`w-10 h-10 rounded-[4px] font-bold transition-all ${
-                        editGutValues.gutTendency === value
-                          ? 'bg-on-surface-variant text-white ring-2 ring-gray-400'
-                          : 'bg-secondary hover:bg-surface-high text-muted-foreground'
-                      }`}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {editGutValues.gutTendency === 1 && 'Não piora'}
-                  {editGutValues.gutTendency === 2 && 'Piora a longo prazo'}
-                  {editGutValues.gutTendency === 3 && 'Piora a médio prazo'}
-                  {editGutValues.gutTendency === 4 && 'Piora a curto prazo'}
-                  {editGutValues.gutTendency === 5 && 'Piora rapidamente'}
-                </p>
-              </div>
-
-              {/* Score Preview */}
-              <div className="p-3 bg-muted rounded-[4px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">Novo Score GUT:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-foreground">
-                      {editGutValues.gutGravity * editGutValues.gutUrgency * editGutValues.gutTendency}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({editGutValues.gutGravity}×{editGutValues.gutUrgency}×{editGutValues.gutTendency})
-                    </span>
+                            )
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-            </div>
-          </ModalSection>
-        </div>
 
-        <div className="flex gap-3 px-4 py-4 border-t border-border">
-          <Button variant="outline" onClick={closeGutEditor} className="flex-1">
-            Cancelar
-          </Button>
-          <Button onClick={saveGutValues} disabled={saving} className="flex-1">
-            <Icon name="save" className="text-base mr-2" />
-            {saving ? 'Salvando...' : 'Salvar'}
-          </Button>
+              {/* Right: detail / edit panel (desktop only) */}
+              {hasSidePanel && !isMobile && (
+                <div className="w-1/2 min-w-0">
+                  {isEditing ? (
+                    <CriticalityEditPanel
+                      asset={selectedAsset}
+                      onClose={() => setIsEditing(false)}
+                      onSuccess={handleEditSuccess}
+                    />
+                  ) : (
+                    <CriticalityDetailPanel
+                      asset={selectedAsset}
+                      onClose={() => {
+                        setSelectedAsset(null)
+                        setIsEditing(false)
+                      }}
+                      onEdit={() => setIsEditing(true)}
+                      canEdit={canEdit('criticality')}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
-      </Modal>
+      </div>
+
+      {/* Mobile overlays */}
+      {isMobile && selectedAsset && !isEditing && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedAsset(null)}
+          title={selectedAsset.name}
+          size="md"
+        >
+          <div className="p-4 space-y-3">
+            <ModalSection title="Classificação">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Classificação</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {classificationConfig[selectedAsset.classification].label}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Score Total</p>
+                  <p className="text-sm font-bold text-foreground">{selectedAsset.totalScore}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Score GUT</p>
+                  <p className="text-sm text-foreground">
+                    {selectedAsset.gutScore} ({selectedAsset.gutGravity}×{selectedAsset.gutUrgency}×{selectedAsset.gutTendency})
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Localização</p>
+                  <p className="text-sm text-foreground">{selectedAsset.location?.name || '—'}</p>
+                </div>
+              </div>
+            </ModalSection>
+            <ModalSection title="Operacional">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{selectedAsset.openRequestsCount}</p>
+                  <p className="text-xs text-muted-foreground">SS abertas</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{selectedAsset.openWorkOrdersCount}</p>
+                  <p className="text-xs text-muted-foreground">OS abertas</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{selectedAsset.rafCount}</p>
+                  <p className="text-xs text-muted-foreground">RAFs</p>
+                </div>
+              </div>
+            </ModalSection>
+          </div>
+          {canEdit('criticality') && (
+            <div className="flex gap-3 px-4 py-4 border-t border-border">
+              <Button variant="outline" onClick={() => setSelectedAsset(null)} className="flex-1">
+                Fechar
+              </Button>
+              <Button onClick={() => setIsEditing(true)} className="flex-1">
+                <Icon name="edit" className="text-base mr-2" />
+                Editar GUT
+              </Button>
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {isMobile && selectedAsset && isEditing && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsEditing(false)}
+          title={`Editar GUT — ${selectedAsset.name}`}
+          size="md"
+        >
+          <CriticalityEditPanel
+            asset={selectedAsset}
+            onClose={() => setIsEditing(false)}
+            onSuccess={() => {
+              setIsEditing(false)
+              setSelectedAsset(null)
+              void fetchData()
+            }}
+          />
+        </Modal>
+      )}
     </PageContainer>
   )
 }

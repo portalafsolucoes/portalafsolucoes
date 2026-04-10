@@ -13,9 +13,10 @@ interface ExecutionModalProps {
   type: 'workorder' | 'request'
   onClose: () => void
   onSuccess: () => void
+  inPage?: boolean
 }
 
-export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModalProps) {
+export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false }: ExecutionModalProps) {
   const [step, setStep] = useState<'view' | 'start' | 'complete'>('view')
   const [beforePhoto, setBeforePhoto] = useState<string | null>(item.beforePhotoUrl || null)
   const [afterPhoto, setAfterPhoto] = useState<string | null>(item.afterPhotoUrl || null)
@@ -164,13 +165,10 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
     return <Badge className={colors[priority as keyof typeof colors] || colors.NONE}>{priority}</Badge>
   }
 
-  return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      title={type === 'workorder' ? 'Ordem de Servico' : 'Solicitacao de Servico'}
-      size="wide"
-    >
+  const title = type === 'workorder' ? 'Ordem de Servico' : 'Solicitacao de Servico'
+
+  const bodyContent = (
+    <>
       <div className="p-4 space-y-3">
         {type === 'workorder' && item.internalId && (
           <p className="text-sm font-mono text-muted-foreground">{item.internalId}</p>
@@ -433,6 +431,37 @@ export function ExecutionModal({ item, type, onClose, onSuccess }: ExecutionModa
           </Button>
         )}
       </div>
+    </>
+  )
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-border">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-muted rounded transition-colors"
+          >
+            <Icon name="close" className="text-xl text-muted-foreground" />
+          </button>
+        </div>
+        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
+          {bodyContent}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={title}
+      size="wide"
+    >
+      {bodyContent}
     </Modal>
   )
 }
