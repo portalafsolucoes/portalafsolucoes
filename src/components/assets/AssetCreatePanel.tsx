@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
@@ -7,6 +8,18 @@ import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/hooks/useAuth'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
+import type { ApiItemResponse, ApiListResponse } from '@/types/api'
+import type {
+  AreaOption,
+  AssetFamilyModelOption,
+  AssetFamilyOption,
+  AssetOption,
+  CalendarOption,
+  CharacteristicValueOption,
+  CostCenterOption,
+  PositionOption,
+  WorkCenterOption,
+} from '@/types/catalog'
 
 interface AssetCreatePanelProps {
   onClose: () => void
@@ -14,17 +27,34 @@ interface AssetCreatePanelProps {
   parentAsset?: { id: string; name: string }
 }
 
-interface CharacteristicOption {
-  id: string
-  name: string
-  unit?: string | null
-  infoType?: string
-}
-
 interface CharacteristicRow {
   characteristicId: string
   value: string
   unit: string
+}
+
+interface StandardAssetCharacteristic {
+  characteristicId: string
+  value?: string | null
+  unit?: string | null
+  characteristic?: {
+    unit?: string | null
+  } | null
+}
+
+interface StandardAssetData {
+  manufacturer?: string | null
+  modelName?: string | null
+  serialNumber?: string | null
+  hourlyCost?: number | null
+  shiftCode?: string | null
+  warehouse?: string | null
+  supplierCode?: string | null
+  supplierStore?: string | null
+  priority?: string | null
+  counterType?: string | null
+  hasCounter?: boolean
+  characteristics?: StandardAssetCharacteristic[]
 }
 
 function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
@@ -53,21 +83,20 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
   const mainImageInputRef = useRef<HTMLInputElement>(null)
   const attachmentsInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
-  const [locations, setLocations] = useState<any[]>([])
-  const [assets, setAssets] = useState<any[]>([])
-  const [families, setFamilies] = useState<any[]>([])
-  const [familyModels, setFamilyModels] = useState<any[]>([])
-  const [costCenters, setCostCenters] = useState<any[]>([])
-  const [workCenters, setWorkCenters] = useState<any[]>([])
-  const [positions, setPositions] = useState<any[]>([])
-  const [areas, setAreas] = useState<any[]>([])
-  const [calendars, setCalendars] = useState<any[]>([])
-  const [characteristics, setCharacteristics] = useState<CharacteristicOption[]>([])
+  const [assets, setAssets] = useState<AssetOption[]>([])
+  const [families, setFamilies] = useState<AssetFamilyOption[]>([])
+  const [familyModels, setFamilyModels] = useState<AssetFamilyModelOption[]>([])
+  const [costCenters, setCostCenters] = useState<CostCenterOption[]>([])
+  const [workCenters, setWorkCenters] = useState<WorkCenterOption[]>([])
+  const [positions, setPositions] = useState<PositionOption[]>([])
+  const [areas, setAreas] = useState<AreaOption[]>([])
+  const [calendars, setCalendars] = useState<CalendarOption[]>([])
+  const [characteristics, setCharacteristics] = useState<CharacteristicValueOption[]>([])
   const [characteristicRows, setCharacteristicRows] = useState<CharacteristicRow[]>([])
   const [mainImage, setMainImage] = useState<File | null>(null)
   const [mainImagePreview, setMainImagePreview] = useState<string>('')
   const [attachments, setAttachments] = useState<File[]>([])
-  const [standardAssetDialog, setStandardAssetDialog] = useState<{ open: boolean; data: any | null }>({ open: false, data: null })
+  const [standardAssetDialog, setStandardAssetDialog] = useState<{ open: boolean; data: StandardAssetData | null }>({ open: false, data: null })
 
   const [formData, setFormData] = useState({
     // Identificação
@@ -140,8 +169,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
   const loadData = async () => {
     try {
-      const [locationsRes, assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes, calendarsRes] = await Promise.all([
-        fetch('/api/locations'),
+      const [assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes, calendarsRes] = await Promise.all([
         fetch('/api/assets'),
         fetch('/api/basic-registrations/asset-families'),
         fetch('/api/basic-registrations/asset-family-models'),
@@ -153,20 +181,18 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
         fetch('/api/basic-registrations/calendars'),
       ])
 
-      const [locationsData, assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData, calendarsData] = await Promise.all([
-        locationsRes.json(),
-        assetsRes.json(),
-        familiesRes.json(),
-        familyModelsRes.json(),
-        costCentersRes.json(),
-        workCentersRes.json(),
-        positionsRes.json(),
-        areasRes.json(),
-        characteristicsRes.json(),
-        calendarsRes.json(),
+      const [assetsData, familiesData, familyModelsData, costCentersData, workCentersData, positionsData, areasData, characteristicsData, calendarsData] = await Promise.all([
+        assetsRes.json() as Promise<ApiListResponse<AssetOption>>,
+        familiesRes.json() as Promise<ApiListResponse<AssetFamilyOption>>,
+        familyModelsRes.json() as Promise<ApiListResponse<AssetFamilyModelOption>>,
+        costCentersRes.json() as Promise<ApiListResponse<CostCenterOption>>,
+        workCentersRes.json() as Promise<ApiListResponse<WorkCenterOption>>,
+        positionsRes.json() as Promise<ApiListResponse<PositionOption>>,
+        areasRes.json() as Promise<ApiListResponse<AreaOption>>,
+        characteristicsRes.json() as Promise<ApiListResponse<CharacteristicValueOption>>,
+        calendarsRes.json() as Promise<ApiListResponse<CalendarOption>>,
       ])
 
-      setLocations(locationsData.data || [])
       setAssets(assetsData.data || [])
       setFamilies(familiesData.data || [])
       setFamilyModels(familyModelsData.data || [])
@@ -247,7 +273,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
     try {
       const res = await fetch(`/api/standard-assets/by-family?familyId=${familyId}`)
-      const result = await res.json()
+      const result = await res.json() as ApiItemResponse<StandardAssetData>
       if (result.data) {
         setStandardAssetDialog({ open: true, data: result.data })
       }
@@ -277,7 +303,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
     // Pré-preencher características do Bem Padrão
     if (sa.characteristics && Array.isArray(sa.characteristics) && sa.characteristics.length > 0) {
-      const rows: CharacteristicRow[] = sa.characteristics.map((c: any) => ({
+      const rows: CharacteristicRow[] = sa.characteristics.map((c) => ({
         characteristicId: c.characteristicId,
         value: c.value || '',
         unit: c.unit || c.characteristic?.unit || '',
@@ -294,10 +320,10 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
   // Filtrar modelos pela família selecionada
   const filteredModels = formData.familyId
-    ? familyModels.filter((m: any) => {
-        const family = families.find((f: any) => f.id === formData.familyId)
+    ? familyModels.filter((m) => {
+        const family = families.find((f) => f.id === formData.familyId)
         if (!family?.modelMappings || family.modelMappings.length === 0) return true
-        return family.modelMappings.some((mm: any) => mm.modelId === m.id)
+        return family.modelMappings.some((mm) => mm.modelId === m.id)
       })
     : familyModels
 
@@ -456,7 +482,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Família</label>
               <select value={formData.familyId} onChange={(e) => handleFamilyChange(e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {families.map((f: any) => (
+                {families.map((f) => (
                   <option key={f.id} value={f.id}>{f.code ? `${f.code} - ${f.name}` : f.name}</option>
                 ))}
               </select>
@@ -465,7 +491,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modelo</label>
               <select value={formData.familyModelId} onChange={(e) => updateField('familyModelId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {filteredModels.map((m: any) => (
+                {filteredModels.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
@@ -505,7 +531,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área</label>
               <select value={formData.areaId} onChange={(e) => updateField('areaId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {filteredAreas.map((a: any) => (
+                {filteredAreas.map((a) => (
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
@@ -514,7 +540,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro de Trabalho</label>
               <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {filteredWorkCenters.map((wc: any) => (
+                {filteredWorkCenters.map((wc) => (
                   <option key={wc.id} value={wc.id}>{wc.name}</option>
                 ))}
               </select>
@@ -523,7 +549,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Centro de Custo</label>
               <select value={formData.costCenterId} onChange={(e) => updateField('costCenterId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {costCenters.map((cc: any) => (
+                {costCenters.map((cc) => (
                   <option key={cc.id} value={cc.id}>{cc.code ? `${cc.code} - ${cc.name}` : cc.name}</option>
                 ))}
               </select>
@@ -532,7 +558,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Posição</label>
               <select value={formData.positionId} onChange={(e) => updateField('positionId', e.target.value)} className={selectClass}>
                 <option value="">Selecione</option>
-                {positions.map((p: any) => (
+                {positions.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
@@ -542,7 +568,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Turno</label>
             <select value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} className={selectClass}>
               <option value="">Selecione</option>
-              {calendars.map((cal: any) => (
+              {calendars.map((cal) => (
                 <option key={cal.id} value={cal.name}>{cal.name}</option>
               ))}
             </select>
@@ -654,7 +680,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </button>
             </div>
             {characteristicRows.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Nenhuma característica adicionada. Clique em "Adicionar" para incluir.</p>
+              <p className="text-xs text-muted-foreground italic">Nenhuma característica adicionada. Clique em &quot;Adicionar&quot; para incluir.</p>
             ) : (
               <div className="space-y-2">
                 {characteristicRows.map((row, index) => (
@@ -795,8 +821,8 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
           <div>
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Foto Principal do Ativo</label>
             {mainImagePreview ? (
-              <div className="relative">
-                <img src={mainImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-[4px]" />
+              <div className="relative h-48 w-full overflow-hidden rounded-[4px]">
+                <Image src={mainImagePreview} alt="Preview" fill unoptimized className="object-cover" />
                 <button
                   type="button"
                   onClick={() => { setMainImage(null); setMainImagePreview('') }}

@@ -5,6 +5,16 @@ import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import type { ApiItemResponse, ApiListResponse } from '@/types/api'
+import type {
+  AssetFamilyModelOption,
+  AssetFamilyOption,
+  AssetOption,
+  CalendarOption,
+  NamedEntity,
+  ResourceOption,
+  ServiceTypeOption,
+} from '@/types/catalog'
 
 /* ------------------------------------------------------------------ */
 /*  Tipos                                                               */
@@ -20,12 +30,71 @@ interface TaskRow {
   resources: TaskResource[]
 }
 
+interface AssetPlanFormData {
+  assetId: string
+  serviceTypeId: string
+  maintenanceAreaId: string
+  maintenanceTypeId: string
+  name: string
+  calendarId: string
+  maintenanceTime: number | ''
+  timeUnit: string
+  period: string
+  trackingType: string
+  lastMaintenanceDate: string
+  standardPlanId?: string
+}
+
+interface PlanTaskResponse {
+  id?: string
+  description?: string | null
+  executionTime?: number | null
+  steps?: TaskStep[]
+  resources?: Array<{
+    resourceId: string
+    resourceCount?: number | null
+    quantity?: number | null
+    unit?: string | null
+  }>
+}
+
+interface AssetPlanResponse {
+  assetId?: string | null
+  serviceTypeId?: string | null
+  maintenanceAreaId?: string | null
+  maintenanceTypeId?: string | null
+  name?: string | null
+  calendarId?: string | null
+  maintenanceTime?: number | null
+  timeUnit?: string | null
+  period?: string | null
+  trackingType?: string | null
+  lastMaintenanceDate?: string | null
+  sequence?: number | null
+  isStandard?: boolean
+  tasks?: PlanTaskResponse[]
+}
+
 const emptyTask = (): TaskRow => ({
   key: crypto.randomUUID(),
   description: '',
   executionTime: '',
   steps: [],
   resources: [],
+})
+
+const emptyFormData = (): AssetPlanFormData => ({
+  assetId: '',
+  serviceTypeId: '',
+  maintenanceAreaId: '',
+  maintenanceTypeId: '',
+  name: '',
+  calendarId: '',
+  maintenanceTime: '',
+  timeUnit: '',
+  period: '',
+  trackingType: 'TIME',
+  lastMaintenanceDate: '',
 })
 
 /* ------------------------------------------------------------------ */
@@ -57,19 +126,19 @@ export default function AssetPlanFormPanel({
   onClose,
   onSuccess,
 }: AssetPlanFormPanelProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({})
+  const [formData, setFormData] = useState<AssetPlanFormData>(emptyFormData())
   const [tasks, setTasks] = useState<TaskRow[]>([emptyTask()])
   const [saving, setSaving] = useState(false)
   const [loadingPlan, setLoadingPlan] = useState(false)
   const [error, setError] = useState('')
 
-  const [serviceTypes, setServiceTypes] = useState<any[]>([])
-  const [assets, setAssets] = useState<any[]>([])
-  const [calendars, setCalendars] = useState<any[]>([])
-  const [genericSteps, setGenericSteps] = useState<any[]>([])
-  const [resources, setResources] = useState<any[]>([])
-  const [families, setFamilies] = useState<any[]>([])
-  const [familyModels, setFamilyModels] = useState<any[]>([])
+  const [serviceTypes, setServiceTypes] = useState<ServiceTypeOption[]>([])
+  const [assets, setAssets] = useState<AssetOption[]>([])
+  const [calendars, setCalendars] = useState<CalendarOption[]>([])
+  const [genericSteps, setGenericSteps] = useState<NamedEntity[]>([])
+  const [resources, setResources] = useState<ResourceOption[]>([])
+  const [families, setFamilies] = useState<AssetFamilyOption[]>([])
+  const [familyModels, setFamilyModels] = useState<AssetFamilyModelOption[]>([])
 
   const [stepSearch, setStepSearch] = useState<Record<string, string>>({})
   const [stepDropdownOpen, setStepDropdownOpen] = useState<Record<string, boolean>>({})
@@ -78,10 +147,10 @@ export default function AssetPlanFormPanel({
   const [nextSequence, setNextSequence] = useState<number | null>(null)
   const [loadingSeq, setLoadingSeq] = useState(false)
 
-  const [assetFamily, setAssetFamily] = useState<any>(null)
-  const [assetFamilyModel, setAssetFamilyModel] = useState<any>(null)
-  const [derivedArea, setDerivedArea] = useState<any>(null)
-  const [derivedMaintType, setDerivedMaintType] = useState<any>(null)
+  const [assetFamily, setAssetFamily] = useState<AssetFamilyOption | null>(null)
+  const [assetFamilyModel, setAssetFamilyModel] = useState<AssetFamilyModelOption | null>(null)
+  const [derivedArea, setDerivedArea] = useState<NamedEntity | null>(null)
+  const [derivedMaintType, setDerivedMaintType] = useState<NamedEntity | null>(null)
   const [isStandard, setIsStandard] = useState<'sim' | 'nao' | ''>('')
   const [loadingStandard, setLoadingStandard] = useState(false)
 
@@ -121,7 +190,7 @@ export default function AssetPlanFormPanel({
     if (editingId) {
       loadPlan(editingId)
     } else {
-      setFormData({})
+      setFormData(emptyFormData())
       setTasks([emptyTask()])
       setError('')
       setNextSequence(null)
@@ -131,7 +200,6 @@ export default function AssetPlanFormPanel({
       setDerivedMaintType(null)
       setIsStandard('')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingId])
 
   const loadDependencies = async () => {
@@ -145,7 +213,13 @@ export default function AssetPlanFormPanel({
       fetch('/api/basic-registrations/asset-family-models'),
     ])
     const [stData, assData, calData, stepsData, resData, famData, modelsData] = await Promise.all([
-      stRes.json(), assRes.json(), calRes.json(), stepsRes.json(), resRes.json(), famRes.json(), modelsRes.json()
+      stRes.json() as Promise<ApiListResponse<ServiceTypeOption>>,
+      assRes.json() as Promise<ApiListResponse<AssetOption>>,
+      calRes.json() as Promise<ApiListResponse<CalendarOption>>,
+      stepsRes.json() as Promise<ApiListResponse<NamedEntity>>,
+      resRes.json() as Promise<ApiListResponse<ResourceOption>>,
+      famRes.json() as Promise<ApiListResponse<AssetFamilyOption>>,
+      modelsRes.json() as Promise<ApiListResponse<AssetFamilyModelOption>>,
     ])
     setServiceTypes(stData.data || [])
     setAssets(assData.data || [])
@@ -160,9 +234,14 @@ export default function AssetPlanFormPanel({
     setLoadingPlan(true)
     try {
       const res = await fetch(`/api/maintenance-plans/asset/${planId}`)
-      const json = await res.json()
+      const json = await res.json() as ApiItemResponse<AssetPlanResponse>
       if (!res.ok) { setError(json.error || 'Erro ao carregar plano'); setLoadingPlan(false); return }
       const plan = json.data
+      if (!plan) {
+        setError('Plano não encontrado')
+        setLoadingPlan(false)
+        return
+      }
       setFormData({
         assetId: plan.assetId || '',
         serviceTypeId: plan.serviceTypeId || '',
@@ -179,12 +258,12 @@ export default function AssetPlanFormPanel({
       setNextSequence(plan.sequence ?? null)
       setIsStandard(plan.isStandard ? 'sim' : 'nao')
       if (plan.tasks && plan.tasks.length > 0) {
-        setTasks(plan.tasks.map((t: any) => ({
+        setTasks(plan.tasks.map((t) => ({
           key: t.id || crypto.randomUUID(),
           description: t.description || '',
           executionTime: t.executionTime ?? '',
-          steps: (t.steps || []).map((s: any) => ({ stepId: s.stepId, order: s.order })),
-          resources: (t.resources || []).map((r: any) => ({
+          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order })),
+          resources: (t.resources || []).map((r) => ({
             resourceId: r.resourceId,
             resourceCount: r.resourceCount ?? 1,
             quantity: r.quantity ?? 0,
@@ -228,10 +307,10 @@ export default function AssetPlanFormPanel({
       setAssetFamilyModel(null)
       return
     }
-    const asset = assets.find((a: any) => a.id === formData.assetId)
+    const asset = assets.find((a) => a.id === formData.assetId)
     if (asset) {
-      const fam = asset.familyId ? families.find((f: any) => f.id === asset.familyId) : null
-      const model = asset.familyModelId ? familyModels.find((m: any) => m.id === asset.familyModelId) : null
+      const fam = asset.familyId ? families.find((f) => f.id === asset.familyId) : null
+      const model = asset.familyModelId ? familyModels.find((m) => m.id === asset.familyModelId) : null
       setAssetFamily(fam || null)
       setAssetFamilyModel(model || null)
     } else {
@@ -250,7 +329,7 @@ export default function AssetPlanFormPanel({
       setDerivedMaintType(null)
       return
     }
-    const st = serviceTypes.find((s: any) => s.id === formData.serviceTypeId)
+    const st = serviceTypes.find((s) => s.id === formData.serviceTypeId)
     if (st) {
       setDerivedArea(st.maintenanceArea || null)
       setDerivedMaintType(st.maintenanceType || null)
@@ -273,7 +352,7 @@ export default function AssetPlanFormPanel({
     setIsStandard(value)
     if (value !== 'sim') return
 
-    const asset = assets.find((a: any) => a.id === formData.assetId)
+    const asset = assets.find((a) => a.id === formData.assetId)
     if (!asset?.familyId || !formData.serviceTypeId) {
       alert('Selecione o Bem/Ativo e o Tipo de Serviço antes de marcar Manutenção Padrão.')
       setIsStandard('')
@@ -290,9 +369,9 @@ export default function AssetPlanFormPanel({
       if (nextSequence) params.set('sequence', String(nextSequence))
 
       const res = await fetch(`/api/maintenance-plans/standard/search?${params}`)
-      const json = await res.json()
+      const json = await res.json() as ApiItemResponse<AssetPlanResponse>
 
-      if (!json.found) {
+      if (!json.found || !json.data) {
         alert('Não existe manutenção padrão para o cadastro atual.')
         setIsStandard('nao')
         setLoadingStandard(false)
@@ -312,12 +391,12 @@ export default function AssetPlanFormPanel({
       }))
 
       if (stdPlan.tasks && stdPlan.tasks.length > 0) {
-        setTasks(stdPlan.tasks.map((t: any) => ({
+        setTasks(stdPlan.tasks.map((t) => ({
           key: crypto.randomUUID(),
           description: t.description || '',
           executionTime: t.executionTime ?? '',
-          steps: (t.steps || []).map((s: any) => ({ stepId: s.stepId, order: s.order })),
-          resources: (t.resources || []).map((r: any) => ({
+          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order })),
+          resources: (t.resources || []).map((r) => ({
             resourceId: r.resourceId,
             resourceCount: r.resourceCount ?? 1,
             quantity: r.quantity ?? 0,
@@ -362,7 +441,7 @@ export default function AssetPlanFormPanel({
   }
 
   const addResourceToTask = (taskKey: string, resourceId: string) => {
-    const res = resources.find((r: any) => r.id === resourceId)
+    const res = resources.find((r) => r.id === resourceId)
     const defaultUnit = res?.unit || 'UN'
     setTasks(prev => prev.map(t => {
       if (t.key !== taskKey) return t
@@ -474,7 +553,7 @@ export default function AssetPlanFormPanel({
             <label className={labelCls}>Bem/Ativo <span className="text-danger">*</span></label>
             <select value={formData.assetId || ''} onChange={e => setFormData({ ...formData, assetId: e.target.value })} className={selectCls}>
               <option value="">Selecione...</option>
-              {assets.map((a: any) => <option key={a.id} value={a.id}>{a.tag ? `[${a.tag}] ` : ''}{a.name}</option>)}
+              {assets.map((a) => <option key={a.id} value={a.id}>{a.tag ? `[${a.tag}] ` : ''}{a.name}</option>)}
             </select>
           </div>
           <div>
@@ -499,7 +578,7 @@ export default function AssetPlanFormPanel({
             <label className={labelCls}>Tipo de Serviço <span className="text-danger">*</span></label>
             <select value={formData.serviceTypeId || ''} onChange={e => setFormData({ ...formData, serviceTypeId: e.target.value })} className={selectCls}>
               <option value="">Selecione...</option>
-              {serviceTypes.map((st: any) => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
+              {serviceTypes.map((st) => <option key={st.id} value={st.id}>{st.code} - {st.name}</option>)}
             </select>
           </div>
           <div>
@@ -562,7 +641,7 @@ export default function AssetPlanFormPanel({
             <label className={labelCls}>Calendário</label>
             <select value={formData.calendarId || ''} onChange={e => setFormData({ ...formData, calendarId: e.target.value })} className={selectCls}>
               <option value="">Nenhum</option>
-              {calendars.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {calendars.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
@@ -633,7 +712,7 @@ export default function AssetPlanFormPanel({
                 <label className={labelCls}>Etapas</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {task.steps.map(s => {
-                    const step = genericSteps.find((gs: any) => gs.id === s.stepId)
+                    const step = genericSteps.find((gs) => gs.id === s.stepId)
                     return (
                       <span key={s.stepId} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-muted rounded-[4px]">
                         {step?.name || s.stepId}
@@ -660,11 +739,11 @@ export default function AssetPlanFormPanel({
                   {stepDropdownOpen[task.key] && (() => {
                     const query = (stepSearch[task.key] || '').toLowerCase()
                     const available = genericSteps
-                      .filter((gs: any) => !task.steps.some(s => s.stepId === gs.id))
-                      .filter((gs: any) => !query || gs.name.toLowerCase().includes(query))
+                      .filter((gs) => !task.steps.some(s => s.stepId === gs.id))
+                      .filter((gs) => !query || gs.name.toLowerCase().includes(query))
                     return available.length > 0 ? (
                       <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-input rounded-[4px] shadow-lg">
-                        {available.map((gs: any) => (
+                        {available.map((gs) => (
                           <button
                             key={gs.id}
                             type="button"
@@ -688,7 +767,7 @@ export default function AssetPlanFormPanel({
                 {task.resources.length > 0 && (
                   <div className="space-y-2 mb-2">
                     {task.resources.map(r => {
-                      const res = resources.find((rs: any) => rs.id === r.resourceId)
+                      const res = resources.find((rs) => rs.id === r.resourceId)
                       const isMaoDeObra = res?.type === 'MAO_DE_OBRA' || res?.type === 'LABOR'
                       return (
                         <div key={r.resourceId} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
@@ -729,8 +808,8 @@ export default function AssetPlanFormPanel({
                 >
                   <option value="">+ Adicionar recurso...</option>
                   {resources
-                    .filter((rs: any) => !task.resources.some(r => r.resourceId === rs.id))
-                    .map((rs: any) => <option key={rs.id} value={rs.id}>{rs.name} ({rs.type})</option>)}
+                    .filter((rs) => !task.resources.some(r => r.resourceId === rs.id))
+                    .map((rs) => <option key={rs.id} value={rs.id}>{rs.name} ({rs.type})</option>)}
                 </select>
               </div>
             </div>
@@ -748,10 +827,10 @@ export default function AssetPlanFormPanel({
   const formFooter = (
     <div className="flex gap-3 px-4 py-4 border-t border-border">
       <Button variant="outline" type="button" onClick={onClose} className="flex-1">Cancelar</Button>
-      <Button type="submit" disabled={saving} className="flex-1">
-        <Icon name="save" className="text-base mr-2" />
-        {saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Salvar'}
-      </Button>
+        <Button type="submit" disabled={saving || loadingPlan} className="flex-1">
+          <Icon name="save" className="text-base mr-2" />
+          {loadingPlan ? 'Carregando...' : saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Salvar'}
+        </Button>
     </div>
   )
 

@@ -21,6 +21,15 @@ const eslintConfig = defineConfig([
     ".codex/**",
     "auditoria/**",
   ]),
+  {
+    files: ["scripts/*.js", "scripts/**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

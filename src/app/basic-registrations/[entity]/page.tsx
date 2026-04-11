@@ -20,35 +20,55 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { exportToExcel } from '@/lib/exportExcel'
 import { hasPermission, type UserRole } from '@/lib/permissions'
+import type { ApiListResponse } from '@/types/api'
+import type {
+  AssetFamilyModelOption,
+  CalendarOption,
+  MaintenanceAreaOption,
+  MaintenanceTypeOption,
+} from '@/types/catalog'
 
-const dependencyCache = new Map<string, any[]>()
-const dependencyPromiseCache = new Map<string, Promise<any[]>>()
+type EntityRecord = Record<string, unknown> & { id?: string }
 
-async function fetchCachedList(url: string) {
+interface ResourceUserSummary extends EntityRecord {
+  id: string
+  firstName: string
+  lastName: string
+  role: string
+  enabled?: boolean
+  jobTitle?: string | null
+  rate?: number | string | null
+  calendarName?: string | null
+}
+
+const dependencyCache = new Map<string, EntityRecord[]>()
+const dependencyPromiseCache = new Map<string, Promise<EntityRecord[]>>()
+
+async function fetchCachedList<T extends EntityRecord>(url: string): Promise<T[]> {
   if (dependencyCache.has(url)) {
-    return dependencyCache.get(url)
+    return (dependencyCache.get(url) ?? []) as T[]
   }
 
   if (dependencyPromiseCache.has(url)) {
-    return dependencyPromiseCache.get(url)
+    return (dependencyPromiseCache.get(url) as Promise<T[]> | undefined) ?? Promise.resolve([] as T[])
   }
 
-  const request = fetch(url)
+  const request: Promise<T[]> = fetch(url)
     .then(async response => {
       if (!response.ok) {
         throw new Error(`Falha ao carregar ${url}: ${response.status}`)
       }
 
-      const payload = await response.json()
+      const payload = await response.json() as ApiListResponse<T>
       const data = payload.data || []
-      dependencyCache.set(url, data)
+      dependencyCache.set(url, data as EntityRecord[])
       return data
     })
     .finally(() => {
       dependencyPromiseCache.delete(url)
     })
 
-  dependencyPromiseCache.set(url, request)
+  dependencyPromiseCache.set(url, request as Promise<EntityRecord[]>)
   return request
 }
 
@@ -72,7 +92,7 @@ const ROLE_LABELS: Record<string, string> = {
   VIEW_ONLY: 'Somente Consulta',
 }
 
-function PeopleSummarySection({ users }: { users: any[] }) {
+function PeopleSummarySection({ users }: { users: ResourceUserSummary[] }) {
   const [searchTerm, setSearchTerm] = useState('')
 
   const enabledUsers = useMemo(() => {
@@ -91,7 +111,7 @@ function PeopleSummarySection({ users }: { users: any[] }) {
   }, [enabledUsers, searchTerm])
 
   const groupedByRole = useMemo(() => {
-    const groups: Record<string, any[]> = {}
+    const groups: Record<string, ResourceUserSummary[]> = {}
     for (const user of filtered) {
       const role = normalizeUserRole(user.role) || 'SEM_CARGO'
       if (!groups[role]) groups[role] = []
@@ -219,29 +239,19 @@ export default function BasicRegistrationEntityPage() {
   const allowDelete = canDelete('basic-registrations')
 
   // Dependency lists for dynamic selects
-  const [maintenanceTypes, setMaintenanceTypes] = useState<any[]>([])
-  const [maintenanceAreas, setMaintenanceAreas] = useState<any[]>([])
-  const [assetFamilyModels, setAssetFamilyModels] = useState<any[]>([])
-  const [calendars, setCalendars] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
+  const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypeOption[]>([])
+  const [maintenanceAreas, setMaintenanceAreas] = useState<MaintenanceAreaOption[]>([])
+  const [assetFamilyModels, setAssetFamilyModels] = useState<AssetFamilyModelOption[]>([])
+  const [calendars, setCalendars] = useState<CalendarOption[]>([])
+  const [users, setUsers] = useState<ResourceUserSummary[]>([])
 
   // Split-panel state
-  const [selectedItem, setSelectedItem] = useState<any | null>(null)
+  const [selectedItem, setSelectedItem] = useState<EntityRecord | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<EntityRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-
-  // Redirect if not authenticated or no permission
-  useEffect(() => {
-    if (authLoading || !user) return
-    if (!hasPermission(role as UserRole, 'basic-registrations', 'view')) {
-      router.push('/dashboard')
-      return
-    }
-    loadDependencies(entity)
-  }, [authLoading, user, role, entity])
 
   // Reset panel state on entity change
   useEffect(() => {
@@ -251,10 +261,10 @@ export default function BasicRegistrationEntityPage() {
     setSearch('')
   }, [entity])
 
-  const loadDependencies = async (currentEntity: string) => {
+  const loadDependencies = useCallback(async (currentEntity: string) => {
     const loaders: Array<Promise<void>> = []
 
-    const runLoader = async (load: () => Promise<any[]>, setter: (value: any[]) => void) => {
+    const runLoader = async <T extends EntityRecord>(load: () => Promise<T[]>, setter: (value: T[]) => void) => {
       try {
         setter(await load())
       } catch (error) {
@@ -269,33 +279,43 @@ export default function BasicRegistrationEntityPage() {
     const needsUsers = currentEntity === 'resources'
 
     if (needsMaintenanceRefs) {
-      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/maintenance-types'), setMaintenanceTypes))
-      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/maintenance-areas'), setMaintenanceAreas))
+      loaders.push(runLoader(() => fetchCachedList<MaintenanceTypeOption>('/api/basic-registrations/maintenance-types'), setMaintenanceTypes))
+      loaders.push(runLoader(() => fetchCachedList<MaintenanceAreaOption>('/api/basic-registrations/maintenance-areas'), setMaintenanceAreas))
     } else {
       setMaintenanceTypes([])
       setMaintenanceAreas([])
     }
 
     if (needsAssetFamilyModels) {
-      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/asset-family-models'), setAssetFamilyModels))
+      loaders.push(runLoader(() => fetchCachedList<AssetFamilyModelOption>('/api/basic-registrations/asset-family-models'), setAssetFamilyModels))
     } else {
       setAssetFamilyModels([])
     }
 
     if (needsCalendars.has(currentEntity)) {
-      loaders.push(runLoader(() => fetchCachedList('/api/basic-registrations/calendars'), setCalendars))
+      loaders.push(runLoader(() => fetchCachedList<CalendarOption>('/api/basic-registrations/calendars'), setCalendars))
     } else {
       setCalendars([])
     }
 
     if (needsUsers) {
-      loaders.push(runLoader(() => fetchCachedList('/api/users?enabled=true&brief=resource'), setUsers))
+      loaders.push(runLoader(() => fetchCachedList<ResourceUserSummary>('/api/users?enabled=true&brief=resource'), setUsers))
     } else {
       setUsers([])
     }
 
     await Promise.all(loaders)
-  }
+  }, [])
+
+  // Redirect if not authenticated or no permission
+  useEffect(() => {
+    if (authLoading || !user) return
+    if (!hasPermission(role as UserRole, 'basic-registrations', 'view')) {
+      router.push('/dashboard')
+      return
+    }
+    void loadDependencies(entity)
+  }, [authLoading, user, role, entity, router, loadDependencies])
 
   const tabs: TabConfig[] = [
     {
@@ -331,10 +351,10 @@ export default function BasicRegistrationEntityPage() {
         { key: 'code', label: 'Codigo', type: 'text', required: true, placeholder: 'Ex: MECPRV' },
         { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Mecanica Preventiva' },
         { key: 'maintenanceTypeId', label: 'Tipo de Manutencao', type: 'select', required: true,
-          options: maintenanceTypes.map((mt: any) => ({ value: mt.id, label: mt.name }))
+          options: maintenanceTypes.map((mt) => ({ value: mt.id, label: mt.name }))
         },
         { key: 'maintenanceAreaId', label: 'Area de Manutencao', type: 'select', required: true,
-          options: maintenanceAreas.map((ma: any) => ({ value: ma.id, label: ma.name }))
+          options: maintenanceAreas.map((ma) => ({ value: ma.id, label: ma.name }))
         },
         { key: 'isLubrication', label: 'Lubrificacao?', type: 'checkbox' },
         { key: 'protheusCode', label: 'Codigo Protheus', type: 'text', placeholder: 'Ex: MECPRV' },
@@ -468,7 +488,7 @@ export default function BasicRegistrationEntityPage() {
         }},
         { key: 'calendarName', label: 'Calendario' },
         { key: 'unit', label: 'Unidade' },
-        { key: 'unitCost', label: 'Custo (R$)', render: (v: any) => v ? `R$ ${Number(v).toFixed(2)}` : '\u2014' },
+        { key: 'unitCost', label: 'Custo (R$)', render: (v: unknown) => v ? `R$ ${Number(v).toFixed(2)}` : '\u2014' },
         { key: 'protheusCode', label: 'Cod. Protheus' },
       ],
       customSectionRender: () => <PeopleSummarySection users={users} />,
@@ -500,10 +520,10 @@ export default function BasicRegistrationEntityPage() {
       ],
       columns: [
         { key: 'name', label: 'Descricao' },
-        { key: 'optionType', label: 'Tipo', render: (value: string, row: any) => {
+        { key: 'optionType', label: 'Tipo', render: (value: string, row: EntityRecord) => {
           const labels: Record<string, string> = { NONE: 'Nenhuma', RESPONSE: 'Resposta', OPTION: 'Opcao' }
           const label = labels[value] || value
-          const optCount = row.options?.length || 0
+          const optCount = Array.isArray(row.options) ? row.options.length : 0
           return value === 'OPTION' && optCount > 0 ? `${label} (${optCount})` : label
         }},
         { key: 'protheusCode', label: 'Cod. Protheus' },
@@ -597,31 +617,34 @@ export default function BasicRegistrationEntityPage() {
   ]
 
   const currentTab = tabs.find(t => t.key === entity)
+  const currentEntityName = currentTab?.entity
+  const currentUnitScoped = currentTab?.unitScoped
+  const currentApiQueryParams = currentTab?.apiQueryParams
 
   // Data fetching
   const fetchItems = useCallback(async () => {
-    if (!currentTab) return
+    if (!currentEntityName) return
     setLoading(true)
-    let url = `/api/basic-registrations/${currentTab.entity}`
+    let url = `/api/basic-registrations/${currentEntityName}`
     const fetchParams: string[] = []
-    if (currentTab.unitScoped && activeUnitId) fetchParams.push(`unitId=${activeUnitId}`)
-    if (currentTab.apiQueryParams) fetchParams.push(currentTab.apiQueryParams)
+    if (currentUnitScoped && activeUnitId) fetchParams.push(`unitId=${activeUnitId}`)
+    if (currentApiQueryParams) fetchParams.push(currentApiQueryParams)
     if (fetchParams.length > 0) url += `?${fetchParams.join('&')}`
     try {
       const res = await fetch(url)
-      const data = await res.json()
+      const data = await res.json() as ApiListResponse<EntityRecord>
       setItems(data.data || [])
     } catch {
       setItems([])
     }
     setLoading(false)
-  }, [currentTab?.entity, currentTab?.unitScoped, activeUnitId, currentTab?.apiQueryParams])
+  }, [currentEntityName, currentUnitScoped, activeUnitId, currentApiQueryParams])
 
   useEffect(() => {
-    if (!authLoading && user && currentTab) {
-      fetchItems()
+    if (!authLoading && user && currentEntityName) {
+      void fetchItems()
     }
-  }, [fetchItems, authLoading, user])
+  }, [fetchItems, authLoading, user, currentEntityName])
 
   // Search filtering
   const filtered = useMemo(() => {
@@ -636,7 +659,7 @@ export default function BasicRegistrationEntityPage() {
   }, [items, search, currentTab])
 
   // Handlers
-  const handleSelectItem = (item: any) => {
+  const handleSelectItem = (item: EntityRecord) => {
     setSelectedItem(item)
     setIsEditing(false)
     setIsCreating(false)
@@ -658,7 +681,7 @@ export default function BasicRegistrationEntityPage() {
 
   const handleSaved = () => {
     handleClosePanel()
-    fetchItems()
+    void fetchItems()
   }
 
   const handleDelete = async () => {
@@ -671,14 +694,14 @@ export default function BasicRegistrationEntityPage() {
         return
       }
       handleClosePanel()
-      fetchItems()
-    } catch {
-      alert('Erro de conexao')
-    }
-  }
-
+       void fetchItems()
+     } catch {
+       alert('Erro de conexao')
+     }
+   }
+ 
   // Render form panel (dispatches to custom or generic)
-  const renderFormPanel = (item: any | null) => {
+  const renderFormPanel = (item: EntityRecord | null) => {
     const tabKey = currentTab?.key
     const commonProps = {
       editingItem: item,
