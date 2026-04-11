@@ -80,6 +80,10 @@ export async function PUT(
     delete body.tasks
     body.updatedAt = new Date().toISOString()
 
+    // Sanitizar FKs opcionais: string vazia → null
+    if (!body.familyModelId) body.familyModelId = null
+    if (!body.calendarId) body.calendarId = null
+
     const { data, error } = await supabase
       .from('StandardMaintenancePlan')
       .update(body)
