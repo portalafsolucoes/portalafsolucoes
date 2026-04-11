@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { hasPermission } from '@/lib/permissions'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useAuth } from '@/hooks/useAuth'
@@ -54,6 +54,7 @@ export function Sidebar() {
       { name: 'Tipos Modelo', href: '/basic-registrations/asset-family-models' },
       { name: 'Famílias de Bens', href: '/basic-registrations/asset-families' },
       { name: 'Posições', href: '/basic-registrations/positions' },
+      { name: 'Cargos', href: '/basic-registrations/job-titles' },
       { name: 'Recursos', href: '/basic-registrations/resources' },
       { name: 'Tarefas Genéricas', href: '/basic-registrations/generic-tasks' },
       { name: 'Etapas Genéricas', href: '/basic-registrations/generic-steps' },
@@ -90,18 +91,32 @@ export function Sidebar() {
     return hasPermission(permissionSubject, menu.module, 'view')
   })
 
+  const manuallyCollapsed = useRef<Set<string>>(new Set())
+
   useEffect(() => {
     navigation.forEach(item => {
-      if (item.subItems && pathname.startsWith(item.href)) {
-        setExpandedMenus(prev => prev.includes(item.name) ? prev : [...prev, item.name])
+      if (item.subItems) {
+        if (pathname.startsWith(item.href)) {
+          if (!manuallyCollapsed.current.has(item.name)) {
+            setExpandedMenus(prev => prev.includes(item.name) ? prev : [...prev, item.name])
+          }
+        } else {
+          manuallyCollapsed.current.delete(item.name)
+        }
       }
     })
   }, [navigation, pathname, userRole])
 
   const toggleExpanded = (name: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
-    )
+    setExpandedMenus(prev => {
+      const isOpen = prev.includes(name)
+      if (isOpen) {
+        manuallyCollapsed.current.add(name)
+      } else {
+        manuallyCollapsed.current.delete(name)
+      }
+      return isOpen ? prev.filter(n => n !== name) : [...prev, name]
+    })
   }
 
   const handleBackToPortal = () => {
