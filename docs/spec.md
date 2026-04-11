@@ -108,6 +108,7 @@ Regras complementares:
 
 ### Boas Praticas de Implementacao com Impacto Funcional
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
+- Em telas, filtros, badges, detalhes e formularios de `Pessoas`, o campo `papel` representa exclusivamente o perfil de acesso do sistema; o campo `cargo` representa exclusivamente a funcao profissional da pessoa, por exemplo `Mecanico`, `Eletricista`, `Engenheiro` ou `Supervisor`
 - Se o banco ou legado ainda possuir perfis antigos (`GESTOR`, `PLANEJADOR`, `MECANICO`, `ELETRICISTA`, `CONSTRUTOR_CIVIL`, `OPERADOR`), a aplicacao deve normalizar esses valores para os papeis canonicos antes de decidir sidebar, redirects, badges e permissoes
 - A borda de compatibilidade legado->canonico esta em `src/lib/user-roles.ts`. Os helpers `isAdminRole`, `isApproverRole`, `normalizeUserRole`, `getRoleDisplayName` devem ser reutilizados em toda nova checagem; nao reimplementar logica de papel localmente
 - Papeis legados armazenados no banco sao aceitos pelo sistema, porem toda decisao de acesso deve usar o papel canonico derivado da sessao (`session.canonicalRole`)
@@ -197,6 +198,8 @@ Regras complementares:
 - Usuarios podem ter multiplas unidades de acesso
 - A tela de `Pessoas` oferece apenas visualizacao em `Tabela` e `Grade`; a visualizacao em arvore nao faz parte deste modulo
 - Formularios de pessoa devem exigir email valido com dominio completo e nunca reapresentar senha salva; no modo de edicao, o campo de senha deve permanecer vazio e opcional
+- O modal de pessoa, em criacao e edicao, deve permitir alterar todos os campos operacionais expostos no modulo: nome, sobrenome, email, senha, telefone, cargo, papel, taxa/hora, localizacao principal, calendario, unidades de acesso e status
+- A coluna `Cargo` da listagem de pessoas deve exibir `jobTitle` e nunca o perfil de acesso; a coluna `Papel` deve exibir o papel canonico do produto, mesmo quando o registro de origem vier de valor legado
 
 ### 9. Planos de Manutencao
 - Planos padrao por familia de ativos

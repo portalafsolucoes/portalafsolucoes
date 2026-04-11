@@ -11,6 +11,7 @@ globs: src/app/api/**,src/actions/**
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
 - Se o banco ou legado ainda possuir perfis antigos, a camada de auth/API deve normalizar esses valores antes de decidir acesso, sidebar, redirects, badges e permissoes
 - A normalizacao de papel deve considerar contexto confiavel do usuario, como `email`, `username`, `jobTitle` e papel canonico de sessao; nao depender apenas do valor legado bruto
+- Em payloads e respostas do modulo de `Pessoas`, `role` representa o papel de acesso do sistema e `jobTitle` representa o cargo profissional; APIs nao devem misturar esses conceitos nem rotular valores legados operacionais como se fossem o papel exibido ao usuario
 
 ## Autenticacao e Sessao
 - O endpoint `/api/auth/me` e a leitura de modulos da empresa devem ser tratados como dados dinamicos de sessao, sem cache compartilhado entre usuarios
@@ -30,6 +31,7 @@ globs: src/app/api/**,src/actions/**
 - Toda acao que altera dados deve validar payload, status permitidos e relacoes obrigatorias antes de persistir
 - Campos sensiveis como `password` nunca podem retornar para a UI, nem em listagens, nem em detalhes, nem em respostas de edicao
 - APIs de usuario devem normalizar email e rejeitar payloads com email sem dominio completo ou com email igual a senha
+- APIs de `Pessoas` devem aceitar e persistir os campos editaveis do modal de pessoa: nome, sobrenome, email, senha opcional na edicao, telefone, cargo (`jobTitle`), papel (`role`), taxa/hora, localizacao, calendario, unidades de acesso e status
 
 ## Sincronizacao de Documentacao
 - Toda mudanca de contrato, permissao, validacao ou comportamento de rota/action deve atualizar a secao funcional correspondente em `docs/SPEC.md`

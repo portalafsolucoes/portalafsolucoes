@@ -64,6 +64,7 @@ Padrao visual:
 ## Padrao de Tela de Listagem (OBRIGATORIO)
 Referencia canonica: telas de `Pessoas` e `Ativos`.
 - Excecao documentada: em `/people-teams`, o toggle de visualizacao deve oferecer apenas `Tabela` e `Grade`; o modo `Arvore` nao deve aparecer nessa tela
+- Em `/people-teams`, a coluna e os campos de `Papel` devem usar o papel canonico de acesso do produto; `Cargo` deve usar exclusivamente `jobTitle` como funcao profissional da pessoa
 
 ### Estrutura da pagina
 ```tsx
@@ -262,6 +263,7 @@ Toda tela de listagem DEVE usar o padrao split-panel no desktop para TODOS os fl
 - Unica excecao para overlay: modais de confirmacao de exclusao (`ConfirmDialog`, `ConfirmationModal`)
 - Os componentes devem aceitar prop `inPage` para renderizar como painel embutido
 - Cada componente que suporta `inPage` deve renderizar: header com titulo + botao X, conteudo scrollavel, footer fixo
+- Nos modais de `Pessoa`, criacao e edicao devem expor os mesmos campos operacionais do cadastro: nome, sobrenome, email, senha, telefone, cargo, papel, taxa/hora, localizacao, calendario, unidades de acesso e status
 
 Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 
