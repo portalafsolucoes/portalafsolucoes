@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 
 interface Company {
@@ -140,7 +140,7 @@ function CompanyDetailPanel({
         {/* Data */}
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             <div>
               <p className="text-xs text-muted-foreground">E-mail</p>
               <p className="text-sm text-foreground">{company.email || '—'}</p>
@@ -359,7 +359,6 @@ export default function AdminPortalPage() {
   const { role, user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const isMobile = useIsMobile()
 
   const [companies, setCompanies] = useState<Company[]>([])
   const [stats, setStats] = useState<PortalStats | null>(null)
@@ -370,7 +369,7 @@ export default function AdminPortalPage() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const hasSidePanel = !isMobile && (selectedCompany !== null || isCreating)
+  const showSidePanel = !!(selectedCompany !== null || isCreating)
 
   // Company form
   const [saving, setSaving] = useState(false)
@@ -755,9 +754,163 @@ export default function AdminPortalPage() {
   ] : []
 
   // Determine what the right panel shows
-  const showRightPanel = hasSidePanel
-  const showEditForm = !isMobile && (isCreating || (selectedCompany && isEditing))
-  const showDetailPanel = !isMobile && selectedCompany && !isEditing && !isCreating
+  const showEditForm = isCreating || (selectedCompany !== null && isEditing)
+  const showDetailPanel = selectedCompany !== null && !isEditing && !isCreating
+
+  const activePanel = showEditForm ? (
+    <CompanyFormPanel
+      inPage
+      isEdit={isEditing}
+      onClose={handleCloseSidePanel}
+      onSubmit={isEditing ? handleEditCompany : handleCreateCompany}
+      formData={createForm}
+      onChange={handleFormChange}
+      saving={saving}
+      error={formError}
+    />
+  ) : showDetailPanel && selectedCompany ? (
+    <CompanyDetailPanel
+      company={selectedCompany}
+      onClose={handleCloseSidePanel}
+      onEdit={handleEditOpen}
+      onDelete={(c) => setDeleteCompany(c)}
+      onManageLogo={openLogoModal}
+      onManageModules={openModules}
+    />
+  ) : null
+
+  const listContent = (
+    <div className="flex-1 overflow-auto p-4 md:p-6 min-h-0">
+      {/* Stats */}
+      {statsLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-[4px] ambient-shadow p-4 animate-pulse">
+              <div className="h-10 bg-secondary rounded" />
+            </div>
+          ))}
+        </div>
+      ) : stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+          {statCards.map((card) => (
+            <div key={card.label} className="bg-card rounded-[4px] ambient-shadow p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-[4px] flex items-center justify-center ${card.color}`}>
+                  <Icon name={card.icon} className="text-lg" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-foreground">{card.value}</div>
+              <div className="text-xs text-muted-foreground">{card.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Table section heading */}
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-foreground">Empresas Cadastradas</h2>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+            <p className="mt-2 text-muted-foreground">Carregando...</p>
+          </div>
+        </div>
+      ) : companies.length === 0 ? (
+        <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
+          <Icon name="domain" className="text-6xl text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma empresa cadastrada</h3>
+          <p className="text-muted-foreground mb-4">Adicione a primeira empresa para começar.</p>
+          <Button onClick={openCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
+            <Icon name="add" className="mr-1 text-base" />
+            Nova Empresa
+          </Button>
+        </div>
+      ) : (
+        <div className="h-full flex flex-col bg-card overflow-hidden">
+          <div className="flex-1 overflow-auto min-h-0">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="sticky top-0 bg-secondary z-10">
+                <tr>
+                  <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Empresa
+                  </th>
+                  <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Contato
+                  </th>
+                  <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Usuários
+                  </th>
+                  <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Módulos
+                  </th>
+                  <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Criada em
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-card divide-y divide-gray-200">
+                {companies.map((company) => (
+                  <tr
+                    key={company.id}
+                    onClick={() => handleSelectCompany(company)}
+                    className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
+                  >
+                    <td className="px-6 py-4 text-sm text-foreground">
+                      <div className="flex items-center gap-3">
+                        {company.logo ? (
+                          <div className="relative w-10 h-10 rounded-[4px] overflow-hidden flex-shrink-0 bg-secondary">
+                            <Image
+                              src={company.logo}
+                              alt={company.name}
+                              fill
+                              className="object-contain"
+                              sizes="40px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="domain" className="text-xl text-primary" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold text-foreground">{company.name}</div>
+                          {company.website && (
+                            <div className="text-xs text-muted-foreground">{company.website}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-foreground">
+                      <div>{company.email || '—'}</div>
+                      <div className="text-xs text-muted-foreground">{company.phone || ''}</div>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
+                        <Icon name="group" className="text-base text-muted-foreground" />
+                        {company.userCount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
+                        <Icon name="extension" className="text-base text-muted-foreground" />
+                        {company.moduleCount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-muted-foreground">
+                      {new Date(company.createdAt).toLocaleDateString('pt-BR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -769,8 +922,8 @@ export default function AdminPortalPage() {
           className="mb-0"
           actions={
             <Button onClick={openCreate} size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-              <Icon name="add" className="mr-1 text-base" />
-              Nova Empresa
+              <Icon name="add" className="text-base" />
+              <span className="hidden sm:inline ml-1">Nova Empresa</span>
             </Button>
           }
         />
@@ -779,254 +932,15 @@ export default function AdminPortalPage() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-
-          {/* Left panel */}
-          <div className={`${showRightPanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
-            <div className="flex-1 overflow-auto p-4 md:p-6 min-h-0">
-
-              {/* Stats */}
-              {statsLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
-                  {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="bg-card rounded-[4px] ambient-shadow p-4 animate-pulse">
-                      <div className="h-10 bg-secondary rounded" />
-                    </div>
-                  ))}
-                </div>
-              ) : stats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
-                  {statCards.map((card) => (
-                    <div key={card.label} className="bg-card rounded-[4px] ambient-shadow p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-8 h-8 rounded-[4px] flex items-center justify-center ${card.color}`}>
-                          <Icon name={card.icon} className="text-lg" />
-                        </div>
-                      </div>
-                      <div className="text-2xl font-bold text-foreground">{card.value}</div>
-                      <div className="text-xs text-muted-foreground">{card.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Table section heading */}
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold text-foreground">Empresas Cadastradas</h2>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                    <p className="mt-2 text-muted-foreground">Carregando...</p>
-                  </div>
-                </div>
-              ) : companies.length === 0 ? (
-                <div className="bg-card rounded-[4px] ambient-shadow p-12 text-center">
-                  <Icon name="domain" className="text-6xl text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma empresa cadastrada</h3>
-                  <p className="text-muted-foreground mb-4">Adicione a primeira empresa para começar.</p>
-                  <Button onClick={openCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                    <Icon name="add" className="mr-1 text-base" />
-                    Nova Empresa
-                  </Button>
-                </div>
-              ) : (
-                <div className="h-full flex flex-col bg-card overflow-hidden">
-                  <div className="flex-1 overflow-auto min-h-0">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="sticky top-0 bg-secondary z-10">
-                        <tr>
-                          <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Empresa
-                          </th>
-                          <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Contato
-                          </th>
-                          <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Usuários
-                          </th>
-                          <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Módulos
-                          </th>
-                          <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Criada em
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-card divide-y divide-gray-200">
-                        {companies.map((company) => (
-                          <tr
-                            key={company.id}
-                            onClick={() => handleSelectCompany(company)}
-                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
-                          >
-                            <td className="px-6 py-4 text-sm text-foreground">
-                              <div className="flex items-center gap-3">
-                                {company.logo ? (
-                                  <div className="relative w-10 h-10 rounded-[4px] overflow-hidden flex-shrink-0 bg-secondary">
-                                    <Image
-                                      src={company.logo}
-                                      alt={company.name}
-                                      fill
-                                      className="object-contain"
-                                      sizes="40px"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                    <Icon name="domain" className="text-xl text-primary" />
-                                  </div>
-                                )}
-                                <div>
-                                  <div className="font-semibold text-foreground">{company.name}</div>
-                                  {company.website && (
-                                    <div className="text-xs text-muted-foreground">{company.website}</div>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-foreground">
-                              <div>{company.email || '—'}</div>
-                              <div className="text-xs text-muted-foreground">{company.phone || ''}</div>
-                            </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
-                                <Icon name="group" className="text-base text-muted-foreground" />
-                                {company.userCount}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-foreground">
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-secondary rounded-[4px] text-sm font-medium text-foreground">
-                                <Icon name="extension" className="text-base text-muted-foreground" />
-                                {company.moduleCount}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-muted-foreground">
-                              {new Date(company.createdAt).toLocaleDateString('pt-BR')}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right panel — desktop only */}
-          {showRightPanel && !isMobile && (
-            <div className="w-1/2 min-w-0">
-              {showEditForm && (
-                <CompanyFormPanel
-                  inPage
-                  isEdit={isEditing}
-                  onClose={handleCloseSidePanel}
-                  onSubmit={isEditing ? handleEditCompany : handleCreateCompany}
-                  formData={createForm}
-                  onChange={handleFormChange}
-                  saving={saving}
-                  error={formError}
-                />
-              )}
-              {showDetailPanel && selectedCompany && (
-                <CompanyDetailPanel
-                  company={selectedCompany}
-                  onClose={handleCloseSidePanel}
-                  onEdit={handleEditOpen}
-                  onDelete={(c) => setDeleteCompany(c)}
-                  onManageLogo={openLogoModal}
-                  onManageModules={openModules}
-                />
-              )}
-            </div>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Empresa"
+            onClosePanel={handleCloseSidePanel}
+          />
         </div>
       </div>
-
-      {/* ── Mobile modals ─────────────────────────────────────────────────────── */}
-
-      {isMobile && selectedCompany && !isEditing && (
-        <Modal
-          isOpen
-          onClose={handleCloseSidePanel}
-          title={selectedCompany.name}
-          size="wide"
-        >
-          <div className="p-4 space-y-2">
-            <button
-              onClick={handleEditOpen}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
-            >
-              <Icon name="edit" className="text-base" />
-              Editar
-            </button>
-            <button
-              onClick={() => { openLogoModal(selectedCompany); handleCloseSidePanel() }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
-            >
-              <Icon name="image" className="text-base" />
-              Gerenciar Logo
-            </button>
-            <button
-              onClick={() => { openModules(selectedCompany); handleCloseSidePanel() }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
-            >
-              <Icon name="extension" className="text-base" />
-              Configurar Módulos
-            </button>
-            <button
-              onClick={() => { setDeleteCompany(selectedCompany); handleCloseSidePanel() }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
-            >
-              <Icon name="delete" className="text-base" />
-              Excluir
-            </button>
-          </div>
-          <div className="p-4 border-t border-border">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <div>
-                <p className="text-xs text-muted-foreground">E-mail</p>
-                <p className="text-sm text-foreground">{selectedCompany.email || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Telefone</p>
-                <p className="text-sm text-foreground">{selectedCompany.phone || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Website</p>
-                <p className="text-sm text-foreground">{selectedCompany.website || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Criada em</p>
-                <p className="text-sm text-foreground">
-                  {new Date(selectedCompany.createdAt).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isMobile && (isCreating || (selectedCompany && isEditing)) && (
-        <Modal
-          isOpen
-          onClose={handleCloseSidePanel}
-          title={isEditing ? 'Editar Empresa' : 'Nova Empresa'}
-          size="wide"
-        >
-          <CompanyFormPanel
-            isEdit={isEditing}
-            onClose={handleCloseSidePanel}
-            onSubmit={isEditing ? handleEditCompany : handleCreateCompany}
-            formData={createForm}
-            onChange={handleFormChange}
-            saving={saving}
-            error={formError}
-          />
-        </Modal>
-      )}
 
       {/* Logo Upload Modal (always overlay) */}
       <Modal

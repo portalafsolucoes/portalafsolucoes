@@ -5,10 +5,10 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
 import { normalizeUserRole } from '@/lib/user-roles'
 import { usePermissions } from '@/hooks/usePermissions'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 import { GenericCrudTable, type ColumnConfig } from '@/components/basic-registrations/GenericCrudTable'
 import { GenericDetailPanel } from '@/components/basic-registrations/GenericDetailPanel'
 import { GenericEditPanel, type FieldConfig } from '@/components/basic-registrations/GenericEditPanel'
@@ -17,7 +17,6 @@ import { AssetFamilyModal } from '@/components/basic-registrations/AssetFamilyMo
 import { ResourceModal } from '@/components/basic-registrations/ResourceModal'
 import { GenericStepModal } from '@/components/basic-registrations/GenericStepModal'
 import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
 import { Icon } from '@/components/ui/Icon'
 import { exportToExcel } from '@/lib/exportExcel'
 import { hasPermission, type UserRole } from '@/lib/permissions'
@@ -211,7 +210,6 @@ export default function BasicRegistrationEntityPage() {
   const params = useParams()
   const router = useRouter()
   const entity = params.entity as string
-  const isMobile = useIsMobile()
 
   const { user, isLoading: authLoading, unitId: activeUnitId } = useAuth()
   const role = user?.role ?? ''
@@ -680,13 +678,13 @@ export default function BasicRegistrationEntityPage() {
   }
 
   // Render form panel (dispatches to custom or generic)
-  const renderFormPanel = (item: any | null, inPage: boolean) => {
+  const renderFormPanel = (item: any | null) => {
     const tabKey = currentTab?.key
     const commonProps = {
       editingItem: item,
       onClose: handleClosePanel,
       onSaved: handleSaved,
-      inPage,
+      inPage: true,
     }
 
     switch (tabKey) {
@@ -743,8 +741,49 @@ export default function BasicRegistrationEntityPage() {
     )
   }
 
-  const hasSidePanel = !isMobile && (selectedItem !== null || isCreating)
+  const showSidePanel = !!(selectedItem !== null || isCreating)
   const noUnitSelected = currentTab.unitScoped && !activeUnitId
+
+  const activePanel = isCreating ? (
+    renderFormPanel(null)
+  ) : selectedItem && isEditing ? (
+    renderFormPanel(selectedItem)
+  ) : selectedItem ? (
+    <GenericDetailPanel
+      item={selectedItem}
+      entity={currentTab.entity}
+      title={currentTab.label}
+      columns={currentTab.columns}
+      fields={currentTab.fields}
+      onClose={handleClosePanel}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      canEdit={allowEdit}
+      canDelete={allowDelete}
+    />
+  ) : null
+
+  const listContent = (
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* PeopleSummarySection for resources entity */}
+      {currentTab.key === 'resources' && currentTab.customSectionRender && (
+        <div className="flex-shrink-0 border-b border-border">
+          {currentTab.customSectionRender()}
+        </div>
+      )}
+      {/* Table */}
+      {!noUnitSelected && (
+        <GenericCrudTable
+          items={filtered}
+          columns={currentTab.columns}
+          loading={loading}
+          selectedItemId={selectedItem?.id}
+          onSelectItem={handleSelectItem}
+          emptyMessage="Nenhum registro encontrado."
+        />
+      )}
+    </div>
+  )
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -757,7 +796,7 @@ export default function BasicRegistrationEntityPage() {
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               {/* Search */}
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -784,8 +823,8 @@ export default function BasicRegistrationEntityPage() {
               {/* Add button */}
               {allowCreate && (
                 <Button onClick={handleCreate} disabled={!!noUnitSelected} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                  <Icon name="add" className="mr-2 text-base" />
-                  Adicionar
+                  <Icon name="add" className="text-base" />
+                  <span className="hidden sm:inline ml-1">Adicionar</span>
                 </Button>
               )}
             </div>
@@ -803,76 +842,15 @@ export default function BasicRegistrationEntityPage() {
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {/* Left: table */}
-          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
-            {/* PeopleSummarySection for resources entity */}
-            {currentTab.key === 'resources' && currentTab.customSectionRender && (
-              <div className="flex-shrink-0 border-b border-border">
-                {currentTab.customSectionRender()}
-              </div>
-            )}
-            {/* Table */}
-            {!noUnitSelected && (
-              <GenericCrudTable
-                items={filtered}
-                columns={currentTab.columns}
-                loading={loading}
-                selectedItemId={selectedItem?.id}
-                onSelectItem={handleSelectItem}
-                emptyMessage="Nenhum registro encontrado."
-              />
-            )}
-          </div>
-
-          {/* Right: panel (desktop only) */}
-          {!isMobile && isCreating && (
-            <div className="w-1/2 min-w-0">
-              {renderFormPanel(null, true)}
-            </div>
-          )}
-          {!isMobile && !isCreating && selectedItem && isEditing && (
-            <div className="w-1/2 min-w-0">
-              {renderFormPanel(selectedItem, true)}
-            </div>
-          )}
-          {!isMobile && !isCreating && selectedItem && !isEditing && (
-            <div className="w-1/2 min-w-0">
-              <GenericDetailPanel
-                item={selectedItem}
-                entity={currentTab.entity}
-                title={currentTab.label}
-                columns={currentTab.columns}
-                fields={currentTab.fields}
-                onClose={handleClosePanel}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                canEdit={allowEdit}
-                canDelete={allowDelete}
-              />
-            </div>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle={currentTab.label}
+            onClosePanel={handleClosePanel}
+          />
         </div>
       </div>
-
-      {/* Mobile modals */}
-      {isMobile && selectedItem && !isEditing && (
-        <Modal isOpen onClose={handleClosePanel} title={selectedItem.name || selectedItem.code || currentTab.label} hideHeader noPadding>
-          <GenericDetailPanel
-            item={selectedItem}
-            entity={currentTab.entity}
-            title={currentTab.label}
-            columns={currentTab.columns}
-            fields={currentTab.fields}
-            onClose={handleClosePanel}
-            onEdit={() => setIsEditing(true)}
-            onDelete={handleDelete}
-            canEdit={allowEdit}
-            canDelete={allowDelete}
-          />
-        </Modal>
-      )}
-      {isMobile && isEditing && selectedItem && renderFormPanel(selectedItem, false)}
-      {isMobile && isCreating && renderFormPanel(null, false)}
     </PageContainer>
   )
 }

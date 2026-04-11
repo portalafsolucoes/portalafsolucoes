@@ -30,13 +30,12 @@ type SidebarMenuItem = {
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { isCollapsed, setIsCollapsed } = useSidebar()
+  const { isCollapsed, setIsCollapsed, mobileMenuOpen, setMobileMenuOpen } = useSidebar()
   const { role: userRole, user, companyName, isLoading: authLoading } = useAuth()
   const companyLogo = user?.company?.logo || null
   const defaultCmmsPath = getDefaultCmmsPath(user ?? userRole)
   const pendingCount = usePendingCount()
   const { isModuleEnabled } = useCompanyModules()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
   const allMenus: SidebarMenuItem[] = [
@@ -125,30 +124,22 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-[60] p-2 bg-card text-foreground rounded-[4px] ambient-shadow"
-      >
-        <Icon name={mobileMenuOpen ? 'close' : 'menu'} className="text-xl" />
-      </button>
-
-      {/* Overlay for mobile */}
+      {/* Overlay para mobile/tablet — clique fora fecha a sidebar */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          className="xl:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-[60] bg-sidebar flex flex-col transition-all duration-300 shadow-xl ${
-        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      } ${isCollapsed ? 'lg:w-16' : 'lg:w-64'} w-64`}>
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'
+      } ${isCollapsed ? 'xl:w-16' : 'xl:w-64'} w-72`}>
 
-        {/* Header — Logo + Hamburger only */}
+        {/* Header — Logo + Hamburguer (desktop) */}
         <div className="px-3 py-3 bg-[var(--color-sidebar-header)] border-b border-sidebar-border">
-          <div className="hidden lg:block">
+          <div className="hidden xl:block">
             {!isCollapsed ? (
               <div className="flex items-center gap-3">
                 <button
@@ -224,8 +215,8 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* Mobile Layout */}
-          <div className="lg:hidden">
+          {/* Mobile/Tablet Layout — botão fechar + logo */}
+          <div className="xl:hidden">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -318,7 +309,7 @@ export function Sidebar() {
                             key={sub.href}
                             href={sub.href}
                             onClick={() => setMobileMenuOpen(false)}
-                            className={`block px-3 py-1.5 text-xs font-medium rounded-[4px] transition-all duration-200 ${
+                            className={`block px-3 py-2.5 text-xs font-medium rounded-[4px] transition-all duration-200 ${
                               isSubActive
                                 ? 'text-white font-bold'
                                 : 'text-sidebar-foreground hover:text-white'
@@ -376,7 +367,7 @@ export function Sidebar() {
         <div className="p-3 bg-[var(--color-sidebar-header)] border-t border-sidebar-border">
           <button
             onClick={handleBackToPortal}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2 text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-white rounded-[4px] transition-all duration-200`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-white rounded-[4px] transition-all duration-200`}
             title={isCollapsed ? 'Voltar ao Portal' : ''}
           >
             <Icon name="grid_view" className={`text-xl ${isCollapsed ? '' : 'mr-3'} text-sidebar-muted`} />

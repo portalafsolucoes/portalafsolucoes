@@ -7,12 +7,12 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import { Modal } from '@/components/ui/Modal'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
 import { usePermissions } from '@/hooks/usePermissions'
-import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 
 const LocationDetailPanel = dynamic(
   () => import('@/components/locations/LocationDetailPanel').then(m => ({ default: m.LocationDetailPanel })),
@@ -41,7 +41,7 @@ interface Location {
 
 export default function LocationsPage() {
   const router = useRouter()
-  const isMobile = useIsMobile()
+  const { isPhone } = useResponsiveLayout()
   const { user } = useAuth()
   const { canCreate, canEdit, canDelete } = usePermissions()
 
@@ -52,7 +52,6 @@ export default function LocationsPage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user || !hasPermission(user, 'locations', 'view')) return
@@ -137,12 +136,63 @@ export default function LocationsPage() {
     setIsCreating(false)
   }
 
+  const closeSidePanel = () => {
+    setSelectedLocation(null)
+    setIsEditing(false)
+    setIsCreating(false)
+  }
+
   const filteredLocations = locations.filter(loc =>
     loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (loc.address?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   )
 
-  const hasSidePanel = !isMobile && (selectedLocation !== null || isCreating)
+  const showSidePanel = !!(selectedLocation !== null || isCreating)
+
+  const activePanel = isCreating || isEditing ? (
+    <LocationFormPanel
+      editingLocation={isEditing ? selectedLocation : null}
+      allLocations={locations}
+      onClose={handleFormClose}
+      onSaved={handleFormSaved}
+      inPage
+    />
+  ) : selectedLocation ? (
+    <LocationDetailPanel
+      location={selectedLocation}
+      onClose={() => {
+        setSelectedLocation(null)
+        setIsEditing(false)
+      }}
+      onEdit={handleEdit}
+      onDelete={() => handleDelete(selectedLocation.id)}
+      canEdit={canEdit('locations')}
+      canDelete={canDelete('locations')}
+    />
+  ) : null
+
+  const effectiveViewMode = isPhone ? 'table' : viewMode
+
+  const listContent = loading ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+        <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : effectiveViewMode === 'table' ? (
+    <TableView
+      locations={filteredLocations}
+      selectedId={selectedLocation?.id}
+      onSelect={handleSelectLocation}
+    />
+  ) : (
+    <GridView
+      locations={filteredLocations}
+      selectedId={selectedLocation?.id}
+      onSelect={handleSelectLocation}
+    />
+  )
 
   if (!user || !hasPermission(user, 'locations', 'view')) {
     return null
@@ -159,7 +209,7 @@ export default function LocationsPage() {
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               {/* Search */}
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon
                   name="search"
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground"
@@ -174,7 +224,7 @@ export default function LocationsPage() {
               </div>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center bg-muted rounded-[4px] p-1">
+              <div className="hidden md:flex items-center bg-muted rounded-[4px] p-1">
                 <button
                   onClick={() => setViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
@@ -203,8 +253,8 @@ export default function LocationsPage() {
 
               {canCreate('locations') && (
                 <Button onClick={handleAddNew} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                  <Icon name="add" className="mr-2 text-base" />
-                  Nova Localização
+                  <Icon name="add" className="text-base" />
+                  <span className="hidden sm:inline ml-1">Nova Localização</span>
                 </Button>
               )}
             </div>
@@ -215,96 +265,15 @@ export default function LocationsPage() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {loading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                <p className="mt-2 text-muted-foreground">Carregando...</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Left panel */}
-              <div
-                className={`${
-                  hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'
-                } transition-all overflow-hidden`}
-              >
-                {viewMode === 'table' ? (
-                  <TableView
-                    locations={filteredLocations}
-                    selectedId={selectedLocation?.id}
-                    onSelect={handleSelectLocation}
-                  />
-                ) : (
-                  <GridView
-                    locations={filteredLocations}
-                    selectedId={selectedLocation?.id}
-                    onSelect={handleSelectLocation}
-                  />
-                )}
-              </div>
-
-              {/* Right panel — desktop only */}
-              {hasSidePanel && !isMobile && (
-                <div className="w-1/2 min-w-0">
-                  {isCreating || isEditing ? (
-                    <LocationFormPanel
-                      editingLocation={isEditing ? selectedLocation : null}
-                      allLocations={locations}
-                      onClose={handleFormClose}
-                      onSaved={handleFormSaved}
-                      inPage
-                    />
-                  ) : selectedLocation ? (
-                    <LocationDetailPanel
-                      location={selectedLocation}
-                      onClose={() => {
-                        setSelectedLocation(null)
-                        setIsEditing(false)
-                      }}
-                      onEdit={handleEdit}
-                      onDelete={() => handleDelete(selectedLocation.id)}
-                      canEdit={canEdit('locations')}
-                      canDelete={canDelete('locations')}
-                    />
-                  ) : null}
-                </div>
-              )}
-            </>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Localização"
+            onClosePanel={closeSidePanel}
+          />
         </div>
       </div>
-
-      {/* Modals for Mobile */}
-      {isMobile && selectedLocation && !isEditing && !isCreating && (
-        <Modal
-          isOpen={true}
-          onClose={() => { setSelectedLocation(null); setIsEditing(false) }}
-          title={selectedLocation.name}
-          size="md"
-          hideHeader
-          noPadding
-        >
-          <LocationDetailPanel
-            location={selectedLocation}
-            onClose={() => { setSelectedLocation(null); setIsEditing(false) }}
-            onEdit={handleEdit}
-            onDelete={() => handleDelete(selectedLocation.id)}
-            canEdit={canEdit('locations')}
-            canDelete={canDelete('locations')}
-          />
-        </Modal>
-      )}
-
-      {isMobile && (isCreating || (selectedLocation && isEditing)) && (
-        <LocationFormPanel
-          editingLocation={isEditing ? selectedLocation : null}
-          allLocations={locations}
-          onClose={handleFormClose}
-          onSaved={handleFormSaved}
-        />
-      )}
     </PageContainer>
   )
 }

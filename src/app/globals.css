@@ -230,6 +230,27 @@ body {
   border-radius: 3px;
 }
 
+/* ===== Mobile / Touch utilities ===== */
+html {
+  /* Evita flash de highlight azul ao tocar em elementos no mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Padding extra para dispositivos com barra gestual (iPhone) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Animação slide-in da direita para painéis sheet no tablet */
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.25s ease-out;
+}
+
 /* Estilos de impressão */
 @media print {
   body {

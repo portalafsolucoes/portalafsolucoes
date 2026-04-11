@@ -6,8 +6,8 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
 import { formatDate } from '@/lib/utils'
@@ -38,14 +38,13 @@ type TabType = 'pending' | 'approved' | 'rejected'
 
 export default function RequestApprovalsPage() {
   const router = useRouter()
-  const isMobile = useIsMobile()
   const { user, isLoading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('pending')
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
 
-  const hasSidePanel = !isMobile && selectedRequest !== null
+  const showSidePanel = selectedRequest !== null
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -282,6 +281,85 @@ export default function RequestApprovalsPage() {
     return null
   }
 
+  const activePanel = selectedRequest ? (
+    <ApprovalModal
+      inPage
+      request={selectedRequest}
+      onClose={handleClosePanel}
+      onSuccess={handleApprovalSuccess}
+    />
+  ) : null
+
+  const listContent = (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Tabs */}
+      <div className="border-b border-border flex-shrink-0">
+        <nav className="-mb-px flex space-x-8 px-4 md:px-6">
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`
+              py-3 px-1 border-b-2 font-medium text-sm transition-colors
+              ${activeTab === 'pending'
+                ? 'border-on-surface text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }
+            `}
+          >
+            <Icon name="schedule" className="text-xl inline mr-2" />
+            Pendentes
+            {activeTab === 'pending' && ` (${requests.length})`}
+          </button>
+          <button
+            onClick={() => setActiveTab('approved')}
+            className={`
+              py-3 px-1 border-b-2 font-medium text-sm transition-colors
+              ${activeTab === 'approved'
+                ? 'border-on-surface text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }
+            `}
+          >
+            <Icon name="check_circle" className="text-xl inline mr-2" />
+            Aprovadas
+            {activeTab === 'approved' && ` (${requests.length})`}
+          </button>
+          <button
+            onClick={() => setActiveTab('rejected')}
+            className={`
+              py-3 px-1 border-b-2 font-medium text-sm transition-colors
+              ${activeTab === 'rejected'
+                ? 'border-on-surface text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }
+            `}
+          >
+            <Icon name="cancel" className="text-xl inline mr-2" />
+            Rejeitadas
+            {activeTab === 'rejected' && ` (${requests.length})`}
+          </button>
+        </nav>
+      </div>
+
+      {/* Table content */}
+      <div className="flex-1 overflow-hidden min-h-0">
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+              <p className="mt-2 text-muted-foreground">Carregando...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'pending' && renderPendingTable()}
+            {activeTab === 'approved' && renderApprovedTable()}
+            {activeTab === 'rejected' && renderRejectedTable()}
+          </>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
       {/* Header */}
@@ -296,97 +374,15 @@ export default function RequestApprovalsPage() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {/* Left: tabs + table */}
-          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} flex flex-col overflow-hidden transition-all`}>
-            {/* Tabs */}
-            <div className="border-b border-border flex-shrink-0">
-              <nav className="-mb-px flex space-x-8 px-4 md:px-6">
-                <button
-                  onClick={() => setActiveTab('pending')}
-                  className={`
-                    py-3 px-1 border-b-2 font-medium text-sm transition-colors
-                    ${activeTab === 'pending'
-                      ? 'border-on-surface text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                    }
-                  `}
-                >
-                  <Icon name="schedule" className="text-xl inline mr-2" />
-                  Pendentes
-                  {activeTab === 'pending' && ` (${requests.length})`}
-                </button>
-                <button
-                  onClick={() => setActiveTab('approved')}
-                  className={`
-                    py-3 px-1 border-b-2 font-medium text-sm transition-colors
-                    ${activeTab === 'approved'
-                      ? 'border-on-surface text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                    }
-                  `}
-                >
-                  <Icon name="check_circle" className="text-xl inline mr-2" />
-                  Aprovadas
-                  {activeTab === 'approved' && ` (${requests.length})`}
-                </button>
-                <button
-                  onClick={() => setActiveTab('rejected')}
-                  className={`
-                    py-3 px-1 border-b-2 font-medium text-sm transition-colors
-                    ${activeTab === 'rejected'
-                      ? 'border-on-surface text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                    }
-                  `}
-                >
-                  <Icon name="cancel" className="text-xl inline mr-2" />
-                  Rejeitadas
-                  {activeTab === 'rejected' && ` (${requests.length})`}
-                </button>
-              </nav>
-            </div>
-
-            {/* Table content */}
-            <div className="flex-1 overflow-hidden min-h-0">
-              {loading ? (
-                <div className="flex-1 flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                    <p className="mt-2 text-muted-foreground">Carregando...</p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {activeTab === 'pending' && renderPendingTable()}
-                  {activeTab === 'approved' && renderApprovedTable()}
-                  {activeTab === 'rejected' && renderRejectedTable()}
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Right: approval panel (desktop only) */}
-          {hasSidePanel && !isMobile && (
-            <div className="w-1/2 min-w-0">
-              <ApprovalModal
-                inPage
-                request={selectedRequest}
-                onClose={handleClosePanel}
-                onSuccess={handleApprovalSuccess}
-              />
-            </div>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Solicitação"
+            onClosePanel={handleClosePanel}
+          />
         </div>
       </div>
-
-      {/* Mobile: modal overlay */}
-      {isMobile && selectedRequest && (
-        <ApprovalModal
-          request={selectedRequest}
-          onClose={handleClosePanel}
-          onSuccess={handleApprovalSuccess}
-        />
-      )}
     </PageContainer>
   )
 }

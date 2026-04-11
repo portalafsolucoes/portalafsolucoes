@@ -252,7 +252,7 @@ export default function EditWorkOrderPage() {
               {formData.type === 'PREVENTIVE' && (
                 <div className="bg-surface rounded-[4px] p-4">
                   <h3 className="text-sm font-semibold text-foreground mb-3">⏰ Periodicidade (Manutenção Preventiva)</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Frequência
@@ -323,7 +323,7 @@ export default function EditWorkOrderPage() {
 
               <div className="bg-success-light rounded-[4px] p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">👥 Atribuição</h3>
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Equipe Responsável

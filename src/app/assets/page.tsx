@@ -9,7 +9,8 @@ import { Icon } from '@/components/ui/Icon'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AssetTree } from '@/components/assets/AssetTree'
 import { AssetTable } from '@/components/assets/AssetTable'
-import { useIsMobile } from '@/hooks/useMediaQuery'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -19,8 +20,6 @@ import { getDefaultCmmsPath, isSuperAdminRole } from '@/lib/user-roles'
 // Lazy load: modais e painéis só carregam quando necessário
 const AssetDetailPanel = dynamic(() => import('@/components/assets/AssetDetailPanel').then(m => ({ default: m.AssetDetailPanel })), { ssr: false })
 const AssetEditPanel = dynamic(() => import('@/components/assets/AssetEditPanel').then(m => ({ default: m.AssetEditPanel })), { ssr: false })
-const AssetDetailModal = dynamic(() => import('@/components/assets/AssetDetailModal').then(m => ({ default: m.AssetDetailModal })), { ssr: false })
-const AssetEditModal = dynamic(() => import('@/components/assets/AssetEditModal').then(m => ({ default: m.AssetEditModal })), { ssr: false })
 const AssetCreateModal = dynamic(() => import('@/components/assets/AssetCreateModal').then(m => ({ default: m.AssetCreateModal })), { ssr: false })
 
 type ViewMode = 'tree' | 'table'
@@ -50,7 +49,7 @@ interface Asset {
 
 export default function AssetsPage() {
   const router = useRouter()
-  const isMobile = useIsMobile()
+  const { isPhone } = useResponsiveLayout()
   const { user } = useAuth()
   const { canCreate, canEdit, canDelete } = usePermissions()
   const [assets, setAssets] = useState<Asset[]>([])
@@ -164,13 +163,89 @@ export default function AssetsPage() {
     setParentAssetForNew(undefined)
   }
 
-  // Filtro de assets com busca e status - Estilo TracOS
+  const closeSidePanel = () => {
+    setSelectedAsset(null)
+    setIsCreating(false)
+    setIsEditingInPanel(false)
+    setParentAssetForNew(undefined)
+  }
+
+  // Filtro de assets com busca e status
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.description?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || asset.status === statusFilter
     return matchesSearch && matchesStatus
   })
+
+  const showSidePanel = !!(selectedAsset || isCreating)
+
+  const activePanel = isCreating ? (
+    <AssetCreateModal
+      isOpen={true}
+      onClose={handleCreateClose}
+      onSuccess={handleCreateSuccess}
+      parentAsset={parentAssetForNew}
+      inPage
+    />
+  ) : selectedAsset && isEditingInPanel ? (
+    <AssetEditPanel
+      asset={selectedAsset}
+      onClose={() => setIsEditingInPanel(false)}
+      onSuccess={handleEditSuccess}
+    />
+  ) : selectedAsset ? (
+    <AssetDetailPanel
+      asset={selectedAsset}
+      onClose={() => {
+        setSelectedAsset(null)
+        setIsEditingInPanel(false)
+      }}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
+  ) : null
+
+  // Force table view on phone (tree not available)
+  const effectiveViewMode = isPhone ? 'table' : viewMode
+
+  const listContent = loading ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+        <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : (
+    <div className="h-full flex flex-col overflow-hidden">
+      {effectiveViewMode === 'tree' && (
+        <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+            Hierarquia de Ativos
+          </p>
+        </div>
+      )}
+      <div className={`flex-1 min-h-0 ${effectiveViewMode === 'tree' ? 'overflow-auto' : ''}`}>
+        {effectiveViewMode === 'tree' ? (
+          <AssetTree
+            assets={filteredAssets}
+            onSelectAsset={handleAssetSelect}
+            selectedAssetId={selectedAsset?.id}
+            onAddSubAsset={canCreate('assets') ? handleAddSubAsset : undefined}
+          />
+        ) : (
+          <AssetTable
+            assets={filteredAssets}
+            onSelectAsset={handleAssetSelect}
+            selectedAssetId={selectedAsset?.id}
+            onEdit={canEdit('assets') ? handleEdit : undefined}
+            onDelete={canDelete('assets') ? handleDelete : undefined}
+            showUnit={isSuperAdminRole(user)}
+          />
+        )}
+      </div>
+    </div>
+  )
 
   if (!user || !hasPermission(user, 'assets', 'view')) {
     return null
@@ -187,7 +262,7 @@ export default function AssetsPage() {
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               {/* Search */}
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -198,8 +273,8 @@ export default function AssetsPage() {
                 />
               </div>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-muted rounded-[4px] p-1">
+              {/* View Mode Toggle — hidden on phone */}
+              <div className="hidden sm:flex items-center bg-muted rounded-[4px] p-1">
                 <button
                   onClick={() => setViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
@@ -230,7 +305,7 @@ export default function AssetsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto"
               >
                 <option value="all">Todos os Status</option>
                 <option value="OPERATIONAL">Operacional</option>
@@ -242,8 +317,8 @@ export default function AssetsPage() {
               <ExportButton data={filteredAssets} entity="assets" />
               {canCreate('assets') && (
                 <Button onClick={handleAddNewAsset} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                  <Icon name="add" className="mr-2 text-base" />
-                  Adicionar
+                  <Icon name="add" className="text-base" />
+                  <span className="hidden sm:inline ml-1">Adicionar</span>
                 </Button>
               )}
             </div>
@@ -254,161 +329,15 @@ export default function AssetsPage() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-              <p className="mt-2 text-muted-foreground">Carregando...</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Desktop: Tree/Table View with Panels */}
-            {!isMobile && (
-              <>
-                {/* Left Panel - Asset Tree ou Table baseado no viewMode */}
-                <div
-                  className={`${
-                    (selectedAsset || isCreating) ? 'w-1/2' : 'w-full'
-                  } ${
-                    viewMode === 'tree' ? 'border-r border-border' : ''
-                  } transition-all overflow-hidden`}
-                >
-                  <div className="h-full flex flex-col overflow-hidden">
-                    {viewMode === 'tree' && (
-                      <div className="p-3 border-b border-border bg-surface flex-shrink-0">
-                        <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                          Hierarquia de Ativos
-                        </p>
-                      </div>
-                    )}
-                    <div className={`flex-1 min-h-0 ${viewMode === 'tree' ? 'overflow-auto' : ''}`}>
-                      {viewMode === 'tree' ? (
-                        <AssetTree
-                          assets={filteredAssets}
-                          onSelectAsset={handleAssetSelect}
-                          selectedAssetId={selectedAsset?.id}
-                          onAddSubAsset={canCreate('assets') ? handleAddSubAsset : undefined}
-                        />
-                      ) : (
-                        <AssetTable
-                          assets={filteredAssets}
-                          onSelectAsset={handleAssetSelect}
-                          selectedAssetId={selectedAsset?.id}
-                          onEdit={canEdit('assets') ? handleEdit : undefined}
-                          onDelete={canDelete('assets') ? handleDelete : undefined}
-                          showUnit={isSuperAdminRole(user)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Panel - Create, Edit, or Details */}
-                {isCreating && (
-                  <div className="w-1/2">
-                    <AssetCreateModal
-                      isOpen={true}
-                      onClose={handleCreateClose}
-                      onSuccess={handleCreateSuccess}
-                      parentAsset={parentAssetForNew}
-                      inPage
-                    />
-                  </div>
-                )}
-                {!isCreating && selectedAsset && (
-                  <div className="w-1/2">
-                    {selectedAsset && isEditingInPanel ? (
-                      <AssetEditPanel
-                        asset={selectedAsset}
-                        onClose={() => setIsEditingInPanel(false)}
-                        onSuccess={handleEditSuccess}
-                      />
-                    ) : selectedAsset ? (
-                      <AssetDetailPanel
-                        asset={selectedAsset}
-                        onClose={() => {
-                          setSelectedAsset(null)
-                          setIsEditingInPanel(false)
-                        }}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                      />
-                    ) : null}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Mobile: Tree/Table View with Modals */}
-            {isMobile && (
-              <div className={`w-full ${viewMode === 'tree' ? 'border-r border-border' : ''} overflow-hidden`}>
-                <div className="h-full flex flex-col overflow-hidden">
-                  {viewMode === 'tree' && (
-                    <div className="p-3 border-b border-border bg-surface flex-shrink-0">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                        Hierarquia de Ativos
-                      </p>
-                    </div>
-                  )}
-                  <div className={`flex-1 min-h-0 ${viewMode === 'tree' ? 'overflow-auto' : ''}`}>
-                    {viewMode === 'tree' ? (
-                      <AssetTree
-                        assets={filteredAssets}
-                        onSelectAsset={handleAssetSelect}
-                        selectedAssetId={selectedAsset?.id}
-                        onAddSubAsset={canCreate('assets') ? handleAddSubAsset : undefined}
-                      />
-                    ) : (
-                      <AssetTable
-                        assets={filteredAssets}
-                        onSelectAsset={handleAssetSelect}
-                        selectedAssetId={selectedAsset?.id}
-                        onEdit={canEdit('assets') ? handleEdit : undefined}
-                        onDelete={canDelete('assets') ? handleDelete : undefined}
-                        showUnit={isSuperAdminRole(user)}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Ativo"
+            onClosePanel={closeSidePanel}
+          />
         </div>
       </div>
-
-      {/* Modals for Mobile */}
-      {isMobile && selectedAsset && !isEditingInPanel && (
-        <AssetDetailModal
-          isOpen={true}
-          onClose={() => {
-            setSelectedAsset(null)
-            setIsEditingInPanel(false)
-          }}
-          asset={selectedAsset}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
-
-      {isMobile && selectedAsset && isEditingInPanel && (
-        <AssetEditModal
-          isOpen={true}
-          onClose={() => setIsEditingInPanel(false)}
-          asset={selectedAsset}
-          onSuccess={handleEditSuccess}
-        />
-      )}
-
-      {isMobile && isCreating && (
-        <AssetCreateModal
-          isOpen={true}
-          onClose={handleCreateClose}
-          onSuccess={handleCreateSuccess}
-          parentAsset={parentAssetForNew}
-        />
-      )}
     </PageContainer>
   )
 }

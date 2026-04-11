@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
-import { Modal } from '@/components/ui/Modal'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 import { formatDate } from '@/lib/utils'
 
 const ExecutionModal = dynamic(
@@ -152,7 +151,7 @@ function TaskDetailPanel({
         {/* Details */}
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Informações</h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             {wo && (
               <>
                 {wo.internalId && (
@@ -211,7 +210,7 @@ function TaskDetailPanel({
         {(item.beforePhotoUrl || item.afterPhotoUrl) && (
           <div className="p-4 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3">Fotos</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {item.beforePhotoUrl && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Antes</p>
@@ -248,7 +247,6 @@ function TaskDetailPanel({
 }
 
 export default function MyTasksPage() {
-  const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<TabType>('workorders')
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [requests, setRequests] = useState<Request[]>([])
@@ -257,7 +255,7 @@ export default function MyTasksPage() {
   const [selectedType, setSelectedType] = useState<'workorder' | 'request' | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
 
-  const hasSidePanel = !isMobile && selectedItem !== null
+  const showSidePanel = selectedItem !== null
 
   useEffect(() => {
     loadData()
@@ -300,10 +298,6 @@ export default function MyTasksPage() {
 
   const handleCloseExecute = () => {
     setIsExecuting(false)
-    if (isMobile) {
-      setSelectedItem(null)
-      setSelectedType(null)
-    }
   }
 
   const handleExecutionSuccess = () => {
@@ -500,82 +494,41 @@ export default function MyTasksPage() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {loading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                <p className="mt-2 text-muted-foreground">Carregando...</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Desktop: split-panel */}
-              {!isMobile && (
-                <>
-                  <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
-                    {activeTab === 'workorders' ? renderWorkOrdersTable() : renderRequestsTable()}
-                  </div>
-
-                  {hasSidePanel && selectedItem && selectedType && (
-                    <div className="w-1/2 min-w-0">
-                      {isExecuting ? (
-                        <ExecutionModal
-                          item={selectedItem}
-                          type={selectedType}
-                          onClose={handleCloseExecute}
-                          onSuccess={handleExecutionSuccess}
-                          inPage
-                        />
-                      ) : (
-                        <TaskDetailPanel
-                          item={selectedItem}
-                          type={selectedType}
-                          onClose={handleClosePanel}
-                          onExecute={handleOpenExecute}
-                        />
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Mobile: full-width table */}
-              {isMobile && (
-                <div className="w-full overflow-hidden">
-                  {activeTab === 'workorders' ? renderWorkOrdersTable() : renderRequestsTable()}
+          <AdaptiveSplitPanel
+            list={loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                  <p className="mt-2 text-muted-foreground">Carregando...</p>
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            ) : (
+              activeTab === 'workorders' ? renderWorkOrdersTable() : renderRequestsTable()
+            )}
+            panel={selectedItem && selectedType ? (
+              isExecuting ? (
+                <ExecutionModal
+                  item={selectedItem}
+                  type={selectedType}
+                  onClose={handleCloseExecute}
+                  onSuccess={handleExecutionSuccess}
+                  inPage
+                />
+              ) : (
+                <TaskDetailPanel
+                  item={selectedItem}
+                  type={selectedType}
+                  onClose={handleClosePanel}
+                  onExecute={handleOpenExecute}
+                />
+              )
+            ) : null}
+            showPanel={showSidePanel}
+            panelTitle="Tarefa"
+            onClosePanel={handleClosePanel}
+          />
         </div>
       </div>
-
-      {/* Mobile modals */}
-      {isMobile && selectedItem && selectedType && !isExecuting && (
-        <Modal
-          isOpen={true}
-          onClose={handleClosePanel}
-          size="wide"
-          hideHeader
-          noPadding
-        >
-          <TaskDetailPanel
-            item={selectedItem}
-            type={selectedType}
-            onClose={handleClosePanel}
-            onExecute={handleOpenExecute}
-          />
-        </Modal>
-      )}
-
-      {isMobile && selectedItem && selectedType && isExecuting && (
-        <ExecutionModal
-          item={selectedItem}
-          type={selectedType}
-          onClose={handleCloseExecute}
-          onSuccess={handleExecutionSuccess}
-        />
-      )}
     </PageContainer>
   )
 }

@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 import { isAdminRole } from '@/lib/user-roles'
 
@@ -67,7 +67,7 @@ function UnitDetailPanel({ unit, onClose, onEdit, onDelete }: UnitDetailPanelPro
         {/* Data */}
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             <div className="col-span-2">
               <p className="text-xs text-muted-foreground">Endereço</p>
               <p className="text-sm text-foreground">{unit.address || '—'}</p>
@@ -202,7 +202,6 @@ function UnitFormPanel({
 export default function AdminUnitsPage() {
   const { role, isLoading: authLoading } = useAuth()
   const router = useRouter()
-  const isMobile = useIsMobile()
 
   const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
@@ -212,7 +211,7 @@ export default function AdminUnitsPage() {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const hasSidePanel = !isMobile && (selectedUnit !== null || isCreating)
+  const showSidePanel = !!(selectedUnit !== null || isCreating)
 
   // Form state
   const [formData, setFormData] = useState<UnitFormData>({ name: '', address: '' })
@@ -351,8 +350,99 @@ export default function AdminUnitsPage() {
     )
   })
 
-  const showEditForm = !isMobile && (isCreating || (selectedUnit !== null && isEditing))
-  const showDetailPanel = !isMobile && selectedUnit !== null && !isEditing && !isCreating
+  const showEditForm = isCreating || (selectedUnit !== null && isEditing)
+  const showDetailPanel = selectedUnit !== null && !isEditing && !isCreating
+
+  const activePanel = showEditForm ? (
+    <UnitFormPanel
+      inPage
+      isEdit={isEditing}
+      formData={formData}
+      saving={saving}
+      error={formError}
+      onClose={handleCloseSidePanel}
+      onSubmit={handleSubmit}
+      onChange={handleFormChange}
+    />
+  ) : showDetailPanel && selectedUnit ? (
+    <UnitDetailPanel
+      unit={selectedUnit}
+      onClose={handleCloseSidePanel}
+      onEdit={handleEditOpen}
+      onDelete={(u) => setDeleteUnit(u)}
+    />
+  ) : null
+
+  const listContent = loading ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+        <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="flex-1 overflow-auto min-h-0">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="sticky top-0 bg-secondary z-10">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidade</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Endereço</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Membros</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativos</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criada em</th>
+            </tr>
+          </thead>
+          <tbody className="bg-card divide-y divide-gray-200">
+            {filteredUnits.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <Icon name="apartment" className="text-4xl text-muted-foreground" />
+                    <h3 className="text-sm font-medium text-foreground">Nenhuma unidade encontrada</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {units.length === 0
+                        ? 'Adicione a primeira unidade para começar.'
+                        : 'Ajuste a busca para encontrar outra unidade.'}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredUnits.map((unit) => (
+                <tr
+                  key={unit.id}
+                  onClick={() => handleSelectUnit(unit)}
+                  className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-[4px] bg-primary/10 flex items-center justify-center">
+                        <Icon name="apartment" className="text-xl text-primary" />
+                      </div>
+                      <span className="font-medium">{unit.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    {unit.address || '—'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                    {unit.memberCount}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                    {unit.assetCount}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                    {new Date(unit.createdAt).toLocaleDateString('pt-BR')}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -363,7 +453,7 @@ export default function AdminUnitsPage() {
           description="Gerencie as unidades da organização"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -374,8 +464,8 @@ export default function AdminUnitsPage() {
                 />
               </div>
               <Button onClick={openCreate} size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                <Icon name="add" className="mr-1 text-base" />
-                Nova Unidade
+                <Icon name="add" className="text-base" />
+                <span className="hidden sm:inline ml-1">Nova Unidade</span>
               </Button>
             </div>
           }
@@ -384,177 +474,15 @@ export default function AdminUnitsPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-
-          {/* Left panel */}
-          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
-            {loading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                  <p className="mt-2 text-muted-foreground">Carregando...</p>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col bg-card overflow-hidden">
-                <div className="flex-1 overflow-auto min-h-0">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="sticky top-0 bg-secondary z-10">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidade</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Endereço</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Membros</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativos</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criada em</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-card divide-y divide-gray-200">
-                      {filteredUnits.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-6 py-16 text-center">
-                            <div className="flex flex-col items-center gap-3">
-                              <Icon name="apartment" className="text-4xl text-muted-foreground" />
-                              <h3 className="text-sm font-medium text-foreground">Nenhuma unidade encontrada</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {units.length === 0
-                                  ? 'Adicione a primeira unidade para começar.'
-                                  : 'Ajuste a busca para encontrar outra unidade.'}
-                              </p>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredUnits.map((unit) => (
-                          <tr
-                            key={unit.id}
-                            onClick={() => handleSelectUnit(unit)}
-                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-[4px] bg-primary/10 flex items-center justify-center">
-                                  <Icon name="apartment" className="text-xl text-primary" />
-                                </div>
-                                <span className="font-medium">{unit.name}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-foreground">
-                              {unit.address || '—'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              {unit.memberCount}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              {unit.assetCount}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              {new Date(unit.createdAt).toLocaleDateString('pt-BR')}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right panel — desktop only */}
-          {hasSidePanel && !isMobile && (
-            <div className="w-1/2 min-w-0">
-              {showEditForm && (
-                <UnitFormPanel
-                  inPage
-                  isEdit={isEditing}
-                  formData={formData}
-                  saving={saving}
-                  error={formError}
-                  onClose={handleCloseSidePanel}
-                  onSubmit={handleSubmit}
-                  onChange={handleFormChange}
-                />
-              )}
-              {showDetailPanel && selectedUnit && (
-                <UnitDetailPanel
-                  unit={selectedUnit}
-                  onClose={handleCloseSidePanel}
-                  onEdit={handleEditOpen}
-                  onDelete={(u) => setDeleteUnit(u)}
-                />
-              )}
-            </div>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Unidade"
+            onClosePanel={handleCloseSidePanel}
+          />
         </div>
       </div>
-
-      {/* ── Mobile modals ─────────────────────────────────────────────────────── */}
-
-      {isMobile && selectedUnit && !isEditing && (
-        <Modal
-          isOpen
-          onClose={handleCloseSidePanel}
-          title={selectedUnit.name}
-          size="wide"
-        >
-          <div className="p-4 space-y-2">
-            <button
-              onClick={handleEditOpen}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
-            >
-              <Icon name="edit" className="text-base" />
-              Editar
-            </button>
-            <button
-              onClick={() => { setDeleteUnit(selectedUnit); handleCloseSidePanel() }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-[4px] hover:bg-destructive/10 transition-colors text-sm"
-            >
-              <Icon name="delete" className="text-base" />
-              Excluir
-            </button>
-          </div>
-          <div className="p-4 border-t border-border">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground">Endereço</p>
-                <p className="text-sm text-foreground">{selectedUnit.address || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Membros</p>
-                <p className="text-sm text-foreground">{selectedUnit.memberCount}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Ativos</p>
-                <p className="text-sm text-foreground">{selectedUnit.assetCount}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Criada em</p>
-                <p className="text-sm text-foreground">
-                  {new Date(selectedUnit.createdAt).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isMobile && (isCreating || (selectedUnit && isEditing)) && (
-        <Modal
-          isOpen
-          onClose={handleCloseSidePanel}
-          title={isEditing ? 'Editar Unidade' : 'Nova Unidade'}
-          size="md"
-        >
-          <UnitFormPanel
-            isEdit={isEditing}
-            formData={formData}
-            saving={saving}
-            error={formError}
-            onClose={handleCloseSidePanel}
-            onSubmit={handleSubmit}
-            onChange={handleFormChange}
-          />
-        </Modal>
-      )}
 
       {/* Delete Confirmation Modal */}
       <Modal

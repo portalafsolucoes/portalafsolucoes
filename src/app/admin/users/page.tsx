@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useRouter } from 'next/navigation'
 import { getRoleDisplayName } from '@/lib/permissions'
 import type { UserRole } from '@/lib/permissions'
@@ -146,7 +146,7 @@ function UserDetailPanel({
         {/* Data */}
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             <div>
               <p className="text-xs text-muted-foreground">Papel</p>
               <p className="text-sm text-foreground">
@@ -439,7 +439,6 @@ function UserFormPanel({
 export default function AdminUsersPage() {
   const { role: currentRole, isLoading: authLoading, user: currentUser } = useAuth()
   const router = useRouter()
-  const isMobile = useIsMobile()
 
   const [users, setUsers] = useState<AdminUser[]>([])
   const [units, setUnits] = useState<UnitOption[]>([])
@@ -453,7 +452,7 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const hasSidePanel = !isMobile && (selectedUser !== null || isCreating)
+  const showSidePanel = !!(selectedUser !== null || isCreating)
 
   // Form state
   const [formData, setFormData] = useState<UserFormData>({
@@ -729,8 +728,137 @@ export default function AdminUsersPage() {
 
   if (authLoading) return null
 
-  const showEditForm = !isMobile && (isCreating || (selectedUser !== null && isEditing))
-  const showDetailPanel = !isMobile && selectedUser !== null && !isEditing && !isCreating
+  const showEditForm = isCreating || (selectedUser !== null && isEditing)
+  const showDetailPanel = selectedUser !== null && !isEditing && !isCreating
+
+  const activePanel = showEditForm ? (
+    <UserFormPanel
+      inPage
+      isEdit={isEditing}
+      formData={formData}
+      units={units}
+      jobTitles={jobTitles}
+      saving={saving}
+      error={formError}
+      onClose={handleCloseSidePanel}
+      onSubmit={handleSubmit}
+      onChange={handleFormChange}
+      onToggleUnit={handleToggleFormUnit}
+    />
+  ) : showDetailPanel && selectedUser ? (
+    <UserDetailPanel
+      user={selectedUser}
+      currentUserId={currentUser?.id}
+      onClose={handleCloseSidePanel}
+      onEdit={handleEditOpen}
+      onDelete={(u) => setDeleteUser(u)}
+      onManageUnits={openAssign}
+    />
+  ) : null
+
+  const listContent = loading ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+        <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="flex-1 overflow-auto min-h-0">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="sticky top-0 bg-secondary z-10">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidades</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="bg-card divide-y divide-gray-200">
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <Icon name="group" className="text-4xl text-muted-foreground" />
+                    <h3 className="text-sm font-medium text-foreground">Nenhum usuário encontrado</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {users.length === 0
+                        ? 'Crie o primeiro usuário para começar.'
+                        : 'Ajuste os filtros para encontrar outro usuário.'}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((user) => (
+                <tr
+                  key={user.id}
+                  onClick={() => handleSelectUser(user)}
+                  className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
+                >
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    <div className="flex items-center gap-3">
+                      {user.image ? (
+                        <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-primary font-semibold">
+                            {user.firstName[0]}{user.lastName[0]}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                        {user.jobTitle && (
+                          <div className="text-xs text-muted-foreground">{user.jobTitle}</div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-foreground">
+                      {getRoleDisplayName(user.role as UserRole)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    {user.units.length === 0 ? (
+                      <span className="text-muted-foreground italic">Sem unidade</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {user.units.map(unit => (
+                          <span
+                            key={unit.id}
+                            className="px-2 py-0.5 text-xs rounded-full bg-secondary text-foreground"
+                          >
+                            {unit.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                    {user.enabled ? (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-success/10 text-success">
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-danger/10 text-danger">
+                        Inativo
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -741,7 +869,7 @@ export default function AdminUsersPage() {
           description="Crie usuários, defina papéis e atribua unidades"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -754,7 +882,7 @@ export default function AdminUsersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full sm:w-auto h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Todos os Papéis</option>
                 {ALL_ROLES.map(r => (
@@ -764,7 +892,7 @@ export default function AdminUsersPage() {
               <select
                 value={unitFilter}
                 onChange={(e) => setUnitFilter(e.target.value)}
-                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full sm:w-auto h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Todas as Unidades</option>
                 {units.map(u => (
@@ -772,8 +900,8 @@ export default function AdminUsersPage() {
                 ))}
               </select>
               <Button onClick={openCreate} size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                <Icon name="person_add" className="mr-1 text-base" />
-                Novo Usuário
+                <Icon name="person_add" className="text-base" />
+                <span className="hidden sm:inline ml-1">Novo Usuário</span>
               </Button>
             </div>
           }
@@ -782,233 +910,15 @@ export default function AdminUsersPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-
-          {/* Left panel */}
-          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
-            {loading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                  <p className="mt-2 text-muted-foreground">Carregando...</p>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col bg-card overflow-hidden">
-                <div className="flex-1 overflow-auto min-h-0">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="sticky top-0 bg-secondary z-10">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidades</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-card divide-y divide-gray-200">
-                      {filteredUsers.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="px-6 py-16 text-center">
-                            <div className="flex flex-col items-center gap-3">
-                              <Icon name="group" className="text-4xl text-muted-foreground" />
-                              <h3 className="text-sm font-medium text-foreground">Nenhum usuário encontrado</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {users.length === 0
-                                  ? 'Crie o primeiro usuário para começar.'
-                                  : 'Ajuste os filtros para encontrar outro usuário.'}
-                              </p>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredUsers.map((user) => (
-                          <tr
-                            key={user.id}
-                            onClick={() => handleSelectUser(user)}
-                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
-                          >
-                            <td className="px-6 py-4 text-sm text-foreground">
-                              <div className="flex items-center gap-3">
-                                {user.image ? (
-                                  <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-primary font-semibold">
-                                      {user.firstName[0]}{user.lastName[0]}
-                                    </span>
-                                  </div>
-                                )}
-                                <div>
-                                  <div className="font-medium text-foreground">
-                                    {user.firstName} {user.lastName}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">{user.email}</div>
-                                  {user.jobTitle && (
-                                    <div className="text-xs text-muted-foreground">{user.jobTitle}</div>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-foreground">
-                                {getRoleDisplayName(user.role as UserRole)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-foreground">
-                              {user.units.length === 0 ? (
-                                <span className="text-muted-foreground italic">Sem unidade</span>
-                              ) : (
-                                <div className="flex flex-wrap gap-1">
-                                  {user.units.map(unit => (
-                                    <span
-                                      key={unit.id}
-                                      className="px-2 py-0.5 text-xs rounded-full bg-secondary text-foreground"
-                                    >
-                                      {unit.name}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              {user.enabled ? (
-                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-success/10 text-success">
-                                  Ativo
-                                </span>
-                              ) : (
-                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-danger/10 text-danger">
-                                  Inativo
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right panel — desktop only */}
-          {hasSidePanel && !isMobile && (
-            <div className="w-1/2 min-w-0">
-              {showEditForm && (
-                <UserFormPanel
-                  inPage
-                  isEdit={isEditing}
-                  formData={formData}
-                  units={units}
-                  jobTitles={jobTitles}
-                  saving={saving}
-                  error={formError}
-                  onClose={handleCloseSidePanel}
-                  onSubmit={handleSubmit}
-                  onChange={handleFormChange}
-                  onToggleUnit={handleToggleFormUnit}
-                />
-              )}
-              {showDetailPanel && selectedUser && (
-                <UserDetailPanel
-                  user={selectedUser}
-                  currentUserId={currentUser?.id}
-                  onClose={handleCloseSidePanel}
-                  onEdit={handleEditOpen}
-                  onDelete={(u) => setDeleteUser(u)}
-                  onManageUnits={openAssign}
-                />
-              )}
-            </div>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Usuário"
+            onClosePanel={handleCloseSidePanel}
+          />
         </div>
       </div>
-
-      {/* ── Mobile modals ─────────────────────────────────────────────────────── */}
-
-      {isMobile && selectedUser && !isEditing && (
-        <Modal
-          isOpen
-          onClose={handleCloseSidePanel}
-          title={`${selectedUser.firstName} ${selectedUser.lastName}`}
-          size="wide"
-        >
-          <div className="p-4 space-y-2">
-            <button
-              onClick={handleEditOpen}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
-            >
-              <Icon name="edit" className="text-base" />
-              Editar
-            </button>
-            <button
-              onClick={() => { openAssign(selectedUser); handleCloseSidePanel() }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
-            >
-              <Icon name="apartment" className="text-base" />
-              Gerenciar Unidades
-            </button>
-            {selectedUser.id !== currentUser?.id && (
-              <button
-                onClick={() => { setDeleteUser(selectedUser); handleCloseSidePanel() }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-[4px] hover:bg-destructive/10 transition-colors text-sm"
-              >
-                <Icon name="delete" className="text-base" />
-                Excluir
-              </button>
-            )}
-          </div>
-          <div className="p-4 border-t border-border">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Papel</p>
-                <p className="text-sm text-foreground">{getRoleDisplayName(selectedUser.role as UserRole)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Status</p>
-                <p className="text-sm text-foreground">
-                  {selectedUser.enabled ? (
-                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-success/10 text-success">Ativo</span>
-                  ) : (
-                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-danger/10 text-danger">Inativo</span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Telefone</p>
-                <p className="text-sm text-foreground">{selectedUser.phone || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Unidades</p>
-                <p className="text-sm text-foreground">
-                  {selectedUser.units.length === 0 ? '—' : selectedUser.units.map(u => u.name).join(', ')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isMobile && (isCreating || (selectedUser && isEditing)) && (
-        <Modal
-          isOpen
-          onClose={handleCloseSidePanel}
-          title={isEditing ? 'Editar Usuário' : 'Novo Usuário'}
-          size="xl"
-        >
-          <UserFormPanel
-            isEdit={isEditing}
-            formData={formData}
-            units={units}
-            jobTitles={jobTitles}
-            saving={saving}
-            error={formError}
-            onClose={handleCloseSidePanel}
-            onSubmit={handleSubmit}
-            onChange={handleFormChange}
-            onToggleUnit={handleToggleFormUnit}
-          />
-        </Modal>
-      )}
 
       {/* Unit Assignment Modal (always overlay) */}
       <Modal

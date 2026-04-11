@@ -5,11 +5,10 @@ import dynamic from 'next/dynamic'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import { Modal } from '@/components/ui/Modal'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { StandardAssetDetailPanel } from '@/components/standard-assets/StandardAssetDetailPanel'
-import { useIsMobile } from '@/hooks/useMediaQuery'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 
 const StandardAssetFormPanel = dynamic(
   () => import('@/components/standard-assets/StandardAssetFormPanel'),
@@ -76,9 +75,7 @@ export default function StandardAssetsPage() {
   const [selectedItem, setSelectedItem] = useState<StandardAsset | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [editingItem, setEditingItem] = useState<StandardAsset | null>(null)
-  const isMobile = useIsMobile()
-
-  const hasSidePanel = !isMobile && (!!selectedItem || isCreating || !!editingItem)
+  const hasSidePanel = !!(selectedItem || isCreating || editingItem)
 
   useEffect(() => {
     loadData()
@@ -205,7 +202,7 @@ export default function StandardAssetsPage() {
           className="mb-0"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -217,8 +214,8 @@ export default function StandardAssetsPage() {
               </div>
               <ExportButton data={sortedItems} entity="standard-assets" />
               <Button onClick={handleNew} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                <Icon name="add" className="mr-2 text-base" />
-                Novo Bem Padrão
+                <Icon name="add" className="text-base" />
+                <span className="hidden sm:inline ml-2">Novo Bem Padrão</span>
               </Button>
             </div>
           }
@@ -228,8 +225,36 @@ export default function StandardAssetsPage() {
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {/* Coluna esquerda: tabela */}
-          <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
+          <AdaptiveSplitPanel
+            showPanel={hasSidePanel}
+            panelTitle="Bem Padrão"
+            onClosePanel={() => { setSelectedItem(null); setIsCreating(false); setEditingItem(null) }}
+            panel={
+              isCreating ? (
+                <StandardAssetFormPanel
+                  inPage
+                  allItems={items}
+                  onClose={() => setIsCreating(false)}
+                  onSuccess={() => { setIsCreating(false); loadData() }}
+                />
+              ) : editingItem ? (
+                <StandardAssetFormPanel
+                  inPage
+                  editingItem={editingItem}
+                  allItems={items}
+                  onClose={() => setEditingItem(null)}
+                  onSuccess={() => { setEditingItem(null); loadData() }}
+                />
+              ) : selectedItem ? (
+                <StandardAssetDetailPanel
+                  item={selectedItem}
+                  onClose={handleCloseDetail}
+                  onEdit={handleEditFromPanel}
+                  onDelete={handleDeleteFromPanel}
+                />
+              ) : null
+            }
+            list={<div className="flex flex-col h-full overflow-hidden">
             {loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -305,69 +330,11 @@ export default function StandardAssetsPage() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Coluna direita: painel lateral (desktop) */}
-          {hasSidePanel && (
-            <div className="w-1/2 min-w-0">
-              {isCreating ? (
-                <StandardAssetFormPanel
-                  inPage
-                  allItems={items}
-                  onClose={() => setIsCreating(false)}
-                  onSuccess={() => { setIsCreating(false); loadData() }}
-                />
-              ) : editingItem ? (
-                <StandardAssetFormPanel
-                  inPage
-                  editingItem={editingItem}
-                  allItems={items}
-                  onClose={() => setEditingItem(null)}
-                  onSuccess={() => { setEditingItem(null); loadData() }}
-                />
-              ) : selectedItem ? (
-                <StandardAssetDetailPanel
-                  item={selectedItem}
-                  onClose={handleCloseDetail}
-                  onEdit={handleEditFromPanel}
-                  onDelete={handleDeleteFromPanel}
-                />
-              ) : null}
-            </div>
-          )}
+            </div>}
+          />
         </div>
       </div>
 
-      {/* Mobile: detail como modal */}
-      {isMobile && selectedItem && !isCreating && !editingItem && (
-        <Modal isOpen onClose={handleCloseDetail} title={selectedItem.name || selectedItem.family?.name || 'Bem Padrão'} hideHeader noPadding>
-          <StandardAssetDetailPanel
-            item={selectedItem}
-            onClose={handleCloseDetail}
-            onEdit={handleEditFromPanel}
-            onDelete={handleDeleteFromPanel}
-          />
-        </Modal>
-      )}
-
-      {/* Mobile: criar */}
-      {isMobile && isCreating && (
-        <StandardAssetFormPanel
-          allItems={items}
-          onClose={() => setIsCreating(false)}
-          onSuccess={() => { setIsCreating(false); loadData() }}
-        />
-      )}
-
-      {/* Mobile: editar */}
-      {isMobile && editingItem && (
-        <StandardAssetFormPanel
-          editingItem={editingItem}
-          allItems={items}
-          onClose={() => setEditingItem(null)}
-          onSuccess={() => { setEditingItem(null); loadData() }}
-        />
-      )}
     </PageContainer>
   )
 }

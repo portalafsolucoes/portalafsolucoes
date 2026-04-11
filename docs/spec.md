@@ -128,7 +128,7 @@ Regras complementares:
 - Menus, botoes e acoes devem respeitar perfil do usuario e tambem ser validados nas APIs
 - Todas as listas principais devem ter busca e filtros
 - A busca deve usar debounce de `500ms`
-- O sistema deve ser responsivo em desktop, tablet e celular
+- O sistema deve ser responsivo em desktop, tablet e celular (ver secao "Responsividade" abaixo)
 - Paginas devem exibir estado de carregamento com skeletons
 - Uploads de arquivos e imagens devem usar Cloudinary
 - OS preventivas podem ser geradas automaticamente por agendamento/cron
@@ -391,6 +391,40 @@ Regras:
 - `Integracao TOTVS`: Funcionando (parcial)
 - `Exportacao Excel`: Funcionando
 - `Notificacoes`: Basico
+
+## Responsividade
+
+Implementado em 2026-04-11. O sistema suporta tres faixas de viewport com comportamentos distintos.
+
+### Breakpoints
+
+| Faixa | Viewport | Sidebar | Detalhe / Paineis | Tabelas |
+|-------|----------|---------|-------------------|---------|
+| Phone (< 768px) | Celular | Drawer temporario (abre por hamburguer no header) | Overlay fullscreen | Scroll horizontal |
+| Compact (768–1279px) | Tablet / Desktop compacto | Drawer temporario | Overlay sheet lateral (slide-in direita, max-w-2xl) | Colunas reduzidas |
+| Wide (>= 1280px) | Desktop amplo | Permanente, colapsavel (64px / 256px) | InPage split-panel 50/50 | Todas as colunas |
+
+### Componentes e Hooks
+
+- **`useResponsiveLayout()`** em `src/hooks/useMediaQuery.ts`: hook unificado que retorna `{ isPhone, isCompact, isWide }`. Substitui os hooks deprecados `useIsMobile`, `useIsDesktop`, `useIsTablet`.
+- **`AdaptiveSplitPanel`** em `src/components/layout/AdaptiveSplitPanel.tsx`: encapsula a logica de split-panel x overlay. Todas as 17 paginas de listagem usam este componente.
+- **`Modal`** em `src/components/ui/Modal.tsx`: renderiza em 3 modos automaticamente conforme o viewport (fullscreen / sheet lateral / modal centralizado).
+- **`SidebarContext`**: expoe `mobileMenuOpen` / `setMobileMenuOpen` para o `Header` controlar o hamburguer em < 1280px.
+
+### Regras de Comportamento
+
+- Split-panel (50/50) e exclusivo de `isWide` (>= 1280px). Abaixo disso, o painel de detalhe/edicao/criacao sempre abre como overlay Modal.
+- Sidebar so e permanente em `>= 1280px`. Em faixas menores, o botao hamburguer no `Header` abre o drawer.
+- Formularios usam `grid grid-cols-1 sm:grid-cols-2`; nunca `grid-cols-2` sem fallback mobile.
+- Campos de busca usam `w-full sm:w-48 xl:w-64`.
+- Botoes de acao em paineis tem `min-h-[44px]` para touch targets industriais.
+- Texto de botoes primarios usa `hidden sm:inline` para mostrar apenas icone no phone.
+
+### Paginas Especificas
+
+- `/tree`: usa `AdaptiveSplitPanel`; no compact/phone a arvore ocupa a tela inteira e o painel de detalhe do ativo abre como overlay.
+- `/kpi`: graficos Recharts redimensionam via `ResponsiveContainer`; filtros de data usam `w-full sm:w-auto`.
+- `/dashboard`, `/hub`, `/login`, `/profile`: ja eram responsivos; nenhuma mudanca.
 
 ## Estrutura do Projeto (Contexto Tecnico Herdado)
 ```txt

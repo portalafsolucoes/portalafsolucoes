@@ -451,7 +451,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               ))}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Família</label>
               <select value={formData.familyId} onChange={(e) => { updateField('familyId', e.target.value); updateField('familyModelId', '') }} className={selectClass}>
@@ -471,7 +471,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Prioridade</label>
               <select value={formData.assetPriority} onChange={(e) => updateField('assetPriority', e.target.value)} className={selectClass}>
@@ -496,7 +496,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
 
         {/* === LOCALIZAÇÃO === */}
         <Section title="Localização e Organização" defaultOpen={false}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Unidade</label>
               <input type="text" value={unitName} disabled className={`${selectClass} opacity-70 cursor-not-allowed`} />
@@ -509,7 +509,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Centro de Trabalho</label>
               <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} className={selectClass}>
@@ -545,7 +545,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
 
         {/* === DADOS TÉCNICOS === */}
         <Section title="Dados Técnicos" defaultOpen={false}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Fabricante" value={formData.manufacturer} onChange={(e) => updateField('manufacturer', e.target.value)} placeholder="Nome do fabricante" />
             <Input label="Modelo" value={formData.modelName} onChange={(e) => updateField('modelName', e.target.value)} placeholder="Modelo do equipamento" />
           </div>
@@ -561,14 +561,14 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
             </label>
           </div>
           {formData.hasCounter && (
-            <div className="grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-[4px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-muted/30 rounded-[4px]">
               <Input label="Tipo do Contador" value={formData.counterType} onChange={(e) => updateField('counterType', e.target.value)} placeholder="Ex: Horímetro" />
               <Input label="Posição Atual" value={formData.counterPosition} onChange={(e) => updateField('counterPosition', e.target.value)} placeholder="0" type="number" />
               <Input label="Limite do Contador" value={formData.counterLimit} onChange={(e) => updateField('counterLimit', e.target.value)} placeholder="0" type="number" />
               <Input label="Variação Diária" value={formData.dailyVariation} onChange={(e) => updateField('dailyVariation', e.target.value)} placeholder="0" type="number" />
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Vida Útil (valor)" value={formData.lifeValue} onChange={(e) => updateField('lifeValue', e.target.value)} placeholder="0" type="number" />
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Vida Útil (unidade)</label>
@@ -707,7 +707,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
 
         {/* === STATUS === */}
         <Section title="Status" defaultOpen={false}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Situação de Manutenção</label>
               <select value={formData.maintenanceStatus} onChange={(e) => updateField('maintenanceStatus', e.target.value)} className={selectClass}>

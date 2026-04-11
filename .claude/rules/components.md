@@ -17,6 +17,89 @@ globs: src/components/**,src/app/**/page.tsx
 - Usar o design system existente com `Tailwind CSS v4`, `Shadcn/UI`, `Recharts` e icones no padrao `Material Symbols`
 - O botao de acao principal deve usar o componente `<Button>`; nao usar `<button>` raw para acoes padronizadas
 
+## Responsividade (OBRIGATORIO)
+
+### Breakpoints oficiais
+
+| Faixa | Nome | Viewport | Sidebar | Split-panel | Painel de detalhe |
+|-------|------|----------|---------|-------------|-------------------|
+| < 768px | Phone | Celular | Drawer temporario | Nao | Overlay fullscreen |
+| 768–1279px | Compact | Tablet / Desktop compacto | Drawer temporario | Nao | Overlay sheet lateral (max-w-2xl) |
+| >= 1280px | Wide | Desktop amplo | Permanente (colapsavel) | Sim (50/50) | InPage panel |
+
+- Split-panel so e renderizado em `>= 1280px` (alinhado com Tailwind `xl:`)
+- Sidebar permanente so em `>= 1280px`; abaixo disso e drawer controlado por `mobileMenuOpen` no `SidebarContext`
+
+### Hook unificado: `useResponsiveLayout()`
+Arquivo: `src/hooks/useMediaQuery.ts`
+
+```ts
+const { isPhone, isCompact, isWide } = useResponsiveLayout()
+// isPhone   = celular (< 768px)
+// isCompact = nao suporta split-panel (< 1280px, inclui phone + tablet + desktop compacto)
+// isWide    = desktop amplo, suporta split-panel (>= 1280px)
+```
+
+- **NAO** usar `useIsMobile()`, `useIsDesktop()`, `useIsTablet()` — sao aliases deprecados
+- `isWide` e a condicao correta para exibir split-panel ou comportamento exclusivo de desktop
+
+### Componente AdaptiveSplitPanel (OBRIGATORIO em listagens)
+Arquivo: `src/components/layout/AdaptiveSplitPanel.tsx`
+
+Todo painel lateral de listagem DEVE usar este componente. Ele decide internamente:
+- `isWide`: renderiza `w-1/2 list` + `w-1/2 panel` lado a lado
+- `isCompact` (nao-phone): renderiza lista full-width + painel como overlay sheet lateral (slide-in da direita)
+- `isPhone`: renderiza lista full-width + painel como overlay fullscreen
+
+```tsx
+<AdaptiveSplitPanel
+  list={<MinhaListagem />}
+  panel={hasSidePanel ? <MeuPainel /> : null}
+  showPanel={hasSidePanel}
+  panelTitle="Titulo do Painel"
+  onClosePanel={() => setSelectedItem(null)}
+/>
+```
+
+- **NAO** recriar o padrao manual `{hasSidePanel && <div className="w-1/2">...</div>}` — usar este componente
+- O `panelTitle` e usado como titulo do Modal no modo compacto/phone
+
+### Regras responsivas para UI elements
+
+**Busca**:
+```tsx
+<div className="relative w-full sm:w-48 xl:w-64">...</div>
+```
+
+**Filtros select**:
+```tsx
+<select className="w-full sm:w-auto ...">
+```
+
+**Botao primario (texto escondido no mobile)**:
+```tsx
+<Button>
+  <Icon name="add" className="text-base" />
+  <span className="hidden sm:inline ml-2">Adicionar Item</span>
+</Button>
+```
+
+**Grids de formulario**:
+```tsx
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+```
+Nunca usar `grid-cols-2` sem fallback `grid-cols-1` — em phone o formulario deve ficar em coluna unica.
+
+**Touch targets**:
+- Botoes de acao em paineis: `min-h-[44px]` obrigatorio
+- Rows de tabela: `py-3` minimo em listas usadas em campo (contexto industrial)
+
+**Container de acoes no PageHeader**:
+```tsx
+<div className="flex items-center gap-2 flex-wrap">
+```
+O `flex-wrap` e obrigatorio para evitar overflow horizontal em telas estreitas.
+
 ## Sincronizacao de Documentacao
 - Se uma mudanca alterar padroes reutilizaveis de pagina, modal, listagem, painel ou layout, atualizar este arquivo no mesmo ciclo
 - Se a mudanca afetar comportamento funcional percebido pelo usuario, atualizar tambem a secao correspondente em `docs/SPEC.md`

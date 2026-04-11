@@ -7,11 +7,12 @@ import { Icon } from '@/components/ui/Icon'
 
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { User } from '@/types'
 import { ExportButton } from '@/components/ui/ExportButton'
-import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
 import { hasPermission } from '@/lib/permissions'
@@ -47,11 +48,11 @@ type SortDirection = 'asc' | 'desc'
 export default function PeopleTeamsPage() {
   const router = useRouter()
   const activeTab = 'people' as 'people' | 'teams'
-  const isMobile = useIsMobile()
+  const { isPhone } = useResponsiveLayout()
   const { user } = useAuth()
   const { canCreate, canEdit, canDelete } = usePermissions()
   const [viewMode, setViewMode] = useState<ViewMode>('table')
-  
+
   // People states
   const [users, setUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(true)
@@ -62,7 +63,7 @@ export default function PeopleTeamsPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [showNewUserModal, setShowNewUserModal] = useState(false)
   const [showEditUserModal, setShowEditUserModal] = useState(false)
-  
+
   // Teams states
   const [teams, setTeams] = useState<Team[]>([])
   const [loadingTeams, setLoadingTeams] = useState(true)
@@ -75,7 +76,7 @@ export default function PeopleTeamsPage() {
       setLoadingUsers(true)
       const response = await fetch('/api/users')
       const data = await response.json()
-      
+
       if (data.data) {
         setUsers(data.data)
       }
@@ -223,12 +224,45 @@ export default function PeopleTeamsPage() {
     )
   }
 
+  const closeSidePanel = () => {
+    handleCloseModals()
+  }
+
   const pageTitle = activeTab === 'people' ? 'Pessoas' : 'Equipes'
   const pageDescription =
     activeTab === 'people'
       ? 'Gestao de pessoas e equipamentos'
       : 'Gestao de equipes e alocacoes operacionais'
-  const showPeopleSidePanel = !isMobile && (!!selectedUserId || showNewUserModal)
+
+  const showPeopleSidePanel = !!(selectedUserId || showNewUserModal)
+
+  // Active panel for AdaptiveSplitPanel
+  const activePanel = showNewUserModal ? (
+    <PersonFormModal
+      isOpen={showNewUserModal}
+      onClose={handleCloseModals}
+      onSuccess={handleSuccess}
+      inPage
+    />
+  ) : showEditUserModal ? (
+    <PersonFormModal
+      isOpen={showEditUserModal}
+      onClose={handleCloseModals}
+      userId={selectedUserId}
+      onSuccess={handleSuccess}
+      inPage
+    />
+  ) : selectedUserId ? (
+    <PersonDetailModal
+      isOpen={!!selectedUserId}
+      onClose={handleCloseModals}
+      userId={selectedUserId!}
+      onEdit={canEdit('people-teams') ? handleEditUser : () => {}}
+      onDelete={canDelete('people-teams') ? handleDelete : () => {}}
+      inPage
+    />
+  ) : null
+
   if (!user || !hasPermission(user, 'people-teams', 'view')) {
     return null
   }
@@ -243,7 +277,7 @@ export default function PeopleTeamsPage() {
             actions={
               activeTab === 'people' ? (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <div className="relative w-64">
+                  <div className="relative w-full sm:w-48 xl:w-64">
                     <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
                     <input
                       type="text"
@@ -254,7 +288,7 @@ export default function PeopleTeamsPage() {
                     />
                   </div>
 
-                  <div className="flex items-center bg-muted rounded-[4px] p-1">
+                  <div className="hidden md:flex items-center bg-muted rounded-[4px] p-1">
                     <button
                       onClick={() => setViewMode('table')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
@@ -284,7 +318,7 @@ export default function PeopleTeamsPage() {
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto"
                   >
                     <option value="">Todos os Papéis</option>
                     {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
@@ -302,7 +336,7 @@ export default function PeopleTeamsPage() {
                       className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white shadow-md font-bold"
                     >
                       <Icon name="add" className="mr-2 text-base" />
-                      Adicionar
+                      <span className="hidden sm:inline ml-1">Adicionar</span>
                     </Button>
                   )}
                 </div>
@@ -327,219 +361,190 @@ export default function PeopleTeamsPage() {
         {activeTab === 'people' && (
           <div className="flex flex-1 overflow-hidden">
             <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-              <div
-                className={`${
-                  showPeopleSidePanel ? 'w-1/2 min-w-0' : 'w-full'
-                } transition-all overflow-hidden flex flex-col`}
-              >
-                {loadingUsers ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                      <p className="mt-2 text-muted-foreground">Carregando...</p>
+              <AdaptiveSplitPanel
+                showPanel={showPeopleSidePanel}
+                panelTitle="Pessoa"
+                onClosePanel={closeSidePanel}
+                panel={activePanel}
+                list={
+                  loadingUsers ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                        <p className="mt-2 text-muted-foreground">Carregando...</p>
+                      </div>
                     </div>
-                  </div>
-                ) : filteredUsers.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center p-12 text-center">
-                    <div>
-                      <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
-                      <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center p-12 text-center">
+                      <div>
+                        <Icon name="group" className="text-6xl text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma pessoa encontrada</h3>
+                        <p className="text-muted-foreground">Adicione pessoas à sua organização para começar.</p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Grid View */}
-                    {viewMode === 'grid' && (
-                      <div className="overflow-auto flex-1 p-4 md:p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sortedUsers.map((user) => (
-                          <div
-                            key={user.id}
-                            onClick={() => handleUserClick(user.id)}
-                            className="bg-card rounded-[4px] ambient-shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
-                            data-user-id={user.id}
-                          >
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                {user.image ? (
-                                  <img
-                                    src={user.image}
-                                    alt={`${user.firstName} ${user.lastName}`}
-                                    className="w-12 h-12 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-primary font-semibold text-lg">
-                                      {user.firstName[0]}{user.lastName[0]}
-                                    </span>
+                  ) : (
+                    <div className="h-full flex flex-col overflow-hidden">
+                      {/* Grid View */}
+                      {(viewMode === 'grid' || isPhone) && (
+                        <div className="overflow-auto flex-1 p-4 md:p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {sortedUsers.map((user) => (
+                            <div
+                              key={user.id}
+                              onClick={() => handleUserClick(user.id)}
+                              className="bg-card rounded-[4px] ambient-shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+                              data-user-id={user.id}
+                            >
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                  {user.image ? (
+                                    <img
+                                      src={user.image}
+                                      alt={`${user.firstName} ${user.lastName}`}
+                                      className="w-12 h-12 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <span className="text-primary font-semibold text-lg">
+                                        {user.firstName[0]}{user.lastName[0]}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <h3 className="font-semibold text-foreground">
+                                      {user.firstName} {user.lastName}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">{user.jobTitle || 'Sem cargo'}</p>
                                   </div>
+                                </div>
+                                {user.enabled ? (
+                                  <Icon name="how_to_reg" className="text-xl text-success" />
+                                ) : (
+                                  <Icon name="person_off" className="text-xl text-danger" />
                                 )}
-                                <div>
-                                  <h3 className="font-semibold text-foreground">
-                                    {user.firstName} {user.lastName}
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground">{user.jobTitle || 'Sem cargo'}</p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <span className="font-medium">Email:</span>
+                                  <span className="truncate">{user.email}</span>
+                                </p>
+                                {user.phone && (
+                                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                    <span className="font-medium">Telefone:</span>
+                                    <span>{user.phone}</span>
+                                  </p>
+                                )}
+                                <div className="pt-2 border-t border-border">
+                                  <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                                    {getRoleDisplayName(user.role)}
+                                  </span>
                                 </div>
                               </div>
-                              {user.enabled ? (
-                                <Icon name="how_to_reg" className="text-xl text-success" />
-                              ) : (
-                                <Icon name="person_off" className="text-xl text-danger" />
-                              )}
                             </div>
-                            
-                            <div className="space-y-2">
-                              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <span className="font-medium">Email:</span>
-                                <span className="truncate">{user.email}</span>
-                              </p>
-                              {user.phone && (
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <span className="font-medium">Telefone:</span>
-                                  <span>{user.phone}</span>
-                                </p>
-                              )}
-                              <div className="pt-2 border-t border-border">
-                                <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                                  {getRoleDisplayName(user.role)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                        </div>
+                      )}
 
-                    {/* Table View */}
-                    {viewMode === 'table' && (
-                      <div className="h-full flex flex-col bg-card overflow-hidden">
-                        <div className="flex-1 overflow-auto min-h-0">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="sticky top-0 bg-secondary z-10">
-                              <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
-                                    <span>Nome</span>
-                                    {renderSortIcon('name')}
-                                  </button>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  <button type="button" onClick={() => handleSort('email')} className="flex items-center gap-1">
-                                    <span>Email</span>
-                                    {renderSortIcon('email')}
-                                  </button>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  <button type="button" onClick={() => handleSort('jobTitle')} className="flex items-center gap-1">
-                                    <span>Cargo</span>
-                                    {renderSortIcon('jobTitle')}
-                                  </button>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1">
-                                    <span>Papel</span>
-                                    {renderSortIcon('role')}
-                                  </button>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  <button type="button" onClick={() => handleSort('enabled')} className="flex items-center gap-1">
-                                    <span>Status</span>
-                                    {renderSortIcon('enabled')}
-                                  </button>
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-card divide-y divide-gray-100">
-                              {sortedUsers.map((user, index) => (
-                                <tr
-                                  key={user.id}
-                                  onClick={() => handleUserClick(user.id)}
-                                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-accent-orange-light cursor-pointer transition-colors group`}
-                                  data-user-id={user.id}
-                                >
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                      {user.image ? (
-                                        <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                          <span className="text-primary font-semibold">
-                                            {user.firstName[0]}{user.lastName[0]}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <div className="ml-4">
-                                        <div className="text-sm font-medium text-foreground">
-                                          {user.firstName} {user.lastName}
+                      {/* Table View */}
+                      {viewMode === 'table' && !isPhone && (
+                        <div className="h-full flex flex-col bg-card overflow-hidden">
+                          <div className="flex-1 overflow-auto min-h-0">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="sticky top-0 bg-secondary z-10">
+                                <tr>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                                      <span>Nome</span>
+                                      {renderSortIcon('name')}
+                                    </button>
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <button type="button" onClick={() => handleSort('email')} className="flex items-center gap-1">
+                                      <span>Email</span>
+                                      {renderSortIcon('email')}
+                                    </button>
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <button type="button" onClick={() => handleSort('jobTitle')} className="flex items-center gap-1">
+                                      <span>Cargo</span>
+                                      {renderSortIcon('jobTitle')}
+                                    </button>
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1">
+                                      <span>Papel</span>
+                                      {renderSortIcon('role')}
+                                    </button>
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <button type="button" onClick={() => handleSort('enabled')} className="flex items-center gap-1">
+                                      <span>Status</span>
+                                      {renderSortIcon('enabled')}
+                                    </button>
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-card divide-y divide-gray-100">
+                                {sortedUsers.map((user, index) => (
+                                  <tr
+                                    key={user.id}
+                                    onClick={() => handleUserClick(user.id)}
+                                    className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-accent-orange-light cursor-pointer transition-colors group`}
+                                    data-user-id={user.id}
+                                  >
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="flex items-center">
+                                        {user.image ? (
+                                          <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span className="text-primary font-semibold">
+                                              {user.firstName[0]}{user.lastName[0]}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="ml-4">
+                                          <div className="text-sm font-medium text-foreground">
+                                            {user.firstName} {user.lastName}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-foreground">{user.email}</div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-foreground">{user.jobTitle || '-'}</div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-foreground">
-                                      {getRoleDisplayName(user.role)}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.enabled ? (
-                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">
-                                        Ativo
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="text-sm text-foreground">{user.email}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="text-sm text-foreground">{user.jobTitle || '-'}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-foreground">
+                                        {getRoleDisplayName(user.role)}
                                       </span>
-                                    ) : (
-                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-light text-danger-light-foreground">
-                                        Inativo
-                                      </span>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      {user.enabled ? (
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">
+                                          Ativo
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-light text-danger-light-foreground">
+                                          Inativo
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                  </>
-                )}
-              </div>
-
-              {!isMobile && (selectedUserId || showNewUserModal) && (
-                <div className="w-1/2 min-w-0">
-                  {showNewUserModal ? (
-                    <PersonFormModal
-                      isOpen={showNewUserModal}
-                      onClose={handleCloseModals}
-                      onSuccess={handleSuccess}
-                      inPage
-                    />
-                  ) : showEditUserModal ? (
-                    <PersonFormModal
-                      isOpen={showEditUserModal}
-                      onClose={handleCloseModals}
-                      userId={selectedUserId}
-                      onSuccess={handleSuccess}
-                      inPage
-                    />
-                  ) : (
-                    <PersonDetailModal
-                      isOpen={!!selectedUserId}
-                      onClose={handleCloseModals}
-                      userId={selectedUserId!}
-                      onEdit={canEdit('people-teams') ? handleEditUser : () => {}}
-                      onDelete={canDelete('people-teams') ? handleDelete : () => {}}
-                      inPage
-                    />
-                  )}
-                </div>
-              )}
+                      )}
+                    </div>
+                  )
+                }
+              />
             </div>
           </div>
         )}
@@ -560,8 +565,8 @@ export default function PeopleTeamsPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {teams.map((team) => (
-                  <Card 
-                    key={team.id} 
+                  <Card
+                    key={team.id}
                     className="hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => handleTeamClick(team.id)}
                   >
@@ -579,7 +584,7 @@ export default function PeopleTeamsPage() {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="mt-4 space-y-2">
                         <div className="text-sm font-medium text-foreground">
                           Membros ({team.members.length}):
@@ -597,7 +602,7 @@ export default function PeopleTeamsPage() {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
                         <span>{team._count.assignedWorkOrders} Ordens</span>
                         <span>{team._count.assignedAssets} Ativos</span>
@@ -610,34 +615,7 @@ export default function PeopleTeamsPage() {
           </div>
         )}
 
-      {/* Modals */}
-      {isMobile && selectedUserId && !showEditUserModal && (
-        <PersonDetailModal
-          isOpen={!!selectedUserId}
-          onClose={handleCloseModals}
-          userId={selectedUserId}
-          onEdit={canEdit('people-teams') ? handleEditUser : () => {}}
-          onDelete={canDelete('people-teams') ? handleDelete : () => {}}
-        />
-      )}
-
-      {isMobile && showNewUserModal && canCreate('people-teams') && (
-        <PersonFormModal
-          isOpen={showNewUserModal}
-          onClose={handleCloseModals}
-          onSuccess={handleSuccess}
-        />
-      )}
-
-      {isMobile && showEditUserModal && selectedUserId && (
-        <PersonFormModal
-          isOpen={showEditUserModal}
-          onClose={handleCloseModals}
-          userId={selectedUserId}
-          onSuccess={handleSuccess}
-        />
-      )}
-
+      {/* Team Modals (always overlay — no inPage variant) */}
       {selectedTeamId && !showEditTeamModal && (
         <TeamDetailModal
           isOpen={!!selectedTeamId}

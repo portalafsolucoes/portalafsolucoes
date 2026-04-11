@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
@@ -12,7 +13,7 @@ import dynamic from 'next/dynamic'
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { usePermissions } from '@/hooks/usePermissions'
-import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
@@ -58,7 +59,7 @@ export default function WorkOrdersPage() {
   const [deleting, setDeleting] = useState(false)
   const { user: currentUser } = useAuth()
   const { canCreate: canCreateWO } = usePermissions()
-  const isMobile = useIsMobile()
+  const { isPhone } = useResponsiveLayout()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<WorkOrder | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -129,12 +130,67 @@ export default function WorkOrdersPage() {
     }
   }
 
+  const closeSidePanel = () => {
+    setSelectedWorkOrderId('')
+    setShowEditModal(false)
+    setEditingWorkOrderId('')
+    setShowExecuteModal(false)
+    setWorkOrderToExecute(null)
+    setShowFinalizeModal(false)
+    setWorkOrderToFinalize(null)
+    setShowCreateModal(false)
+  }
+
   const filteredWorkOrders = workOrders.filter(wo =>
     wo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     wo.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const showSidePanel = !isMobile && (!!selectedWorkOrderId || showEditModal || showExecuteModal || showFinalizeModal || showCreateModal)
+  const showSidePanel = !!(selectedWorkOrderId || showEditModal || showExecuteModal || showFinalizeModal || showCreateModal)
+
+  // Painel ativo (inPage — usado no desktop e dentro do sheet no compact)
+  const activePanel = showCreateModal ? (
+    <WorkOrderFormModal
+      isOpen
+      onClose={() => setShowCreateModal(false)}
+      onSuccess={() => { loadWorkOrders(); setShowCreateModal(false) }}
+      inPage
+    />
+  ) : showFinalizeModal && workOrderToFinalize ? (
+    <FinalizeWorkOrderModal
+      isOpen
+      onClose={() => { setShowFinalizeModal(false); setWorkOrderToFinalize(null) }}
+      workOrder={workOrderToFinalize}
+      onFinalized={() => { loadWorkOrders(); setShowFinalizeModal(false); setWorkOrderToFinalize(null) }}
+      inPage
+    />
+  ) : showExecuteModal && workOrderToExecute ? (
+    <WorkOrderExecuteModal
+      isOpen
+      onClose={() => { setShowExecuteModal(false); setWorkOrderToExecute(null) }}
+      workOrder={workOrderToExecute}
+      onSuccess={() => { loadWorkOrders(); setShowExecuteModal(false); setWorkOrderToExecute(null) }}
+      inPage
+    />
+  ) : showEditModal && editingWorkOrderId ? (
+    <WorkOrderEditModal
+      isOpen
+      onClose={() => { setShowEditModal(false); setEditingWorkOrderId('') }}
+      workOrderId={editingWorkOrderId}
+      onSuccess={() => { loadWorkOrders(); setShowEditModal(false); setEditingWorkOrderId('') }}
+      inPage
+    />
+  ) : selectedWorkOrderId ? (
+    <WorkOrderDetailModal
+      isOpen
+      onClose={() => setSelectedWorkOrderId('')}
+      workOrderId={selectedWorkOrderId}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      currentUserId={currentUser?.id}
+      inPage
+    />
+  ) : null
 
   if (!currentUser || !hasPermission(currentUser, 'work-orders', 'view')) {
     return null
@@ -142,100 +198,105 @@ export default function WorkOrdersPage() {
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
-        <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
-          <PageHeader
-            title="Ordens de Serviço (OS)"
-            description="Gerencie todas as ordens de manutenção"
-            className="mb-0"
-            actions={
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative w-64">
-                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Buscar ordens..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-
-                <div className="hidden md:flex items-center bg-muted rounded-[4px] p-1">
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                      viewMode === 'table'
-                        ? 'bg-background text-foreground ambient-shadow'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    title="Visualização em Tabela"
-                  >
-                    <Icon name="table" className="text-base" />
-                    <span className="hidden md:inline">Tabela</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                      viewMode === 'grid'
-                        ? 'bg-background text-foreground ambient-shadow'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    title="Visualização em Cartões"
-                  >
-                    <Icon name="grid_view" className="text-base" />
-                    <span className="hidden md:inline">Grade</span>
-                  </button>
-                </div>
-
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">Status</option>
-                  <option value="PENDING">Pendente</option>
-                  <option value="RELEASED">Liberada</option>
-                  <option value="IN_PROGRESS">Em Progresso</option>
-                  <option value="ON_HOLD">Em Espera</option>
-                  <option value="COMPLETE">Completa</option>
-                </select>
-
-                <select
-                  value={systemStatusFilter}
-                  onChange={(e) => setSystemStatusFilter(e.target.value)}
-                  className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">Sistema</option>
-                  <option value="IN_SYSTEM">Sistema</option>
-                  <option value="OUT_OF_SYSTEM">Fora</option>
-                </select>
-
-                <ExportButton data={filteredWorkOrders} entity="work-orders" />
-                {canCreateWO('work-orders') && (
-                  <Button
-                    onClick={() => {
-                      setSelectedWorkOrderId('')
-                      setShowEditModal(false)
-                      setShowExecuteModal(false)
-                      setShowFinalizeModal(false)
-                      setShowCreateModal(true)
-                    }}
-                    className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md"
-                  >
-                    <Icon name="add" className="mr-2 text-base" />
-                    Nova Ordem
-                  </Button>
-                )}
+      <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
+        <PageHeader
+          title="Ordens de Serviço (OS)"
+          description="Gerencie todas as ordens de manutenção"
+          className="mb-0"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Busca: full-width no phone, 48/64px no tablet/desktop */}
+              <div className="relative w-full sm:w-48 xl:w-64">
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar ordens..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
               </div>
-            }
-          />
-        </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-            {/* Left: table/grid */}
-            <div className={`${showSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden flex flex-col`}>
-              {loading ? (
+              <div className="hidden md:flex items-center bg-muted rounded-[4px] p-1">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                    viewMode === 'table'
+                      ? 'bg-background text-foreground ambient-shadow'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Visualização em Tabela"
+                >
+                  <Icon name="table" className="text-base" />
+                  <span className="hidden md:inline">Tabela</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                    viewMode === 'grid'
+                      ? 'bg-background text-foreground ambient-shadow'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Visualização em Cartões"
+                >
+                  <Icon name="grid_view" className="text-base" />
+                  <span className="hidden md:inline">Grade</span>
+                </button>
+              </div>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto"
+              >
+                <option value="">Status</option>
+                <option value="PENDING">Pendente</option>
+                <option value="RELEASED">Liberada</option>
+                <option value="IN_PROGRESS">Em Progresso</option>
+                <option value="ON_HOLD">Em Espera</option>
+                <option value="COMPLETE">Completa</option>
+              </select>
+
+              <select
+                value={systemStatusFilter}
+                onChange={(e) => setSystemStatusFilter(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto"
+              >
+                <option value="">Sistema</option>
+                <option value="IN_SYSTEM">Sistema</option>
+                <option value="OUT_OF_SYSTEM">Fora</option>
+              </select>
+
+              <ExportButton data={filteredWorkOrders} entity="work-orders" />
+              {canCreateWO('work-orders') && (
+                <Button
+                  onClick={() => {
+                    setSelectedWorkOrderId('')
+                    setShowEditModal(false)
+                    setShowExecuteModal(false)
+                    setShowFinalizeModal(false)
+                    setShowCreateModal(true)
+                  }}
+                  className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md"
+                >
+                  <Icon name="add" className="text-base" />
+                  <span className="hidden sm:inline ml-2">Nova Ordem</span>
+                </Button>
+              )}
+            </div>
+          }
+        />
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
+          <AdaptiveSplitPanel
+            showPanel={showSidePanel}
+            panelTitle="Ordem de Serviço"
+            onClosePanel={closeSidePanel}
+            panel={activePanel}
+            list={
+              loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
@@ -250,7 +311,7 @@ export default function WorkOrdersPage() {
                     <p className="text-muted-foreground">Crie uma nova ordem de serviço para começar.</p>
                   </div>
                 </div>
-              ) : viewMode === 'grid' || isMobile ? (
+              ) : viewMode === 'grid' || isPhone ? (
                 <div className="overflow-auto flex-1 p-4 md:p-6">
                   <div className="grid grid-cols-1 gap-3 md:gap-4">
                     {filteredWorkOrders.map((wo) => {
@@ -366,169 +427,24 @@ export default function WorkOrdersPage() {
                     </table>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Right: split panel (desktop only) */}
-            {!isMobile && (selectedWorkOrderId || showEditModal || showExecuteModal || showFinalizeModal || showCreateModal) && (
-              <div className="w-1/2 min-w-0">
-                {showCreateModal ? (
-                  <WorkOrderFormModal
-                    isOpen={true}
-                    onClose={() => setShowCreateModal(false)}
-                    onSuccess={() => {
-                      loadWorkOrders()
-                      setShowCreateModal(false)
-                    }}
-                    inPage
-                  />
-                ) : showFinalizeModal && workOrderToFinalize ? (
-                  <FinalizeWorkOrderModal
-                    isOpen={true}
-                    onClose={() => {
-                      setShowFinalizeModal(false)
-                      setWorkOrderToFinalize(null)
-                    }}
-                    workOrder={workOrderToFinalize}
-                    onFinalized={() => {
-                      loadWorkOrders()
-                      setShowFinalizeModal(false)
-                      setWorkOrderToFinalize(null)
-                    }}
-                    inPage
-                  />
-                ) : showExecuteModal && workOrderToExecute ? (
-                  <WorkOrderExecuteModal
-                    isOpen={true}
-                    onClose={() => {
-                      setShowExecuteModal(false)
-                      setWorkOrderToExecute(null)
-                    }}
-                    workOrder={workOrderToExecute}
-                    onSuccess={() => {
-                      loadWorkOrders()
-                      setShowExecuteModal(false)
-                      setWorkOrderToExecute(null)
-                    }}
-                    inPage
-                  />
-                ) : showEditModal && editingWorkOrderId ? (
-                  <WorkOrderEditModal
-                    isOpen={true}
-                    onClose={() => {
-                      setShowEditModal(false)
-                      setEditingWorkOrderId('')
-                    }}
-                    workOrderId={editingWorkOrderId}
-                    onSuccess={() => {
-                      loadWorkOrders()
-                      setShowEditModal(false)
-                      setEditingWorkOrderId('')
-                    }}
-                    inPage
-                  />
-                ) : selectedWorkOrderId ? (
-                  <WorkOrderDetailModal
-                    isOpen={true}
-                    onClose={() => setSelectedWorkOrderId('')}
-                    workOrderId={selectedWorkOrderId}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    currentUserId={currentUser?.id}
-                    inPage
-                  />
-                ) : null}
-              </div>
-            )}
-          </div>
+              )
+            }
+          />
         </div>
+      </div>
 
-        {/* Mobile: overlay modals */}
-        {isMobile && selectedWorkOrderId && (
-          <WorkOrderDetailModal
-            isOpen={!!selectedWorkOrderId}
-            onClose={() => setSelectedWorkOrderId('')}
-            workOrderId={selectedWorkOrderId}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            currentUserId={currentUser?.id}
-          />
-        )}
-
-        {isMobile && showEditModal && editingWorkOrderId && (
-          <WorkOrderEditModal
-            isOpen={showEditModal}
-            onClose={() => {
-              setShowEditModal(false)
-              setEditingWorkOrderId('')
-            }}
-            workOrderId={editingWorkOrderId}
-            onSuccess={() => {
-              loadWorkOrders()
-              setShowEditModal(false)
-              setEditingWorkOrderId('')
-            }}
-          />
-        )}
-
-        {isMobile && showExecuteModal && workOrderToExecute && (
-          <WorkOrderExecuteModal
-            isOpen={showExecuteModal}
-            onClose={() => {
-              setShowExecuteModal(false)
-              setWorkOrderToExecute(null)
-            }}
-            workOrder={workOrderToExecute}
-            onSuccess={() => {
-              loadWorkOrders()
-              setShowExecuteModal(false)
-              setWorkOrderToExecute(null)
-            }}
-          />
-        )}
-
-        {isMobile && showFinalizeModal && workOrderToFinalize && (
-          <FinalizeWorkOrderModal
-            isOpen={showFinalizeModal}
-            onClose={() => {
-              setShowFinalizeModal(false)
-              setWorkOrderToFinalize(null)
-            }}
-            workOrder={workOrderToFinalize}
-            onFinalized={() => {
-              loadWorkOrders()
-              setShowFinalizeModal(false)
-              setWorkOrderToFinalize(null)
-            }}
-          />
-        )}
-
-        {isMobile && showCreateModal && (
-          <WorkOrderFormModal
-            isOpen={showCreateModal}
-            onClose={() => setShowCreateModal(false)}
-            onSuccess={() => {
-              loadWorkOrders()
-              setShowCreateModal(false)
-            }}
-          />
-        )}
-
-        {/* Dialog de Confirmação de Exclusão */}
-        <ConfirmDialog
-          isOpen={showDeleteDialog}
-          onClose={() => {
-            setShowDeleteDialog(false)
-            setWorkOrderToDelete(null)
-          }}
-          onConfirm={handleDelete}
-          title="Excluir Ordem de Serviço"
-          message={`Tem certeza que deseja excluir a ordem de serviço "${workOrderToDelete?.title}"? Esta ação não pode ser desfeita.`}
-          confirmText="Sim, Excluir"
-          cancelText="Não, Cancelar"
-          variant="danger"
-          loading={deleting}
-        />
+      {/* Dialog de Confirmação de Exclusão */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => { setShowDeleteDialog(false); setWorkOrderToDelete(null) }}
+        onConfirm={handleDelete}
+        title="Excluir Ordem de Serviço"
+        message={`Tem certeza que deseja excluir a ordem de serviço "${workOrderToDelete?.title}"? Esta ação não pode ser desfeita.`}
+        confirmText="Sim, Excluir"
+        cancelText="Não, Cancelar"
+        variant="danger"
+        loading={deleting}
+      />
     </PageContainer>
   )
 }

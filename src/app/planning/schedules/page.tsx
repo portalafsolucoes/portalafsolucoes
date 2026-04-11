@@ -7,12 +7,11 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
-import { useIsMobile } from '@/hooks/useMediaQuery'
 
 const ScheduleDetailPanel = dynamic(
   () => import('@/components/planning/ScheduleDetailPanel').then(m => ({ default: m.ScheduleDetailPanel })),
@@ -40,7 +39,6 @@ export default function SchedulesPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { canCreate } = usePermissions()
-  const isMobile = useIsMobile()
   const role = user?.role ?? ''
 
   const [schedules, setSchedules] = useState<Schedule[]>([])
@@ -117,7 +115,7 @@ export default function SchedulesPage() {
     )
   })
 
-  const hasSidePanel = !isMobile && (selectedSchedule !== null || isCreating)
+  const showSidePanel = !!(selectedSchedule !== null || isCreating)
   const canEdit = !!role && hasPermission(role as UserRole, 'planning', 'create')
 
   if (authLoading || !user) {
@@ -133,6 +131,81 @@ export default function SchedulesPage() {
     )
   }
 
+  const activePanel = isCreating ? (
+    <ScheduleFormPanel
+      onClose={handleClosePanel}
+      onSaved={handleSaved}
+      inPage
+    />
+  ) : selectedSchedule ? (
+    <ScheduleDetailPanel
+      schedule={selectedSchedule}
+      onClose={handleClosePanel}
+      onConfirm={handleConfirm}
+      canEdit={canEdit}
+    />
+  ) : null
+
+  const listContent = loading ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+        <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="flex-1 overflow-auto min-h-0">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="sticky top-0 bg-secondary z-10">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prog.</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Período</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="bg-card divide-y divide-gray-200">
+            {filteredSchedules.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <Icon name="calendar_month" className="text-4xl text-muted-foreground" />
+                    <h3 className="text-sm font-medium text-foreground">Nenhuma programação encontrada</h3>
+                    <p className="text-sm text-muted-foreground">Nenhuma programação criada ainda.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredSchedules.map(s => (
+              <tr
+                key={s.id}
+                onClick={() => handleSelectSchedule(s)}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedSchedule?.id === s.id ? 'bg-secondary' : ''}`}
+              >
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{s.scheduleNumber}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{s.description}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(s.scheduleDate || '')}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {formatDate(s.startDate || '')} - {formatDate(s.endDate || '')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {s.createdBy ? `${s.createdBy.firstName || ''} ${s.createdBy.lastName || ''}`.trim() : '—'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  <span className={`px-2 py-0.5 rounded text-xs ${s.status === 'CONFIRMED' ? 'bg-success-light text-success-light-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    {s.status === 'CONFIRMED' ? 'Confirmada' : 'Rascunho'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
       {/* Header */}
@@ -144,7 +217,7 @@ export default function SchedulesPage() {
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               {/* Search */}
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-48 xl:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
                 <input
                   type="text"
@@ -157,8 +230,8 @@ export default function SchedulesPage() {
               {/* Add button */}
               {canCreate('planning') && (
                 <Button onClick={handleCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
-                  <Icon name="add" className="mr-2 text-base" />
-                  Nova Programação
+                  <Icon name="add" className="text-base" />
+                  <span className="hidden sm:inline ml-1">Nova Programação</span>
                 </Button>
               )}
             </div>
@@ -169,119 +242,15 @@ export default function SchedulesPage() {
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {loading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                <p className="mt-2 text-muted-foreground">Carregando...</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Left: table */}
-              <div className={`${hasSidePanel ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
-                <div className="h-full flex flex-col bg-card overflow-hidden">
-                  <div className="flex-1 overflow-auto min-h-0">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="sticky top-0 bg-secondary z-10">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prog.</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Período</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-card divide-y divide-gray-200">
-                        {filteredSchedules.length === 0 ? (
-                          <tr>
-                            <td colSpan={6} className="px-6 py-16 text-center">
-                              <div className="flex flex-col items-center gap-3">
-                                <Icon name="calendar_month" className="text-4xl text-muted-foreground" />
-                                <h3 className="text-sm font-medium text-foreground">Nenhuma programação encontrada</h3>
-                                <p className="text-sm text-muted-foreground">Nenhuma programação criada ainda.</p>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : filteredSchedules.map(s => (
-                          <tr
-                            key={s.id}
-                            onClick={() => handleSelectSchedule(s)}
-                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedSchedule?.id === s.id ? 'bg-secondary' : ''}`}
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{s.scheduleNumber}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{s.description}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(s.scheduleDate || '')}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              {formatDate(s.startDate || '')} - {formatDate(s.endDate || '')}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              {s.createdBy ? `${s.createdBy.firstName || ''} ${s.createdBy.lastName || ''}`.trim() : '—'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                              <span className={`px-2 py-0.5 rounded text-xs ${s.status === 'CONFIRMED' ? 'bg-success-light text-success-light-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                {s.status === 'CONFIRMED' ? 'Confirmada' : 'Rascunho'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: panel (desktop only) */}
-              {!isMobile && isCreating && (
-                <div className="w-1/2 min-w-0">
-                  <ScheduleFormPanel
-                    onClose={handleClosePanel}
-                    onSaved={handleSaved}
-                    inPage
-                  />
-                </div>
-              )}
-              {!isMobile && !isCreating && selectedSchedule && (
-                <div className="w-1/2 min-w-0">
-                  <ScheduleDetailPanel
-                    schedule={selectedSchedule}
-                    onClose={handleClosePanel}
-                    onConfirm={handleConfirm}
-                    canEdit={canEdit}
-                  />
-                </div>
-              )}
-            </>
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Programação"
+            onClosePanel={handleClosePanel}
+          />
         </div>
       </div>
-
-      {/* Mobile modals */}
-      {isMobile && isCreating && (
-        <Modal isOpen onClose={handleClosePanel} title="Nova Programação de OSs" hideHeader noPadding>
-          <ScheduleFormPanel
-            onClose={handleClosePanel}
-            onSaved={handleSaved}
-          />
-        </Modal>
-      )}
-      {isMobile && selectedSchedule && !isCreating && (
-        <Modal
-          isOpen
-          onClose={handleClosePanel}
-          title={selectedSchedule.scheduleNumber ? `#${selectedSchedule.scheduleNumber}` : 'Programação'}
-          hideHeader
-          noPadding
-        >
-          <ScheduleDetailPanel
-            schedule={selectedSchedule}
-            onClose={handleClosePanel}
-            onConfirm={handleConfirm}
-            canEdit={canEdit}
-          />
-        </Modal>
-      )}
     </PageContainer>
   )
 }

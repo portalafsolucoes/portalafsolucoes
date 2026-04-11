@@ -65,3 +65,35 @@ Antes de remover, verificar que nenhum import ou referencia depende do item.
 - **Motivo**: Modais overlay substituídos por split-panel com painéis inPage
 - **Data**: 2026-04-10
 - **Condição para remoção**: Após validação com SUPER_ADMIN
+
+---
+
+## Sessão de responsividade — 2026-04-11
+
+### useIsMobile (hook deprecado)
+- **Arquivo**: `src/hooks/useMediaQuery.ts`
+- **Motivo**: O hook usava breakpoint em 768px; após a migração responsiva o threshold correto para split-panel é 1280px (xl). Substituído por `useResponsiveLayout()`.
+- **Substituto**: `useResponsiveLayout().isCompact` para "não suporta split-panel" ou `useResponsiveLayout().isPhone` para "celular"
+- **Data**: 2026-04-11
+- **Condição para remoção**: Todos os imports de `useIsMobile` trocados por `useResponsiveLayout` no projeto
+
+### useIsDesktop (hook deprecado)
+- **Arquivo**: `src/hooks/useMediaQuery.ts`
+- **Motivo**: Breakpoint antigo inconsistente com o breakpoint oficial de split-panel (1280px)
+- **Substituto**: `useResponsiveLayout().isWide`
+- **Data**: 2026-04-11
+- **Condição para remoção**: Sem imports restantes
+
+### useIsTablet (hook deprecado)
+- **Arquivo**: `src/hooks/useMediaQuery.ts`
+- **Motivo**: Conceito de "tablet" absorvido pela faixa `isCompact` (768–1279px) do hook unificado
+- **Substituto**: `useResponsiveLayout().isCompact && !useResponsiveLayout().isPhone`
+- **Data**: 2026-04-11
+- **Condição para remoção**: Sem imports restantes
+
+### Padrão manual de split-panel inline
+- **Padrão**: `const isMobile = useIsMobile(); ... hasSidePanel && !isMobile && <div className="w-1/2">...</div>`
+- **Motivo**: Padrão repetido em 17 páginas, inconsistente no breakpoint e sem suporte a overlay mobile
+- **Substituto**: Componente `<AdaptiveSplitPanel list={...} panel={...} showPanel={...} onClosePanel={...} />` de `@/components/layout/AdaptiveSplitPanel`
+- **Data**: 2026-04-11
+- **Condição para remoção**: Todas as 17 páginas de listagem já migradas (concluído em 2026-04-11)

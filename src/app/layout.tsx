@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Inter } from "next/font/google";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/branding";
 import { AppShell } from "@/components/layout/AppShell";
@@ -18,6 +18,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: APP_NAME,
   description: APP_DESCRIPTION,
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

@@ -298,7 +298,7 @@ export default function AssetDetailPage() {
                         className="w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
                         label="Código de Barras"
                         value={formData.barCode}
@@ -318,7 +318,7 @@ export default function AssetDetailPage() {
                         </select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
                         label="Custo de Aquisição"
                         type="number"
@@ -343,7 +343,7 @@ export default function AssetDetailPage() {
                         <p className="text-foreground">{asset.description}</p>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {asset.barCode && (
                         <div>
                           <h4 className="text-sm font-medium text-foreground">Código de Barras</h4>

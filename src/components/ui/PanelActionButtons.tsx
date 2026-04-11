@@ -13,7 +13,7 @@ export function PanelActionButtons({ onEdit, onDelete }: PanelActionButtonsProps
       <button
         type="button"
         onClick={onEdit}
-        className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+        className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
       >
         <Icon name="edit" className="text-base" />
         Editar
@@ -21,7 +21,7 @@ export function PanelActionButtons({ onEdit, onDelete }: PanelActionButtonsProps
       <button
         type="button"
         onClick={onDelete}
-        className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+        className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
       >
         <Icon name="delete" className="text-base" />
         Excluir

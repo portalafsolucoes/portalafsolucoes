@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
@@ -266,8 +267,11 @@ export default function TreePage() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-1 min-h-0 overflow-hidden">
-              <div className={`${selectedAsset ? 'w-1/2 min-w-0' : 'w-full'} transition-all overflow-hidden`}>
+            <AdaptiveSplitPanel
+              showPanel={!!selectedAsset}
+              panelTitle={selectedAssetNode?.name || 'Detalhes do Ativo'}
+              onClosePanel={() => { setSelectedAsset(''); setAssetDetail(null) }}
+              list={
                 <div className="h-full flex flex-col bg-card overflow-hidden">
                   <div className="flex items-center justify-between p-4 border-b border-border">
                     <div>
@@ -285,11 +289,9 @@ export default function TreePage() {
                     )}
                   </div>
                 </div>
-              </div>
-
-              {selectedAsset && (
-                <div className="w-1/2 min-w-0">
-                  <div className="h-full flex flex-col bg-card border-l border-border">
+              }
+              panel={selectedAsset ? (
+                <div className="h-full flex flex-col bg-card border-l border-border">
                     <div className="flex items-start justify-between p-4 border-b border-border">
                       <div>
                         <h2 className="text-xl font-bold text-foreground">{selectedAssetNode?.name || 'Detalhes do Ativo'}</h2>
@@ -368,13 +370,11 @@ export default function TreePage() {
                     ) : (
                       <div className="flex-1 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
                         Clique em um ativo na árvore para ver OSs, SSs e ações pendentes.
-                      ) : (
                       </div>
                     )}
-                  </div>
                 </div>
-              )}
-            </div>
+              ) : null}
+            />
           )}
         </div>
       </div>

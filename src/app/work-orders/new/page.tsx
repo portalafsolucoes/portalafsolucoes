@@ -128,7 +128,7 @@ export default function NewWorkOrderPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
                     Tipo de OS
@@ -173,7 +173,7 @@ export default function NewWorkOrderPage() {
               {formData.type === 'PREVENTIVE' && (
                 <div className="bg-purple-50 border border-purple-200 rounded-[4px] p-4">
                   <h3 className="text-sm font-semibold text-purple-900 mb-3">⏰ Periodicidade (Manutenção Preventiva)</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Frequência
@@ -206,7 +206,7 @@ export default function NewWorkOrderPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
                     Ativo
@@ -246,7 +246,7 @@ export default function NewWorkOrderPage() {
 
               <div className="bg-success-light border border-green-200 rounded-[4px] p-4">
                 <h3 className="text-sm font-semibold text-green-900 mb-3">👥 Atribuição</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Equipe Responsável

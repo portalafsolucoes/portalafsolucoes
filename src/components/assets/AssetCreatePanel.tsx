@@ -471,7 +471,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Prioridade</label>
               <select value={formData.assetPriority} onChange={(e) => updateField('assetPriority', e.target.value)} className={selectClass}>
@@ -592,7 +592,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
             </label>
           </div>
           {formData.hasCounter && (
-            <div className="grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-[4px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-muted/30 rounded-[4px]">
               <Input
                 label="Tipo do Contador"
                 value={formData.counterType}
@@ -622,7 +622,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
               />
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               label="Vida Útil (valor)"
               value={formData.lifeValue}
@@ -767,7 +767,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
 
         {/* === SEÇÃO 6: STATUS === */}
         <Section title="Status" defaultOpen={false}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Situação de Manutenção</label>
               <select value={formData.maintenanceStatus} onChange={(e) => updateField('maintenanceStatus', e.target.value)} className={selectClass}>
