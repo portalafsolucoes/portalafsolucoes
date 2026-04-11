@@ -1,7 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
-import { Button } from '@/components/ui/Button'
+import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 
 interface StandardAssetCharacteristic {
   characteristicId: string
@@ -77,7 +77,7 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
             </p>
           )}
         </div>
-        <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
+        <button onClick={onClose} className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
           <Icon name="close" className="text-xl" />
         </button>
       </div>
@@ -85,16 +85,10 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Ações */}
-        <div className="p-4 border-b border-border flex gap-2">
-          <Button onClick={() => onEdit(item)} className="flex-1 bg-gray-900 text-white hover:bg-gray-800">
-            <Icon name="edit" className="text-base mr-2" />
-            Editar
-          </Button>
-          <Button variant="outline" onClick={() => onDelete(item.id)} className="flex-1 text-danger border-danger hover:bg-danger/10">
-            <Icon name="delete" className="text-base mr-2" />
-            Excluir
-          </Button>
-        </div>
+        <PanelActionButtons
+          onEdit={() => onEdit(item)}
+          onDelete={() => onDelete(item.id)}
+        />
 
         {/* Localização e Organização */}
         {(item.costCenterCode || item.shiftCode || item.workCenterCode || item.warehouse) && (

@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
+import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import AssetAttachments from './AssetAttachments'
 import AssetTimeline from './AssetTimelineEnhanced'
 
@@ -111,9 +112,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
             <h2 className="text-lg font-black text-gray-900">{asset.name}</h2>
             <button
               onClick={onClose}
-              className="ml-auto p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
+              className="ml-auto flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
             >
-              <Icon name="close" className="text-xl text-muted-foreground" />
+              <Icon name="close" className="text-xl" />
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -144,22 +145,10 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
           <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
             {/* Ações */}
-            <div className="p-4 border-b border-gray-200 space-y-2">
-              <button
-                onClick={() => onEdit(asset)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
-              >
-                <Icon name="edit" className="text-base" />
-                Editar Ativo
-              </button>
-              <button 
-                onClick={() => onDelete(asset.id)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
-              >
-                <Icon name="delete" className="text-base" />
-                Excluir Ativo
-              </button>
-            </div>
+            <PanelActionButtons
+              onEdit={() => onEdit(asset)}
+              onDelete={() => onDelete(asset.id)}
+            />
 
         {/* Imagem do Ativo */}
         {asset.image && (

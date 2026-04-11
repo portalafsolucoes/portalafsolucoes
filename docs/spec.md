@@ -144,8 +144,10 @@ Regras complementares:
 - **Hierarquia tipografica em paineis**: titulo do painel `font-black` > label de campo `font-bold uppercase text-[11px] text-gray-500` > valor `font-medium text-[13px] text-gray-900`
 - **Inputs em formularios**: `border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-gray-900`
 - **Tabelas**: linhas zebradas `odd:bg-gray-50 even:bg-white`, hover `hover:bg-accent-orange-light`, header `bg-secondary`
-- **Close button de painel**: `p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm`
-- Referencia canonica de implementacao: `PersonDetailModal.tsx` e `PersonFormModal.tsx`
+- **Close button de painel**: `flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors` — icone `close` com `text-xl`; centralizar via `flex` explicitamente, nao depender so de padding
+- **Botoes de acao no painel de detalhe**: sempre empilhados verticalmente (`space-y-2`), nunca lado a lado; Editar (`bg-gray-900 text-white hover:bg-gray-800`) em cima, Excluir (`bg-danger text-white hover:bg-danger/90`) embaixo; ambos `w-full`; texto generico — nunca incluir nome da entidade; usar componente `<PanelActionButtons>` de `@/components/ui/PanelActionButtons`
+- **Secoes colapsaveis em paineis**: chevron inline no cabecalho cinza (`bg-gray-100 border border-gray-200`); proibido wrapper `bg-white` em volta do chevron; referencia: `ModalSection.tsx` e `AssetEditPanel.tsx`
+- Referencia canonica de implementacao de painel de detalhe: `AssetDetailPanel.tsx`
 
 ## Modulos do Sistema
 

@@ -129,9 +129,9 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
               </h2>
               <button
                 onClick={onClose}
-                className="ml-auto p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
+                className="ml-auto flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
               >
-                <Icon name="close" className="text-lg" />
+                <Icon name="close" className="text-xl" />
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -159,20 +159,20 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
             </TabsList>
 
             <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
-              <div className="px-6 py-4 border-b border-gray-200 space-y-2">
+              <div className="p-4 border-b border-gray-200 space-y-2">
                 <button
                   onClick={onEdit}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-black transition-colors font-bold text-[13px] shadow-md"
+                  className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
                 >
                   <Icon name="edit" className="text-base" />
-                  Editar Pessoa
+                  Editar
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-danger border border-gray-300 rounded-md hover:bg-danger-light transition-colors font-bold text-[13px] shadow-sm"
+                  className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
                 >
                   <Icon name="delete" className="text-base" />
-                  Excluir Pessoa
+                  Excluir
                 </button>
               </div>
 

@@ -80,16 +80,14 @@ function PanelSection({
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-md overflow-hidden">
+    <div className="rounded-[4px] overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-md shadow-sm text-foreground hover:bg-gray-200/60 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2.5 bg-gray-100 border border-gray-200 text-[12px] font-bold text-gray-900 uppercase tracking-wider hover:bg-gray-200 transition-colors"
       >
-        <span className="bg-white p-1 rounded border border-gray-200 shadow-sm">
-          <Icon name={open ? 'expand_more' : 'chevron_right'} className="text-sm text-gray-600" />
-        </span>
-        <span className="font-bold text-[12px] uppercase tracking-wider">{title}</span>
+        <Icon name={open ? 'expand_more' : 'chevron_right'} className="text-base text-gray-600" />
+        {title}
       </button>
       {open && <div className="px-1 py-5 space-y-5">{children}</div>}
     </div>
@@ -319,8 +317,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
         <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
             <h2 className="text-lg font-black text-gray-900">{userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}</h2>
-            <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-              <Icon name="close" className="text-lg" />
+            <button onClick={onClose} className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
+              <Icon name="close" className="text-xl" />
             </button>
           </div>
           <div className="flex-1 flex items-center justify-center">

@@ -1,7 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
-import { Button } from '@/components/ui/Button'
+import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 
 interface StandardPlanDetail {
   id: string
@@ -46,17 +46,17 @@ const valueCls = 'text-sm text-foreground'
 
 export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onDelete, canEdit }: StandardPlanDetailPanelProps) {
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
+      <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <div>
-          <h2 className="text-xl font-bold text-foreground">{plan.name}</h2>
+          <h2 className="text-lg font-black text-gray-900">{plan.name}</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {plan.family?.code} - {plan.family?.name}
             {plan.familyModel ? ` / ${plan.familyModel.name}` : ' / Genérico'}
           </p>
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+        <button onClick={onClose} className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
           <Icon name="close" className="text-xl" />
         </button>
       </div>
@@ -65,16 +65,10 @@ export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onDelet
       <div className="flex-1 overflow-y-auto">
         {/* Ações */}
         {canEdit && (
-          <div className="p-4 border-b border-border flex gap-2">
-            <Button onClick={() => onEdit(plan.id)} className="flex-1">
-              <Icon name="edit" className="text-base mr-2" />
-              Editar Plano
-            </Button>
-            <Button variant="outline" onClick={() => onDelete(plan.id)} className="flex-1 text-danger border-danger hover:bg-danger/10">
-              <Icon name="delete" className="text-base mr-2" />
-              Excluir Plano
-            </Button>
-          </div>
+          <PanelActionButtons
+            onEdit={() => onEdit(plan.id)}
+            onDelete={() => onDelete(plan.id)}
+          />
         )}
 
         {/* Classificação */}

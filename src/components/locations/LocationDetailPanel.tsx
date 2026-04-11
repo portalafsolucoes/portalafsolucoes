@@ -48,9 +48,9 @@ export function LocationDetailPanel({
         </div>
         <button
           onClick={onClose}
-          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
+          className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
         >
-          <Icon name="close" className="text-xl text-muted-foreground" />
+          <Icon name="close" className="text-xl" />
         </button>
       </div>
 
@@ -62,7 +62,7 @@ export function LocationDetailPanel({
             {canEdit && (
               <button
                 onClick={onEdit}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors text-sm"
+                className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
               >
                 <Icon name="edit" className="text-base" />
                 Editar
@@ -71,7 +71,7 @@ export function LocationDetailPanel({
             {canDelete && (
               <button
                 onClick={onDelete}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] border border-destructive text-destructive hover:bg-destructive/10 transition-colors text-sm"
+                className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
               >
                 <Icon name="delete" className="text-base" />
                 Excluir

@@ -127,7 +127,7 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - Container: `h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]`
 - Header: `flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200`
 - Titulo: `text-lg font-black text-gray-900`
-- Close: `p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm` com icone `close`
+- Close: `flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors` com icone `close` de tamanho `text-xl`
 - Tabs: `TabsList className="w-full justify-start border-b rounded-none px-4"`
 - Barras de secao: `flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm`
 - Section title: `font-bold text-[12px] uppercase tracking-wider text-gray-900`
@@ -135,8 +135,26 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - Labels: `text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5`
 - Values: `text-[13px] font-medium text-gray-900`
 - Botao Editar: `bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
-- Botao Excluir: `border border-danger text-danger hover:bg-danger/10 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
+- Botao Excluir: `bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
 - **NAO** use `border-on-surface-variant/10`; use sempre `border-gray-200` ou `border-gray-300`
+
+### Regras dos botoes de acao no painel de detalhe (OBRIGATORIO)
+- Usar o componente `<PanelActionButtons>` de `@/components/ui/PanelActionButtons` para renderizar os botoes Editar e Excluir
+- Os botoes devem ser **sempre empilhados verticalmente** (`space-y-2`) — **nunca lado a lado** (`flex gap-2`)
+- O texto dos botoes deve ser **sempre generico**: "Editar" e "Excluir" — **nunca incluir o nome da entidade** (ex: "Editar Ativo", "Excluir Pessoa")
+- Ordem fixa: Editar em cima, Excluir embaixo
+- Excluir sempre com fundo vermelho preenchido (`bg-danger text-white`), nunca outline/branco
+
+### Secoes colapsaveis nos paineis (OBRIGATORIO)
+- Usar chevron **inline**, no mesmo padrao de `ModalSection.tsx` e `AssetEditPanel.tsx`
+- **NAO** usar wrapper `bg-white p-1 rounded border` em volta do chevron (como o `PanelSection` legado em PersonFormModal)
+- Padrao correto do header colapsavel:
+```tsx
+<button className="w-full flex items-center gap-2 px-4 py-2.5 bg-gray-100 border border-gray-200 text-[12px] font-bold text-gray-900 uppercase tracking-wider hover:bg-gray-200 transition-colors">
+  <Icon name={open ? 'expand_more' : 'chevron_right'} className="text-base text-gray-600" />
+  Titulo da Secao
+</button>
+```
 
 ### Painel de edicao (inPage)
 - Container: `h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]`
