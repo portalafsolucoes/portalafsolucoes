@@ -1,10 +1,13 @@
 import { chromium } from '@playwright/test'
 import fs from 'fs/promises'
 import path from 'path'
+import { ensureScreenshotAutomationAuthorized } from '../../../scripts/testing/screenshot-authorization.mjs'
 
 const BASE_URL = 'http://localhost:3000'
 const OUT_DIR = path.resolve('auditoria/2026-04-10_19-15-36/worker-c')
 const PASSWORD = 'Teste@123'
+
+ensureScreenshotAutomationAuthorized('auditoria/2026-04-10_19-15-36/worker-c/run-worker-c-audit.mjs')
 
 const nowStamp = new Date().toISOString().replace(/[:.]/g, '-')
 

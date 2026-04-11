@@ -17,6 +17,17 @@ const outputDir = path.join(
 )
 const screenshotsDir = path.join(outputDir, 'screenshots')
 
+function ensureScreenshotAutomationAuthorized() {
+  const rawValue = (process.env.ALLOW_SCREENSHOT_AUTOMATION ?? '').trim().toLowerCase()
+  const authorizedValues = new Set(['1', 'true', 'yes', 'authorized'])
+
+  if (!authorizedValues.has(rawValue)) {
+    throw new Error(
+      'Screenshot generation is blocked for scripts/capture-dashboard-tree.ts. Set ALLOW_SCREENSHOT_AUTOMATION=1 to authorize this run.'
+    )
+  }
+}
+
 type Capture = {
   section: 'dashboard' | 'tree'
   file: string
@@ -237,6 +248,7 @@ function writeReport() {
 }
 
 async function main() {
+  ensureScreenshotAutomationAuthorized()
   ensureDirs()
 
   const browser = await chromium.launch({ headless: true })

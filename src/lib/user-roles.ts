@@ -17,6 +17,15 @@ export type LegacyUserRole =
 
 export type UserRole = CanonicalUserRole | LegacyUserRole
 
+export const CANONICAL_ROLE_OPTIONS: Array<{ value: CanonicalUserRole; label: string }> = [
+  { value: 'SUPER_ADMIN', label: 'Super Administrador' },
+  { value: 'ADMIN', label: 'Administrador' },
+  { value: 'TECHNICIAN', label: 'Técnico' },
+  { value: 'LIMITED_TECHNICIAN', label: 'Técnico Limitado' },
+  { value: 'REQUESTER', label: 'Solicitante' },
+  { value: 'VIEW_ONLY', label: 'Somente Consulta' },
+]
+
 export interface RoleContext {
   role?: string | null
   canonicalRole?: string | null

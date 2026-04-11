@@ -1,11 +1,16 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import {
+  isScreenshotAutomationAuthorized,
+  skipScreenshotSuiteUnlessAuthorized,
+} from './helpers/screenshotAuthorization'
 
 const baseURL = process.env.BASE_URL ?? 'http://localhost:3001'
 const auditRoot = path.resolve(process.cwd(), 'auditoria-e2e')
 const discoveryShots = path.join(auditRoot, 'F1_discovery', 'screenshots')
 const testShots = path.join(auditRoot, 'F2_testes', 'screenshots')
+const screenshotAuthorized = isScreenshotAutomationAuthorized()
 
 const users = {
   superAdmin: { email: 'super.admin@polimix.local', password: 'Teste@123' },
@@ -14,8 +19,12 @@ const users = {
 }
 
 for (const dir of [discoveryShots, testShots]) {
-  fs.mkdirSync(dir, { recursive: true })
+  if (screenshotAuthorized) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
 }
+
+skipScreenshotSuiteUnlessAuthorized(test, 'tests/audit-smoke.spec.ts')
 
 async function loginByApi(page: Page, request: APIRequestContext, email: string, password: string) {
   const response = await request.post(`${baseURL}/api/auth/login`, {

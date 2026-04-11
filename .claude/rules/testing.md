@@ -25,4 +25,5 @@ globs: tests/**,**/*.test.*
 - Preferir cenarios E2E orientados a fluxo real do usuario
 - Usar esperas deterministicas (`waitForURL`, `waitForLoadState`, asserts de visibilidade) antes de recorrer a `waitForTimeout`
 - Capturar screenshots quando ajudarem a diagnosticar regressao visual, permissao ou responsividade
+- Qualquer script ou teste que gere screenshots deve exigir autorizacao explicita via `ALLOW_SCREENSHOT_AUTOMATION=1` antes de criar arquivos
 - Nomear testes e describes de forma explicita, citando rota, modulo ou comportamento validado

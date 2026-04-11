@@ -63,6 +63,7 @@ Padrao visual:
 
 ## Padrao de Tela de Listagem (OBRIGATORIO)
 Referencia canonica: telas de `Pessoas` e `Ativos`.
+- Excecao documentada: em `/people-teams`, o toggle de visualizacao deve oferecer apenas `Tabela` e `Grade`; o modo `Arvore` nao deve aparecer nessa tela
 
 ### Estrutura da pagina
 ```tsx
@@ -272,6 +273,7 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 | `/dashboard` | Dashboard | Stats | - | - |
 | `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal | ConfirmDialog |
 | `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal | ConfirmDialog |
+| `/assets/standard` | Bens Padrao | Listagem split-panel | StandardAssetDetailPanel, StandardAssetFormPanel(inPage) | ConfirmDialog |
 | `/work-orders` | Ordens de Servico | Listagem split-panel | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal | ConfirmDialog |
 | `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal(inPage), RequestFormModal(inPage) | ConfirmDialog |
 | `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal(inPage) | - |

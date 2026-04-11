@@ -171,11 +171,11 @@ export async function PUT(
       lastName,
       email: normalizedEmail,
       role,
-      phone,
-      jobTitle,
+      phone: phone || null,
+      jobTitle: jobTitle || null,
       rate,
       enabled,
-      locationId,
+      locationId: locationId !== undefined ? (locationId || null) : undefined,
       calendarId: calendarId !== undefined ? (calendarId || null) : undefined
     }
 

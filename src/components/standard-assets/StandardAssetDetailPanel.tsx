@@ -67,44 +67,33 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
     <div className="h-full flex flex-col bg-card border-l border-border">
       {/* Header */}
       <div className="flex items-start justify-between p-4 border-b border-border">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-xl font-bold text-foreground">
-              {item.name || item.family?.name || 'Bem Padrão'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="ml-auto p-1 hover:bg-muted rounded transition-colors"
-            >
-              <Icon name="close" className="text-xl text-muted-foreground" />
-            </button>
-          </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">
+            {item.name || item.family?.name || 'Bem Padrão'}
+          </h2>
           {item.family && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {item.family.code} - {item.family.name}
             </p>
           )}
         </div>
+        <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+          <Icon name="close" className="text-xl" />
+        </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Ações */}
-        <div className="p-4 border-b border-border space-y-2">
-          <button
-            onClick={() => onEdit(item)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
-          >
-            <Icon name="edit" className="text-base" />
+        <div className="p-4 border-b border-border flex gap-2">
+          <Button onClick={() => onEdit(item)} className="flex-1">
+            <Icon name="edit" className="text-base mr-2" />
             Editar
-          </button>
-          <button
-            onClick={() => onDelete(item.id)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
-          >
-            <Icon name="delete" className="text-base" />
+          </Button>
+          <Button variant="outline" onClick={() => onDelete(item.id)} className="flex-1 text-danger border-danger hover:bg-danger/10">
+            <Icon name="delete" className="text-base mr-2" />
             Excluir
-          </button>
+          </Button>
         </div>
 
         {/* Localização e Organização */}

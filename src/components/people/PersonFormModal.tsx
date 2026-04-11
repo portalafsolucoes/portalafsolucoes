@@ -6,6 +6,7 @@ import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Location } from '@/types'
+import { CANONICAL_ROLE_OPTIONS, normalizeUserRole } from '@/lib/user-roles'
 
 interface PersonFormModalProps {
   isOpen: boolean
@@ -100,7 +101,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
     password: '',
     phone: '',
     jobTitle: '',
-    role: 'MECANICO',
+    role: 'TECHNICIAN',
     rate: '0',
     locationId: '',
     calendarId: '',
@@ -116,7 +117,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
       password: '',
       phone: '',
       jobTitle: '',
-      role: 'MECANICO',
+      role: 'TECHNICIAN',
       rate: '0',
       locationId: '',
       calendarId: '',
@@ -150,7 +151,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           password: '',
           phone: user.phone || '',
           jobTitle: user.jobTitle || '',
-          role: user.role,
+          role: normalizeUserRole(user.role),
           rate: user.rate.toString(),
           locationId: user.locationId || '',
           calendarId: user.calendarId || '',
@@ -400,6 +401,36 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             <PanelSection title="Função e Acesso">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <label htmlFor="phone-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Telefone
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone-in-page"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="jobTitle-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Cargo
+                  </label>
+                  <input
+                    type="text"
+                    id="jobTitle-in-page"
+                    name="jobTitle"
+                    value={formData.jobTitle}
+                    onChange={handleChange}
+                    placeholder="Ex.: Mecânico, Eletricista, Engenheiro"
+                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <label htmlFor="role-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Papel <span className="text-danger">*</span>
                   </label>
@@ -411,13 +442,11 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     required
                     className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
-                    <option value="SUPER_ADMIN">Super Administrador</option>
-                    <option value="GESTOR">Gestor</option>
-                    <option value="PLANEJADOR">Planejador</option>
-                    <option value="MECANICO">Mecânico</option>
-                    <option value="ELETRICISTA">Eletricista</option>
-                    <option value="OPERADOR">Operador</option>
-                    <option value="CONSTRUTOR_CIVIL">Construtor Civil</option>
+                    {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
+                      <option key={roleOption.value} value={roleOption.value}>
+                        {roleOption.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -614,6 +643,36 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Função e Acesso">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label htmlFor="phone" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Telefone
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="jobTitle" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Cargo
+                </label>
+                <input
+                  type="text"
+                  id="jobTitle"
+                  name="jobTitle"
+                  value={formData.jobTitle}
+                  onChange={handleChange}
+                  placeholder="Ex.: Mecânico, Eletricista, Engenheiro"
+                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <label htmlFor="role" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Papel <span className="text-danger">*</span>
                 </label>
@@ -625,13 +684,11 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   required
                   className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
-                  <option value="SUPER_ADMIN">Super Administrador</option>
-                  <option value="GESTOR">Gestor</option>
-                  <option value="PLANEJADOR">Planejador</option>
-                  <option value="MECANICO">Mecânico</option>
-                  <option value="ELETRICISTA">Eletricista</option>
-                  <option value="OPERADOR">Operador</option>
-                  <option value="CONSTRUTOR_CIVIL">Construtor Civil</option>
+                  {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
+                    <option key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

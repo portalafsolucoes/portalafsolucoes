@@ -1,4 +1,16 @@
-export type UserRole = 'SUPER_ADMIN' | 'GESTOR' | 'PLANEJADOR' | 'MECANICO' | 'ELETRICISTA' | 'OPERADOR' | 'CONSTRUTOR_CIVIL'
+export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'TECHNICIAN'
+  | 'LIMITED_TECHNICIAN'
+  | 'REQUESTER'
+  | 'VIEW_ONLY'
+  | 'GESTOR'
+  | 'PLANEJADOR'
+  | 'MECANICO'
+  | 'ELETRICISTA'
+  | 'OPERADOR'
+  | 'CONSTRUTOR_CIVIL'
 
 export type WorkOrderStatus = 'PENDING' | 'RELEASED' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETE'
 

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { chromium } from '@playwright/test'
+import { ensureScreenshotAutomationAuthorized } from '../../../scripts/testing/screenshot-authorization.mjs'
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const AUDIT_ROOT = path.resolve('auditoria/2026-04-10_19-15-36/worker-d')
@@ -10,6 +11,8 @@ const REPORT_MD = path.join(AUDIT_ROOT, 'RESULTADO.md')
 const REPORT_HTML = path.join(AUDIT_ROOT, 'RESULTADO.html')
 const REPORT_PDF = path.join(AUDIT_ROOT, 'RESULTADO.pdf')
 const RESULTS_JSON = path.join(AUDIT_ROOT, 'results.json')
+
+ensureScreenshotAutomationAuthorized('auditoria/2026-04-10_19-15-36/worker-d/run-audit.mjs')
 
 const companies = [
   {

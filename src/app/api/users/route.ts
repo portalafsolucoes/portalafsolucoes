@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate, calendarId, locationId, unitIds } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, calendarId, locationId, unitIds } = body
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
 
     if (!email || !password || !firstName || !lastName) {
@@ -179,11 +179,11 @@ export async function POST(request: NextRequest) {
         firstName,
         lastName,
         username,
-        role: role || 'MECANICO',
-        phone,
-        jobTitle,
+        role: role || 'TECHNICIAN',
+        phone: phone || null,
+        jobTitle: jobTitle || null,
         rate: rate || 0,
-        enabled: true,
+        enabled: enabled ?? true,
         companyId: session.companyId,
         calendarId: calendarId || null,
         locationId: locationId || null,

@@ -136,19 +136,5 @@ export function isAdmin(role: UserRole): boolean {
  * Obtém label amigável para o papel
  */
 export function getRoleLabel(role: UserRole | string): string {
-  const labels: Record<string, string> = {
-    SUPER_ADMIN: 'Super Administrador',
-    ADMIN: 'Administrador',
-    TECHNICIAN: 'Técnico',
-    LIMITED_TECHNICIAN: 'Técnico Limitado',
-    REQUESTER: 'Solicitante',
-    VIEW_ONLY: 'Somente Consulta',
-    GESTOR: 'Gestor',
-    PLANEJADOR: 'Planejador',
-    MECANICO: 'Mecânico',
-    ELETRICISTA: 'Eletricista',
-    OPERADOR: 'Operador',
-    CONSTRUTOR_CIVIL: 'Construtor Civil'
-  }
-  return labels[role] || getRoleDisplayName(role)
+  return getRoleDisplayName(role)
 }

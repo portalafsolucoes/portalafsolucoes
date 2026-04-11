@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { chromium, devices } from '@playwright/test'
+import { ensureScreenshotAutomationAuthorized } from './testing/screenshot-authorization.mjs'
 
 const BASE_URL = 'http://localhost:3000'
 const OUTPUT_DIR = path.resolve('auditoria-e2e')
@@ -16,6 +17,8 @@ const COMPARATIVE_MD = path.join(OUTPUT_DIR, 'F3_ui', 'comparativo.md')
 const QA_EMAIL = 'super.admin@polimix.local'
 const QA_PASSWORD = 'Teste@123'
 const AUDIT_DATE = new Date().toISOString()
+
+ensureScreenshotAutomationAuthorized('scripts/run-maintenance-audit.mjs')
 
 const state = {
   currentStep: 'boot',

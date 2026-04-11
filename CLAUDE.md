@@ -43,6 +43,7 @@
 - Antes de criar fluxo novo, validar perfil, empresa/unidade, status envolvidos e criterio de aceite
 - Em listas, sempre considerar busca, filtros, loading, estado vazio, responsividade e permissao
 - Em formularios, garantir validacoes de negocio e status inicial correto
+- Scripts e testes que geram screenshots ou auditorias visuais so podem rodar com autorizacao explicita via `ALLOW_SCREENSHOT_AUTOMATION=1`
 - Mudancas em autenticacao, sidebar, redirects ou permissoes exigem verificacao com Playwright nos perfis impactados
 - Rodar `lint`, `test` e/ou `build` conforme o impacto antes de concluir; se algo nao puder ser validado, declarar
 - Em caso de divergencia, seguir `docs/SPEC.md` e `.claude/rules/*.md` e registrar o gap

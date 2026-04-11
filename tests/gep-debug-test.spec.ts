@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
+
+skipScreenshotSuiteUnlessAuthorized(test, 'tests/gep-debug-test.spec.ts')
 
 test('Debug GEP Page Structure', async ({ page }) => {
   await page.goto('http://localhost:3000/gep');

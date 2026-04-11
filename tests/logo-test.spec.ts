@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
+
+skipScreenshotSuiteUnlessAuthorized(test, 'tests/logo-test.spec.ts')
 
 test.describe('Logo Test', () => {
   test('Deve exibir a nova logo com texto MIZU CIMENTOS', async ({ page }) => {

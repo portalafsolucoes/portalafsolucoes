@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from '@playwright/test'
+import { ensureScreenshotAutomationAuthorized } from './screenshot-authorization.mjs'
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
 const AUDIT_DATE = new Date().toISOString().slice(0, 10)
@@ -13,6 +14,8 @@ const REPORT_JSON = path.join(OUTPUT_ROOT, 'relatorio.json')
 
 const QA_EMAIL = 'super.admin@polimix.local'
 const QA_PASSWORD = 'Teste@123'
+
+ensureScreenshotAutomationAuthorized('scripts/testing/run-super-admin-full-audit.mjs')
 
 function slugify(text) {
   return String(text)

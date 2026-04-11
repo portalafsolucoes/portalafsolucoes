@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
+
+skipScreenshotSuiteUnlessAuthorized(test, 'tests/sidebar-logo-final.spec.ts')
 
 test.describe('Sidebar Logo Final Test', () => {
   test('Deve exibir logo maior ao lado do hamburger com texto embaixo', async ({ page }) => {

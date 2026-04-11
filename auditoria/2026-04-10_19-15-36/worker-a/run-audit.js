@@ -1,11 +1,14 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const { chromium } = require('@playwright/test')
+const { ensureScreenshotAutomationAuthorized } = require('../../../scripts/testing/screenshot-authorization.cjs')
 
 const baseURL = process.env.BASE_URL || 'http://localhost:3000'
 const rootDir = path.resolve(process.cwd(), 'auditoria', '2026-04-10_19-15-36', 'worker-a')
 const shotsDir = path.join(rootDir, 'screenshots')
 const dataDir = path.join(rootDir, 'data')
+
+ensureScreenshotAutomationAuthorized('auditoria/2026-04-10_19-15-36/worker-a/run-audit.js')
 
 fs.mkdirSync(shotsDir, { recursive: true })
 fs.mkdirSync(dataDir, { recursive: true })

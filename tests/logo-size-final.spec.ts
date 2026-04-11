@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
+
+skipScreenshotSuiteUnlessAuthorized(test, 'tests/logo-size-final.spec.ts')
 
 test.describe('Logo Size Final Test', () => {
   test('Deve exibir logo grande ocupando todo o espaço disponível', async ({ page }) => {

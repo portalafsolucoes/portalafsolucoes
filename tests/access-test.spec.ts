@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
+
+skipScreenshotSuiteUnlessAuthorized(test, 'tests/access-test.spec.ts')
 
 test.describe('Teste de Acesso ao Sistema GMM', () => {
   test('Deve acessar a página de login', async ({ page }) => {

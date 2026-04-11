@@ -182,6 +182,9 @@ Regras complementares:
 - Cadastro inclui tag unica por unidade, dados tecnicos, custos, GUT, contador, hierarquia e imagem
 - Criticidade GUT = `Gravidade x Urgencia x Tendencia`
 - Existe suporte a ativos padrao/template baseados em TOTVS
+- A tela `/assets/standard` (Bens Padrao) segue o padrao split-panel: detalhe e formulario (criar/editar) abrem no painel direito no desktop; no mobile abrem como `<Modal>` overlay
+- O componente `StandardAssetFormPanel` suporta prop `inPage` para renderizacao inline (painel) ou como modal
+- Criar um Bem Padrao exige selecao de familia; familias que ja possuem Bem Padrao sao ocultadas no select de criacao
 
 ### 7. Localizacoes
 - Estrutura hierarquica de unidades e locais fisicos
@@ -192,6 +195,7 @@ Regras complementares:
 - Gestao de usuarios por `SUPER_ADMIN` e `ADMIN`
 - Equipes agrupam tecnicos para atribuicao de OS e ativos
 - Usuarios podem ter multiplas unidades de acesso
+- A tela de `Pessoas` oferece apenas visualizacao em `Tabela` e `Grade`; a visualizacao em arvore nao faz parte deste modulo
 - Formularios de pessoa devem exigir email valido com dominio completo e nunca reapresentar senha salva; no modo de edicao, o campo de senha deve permanecer vazio e opcional
 
 ### 9. Planos de Manutencao

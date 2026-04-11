@@ -13,26 +13,14 @@ import { TeamFormModal } from '@/components/teams/TeamFormModal'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { User } from '@/types'
-import { getRoleLabel } from '@/lib/rbac'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
 import { hasPermission } from '@/lib/permissions'
-import { getDefaultCmmsPath } from '@/lib/user-roles'
+import { CANONICAL_ROLE_OPTIONS, getDefaultCmmsPath, getRoleDisplayName, normalizeUserRole } from '@/lib/user-roles'
 
-type ViewMode = 'grid' | 'table' | 'hierarchy'
-
-type TeamMembership = {
-  team: {
-    id: string
-    name: string
-  }
-}
-
-type UserWithTeams = User & {
-  teamMemberships?: TeamMembership[]
-}
+type ViewMode = 'grid' | 'table'
 
 type Team = {
   id: string
@@ -50,19 +38,8 @@ type Team = {
   }
 }
 
-type PeopleHierarchy = Record<string, Record<string, UserWithTeams[]>>
 type SortField = 'name' | 'email' | 'jobTitle' | 'role' | 'enabled'
 type SortDirection = 'asc' | 'desc'
-
-// Mapeia role canônico para valores legados armazenados no banco
-const CANONICAL_TO_LEGACY_ROLES: Record<string, string> = {
-  SUPER_ADMIN: 'SUPER_ADMIN',
-  ADMIN: 'ADMIN,GESTOR,PLANEJADOR',
-  TECHNICIAN: 'TECHNICIAN,MECANICO',
-  LIMITED_TECHNICIAN: 'LIMITED_TECHNICIAN,ELETRICISTA,CONSTRUTOR_CIVIL',
-  REQUESTER: 'REQUESTER,OPERADOR',
-  VIEW_ONLY: 'VIEW_ONLY',
-}
 
 export default function PeopleTeamsPage() {
   const router = useRouter()
@@ -93,10 +70,7 @@ export default function PeopleTeamsPage() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoadingUsers(true)
-      const params = new URLSearchParams()
-      if (roleFilter) params.append('role', CANONICAL_TO_LEGACY_ROLES[roleFilter] ?? roleFilter)
-
-      const response = await fetch(`/api/users?${params}`)
+      const response = await fetch('/api/users')
       const data = await response.json()
       
       if (data.data) {
@@ -107,7 +81,7 @@ export default function PeopleTeamsPage() {
     } finally {
       setLoadingUsers(false)
     }
-  }, [roleFilter])
+  }, [])
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -140,10 +114,16 @@ export default function PeopleTeamsPage() {
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase()
+    const matchesRole = !roleFilter || normalizeUserRole(user.role) === roleFilter
+
     return (
-      user.firstName.toLowerCase().includes(searchLower) ||
-      user.lastName.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower)
+      matchesRole && (
+        user.firstName.toLowerCase().includes(searchLower) ||
+        user.lastName.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        (user.jobTitle || '').toLowerCase().includes(searchLower) ||
+        getRoleDisplayName(user.role).toLowerCase().includes(searchLower)
+      )
     )
   })
 
@@ -161,7 +141,7 @@ export default function PeopleTeamsPage() {
       case 'jobTitle':
         return (a.jobTitle || '').toLowerCase().localeCompare((b.jobTitle || '').toLowerCase()) * modifier
       case 'role':
-        return getRoleLabel(a.role).localeCompare(getRoleLabel(b.role)) * modifier
+        return getRoleDisplayName(a.role).localeCompare(getRoleDisplayName(b.role)) * modifier
       case 'enabled':
         return ((a.enabled ? 1 : 0) - (b.enabled ? 1 : 0)) * modifier
       default:
@@ -240,55 +220,12 @@ export default function PeopleTeamsPage() {
     )
   }
 
-  // Build hierarchy for people: Teams > Job Titles > People (3 layers)
-  const buildHierarchy = () => {
-    const hierarchy: PeopleHierarchy = {}
-    
-    filteredUsers.forEach(user => {
-      const userWithTeams = user as UserWithTeams
-      // Get user's teams
-      const userTeams = userWithTeams.teamMemberships?.map((tm) => tm.team) || []
-      
-      if (userTeams.length === 0) {
-        // Users without team go to "Sem Equipe"
-        const teamName = 'Sem Equipe'
-        if (!hierarchy[teamName]) {
-          hierarchy[teamName] = {}
-        }
-        
-        const jobTitle = user.jobTitle || 'Sem Cargo'
-        if (!hierarchy[teamName][jobTitle]) {
-          hierarchy[teamName][jobTitle] = []
-        }
-        hierarchy[teamName][jobTitle].push(user)
-      } else {
-        // Add user to each of their teams
-        userTeams.forEach((team) => {
-          const teamName = team.name
-          if (!hierarchy[teamName]) {
-            hierarchy[teamName] = {}
-          }
-          
-          const jobTitle = user.jobTitle || 'Sem Cargo'
-          if (!hierarchy[teamName][jobTitle]) {
-            hierarchy[teamName][jobTitle] = []
-          }
-          hierarchy[teamName][jobTitle].push(user)
-        })
-      }
-    })
-    
-    return hierarchy
-  }
-
   const pageTitle = activeTab === 'people' ? 'Pessoas' : 'Equipes'
   const pageDescription =
     activeTab === 'people'
       ? 'Gestao de pessoas e equipamentos'
       : 'Gestao de equipes e alocacoes operacionais'
   const showPeopleSidePanel = !isMobile && (!!selectedUserId || showNewUserModal)
-  const isTableSplitView = showPeopleSidePanel && viewMode === 'table'
-
   if (!user || !hasPermission(user, 'people-teams', 'view')) {
     return null
   }
@@ -339,18 +276,6 @@ export default function PeopleTeamsPage() {
                       <Icon name="grid_view" className="text-base" />
                       <span className="hidden md:inline">Grade</span>
                     </button>
-                    <button
-                      onClick={() => setViewMode('hierarchy')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
-                        viewMode === 'hierarchy'
-                          ? 'bg-background text-foreground ambient-shadow'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                      title="Visualização Hierárquica"
-                    >
-                      <Icon name="account_tree" className="text-base" />
-                      <span className="hidden md:inline">Árvore</span>
-                    </button>
                   </div>
 
                   <select
@@ -359,12 +284,11 @@ export default function PeopleTeamsPage() {
                     className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Todos os Papéis</option>
-                    <option value="SUPER_ADMIN">Super Administrador</option>
-                    <option value="ADMIN">Administrador</option>
-                    <option value="TECHNICIAN">Técnico</option>
-                    <option value="LIMITED_TECHNICIAN">Técnico Limitado</option>
-                    <option value="REQUESTER">Solicitante</option>
-                    <option value="VIEW_ONLY">Somente Consulta</option>
+                    {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
+                      <option key={roleOption.value} value={roleOption.value}>
+                        {roleOption.label}
+                      </option>
+                    ))}
                   </select>
 
                   <ExportButton data={filteredUsers} entity="users" />
@@ -472,15 +396,12 @@ export default function PeopleTeamsPage() {
                               )}
                               <div className="pt-2 border-t border-border">
                                 <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                                  {getRoleLabel(user.role)}
+                                  {getRoleDisplayName(user.role)}
                                 </span>
                               </div>
                             </div>
                           </div>
                         ))}
-                      </div>
-                      <div className="mt-4 text-center text-xs text-muted-foreground">
-                        Mostrando {sortedUsers.length} de {users.length} pessoa(s)
                       </div>
                       </div>
                     )}
@@ -558,7 +479,7 @@ export default function PeopleTeamsPage() {
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-foreground">
-                                      {getRoleLabel(user.role)}
+                                      {getRoleDisplayName(user.role)}
                                     </span>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
@@ -577,69 +498,6 @@ export default function PeopleTeamsPage() {
                             </tbody>
                           </table>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Hierarchy View - 3 Layers: Teams > Job Titles > People */}
-                    {viewMode === 'hierarchy' && (
-                      <div className="overflow-auto flex-1 p-4 md:p-6">
-                      <div className="space-y-6">
-                        {Object.entries(buildHierarchy()).map(([teamName, jobTitles]) => (
-                          <div key={teamName} className="bg-card rounded-[4px] ambient-shadow overflow-hidden">
-                            <div className="bg-primary/5 px-6 py-4 border-b border-border">
-                              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                                <Icon name="group" className="text-xl" />
-                                {teamName}
-                                <span className="text-sm font-normal text-primary">
-                                  ({Object.values(jobTitles).reduce((acc, groupUsers) => acc + groupUsers.length, 0)} pessoas)
-                                </span>
-                              </h3>
-                            </div>
-                            
-                            <div className="p-6 space-y-4">
-                              {Object.entries(jobTitles).map(([jobTitle, groupUsers]) => (
-                                <div key={jobTitle} className="border-l-4 border-on-surface-variant pl-4">
-                                  <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
-                                    <Icon name="hub" className="text-base text-success" />
-                                    {jobTitle}
-                                    <span className="text-sm font-normal text-muted-foreground">({groupUsers.length})</span>
-                                  </h4>
-                                  
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ml-6">
-                                    {groupUsers.map((user) => (
-                                      <div
-                                        key={user.id}
-                                        onClick={() => handleUserClick(user.id)}
-                                        className="flex items-center gap-3 p-3 rounded-[4px] hover:bg-secondary cursor-pointer transition-colors"
-                                        data-user-id={user.id}
-                                      >
-                                        {user.image ? (
-                                          <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                        ) : (
-                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <span className="text-primary font-semibold text-sm">
-                                              {user.firstName[0]}{user.lastName[0]}
-                                            </span>
-                                          </div>
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                          <div className="text-sm font-medium text-foreground truncate">
-                                            {user.firstName} {user.lastName}
-                                          </div>
-                                          <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-6 text-center text-muted-foreground">
-                        Mostrando {sortedUsers.length} de {users.length} pessoa(s)
-                      </div>
                       </div>
                     )}
 
