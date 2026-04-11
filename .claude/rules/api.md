@@ -11,7 +11,7 @@ globs: src/app/api/**,src/actions/**
 - A UI e a API devem compartilhar a mesma regra central de permissao; nao manter matriz divergente
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
 - Se o banco ou legado ainda possuir perfis antigos, a camada de auth/API deve normalizar esses valores antes de decidir acesso, sidebar, redirects, badges e permissoes
-- A normalizacao de papel deve considerar contexto confiavel do usuario, como `email`, `username`, `jobTitle` e papel canonico de sessao; nao depender apenas do valor legado bruto
+- A normalizacao de papel deve usar exclusivamente o campo `role` persistido no banco; email, username e jobTitle NAO podem influenciar o papel efetivo (V04 — escalada de privilegio por padrao de email foi corrigida e nao deve ser reintroduzida)
 - Em payloads e respostas do modulo de `Pessoas`, `role` representa o papel de acesso do sistema e `jobTitle` representa o cargo profissional; APIs nao devem misturar esses conceitos nem rotular valores legados operacionais como se fossem o papel exibido ao usuario
 - Quando a UI enviar `jobTitleId`, as APIs de usuario devem validar que o cargo pertence a empresa ativa, persistir o vinculo no banco e manter o nome do cargo refletido no campo textual exibido na ficha da pessoa
 
