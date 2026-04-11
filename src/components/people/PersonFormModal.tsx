@@ -80,16 +80,18 @@ function PanelSection({
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-[4px] overflow-hidden">
+    <div className="rounded-md overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted/50 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-md shadow-sm text-foreground hover:bg-gray-200/60 transition-colors"
       >
-        {open ? <Icon name="expand_more" className="text-base" /> : <Icon name="chevron_right" className="text-base" />}
-        {title}
+        <span className="bg-white p-1 rounded border border-gray-200 shadow-sm">
+          <Icon name={open ? 'expand_more' : 'chevron_right'} className="text-sm text-gray-600" />
+        </span>
+        <span className="font-bold text-[12px] uppercase tracking-wider">{title}</span>
       </button>
-      {open && <div className="p-4 space-y-4">{children}</div>}
+      {open && <div className="px-1 py-5 space-y-5">{children}</div>}
     </div>
   )
 }
@@ -314,11 +316,11 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
   if (loading) {
     if (inPage) {
       return (
-        <div className="h-full flex flex-col bg-card border-l border-border">
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-xl font-bold text-foreground">{userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}</h2>
-            <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
-              <Icon name="close" className="text-xl text-muted-foreground" />
+        <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-lg font-black text-gray-900">{userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}</h2>
+            <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
+              <Icon name="close" className="text-lg" />
             </button>
           </div>
           <div className="flex-1 flex items-center justify-center">
@@ -343,21 +345,26 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
 
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">{userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
-            <Icon name="close" className="text-xl text-muted-foreground" />
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+          <div>
+            <h2 className="text-lg font-black text-gray-900">{userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}</h2>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">
+              {userId ? 'Atualize as informações do cadastro' : 'Preencha os dados para criar um novo cadastro'}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
+            <Icon name="close" className="text-lg" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
             <PanelSection title="Identificação">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Nome <span className="text-danger">*</span>
+                  <label htmlFor="firstName-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    Nome <span className="text-accent-orange">*</span>
                   </label>
                   <input
                     type="text"
@@ -366,12 +373,12 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     value={formData.firstName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastName-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Sobrenome <span className="text-danger">*</span>
+                  <label htmlFor="lastName-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    Sobrenome <span className="text-accent-orange">*</span>
                   </label>
                   <input
                     type="text"
@@ -380,15 +387,15 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     value={formData.lastName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="email-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Email <span className="text-danger">*</span>
+                  <label htmlFor="email-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    Email <span className="text-accent-orange">*</span>
                   </label>
                   <input
                     type="email"
@@ -397,12 +404,12 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   />
                 </div>
                 <div>
-                  <label htmlFor="password-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-danger">*</span>}
+                  <label htmlFor="password-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-accent-orange">*</span>}
                   </label>
                   <input
                     type="password"
@@ -412,7 +419,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     onChange={handleChange}
                     required={!userId}
                     minLength={6}
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   />
                 </div>
               </div>
@@ -421,7 +428,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             <PanelSection title="Função e Acesso">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="phone-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  <label htmlFor="phone-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                     Telefone
                   </label>
                   <input
@@ -430,11 +437,11 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   />
                 </div>
                 <div>
-                  <label htmlFor="jobTitleId-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  <label htmlFor="jobTitleId-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                     Cargo
                   </label>
                   <select
@@ -442,7 +449,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     name="jobTitleId"
                     value={formData.jobTitleId}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   >
                     <option value="">Selecione um cargo</option>
                     {jobTitles.map((jobTitle) => (
@@ -456,8 +463,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="role-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Papel <span className="text-danger">*</span>
+                  <label htmlFor="role-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    Papel <span className="text-accent-orange">*</span>
                   </label>
                   <select
                     id="role-in-page"
@@ -465,7 +472,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     value={formData.role}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   >
                     {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
                       <option key={roleOption.value} value={roleOption.value}>
@@ -475,7 +482,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="rate-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  <label htmlFor="rate-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                     Taxa por Hora (R$)
                   </label>
                   <input
@@ -486,13 +493,13 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     onChange={handleChange}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="locationId-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label htmlFor="locationId-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Localização
                 </label>
                 <select
@@ -500,7 +507,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   name="locationId"
                   value={formData.locationId}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 >
                   <option value="">Selecione uma localização</option>
                   {locations.map(location => (
@@ -512,7 +519,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
               </div>
 
               <div>
-                <label htmlFor="calendarId-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label htmlFor="calendarId-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Calendário
                 </label>
                 <select
@@ -520,7 +527,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   name="calendarId"
                   value={formData.calendarId}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 >
                   <option value="">Nenhum</option>
                   {calendars.map(cal => (
@@ -535,7 +542,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             <PanelSection title="Unidades de Acesso">
               {units.length > 0 && (
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  <label className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                     Unidades de Acesso
                   </label>
                   <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">
@@ -582,12 +589,12 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             </PanelSection>
           </div>
 
-          <div className="flex gap-3 px-4 py-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          <div className="flex gap-4 px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-gray-300 text-gray-700 font-bold shadow-sm bg-white hover:bg-gray-50">
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving} className="flex-1">
-              <Icon name="save" className="text-base mr-2" />
+            <Button type="submit" disabled={saving} className="flex-1 bg-gray-900 hover:bg-black text-white font-bold shadow-md">
+              <Icon name="check_circle" className="text-base mr-2" />
               {saving ? 'Salvando...' : userId ? 'Salvar Alterações' : 'Salvar'}
             </Button>
           </div>
@@ -603,8 +610,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Identificação">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Nome <span className="text-danger">*</span>
+                <label htmlFor="firstName" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Nome <span className="text-accent-orange">*</span>
                 </label>
                 <input
                   type="text"
@@ -613,12 +620,12 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Sobrenome <span className="text-danger">*</span>
+                <label htmlFor="lastName" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Sobrenome <span className="text-accent-orange">*</span>
                 </label>
                 <input
                   type="text"
@@ -627,15 +634,15 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Email <span className="text-danger">*</span>
+                <label htmlFor="email" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Email <span className="text-accent-orange">*</span>
                 </label>
                 <input
                   type="email"
@@ -644,12 +651,12 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-danger">*</span>}
+                <label htmlFor="password" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-accent-orange">*</span>}
                 </label>
                 <input
                   type="password"
@@ -659,7 +666,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   onChange={handleChange}
                   required={!userId}
                   minLength={6}
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 />
               </div>
             </div>
@@ -668,7 +675,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Função e Acesso">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="phone" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label htmlFor="phone" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Telefone
                 </label>
                 <input
@@ -677,11 +684,11 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 />
               </div>
               <div>
-                <label htmlFor="jobTitleId" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label htmlFor="jobTitleId" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Cargo
                 </label>
                 <select
@@ -689,7 +696,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   name="jobTitleId"
                   value={formData.jobTitleId}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 >
                   <option value="">Selecione um cargo</option>
                   {jobTitles.map((jobTitle) => (
@@ -703,8 +710,8 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="role" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Papel <span className="text-danger">*</span>
+                <label htmlFor="role" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Papel <span className="text-accent-orange">*</span>
                 </label>
                 <select
                   id="role"
@@ -712,7 +719,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   value={formData.role}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 >
                   {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
                     <option key={roleOption.value} value={roleOption.value}>
@@ -722,7 +729,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 </select>
               </div>
               <div>
-                <label htmlFor="rate" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label htmlFor="rate" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Taxa por Hora (R$)
                 </label>
                 <input
@@ -733,13 +740,13 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   onChange={handleChange}
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="locationId" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              <label htmlFor="locationId" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                 Localização
               </label>
               <select
@@ -747,7 +754,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 name="locationId"
                 value={formData.locationId}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
               >
                 <option value="">Selecione uma localização</option>
                 {locations.map(location => (
@@ -759,7 +766,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
             </div>
 
             <div>
-              <label htmlFor="calendarId" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              <label htmlFor="calendarId" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                 Calendário
               </label>
               <select
@@ -767,7 +774,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 name="calendarId"
                 value={formData.calendarId}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
               >
                 <option value="">Nenhum</option>
                 {calendars.map(cal => (
@@ -782,7 +789,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           <ModalSection title="Unidades de Acesso">
             {units.length > 0 && (
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Unidades de Acesso
                 </label>
                 <div className="border border-input rounded-[4px] p-3 max-h-40 overflow-y-auto space-y-2">

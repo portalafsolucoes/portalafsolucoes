@@ -34,7 +34,12 @@ export default function DashboardPage() {
       router.push('/work-orders')
       return
     }
-    loadStats()
+    // SUPER_ADMIN usa CorporateDashboard que carrega seus proprios dados
+    if (!isSuperAdminRole(user)) {
+      loadStats()
+    } else {
+      setLoading(false)
+    }
   }, [authLoading, user])
 
   const loadStats = async () => {

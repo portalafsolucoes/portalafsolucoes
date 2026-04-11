@@ -8,18 +8,21 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
+import dynamic from 'next/dynamic'
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useIsMobile } from '@/hooks/useMediaQuery'
-import { WorkOrderDetailModal } from '@/components/work-orders/WorkOrderDetailModal'
-import { WorkOrderEditModal } from '@/components/work-orders/WorkOrderEditModal'
-import { WorkOrderExecuteModal } from '@/components/work-orders/WorkOrderExecuteModal'
-import { FinalizeWorkOrderModal } from '@/components/work-orders/FinalizeWorkOrderModal'
-import { WorkOrderFormModal } from '@/components/work-orders/WorkOrderFormModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
+
+// Lazy load: modais so carregam quando necessario
+const WorkOrderDetailModal = dynamic(() => import('@/components/work-orders/WorkOrderDetailModal').then(m => ({ default: m.WorkOrderDetailModal })), { ssr: false })
+const WorkOrderEditModal = dynamic(() => import('@/components/work-orders/WorkOrderEditModal').then(m => ({ default: m.WorkOrderEditModal })), { ssr: false })
+const WorkOrderExecuteModal = dynamic(() => import('@/components/work-orders/WorkOrderExecuteModal').then(m => ({ default: m.WorkOrderExecuteModal })), { ssr: false })
+const FinalizeWorkOrderModal = dynamic(() => import('@/components/work-orders/FinalizeWorkOrderModal').then(m => ({ default: m.FinalizeWorkOrderModal })), { ssr: false })
+const WorkOrderFormModal = dynamic(() => import('@/components/work-orders/WorkOrderFormModal').then(m => ({ default: m.WorkOrderFormModal })), { ssr: false })
 
 interface WorkOrder {
   id: string

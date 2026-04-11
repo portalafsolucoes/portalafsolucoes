@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -10,14 +11,16 @@ import { Icon } from '@/components/ui/Icon'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 
 import { formatDate } from '@/lib/utils'
-import { RAFFormModal } from '@/components/rafs/RAFFormModal'
-import { RAFViewModal } from '@/components/rafs/RAFViewModal'
-import { RAFEditModal } from '@/components/rafs/RAFEditModal'
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
+
+// Lazy load: modais so carregam quando necessario
+const RAFFormModal = dynamic(() => import('@/components/rafs/RAFFormModal').then(m => ({ default: m.RAFFormModal })), { ssr: false })
+const RAFViewModal = dynamic(() => import('@/components/rafs/RAFViewModal').then(m => ({ default: m.RAFViewModal })), { ssr: false })
+const RAFEditModal = dynamic(() => import('@/components/rafs/RAFEditModal').then(m => ({ default: m.RAFEditModal })), { ssr: false })
 
 interface RAF {
   id: string

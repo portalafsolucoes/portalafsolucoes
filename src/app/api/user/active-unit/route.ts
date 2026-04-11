@@ -78,40 +78,35 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Buscar dados do usuário com activeUnitId
-  const { data: user } = await supabase
+  // Buscar activeUnitId e unidades disponíveis em paralelo
+  const userPromise = supabase
     .from('User')
     .select('activeUnitId')
     .eq('id', session.id)
     .single()
 
-  // Buscar unidades disponíveis
-  let availableUnits: any[] = []
+  const unitsPromise = isSuperAdminRole(session)
+    ? supabase
+        .from('Location')
+        .select('id, name')
+        .eq('companyId', session.companyId)
+        .is('parentId', null)
+        .order('name')
+    : supabase
+        .from('UserUnit')
+        .select(`
+          unit:unitId (
+            id,
+            name
+          )
+        `)
+        .eq('userId', session.id)
 
-  if (isSuperAdminRole(session)) {
-    // Admin vê todas as unidades da empresa
-    const { data } = await supabase
-      .from('Location')
-      .select('id, name')
-      .eq('companyId', session.companyId)
-      .is('parentId', null)
-      .order('name')
+  const [{ data: user }, { data: unitsData }] = await Promise.all([userPromise, unitsPromise])
 
-    availableUnits = data || []
-  } else {
-    // Não-admin: apenas unidades vinculadas via UserUnit
-    const { data } = await supabase
-      .from('UserUnit')
-      .select(`
-        unit:unitId (
-          id,
-          name
-        )
-      `)
-      .eq('userId', session.id)
-
-    availableUnits = (data || []).map((uu: any) => uu.unit).filter(Boolean)
-  }
+  const availableUnits = isSuperAdminRole(session)
+    ? unitsData || []
+    : (unitsData || []).map((uu: any) => uu.unit).filter(Boolean)
 
   return NextResponse.json({
     activeUnitId: user?.activeUnitId || null,

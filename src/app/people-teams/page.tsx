@@ -1,15 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
 
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { PersonDetailModal } from '@/components/people/PersonDetailModal'
-import { PersonFormModal } from '@/components/people/PersonFormModal'
-import { TeamDetailModal } from '@/components/teams/TeamDetailModal'
-import { TeamFormModal } from '@/components/teams/TeamFormModal'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { User } from '@/types'
@@ -19,6 +16,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
 import { hasPermission } from '@/lib/permissions'
 import { CANONICAL_ROLE_OPTIONS, getDefaultCmmsPath, getRoleDisplayName, normalizeUserRole } from '@/lib/user-roles'
+
+// Lazy load: modais so carregam quando necessario
+const PersonDetailModal = dynamic(() => import('@/components/people/PersonDetailModal').then(m => ({ default: m.PersonDetailModal })), { ssr: false })
+const PersonFormModal = dynamic(() => import('@/components/people/PersonFormModal').then(m => ({ default: m.PersonFormModal })), { ssr: false })
+const TeamDetailModal = dynamic(() => import('@/components/teams/TeamDetailModal').then(m => ({ default: m.TeamDetailModal })), { ssr: false })
+const TeamFormModal = dynamic(() => import('@/components/teams/TeamFormModal').then(m => ({ default: m.TeamFormModal })), { ssr: false })
 
 type ViewMode = 'grid' | 'table'
 
@@ -294,7 +297,10 @@ export default function PeopleTeamsPage() {
                   <ExportButton data={filteredUsers} entity="users" />
 
                   {canCreate('people-teams') && (
-                    <Button onClick={() => { setSelectedUserId(null); setShowEditUserModal(false); setShowNewUserModal(true) }} className="whitespace-nowrap">
+                    <Button
+                      onClick={() => { setSelectedUserId(null); setShowEditUserModal(false); setShowNewUserModal(true) }}
+                      className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white shadow-md font-bold"
+                    >
                       <Icon name="add" className="mr-2 text-base" />
                       Adicionar
                     </Button>
@@ -445,12 +451,12 @@ export default function PeopleTeamsPage() {
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="bg-card divide-y divide-gray-200">
-                              {sortedUsers.map((user) => (
+                            <tbody className="bg-card divide-y divide-gray-100">
+                              {sortedUsers.map((user, index) => (
                                 <tr
                                   key={user.id}
                                   onClick={() => handleUserClick(user.id)}
-                                  className="hover:bg-secondary cursor-pointer transition-colors"
+                                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-accent-orange-light cursor-pointer transition-colors group`}
                                   data-user-id={user.id}
                                 >
                                   <td className="px-6 py-4 whitespace-nowrap">

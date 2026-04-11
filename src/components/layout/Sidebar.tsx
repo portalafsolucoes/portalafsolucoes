@@ -136,31 +136,31 @@ export function Sidebar() {
       {/* Overlay for mobile */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-on-surface/20 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-[60] bg-surface-low flex flex-col transition-all duration-300 ${
+      <aside className={`fixed inset-y-0 left-0 z-[60] bg-sidebar flex flex-col transition-all duration-300 shadow-xl ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       } ${isCollapsed ? 'lg:w-16' : 'lg:w-64'} w-64`}>
 
         {/* Header — Logo + Hamburger only */}
-        <div className="px-3 py-3">
+        <div className="px-3 py-3 bg-[var(--color-sidebar-header)] border-b border-sidebar-border">
           <div className="hidden lg:block">
             {!isCollapsed ? (
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="p-2 hover:bg-surface-high rounded-[4px] transition-colors flex-shrink-0"
+                  className="p-2 hover:bg-sidebar-accent rounded-[4px] transition-colors flex-shrink-0"
                   title="Recolher sidebar"
                 >
-                  <Icon name="menu" className="text-xl text-on-surface" />
+                  <Icon name="menu" className="text-xl text-sidebar-foreground" />
                 </button>
                 <Link
                   href={defaultCmmsPath}
-                  className="flex h-14 min-w-0 flex-1 items-center rounded-[4px] px-2 hover:bg-surface-high transition-colors"
+                  className="flex h-14 min-w-0 flex-1 items-center rounded-[4px] px-2 hover:bg-sidebar-accent transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {companyLogo ? (
@@ -169,16 +169,16 @@ export function Sidebar() {
                         src={companyLogo}
                         alt={companyName || APP_NAME}
                         fill
-                        className="object-contain object-left"
+                        className="object-contain object-left brightness-0 invert"
                         priority
                         unoptimized
                         sizes="220px"
                       />
                     </div>
                   ) : authLoading ? (
-                    <div className="h-10 w-full animate-pulse rounded-[4px] bg-surface-high" />
+                    <div className="h-10 w-full animate-pulse rounded-[4px] bg-sidebar-accent" />
                   ) : (
-                    <span className="text-sm font-semibold text-on-surface truncate">
+                    <span className="text-sm font-bold text-white truncate">
                       {companyName || APP_NAME}
                     </span>
                   )}
@@ -188,15 +188,15 @@ export function Sidebar() {
               <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="p-2 hover:bg-surface-high rounded-[4px] transition-colors w-full flex justify-center"
+                  className="p-2 hover:bg-sidebar-accent rounded-[4px] transition-colors w-full flex justify-center"
                   title="Expandir sidebar"
                 >
-                  <Icon name="menu" className="text-xl text-on-surface" />
+                  <Icon name="menu" className="text-xl text-sidebar-foreground" />
                 </button>
 
                 <Link
                   href={defaultCmmsPath}
-                  className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] bg-card hover:bg-surface-high transition-colors"
+                  className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] bg-sidebar-accent hover:bg-sidebar-accent/80 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                   title={companyName || APP_NAME}
                 >
@@ -206,16 +206,16 @@ export function Sidebar() {
                         src={companyLogo}
                         alt={companyName || APP_NAME}
                         fill
-                        className="object-contain"
+                        className="object-contain brightness-0 invert"
                         priority
                         unoptimized
                         sizes="28px"
                       />
                     </div>
                   ) : authLoading ? (
-                    <div className="h-8 w-8 animate-pulse rounded-[4px] bg-surface-high" />
+                    <div className="h-8 w-8 animate-pulse rounded-[4px] bg-sidebar-accent" />
                   ) : (
-                    <span className="text-[10px] font-semibold text-on-surface">
+                    <span className="text-[10px] font-semibold text-white">
                       {(companyName || APP_NAME).slice(0, 2).toUpperCase()}
                     </span>
                   )}
@@ -229,15 +229,15 @@ export function Sidebar() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 hover:bg-surface-high rounded-[4px] transition-colors flex-shrink-0"
+                className="p-2 hover:bg-sidebar-accent rounded-[4px] transition-colors flex-shrink-0"
                 title="Fechar menu"
               >
-                <Icon name="close" className="text-xl text-on-surface" />
+                <Icon name="close" className="text-xl text-sidebar-foreground" />
               </button>
               {companyLogo ? (
                 <Link
                   href={defaultCmmsPath}
-                  className="flex h-14 w-full items-center rounded-[4px] px-2 hover:bg-surface-high transition-colors"
+                  className="flex h-14 w-full items-center rounded-[4px] px-2 hover:bg-sidebar-accent transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <div className="relative h-10 w-full min-w-0">
@@ -245,7 +245,7 @@ export function Sidebar() {
                       src={companyLogo}
                       alt={companyName || APP_NAME}
                       fill
-                      className="object-contain object-left"
+                      className="object-contain object-left brightness-0 invert"
                       priority
                       unoptimized
                       sizes="220px"
@@ -253,11 +253,11 @@ export function Sidebar() {
                   </div>
                 </Link>
               ) : authLoading ? (
-                <div className="h-10 w-full animate-pulse rounded-[4px] bg-surface-high" />
+                <div className="h-10 w-full animate-pulse rounded-[4px] bg-sidebar-accent" />
               ) : (
                 <Link
                   href={defaultCmmsPath}
-                  className="text-sm font-semibold text-on-surface truncate rounded-[4px] px-2 py-2 hover:bg-surface-high transition-colors"
+                  className="text-sm font-bold text-white truncate rounded-[4px] px-2 py-2 hover:bg-sidebar-accent transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {companyName || APP_NAME}
@@ -268,10 +268,10 @@ export function Sidebar() {
         </div>
 
         {/* Separator */}
-        <div className="mx-4 h-px bg-on-surface-variant/10" />
+        <div className="mx-4 h-px bg-sidebar-border" />
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto sidebar-scroll">
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto sidebar-scroll-dark">
           {navigation.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0
             const isExpanded = expandedMenus.includes(item.name)
@@ -291,15 +291,15 @@ export function Sidebar() {
                         toggleExpanded(item.name)
                       }
                     }}
-                    className={`w-full group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2 text-sm font-medium rounded-[4px] transition-all duration-200 ${
+                    className={`w-full group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-medium rounded-[4px] rounded-l-none transition-all duration-200 border-l-4 ${
                       isActive
-                        ? 'bg-on-surface text-white'
-                        : 'text-on-surface-variant hover:bg-surface-highest hover:text-on-surface'
+                        ? 'bg-sidebar-accent text-white border-accent-orange shadow-sm'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white border-transparent'
                     }`}
                     title={isCollapsed ? item.name : ''}
                   >
                     <Icon name={item.icon} className={`text-xl ${isCollapsed ? '' : 'mr-3'} ${
-                      isActive ? 'text-white' : 'text-on-surface-variant group-hover:text-on-surface'
+                      isActive ? 'text-accent-orange' : 'text-sidebar-muted group-hover:text-sidebar-foreground'
                     }`} weight={isActive ? 300 : 200} />
                     {!isCollapsed && (
                       <>
@@ -310,7 +310,7 @@ export function Sidebar() {
                   </button>
 
                   {!isCollapsed && isExpanded && (
-                    <div className="ml-5 mt-0.5 space-y-0.5 border-l border-on-surface-variant/15 pl-3">
+                    <div className="ml-5 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3">
                       {item.subItems!.map(sub => {
                         const isSubActive = pathname === sub.href
                         return (
@@ -320,8 +320,8 @@ export function Sidebar() {
                             onClick={() => setMobileMenuOpen(false)}
                             className={`block px-3 py-1.5 text-xs font-medium rounded-[4px] transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-on-surface text-white'
-                                : 'text-on-surface-variant hover:bg-surface-highest hover:text-on-surface'
+                                ? 'text-white font-bold'
+                                : 'text-sidebar-foreground hover:text-white'
                             }`}
                           >
                             {sub.name}
@@ -339,28 +339,28 @@ export function Sidebar() {
                 key={item.name}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2 text-sm font-medium rounded-[4px] transition-all duration-200 relative ${
+                className={`group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-medium rounded-[4px] rounded-l-none transition-all duration-200 relative border-l-4 ${
                   isActive
-                    ? 'bg-on-surface text-white'
-                    : 'text-on-surface-variant hover:bg-surface-highest hover:text-on-surface'
+                    ? 'bg-sidebar-accent text-white border-accent-orange shadow-sm'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white border-transparent'
                 }`}
                 title={isCollapsed ? item.name : ''}
               >
                 <Icon name={item.icon} className={`text-xl ${isCollapsed ? '' : 'mr-3'} ${
-                  isActive ? 'text-white' : 'text-on-surface-variant group-hover:text-on-surface'
+                  isActive ? 'text-accent-orange' : 'text-sidebar-muted group-hover:text-sidebar-foreground'
                 }`} weight={isActive ? 300 : 200} />
                 {!isCollapsed && (
                   <>
                     <span className="flex-1">{item.name}</span>
                     {'badge' in item && item.badge && item.badge > 0 && (
-                      <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-danger rounded-[2px]">
+                      <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-white bg-accent-orange rounded shadow-sm">
                         {item.badge}
                       </span>
                     )}
                   </>
                 )}
                 {isCollapsed && 'badge' in item && item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-danger rounded-full">
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-black text-white bg-accent-orange rounded-full shadow-sm">
                     {item.badge}
                   </span>
                 )}
@@ -370,16 +370,16 @@ export function Sidebar() {
         </nav>
 
         {/* Separator */}
-        <div className="mx-4 h-px bg-on-surface-variant/10" />
+        <div className="mx-4 h-px bg-sidebar-border" />
 
         {/* Back to Portal Button */}
-        <div className="p-3">
+        <div className="p-3 bg-[var(--color-sidebar-header)] border-t border-sidebar-border">
           <button
             onClick={handleBackToPortal}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-highest hover:text-on-surface rounded-[4px] transition-all duration-200`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2 text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-white rounded-[4px] transition-all duration-200`}
             title={isCollapsed ? 'Voltar ao Portal' : ''}
           >
-            <Icon name="grid_view" className={`text-xl ${isCollapsed ? '' : 'mr-3'} text-on-surface-variant`} />
+            <Icon name="grid_view" className={`text-xl ${isCollapsed ? '' : 'mr-3'} text-sidebar-muted`} />
             {!isCollapsed && 'Voltar ao Portal'}
           </button>
         </div>

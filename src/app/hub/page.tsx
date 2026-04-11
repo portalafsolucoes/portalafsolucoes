@@ -1,9 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
+import { useAuth } from '@/hooks/useAuth'
 
 import { PORTAL_NAME, PORTAL_DESCRIPTION } from '@/lib/branding'
 
@@ -57,38 +57,13 @@ const modules: ModuleCard[] = [
 
 export default function HubPage() {
   const router = useRouter()
-  const [userName, setUserName] = useState('')
-  const [userRole, setUserRole] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/auth/me', {
-      cache: 'no-store',
-      credentials: 'same-origin',
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Not authenticated')
-        return res.json()
-      })
-      .then(data => {
-        if (data.data?.name || data.user?.firstName) {
-          setUserName(data.data?.name || `${data.user?.firstName} ${data.user?.lastName}`)
-          setUserRole(data.user?.role || '')
-          setIsAuthenticated(true)
-        }
-        setLoading(false)
-      })
-      .catch(() => {
-        setIsAuthenticated(false)
-        setLoading(false)
-      })
-  }, [])
+  const { user, isLoading: loading, isAuthenticated, role } = useAuth()
+  const userName = user ? `${user.firstName} ${user.lastName}` : ''
+  const userRole = role
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    setIsAuthenticated(false)
-    setUserName('')
+    window.location.href = '/hub'
   }
 
   const handleModuleClick = (module: ModuleCard) => {

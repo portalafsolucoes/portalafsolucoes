@@ -42,10 +42,10 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: fetchCurrentUser,
-    staleTime: 0,
+    staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: 1,
-    refetchOnMount: 'always',
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   })

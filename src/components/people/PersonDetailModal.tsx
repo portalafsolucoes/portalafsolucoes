@@ -91,11 +91,11 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
   if (loading || !user) {
     if (inPage) {
       return (
-        <div className="h-full flex flex-col bg-card border-l border-border">
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-xl font-bold text-foreground">Pessoa</h2>
-            <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
-              <Icon name="close" className="text-xl text-muted-foreground" />
+        <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-lg font-black text-gray-900">Pessoa</h2>
+            <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
+              <Icon name="close" className="text-lg" />
             </button>
           </div>
           <div className="flex-1 flex items-center justify-center">
@@ -120,25 +120,25 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
 
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
-        <div className="flex items-start justify-between p-4 border-b border-border">
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+        <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-xl font-bold text-foreground">
+              <h2 className="text-lg font-black text-gray-900">
                 {user.firstName} {user.lastName}
               </h2>
               <button
                 onClick={onClose}
-                className="ml-auto p-1 hover:bg-muted rounded transition-colors"
+                className="ml-auto p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
               >
-                <Icon name="close" className="text-xl text-muted-foreground" />
+                <Icon name="close" className="text-lg" />
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-1 text-xs font-medium rounded border bg-primary/10 text-foreground border-border">
+              <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border bg-gray-800 text-white border-transparent shadow-sm">
                 {getRoleLabel(user.role)}
               </span>
-              <span className={`px-2 py-1 text-xs font-medium rounded border ${user.enabled ? 'bg-success-light text-success-light-foreground border-border' : 'bg-danger-light text-danger-light-foreground border-border'}`}>
+              <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border shadow-sm ${user.enabled ? 'bg-success-light text-success-light-foreground border-gray-200' : 'bg-danger-light text-danger-light-foreground border-gray-200'}`}>
                 {user.enabled ? 'Ativo' : 'Inativo'}
               </span>
             </div>
@@ -147,7 +147,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
 
         <div className="flex-1 overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="w-full justify-start border-b rounded-none px-4">
+            <TabsList className="w-full justify-start border-b border-gray-200 rounded-none px-4">
               <TabsTrigger value="details" className="flex items-center gap-2">
                 <Icon name="person" className="text-base" />
                 Detalhes
@@ -159,74 +159,80 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
             </TabsList>
 
             <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
-              <div className="p-4 border-b border-border space-y-2">
+              <div className="px-6 py-4 border-b border-gray-200 space-y-2">
                 <button
                   onClick={onEdit}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-black transition-colors font-bold text-[13px] shadow-md"
                 >
                   <Icon name="edit" className="text-base" />
                   Editar Pessoa
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-danger border border-gray-300 rounded-md hover:bg-danger-light transition-colors font-bold text-[13px] shadow-sm"
                 >
                   <Icon name="delete" className="text-base" />
                   Excluir Pessoa
                 </button>
               </div>
 
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Contato</h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+                  <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">Contato</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-1">
                   <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="text-sm text-foreground">{user.email}</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Email</p>
+                    <p className="text-[13px] font-medium text-gray-900">{user.email}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Taxa por Hora</p>
-                    <p className="text-sm text-foreground">R$ {user.rate.toFixed(2)}/hora</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Taxa por Hora</p>
+                    <p className="text-[13px] font-medium text-gray-900">R$ {user.rate.toFixed(2)}/hora</p>
                   </div>
                   {user.phone && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Telefone</p>
-                      <p className="text-sm text-foreground">{user.phone}</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Telefone</p>
+                      <p className="text-[13px] font-medium text-gray-900">{user.phone}</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Trabalho</h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+                  <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">Trabalho</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-1">
                   <div>
-                    <p className="text-xs text-muted-foreground">Cargo</p>
-                    <p className="text-sm text-foreground">{user.jobTitle || 'Sem cargo definido'}</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Cargo</p>
+                    <p className="text-[13px] font-medium text-gray-900">{user.jobTitle || 'Sem cargo definido'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Papel</p>
-                    <p className="text-sm text-foreground">{getRoleLabel(user.role)}</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Papel</p>
+                    <p className="text-[13px] font-medium text-gray-900">{getRoleLabel(user.role)}</p>
                   </div>
                   {user.location && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Localização</p>
-                      <p className="text-sm text-foreground">{user.location.name}</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Localização</p>
+                      <p className="text-[13px] font-medium text-gray-900">{user.location.name}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-muted-foreground">Status</p>
-                    <p className="text-sm text-foreground">{user.enabled ? 'Ativo' : 'Inativo'}</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status</p>
+                    <p className="text-[13px] font-medium text-gray-900">{user.enabled ? 'Ativo' : 'Inativo'}</p>
                   </div>
                 </div>
               </div>
 
               {user.teamMemberships && user.teamMemberships.length > 0 && (
-                <div className="p-4 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Equipes</h3>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+                    <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">Equipes</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-1">
                     {user.teamMemberships.map((membership) => (
                       <div key={membership.team.id}>
-                        <p className="text-sm text-foreground">{membership.team.name}</p>
+                        <p className="text-[13px] font-medium text-gray-900">{membership.team.name}</p>
                       </div>
                     ))}
                   </div>
@@ -235,21 +241,23 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
             </TabsContent>
 
             <TabsContent value="system" className="flex-1 overflow-y-auto mt-0">
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Informações do Sistema</h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+                  <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">Informações do Sistema</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-1">
                   <div>
-                    <p className="text-xs text-muted-foreground">Criado em</p>
-                    <p className="text-sm text-foreground">{new Date(user.createdAt).toLocaleString('pt-BR')}</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Criado em</p>
+                    <p className="text-[13px] font-medium text-gray-900">{new Date(user.createdAt).toLocaleString('pt-BR')}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Atualizado em</p>
-                    <p className="text-sm text-foreground">{new Date(user.updatedAt).toLocaleString('pt-BR')}</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Atualizado em</p>
+                    <p className="text-[13px] font-medium text-gray-900">{new Date(user.updatedAt).toLocaleString('pt-BR')}</p>
                   </div>
                   {user.lastLogin && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Último Login</p>
-                      <p className="text-sm text-foreground">{new Date(user.lastLogin).toLocaleString('pt-BR')}</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Último Login</p>
+                      <p className="text-[13px] font-medium text-gray-900">{new Date(user.lastLogin).toLocaleString('pt-BR')}</p>
                     </div>
                   )}
                 </div>

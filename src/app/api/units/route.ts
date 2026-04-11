@@ -15,7 +15,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('Location')
-      .select('*')
+      .select('id, name, parentId')
       .eq('companyId', session.companyId)
       .order('name', { ascending: true })
 

@@ -99,61 +99,26 @@ export async function PATCH(
       )
     }
 
-    // Validar assignedToId se fornecido
-    let validAssignedToId: string | null = body.assignedToId || null
-    if (validAssignedToId) {
-      const { data: assignedUser } = await supabase
-        .from('User')
-        .select('id')
-        .eq('id', validAssignedToId)
-        .eq('companyId', session.companyId)
-        .single()
-      if (!assignedUser) {
-        validAssignedToId = null
-      }
-    }
+    // Validar relacoes em paralelo
+    const [assignedResult, assetResult, locationResult, categoryResult] = await Promise.all([
+      body.assignedToId
+        ? supabase.from('User').select('id').eq('id', body.assignedToId).eq('companyId', session.companyId).single()
+        : Promise.resolve({ data: null }),
+      body.assetId
+        ? supabase.from('Asset').select('id').eq('id', body.assetId).eq('companyId', session.companyId).single()
+        : Promise.resolve({ data: null }),
+      body.locationId
+        ? supabase.from('Location').select('id').eq('id', body.locationId).eq('companyId', session.companyId).single()
+        : Promise.resolve({ data: null }),
+      body.categoryId
+        ? supabase.from('WorkOrderCategory').select('id').eq('id', body.categoryId).eq('companyId', session.companyId).single()
+        : Promise.resolve({ data: null }),
+    ])
 
-    // Validar assetId se fornecido
-    let validAssetId: string | null = body.assetId || null
-    if (validAssetId) {
-      const { data: asset } = await supabase
-        .from('Asset')
-        .select('id')
-        .eq('id', validAssetId)
-        .eq('companyId', session.companyId)
-        .single()
-      if (!asset) {
-        validAssetId = null
-      }
-    }
-
-    // Validar locationId se fornecido
-    let validLocationId: string | null = body.locationId || null
-    if (validLocationId) {
-      const { data: location } = await supabase
-        .from('Location')
-        .select('id')
-        .eq('id', validLocationId)
-        .eq('companyId', session.companyId)
-        .single()
-      if (!location) {
-        validLocationId = null
-      }
-    }
-
-    // Validar categoryId se fornecido
-    let validCategoryId: string | null = body.categoryId || null
-    if (validCategoryId) {
-      const { data: category } = await supabase
-        .from('WorkOrderCategory')
-        .select('id')
-        .eq('id', validCategoryId)
-        .eq('companyId', session.companyId)
-        .single()
-      if (!category) {
-        validCategoryId = null
-      }
-    }
+    const validAssignedToId = assignedResult.data ? body.assignedToId : null
+    const validAssetId = assetResult.data ? body.assetId : null
+    const validLocationId = locationResult.data ? body.locationId : null
+    const validCategoryId = categoryResult.data ? body.categoryId : null
 
     // Validar equipes se fornecido
     let validTeamIds: string[] = []

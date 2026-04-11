@@ -50,23 +50,23 @@ export async function GET(
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
-    // Enriquecer dados com informações de usuário quando disponível
-    const enrichedHistory = await Promise.all(
-      (history || []).map(async (event) => {
-        let userName = null
-        if (event.userId) {
-          const { data: user } = await supabase
-            .from('User')
-            .select('firstName, lastName')
-            .eq('id', event.userId)
-            .single()
-          if (user) {
-            userName = `${user.firstName} ${user.lastName}`
-          }
-        }
-        return { ...event, userName }
-      })
-    )
+    // Batch fetch de usuarios para evitar N+1
+    const userIds = [...new Set((history || []).map(e => e.userId).filter(Boolean))]
+    const usersMap = new Map<string, string>()
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from('User')
+        .select('id, firstName, lastName')
+        .in('id', userIds)
+      for (const u of users || []) {
+        usersMap.set(u.id, `${u.firstName} ${u.lastName}`)
+      }
+    }
+
+    const enrichedHistory = (history || []).map(event => ({
+      ...event,
+      userName: event.userId ? usersMap.get(event.userId) || null : null,
+    }))
 
     return NextResponse.json({
       data: enrichedHistory,

@@ -56,14 +56,14 @@
   --input: 180 5% 95%;                /* #f2f4f4 (filled) */
   --ring: 0 1% 37%;
 
-  /* Sidebar (LIGHT) */
-  --sidebar: 180 5% 95%;              /* #f2f4f4 */
-  --sidebar-foreground: 195 10% 19%;  /* #2d3435 */
-  --sidebar-border: 192 4% 69%;
-  --sidebar-accent: 195 10% 19%;      /* #2d3435 (active bg) */
+  /* Sidebar (DARK — experiment) */
+  --sidebar: 214 14% 14%;             /* #1e2329 */
+  --sidebar-foreground: 216 5% 65%;   /* #9ca3af */
+  --sidebar-border: 214 12% 19%;      /* #2d343c */
+  --sidebar-accent: 215 10% 23%;      /* #374151 */
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-muted: 192 5% 37%;        /* #5a6061 */
-  --sidebar-active-accent: 192 5% 37%;
+  --sidebar-muted: 217 5% 46%;        /* #6b7280 */
+  --sidebar-active-accent: 24 95% 53%; /* #f97316 — laranja */
 
   /* Radius */
   --radius: 0.25rem;                  /* 4px */
@@ -125,8 +125,9 @@
   --color-on-surface-variant: #5a6061;
   --color-primary-graphite: #5f5e5e;
   --color-primary-dim: #535252;
-  --color-accent-orange: #974a00;
-  --color-accent-orange-light: #ffdcc6;
+  --color-accent-orange: #f97316;
+  --color-accent-orange-light: #fff7ed;
+  --color-sidebar-header: #181c21;
 }
 
 body {
@@ -212,6 +213,20 @@ body {
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
   background: hsl(192 4% 69% / 0.3);
+  border-radius: 3px;
+}
+
+/* Sidebar scrollbar (dark) */
+.sidebar-scroll-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll-dark::-webkit-scrollbar-thumb {
+  background: #374151;
   border-radius: 3px;
 }
 

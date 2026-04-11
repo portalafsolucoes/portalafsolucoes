@@ -908,6 +908,8 @@ model Asset {
   @@index([locationId])
   @@index([categoryId])
   @@index([unitId])
+  @@index([companyId, archived])
+  @@index([parentAssetId])
 }
 
 model AssetCharacteristicValue {
@@ -1320,6 +1322,9 @@ model WorkOrder {
   @@index([locationId])
   @@index([status])
   @@index([unitId])
+  @@index([assignedToId])
+  @@index([companyId, status])
+  @@index([companyId, unitId])
 }
 
 model Task {
@@ -1432,6 +1437,8 @@ model Request {
   @@index([approvedById])
   @@index([assignedToId])
   @@index([status, assignedToId])
+  @@index([createdById])
+  @@index([companyId, unitId])
 }
 
 // ============================================
