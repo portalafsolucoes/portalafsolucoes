@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { Location } from '@/types'
 import { CANONICAL_ROLE_OPTIONS, normalizeUserRole } from '@/lib/user-roles'
@@ -317,9 +318,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
         <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
             <h2 className="text-lg font-black text-gray-900">{userId ? 'Editar Pessoa' : 'Adicionar Pessoa'}</h2>
-            <button onClick={onClose} className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-              <Icon name="close" className="text-xl" />
-            </button>
+            <PanelCloseButton onClick={onClose} />
           </div>
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center py-12">
@@ -351,9 +350,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
               {userId ? 'Atualize as informações do cadastro' : 'Preencha os dados para criar um novo cadastro'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-            <Icon name="close" className="text-lg" />
-          </button>
+          <PanelCloseButton onClick={onClose} />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">

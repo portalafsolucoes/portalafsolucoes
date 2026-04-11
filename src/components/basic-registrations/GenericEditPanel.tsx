@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
@@ -332,9 +333,7 @@ export function GenericEditPanel({
           <h2 className="text-lg font-black text-gray-900">
             {editingItem ? `Editar ${title}` : `Novo ${title}`}
           </h2>
-          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-            <Icon name="close" className="text-xl text-muted-foreground" />
-          </button>
+          <PanelCloseButton onClick={onClose} />
         </div>
         <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 
 interface AssetCriticality {
@@ -123,12 +124,7 @@ export function CriticalityEditPanel({ asset, onClose, onSuccess }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <h2 className="text-lg font-black text-gray-900 truncate">Editar GUT</h2>
-        <button
-          onClick={onClose}
-          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors flex-shrink-0 ml-2"
-        >
-          <Icon name="close" className="text-xl text-muted-foreground" />
-        </button>
+        <PanelCloseButton onClick={onClose} className="flex-shrink-0 ml-2" />
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">

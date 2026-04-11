@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
 
@@ -39,12 +40,7 @@ export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: S
         <h2 className="text-lg font-black text-gray-900">
           {schedule.scheduleNumber ? `#${schedule.scheduleNumber}` : 'Programação'}
         </h2>
-        <button
-          onClick={onClose}
-          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-        >
-          <Icon name="close" className="text-xl text-muted-foreground" />
-        </button>
+        <PanelCloseButton onClick={onClose} />
       </div>
 
       {/* Scrollable content */}

@@ -1,6 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 
 interface AssetCriticality {
   id: string
@@ -73,12 +74,7 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
           <div className={`w-3 h-3 rounded-full flex-shrink-0 ${config.color}`} />
           <h2 className="text-lg font-black text-gray-900 truncate">{asset.name}</h2>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors flex-shrink-0 ml-2"
-        >
-          <Icon name="close" className="text-xl text-muted-foreground" />
-        </button>
+        <PanelCloseButton onClick={onClose} className="flex-shrink-0 ml-2" />
       </div>
 
       {/* Scrollable content */}

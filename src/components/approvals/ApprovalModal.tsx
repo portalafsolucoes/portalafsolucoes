@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Modal } from '../ui/Modal'
 import { ModalSection } from '../ui/ModalSection'
 import { Button } from '../ui/Button'
@@ -411,12 +412,7 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
           <h2 className="text-lg font-black text-gray-900">Analisar Solicitação</h2>
-          <button
-            onClick={onClose}
-            className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-          >
-            <Icon name="close" className="text-xl text-muted-foreground" />
-          </button>
+          <PanelCloseButton onClick={onClose} />
         </div>
 
         {formContent}

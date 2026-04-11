@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { formatDate } from '@/lib/utils'
 
 interface RequestDetailModalProps {
@@ -411,12 +412,7 @@ export function RequestDetailModal({
           <h2 className="text-lg font-black text-gray-900">
             {request?.title || 'Solicitação'}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-          >
-            <Icon name="close" className="text-xl text-muted-foreground" />
-          </button>
+          <PanelCloseButton onClick={onClose} />
         </div>
         {inPageBody}
       </div>

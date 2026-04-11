@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 
@@ -68,12 +68,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
         {!hideHeader && (
           <div className="flex-shrink-0 flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
             <h2 className="text-lg font-black text-gray-900">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-            >
-              <Icon name="close" className="text-xl" />
-            </button>
+            <PanelCloseButton onClick={onClose} />
           </div>
         )}
         <div className="flex-1 min-h-0 overflow-y-auto">
@@ -96,12 +91,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
         {!hideHeader && (
           <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-gray-50 border-b border-gray-200">
             <h2 className="font-headline text-base font-black text-gray-900 truncate pr-4">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors flex-shrink-0"
-            >
-              <Icon name="close" className="text-xl" />
-            </button>
+            <PanelCloseButton onClick={onClose} className="flex-shrink-0" />
           </div>
         )}
         <div className={`flex-1 min-h-0 overflow-y-auto safe-bottom ${noPadding ? '' : hideHeader ? 'p-4' : ''}`}>
@@ -125,12 +115,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
           {!hideHeader && (
             <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
               <h2 className="font-headline text-lg font-black text-gray-900">{title}</h2>
-              <button
-                onClick={onClose}
-                className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-              >
-                <Icon name="close" className="text-xl" />
-              </button>
+              <PanelCloseButton onClick={onClose} />
             </div>
           )}
           <div className={`flex-1 min-h-0 overflow-y-auto safe-bottom ${noPadding ? '' : hideHeader ? 'p-6' : ''}`}>
@@ -169,12 +154,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
           {!hideHeader && (
             <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
               <h2 className="font-headline text-lg font-black text-gray-900">{title}</h2>
-              <button
-                onClick={onClose}
-                className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-              >
-                <Icon name="close" className="text-xl" />
-              </button>
+              <PanelCloseButton onClick={onClose} />
             </div>
           )}
 

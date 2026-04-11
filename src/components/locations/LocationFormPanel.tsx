@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
@@ -199,9 +200,7 @@ export function LocationFormPanel({
       <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
           <h2 className="text-lg font-black text-gray-900">{formTitle}</h2>
-          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-            <Icon name="close" className="text-xl text-muted-foreground" />
-          </button>
+          <PanelCloseButton onClick={onClose} />
         </div>
         <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">

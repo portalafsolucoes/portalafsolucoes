@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
@@ -433,9 +434,7 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
     <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <h2 className="text-lg font-black text-gray-900">Editar Ativo</h2>
-        <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-          <Icon name="close" className="text-xl text-muted-foreground" />
-        </button>
+        <PanelCloseButton onClick={onClose} />
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-3">

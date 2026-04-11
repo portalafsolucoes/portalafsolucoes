@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { ImageViewerModal } from '../ui/ImageViewerModal'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -207,12 +208,7 @@ export function WorkOrderDetailModal({
                   </button>
                 </>
               )}
-              <button
-                onClick={onClose}
-                className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-              >
-                <Icon name="close" className="text-2xl text-muted-foreground" />
-              </button>
+              <PanelCloseButton onClick={onClose} />
             </div>
           </div>
 

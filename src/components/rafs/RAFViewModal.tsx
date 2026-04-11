@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { formatDate } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 
@@ -83,9 +84,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors ml-2">
-            <Icon name="close" className="text-xl text-muted-foreground" />
-          </button>
+          <PanelCloseButton onClick={onClose} className="ml-2" />
         </div>
 
         {/* Ações */}

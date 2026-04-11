@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { getRoleLabel } from '@/lib/rbac'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 
@@ -94,9 +95,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
         <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
             <h2 className="text-lg font-black text-gray-900">Pessoa</h2>
-            <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
-              <Icon name="close" className="text-lg" />
-            </button>
+            <PanelCloseButton onClick={onClose} />
           </div>
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center py-12">
@@ -127,12 +126,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
               <h2 className="text-lg font-black text-gray-900">
                 {user.firstName} {user.lastName}
               </h2>
-              <button
-                onClick={onClose}
-                className="ml-auto flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
-              >
-                <Icon name="close" className="text-xl" />
-              </button>
+              <PanelCloseButton onClick={onClose} className="ml-auto" />
             </div>
             <div className="flex items-center gap-2">
               <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border bg-gray-800 text-white border-transparent shadow-sm">
