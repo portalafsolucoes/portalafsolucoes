@@ -172,6 +172,7 @@ Regras complementares:
 ### 3. Dashboard
 - Dashboard operacional para `SUPER_ADMIN`, `ADMIN`, `REQUESTER` e `VIEW_ONLY`, respeitando o nivel de leitura de cada perfil
 - Dashboard corporativo consolidado apenas para `SUPER_ADMIN`
+- O dashboard corporativo deve reutilizar o mesmo cabecalho principal padronizado das paginas internas; apenas titulo, descricao e conteudo variam conforme o perfil
 - Exibe resumo de OS, ativos e solicitacoes
 
 ### 4. Ordens de Servico (OS)
@@ -210,6 +211,7 @@ Regras complementares:
 - Gestao de usuarios por `SUPER_ADMIN` e `ADMIN`
 - Equipes agrupam tecnicos para atribuicao de OS e ativos
 - Usuarios podem ter multiplas unidades de acesso
+- Rotas autenticadas de listagem, detalhe e formulario devem expor o titulo principal no cabecalho padronizado da pagina, mantendo consistencia visual entre perfis e modulos
 - A tela de `Pessoas` oferece apenas visualizacao em `Tabela` e `Grade`; a visualizacao em arvore nao faz parte deste modulo
 - Formularios de pessoa devem exigir email valido com dominio completo e nunca reapresentar senha salva; no modo de edicao, o campo de senha deve permanecer vazio e opcional
 - O modal de pessoa, em criacao e edicao, deve permitir alterar todos os campos operacionais expostos no modulo: nome, sobrenome, email, senha, telefone, cargo, papel, taxa/hora, localizacao principal, calendario, unidades de acesso e status
