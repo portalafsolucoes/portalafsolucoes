@@ -133,6 +133,20 @@ Regras complementares:
 - Uploads de arquivos e imagens devem usar Cloudinary
 - OS preventivas podem ser geradas automaticamente por agendamento/cron
 
+### Padrao Visual UI (Design System aprovado)
+- **Sidebar**: fundo escuro `#1e2329`, item ativo com borda esquerda laranja `border-l-4 border-accent-orange`, icone ativo em laranja, badge de notificacao em laranja
+- **Logo da empresa na sidebar**: deve preservar as cores originais do arquivo configurado, sem filtros CSS que invertam ou branqueiem a imagem
+- **Cor de destaque (accent)**: laranja `#f97316` — usado no botao "Adicionar", hover de linhas de tabela, icone de unidade, sort ativo
+- **Botao primario**: `bg-gray-900 text-white hover:bg-gray-800` — escuro em todos os formularios e footers de painel
+- **Botao Adicionar (listagens)**: `bg-accent-orange text-white font-bold shadow-md hover:bg-accent-orange/90`
+- **Header/footer de paineis laterais**: `bg-gray-50 border-gray-200` — cinza suave, nunca fundo branco puro
+- **Barras de secao dentro de paineis**: `bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm`, titulo `font-bold text-[12px] uppercase tracking-wider text-gray-900`
+- **Hierarquia tipografica em paineis**: titulo do painel `font-black` > label de campo `font-bold uppercase text-[11px] text-gray-500` > valor `font-medium text-[13px] text-gray-900`
+- **Inputs em formularios**: `border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-gray-900`
+- **Tabelas**: linhas zebradas `odd:bg-gray-50 even:bg-white`, hover `hover:bg-accent-orange-light`, header `bg-secondary`
+- **Close button de painel**: `p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm`
+- Referencia canonica de implementacao: `PersonDetailModal.tsx` e `PersonFormModal.tsx`
+
 ## Modulos do Sistema
 
 ### 1. Hub
