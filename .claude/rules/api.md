@@ -5,6 +5,7 @@ globs: src/app/api/**,src/actions/**
 # API Routes e Server Actions
 
 ## Contrato Geral
+- Consultar `docs/SEGURANCA.md` sempre que a mudanca tocar autenticacao, sessao, autorizacao, isolamento multiempresa/unidade, upload sensivel, exportacao, logs de erro, segredos, headers ou readiness de producao
 - Toda rota e toda server action devem validar permissao no servidor; esconder item de menu nao substitui seguranca
 - Validacoes de permissao devem sempre considerar `perfil + empresa + unidade ativa`
 - A UI e a API devem compartilhar a mesma regra central de permissao; nao manter matriz divergente
@@ -36,6 +37,7 @@ globs: src/app/api/**,src/actions/**
 
 ## Sincronizacao de Documentacao
 - Toda mudanca de contrato, permissao, validacao ou comportamento de rota/action deve atualizar a secao funcional correspondente em `docs/SPEC.md`
+- Toda mudanca que altere autenticacao, sessao, autorizacao, isolamento, upload sensivel, exportacao, logs de erro, segredos, headers ou hardening deve atualizar `docs/SEGURANCA.md`
 - Quando a mudanca alterar um padrao reutilizavel de API ou server action, atualizar este arquivo no mesmo ciclo
 
 ## Tratamento de Erros e Validacao

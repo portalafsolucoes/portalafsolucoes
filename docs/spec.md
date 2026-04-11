@@ -4,6 +4,7 @@
 - Repositorio GitHub: https://github.com/portalafsolucoes/portalafsolucoes
 - Produto: Portal AF Solucoes - Gestao de Manutencao (CMMS), multiempresa e multiunidade, com foco em controle operacional, planejamento, execucao e analise da manutencao
 - Localizacao oficial da spec funcional: `docs/SPEC.md`
+- Referencia canonica de seguranca, hardening e readiness de producao: `docs/SEGURANCA.md`
 - Este arquivo e a referencia funcional para o sistema; `CLAUDE.md` na raiz ficou restrito a stack, comandos, convencoes e regras operacionais
 - Versao funcional atual: `1.0`
 - Data da especificacao: `09/04/2026`
@@ -13,6 +14,7 @@
 - Preferir prompts orientados por spec, por exemplo: `Leia a secao de Localizacoes em docs/SPEC.md e implemente conforme a spec`
 - Mudancas de regra de negocio, fluxo funcional, permissoes, navegacao ou comportamento de modulo devem atualizar este arquivo no mesmo ciclo da implementacao
 - Ao finalizar uma entrega, registrar aqui o que ficou implementado, mudancas de comportamento relevantes e eventuais gaps conhecidos
+- Mudancas de autenticacao, sessao, permissao, upload sensivel, exportacao, logs de seguranca, segredos ou criterio de liberacao devem atualizar `docs/SEGURANCA.md`
 - Mudancas de UI que alterem padrao reutilizavel devem atualizar `.claude/rules/components.md`
 - Mudancas de API, server action ou contrato backend devem atualizar `.claude/rules/api.md`
 - Mudancas de convencao geral do projeto devem atualizar `CLAUDE.md` e, quando forem compartilhadas por agentes, tambem `CONVENTIONS.md`

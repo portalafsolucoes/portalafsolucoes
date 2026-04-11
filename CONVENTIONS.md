@@ -3,6 +3,7 @@
 ## Ordem de Leitura Obrigatoria
 - Ler `docs/SPEC.md` para contrato funcional e regra de negocio
 - Ler `CLAUDE.md` para stack, comandos e regras operacionais
+- Ler `docs/SEGURANCA.md` quando a tarefa envolver autenticacao, sessao, permissao, hardening, go-live, upload sensivel, exportacao, logs, segredos ou readiness de producao
 - Ler a rule relevante em `.claude/rules/` conforme o tipo de mudanca
 - Ler `docs/AI_SETUP.md` quando a tarefa envolver MCPs, skills ou configuracao de agentes
 - Ler `docs/AUDITORIA.md` quando a tarefa envolver screenshots, evidencias, relatorios de validacao, Playwright, QA ou qualquer artefato manual/automatizado de auditoria
@@ -21,6 +22,7 @@
 
 ## Atualizacao de Documentacao por Tipo de Mudanca
 - Mudanca funcional, modular, navegacional, de regra de negocio ou permissao: atualizar `docs/SPEC.md`
+- Mudanca de autenticacao, sessao, autorizacao, isolamento multiempresa/unidade, upload sensivel, logs de erro, segredos, headers, hardening ou criterio de go-live: atualizar `docs/SEGURANCA.md`
 - Mudanca de layout, componente reutilizavel, modal, padrao de listagem ou comportamento visual compartilhado: atualizar `.claude/rules/components.md`
 - Mudanca de API route, server action, validacao de payload, resposta, escopo ou permissao no backend: atualizar `.claude/rules/api.md`
 - Mudanca de convencao geral do projeto, stack, comandos ou fluxo operacional: atualizar `CLAUDE.md`
@@ -44,4 +46,4 @@
 - Claude Code: `CLAUDE.md` + `.claude/rules/*.md`
 - Codex e agentes genericos: `AGENTS.md`
 - GitHub Copilot: `.github/copilot-instructions.md`
-- Todos devem convergir para este arquivo e para `docs/SPEC.md`
+- Todos devem convergir para este arquivo, `docs/SPEC.md` e `docs/SEGURANCA.md` quando a tarefa tocar seguranca

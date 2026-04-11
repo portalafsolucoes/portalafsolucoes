@@ -59,6 +59,7 @@ gep/            # Dados de variaveis de processo
 ## Documentacao
 
 Toda documentacao tecnica esta em [`docs/`](./docs/).
+As diretrizes de seguranca, hardening e prontidao de producao estao em [`docs/SEGURANCA.md`](./docs/SEGURANCA.md).
 As regras de auditoria estao em [`docs/AUDITORIA.md`](./docs/AUDITORIA.md).
 
 ## Organizacao da Raiz

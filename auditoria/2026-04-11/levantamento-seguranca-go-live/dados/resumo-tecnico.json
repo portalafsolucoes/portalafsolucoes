@@ -1,0 +1,50 @@
+{
+  "auditDate": "2026-04-11",
+  "scope": "static-code-review-and-config-review",
+  "verdict": "no-go",
+  "routeSecurity": {
+    "totalRoutes": 89,
+    "withSessionOrSecret": 85,
+    "withAuthorizationCheck": 39,
+    "missingSessionOrSecret": 4,
+    "missingAuthorizationCheck": 50,
+    "routesWithSession": 84,
+    "missingCompanyScopePattern": 21,
+    "missingUnitScopePattern": 72
+  },
+  "dependencyAudit": {
+    "tool": "npm audit --json",
+    "total": 12,
+    "high": 9,
+    "moderate": 3,
+    "directPackages": [
+      {
+        "name": "next",
+        "versionRange": "9.5.0 - 15.5.14",
+        "projectVersion": "15.5.7"
+      },
+      {
+        "name": "prisma",
+        "versionRange": "6.13.0-dev.1 - 6.19.2 || 6.20.0-dev.1 - 7.6.0-integration-feat-prisma-bootstrap.13",
+        "projectVersion": "6.18.0"
+      },
+      {
+        "name": "xlsx",
+        "versionRange": "*",
+        "projectVersion": "0.18.5"
+      }
+    ]
+  },
+  "criticalExamples": [
+    "src/lib/session.ts",
+    "src/lib/supabase.ts",
+    "src/lib/user-roles.ts",
+    "src/app/api/profile/route.ts",
+    "src/app/api/gep/data/route.ts",
+    "src/app/api/gep/files/route.ts",
+    "src/app/api/cron/generate-preventive-maintenance/route.ts",
+    "src/app/api/teams/[id]/route.ts",
+    "src/app/api/parts/route.ts",
+    "src/app/api/upload/route.ts"
+  ]
+}

@@ -6,6 +6,7 @@
 - Stack: Next.js 15 (App Router, React 19, TypeScript), PostgreSQL via Supabase + Prisma ORM, Tailwind CSS v4 + Shadcn/UI + Recharts, Zustand + React Query, Playwright, Vercel + Cloudinary
 - Leia primeiro `CONVENTIONS.md` para o fluxo compartilhado entre Claude Code, Codex e GitHub Copilot
 - Para spec completa do sistema, leia `docs/SPEC.md`
+- Para autenticacao, sessao, permissao, hardening, go-live, upload sensivel, exportacao, logs e segredos, leia `docs/SEGURANCA.md`
 - Para evidencias de QA, screenshots e relatorios de validacao, leia `docs/AUDITORIA.md`
 
 ## Comandos
@@ -43,6 +44,7 @@
 - Seguir a ordem de leitura definida em `CONVENTIONS.md` antes de implementar mudancas relevantes
 - Sempre alinhar novas features com `docs/SPEC.md` e `.claude/rules/*.md`
 - Toda mudanca finalizada deve atualizar a documentacao correspondente: regra funcional em `docs/SPEC.md`, padrao de UI em `.claude/rules/components.md`, contrato de API em `.claude/rules/api.md` e convencoes gerais neste `CLAUDE.md`
+- Mudancas de autenticacao, sessao, autorizacao, isolamento multiempresa/unidade, uploads sensiveis, exportacoes, logs de erro, segredos, headers e readiness de producao devem atualizar `docs/SEGURANCA.md`
 - Antes de criar fluxo novo, validar perfil, empresa/unidade, status envolvidos e criterio de aceite
 - Em listas, sempre considerar busca, filtros, loading, estado vazio, responsividade e permissao
 - Em formularios, garantir validacoes de negocio e status inicial correto
