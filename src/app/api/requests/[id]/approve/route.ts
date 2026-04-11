@@ -102,11 +102,9 @@ export async function POST(
         .single()
       
       if (woError || !workOrder) {
-        console.error('Create WO error:', woError)
-        console.error('WO Error details:', JSON.stringify(woError, null, 2))
-        return NextResponse.json({ 
-          error: 'Erro ao criar OS', 
-          details: woError?.message || 'Unknown error'
+        console.error('Create WO error')
+        return NextResponse.json({
+          error: 'Erro ao criar OS'
         }, { status: 500 })
       }
       
@@ -164,10 +162,9 @@ export async function POST(
       })
     }
   } catch (error) {
-    console.error('Approve request error:', error)
-    console.error('Error details:', JSON.stringify(error, null, 2))
+    console.error('Approve request error')
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

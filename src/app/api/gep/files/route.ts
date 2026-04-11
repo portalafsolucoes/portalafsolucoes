@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { listAvailableFiles, formatDate } from '@/lib/gep-parser';
+import { getSession } from '@/lib/session';
 
 export async function GET() {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+    }
+
     const files = listAvailableFiles();
     
     const formatted = files.map(({ date, files }) => ({
@@ -19,7 +25,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Erro ao listar arquivos GEP:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao listar arquivos' },
       { status: 500 }
     );
   }

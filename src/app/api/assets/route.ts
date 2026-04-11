@@ -4,6 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/storage'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
+import { sanitizeLimit } from '@/lib/pagination'
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const summary = searchParams.get('summary') === 'true'
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = sanitizeLimit(searchParams.get('limit'))
     const skip = (page - 1) * limit
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

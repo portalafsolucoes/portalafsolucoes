@@ -43,6 +43,7 @@ export async function GET(
       .from(table)
       .select('*')
       .eq('id', id)
+      .eq('companyId', session.companyId)
       .single()
 
     if (error) {
@@ -108,6 +109,7 @@ export async function PUT(
       .from(table)
       .update(body)
       .eq('id', id)
+      .eq('companyId', session.companyId)
       .select()
       .single()
 
@@ -169,6 +171,7 @@ export async function DELETE(
       .from(table)
       .delete()
       .eq('id', id)
+      .eq('companyId', session.companyId)
 
     if (error) {
       if (error.code === '23503') {

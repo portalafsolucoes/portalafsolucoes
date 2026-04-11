@@ -28,8 +28,6 @@ export async function GET(
 
     // Next.js 15+ requires awaiting params
     const { id } = await params
-    console.log('API GET /api/users/[id] - Received ID:', id)
-    console.log('API GET /api/users/[id] - Company ID:', session.companyId)
 
     // Buscar usuário de forma simples primeiro
     const { data: user, error: userError } = await supabase
@@ -39,17 +37,13 @@ export async function GET(
       .single()
 
     if (userError || !user) {
-      console.log('API GET /api/users/[id] - User not found')
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     // Validação de empresa
     if (user.companyId !== session.companyId) {
-      console.log('API GET /api/users/[id] - Different company')
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
-
-    console.log('API GET /api/users/[id] - Found user:', user.firstName, user.lastName)
 
     // Buscar relacionamentos separadamente para evitar erro 500
     let location = null
@@ -78,7 +72,6 @@ export async function GET(
       teamMemberships: teamMemberships || []
     }
 
-    console.log('API GET /api/users/[id] - Returning complete data')
     return NextResponse.json({ data: userData })
   } catch (error) {
     console.error('Get user error:', error)

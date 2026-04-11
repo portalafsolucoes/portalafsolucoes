@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getCalendarsForPlans } from '@/lib/calendarData'
@@ -47,11 +48,20 @@ function adjustToCalendarWorkingDay(date: Date, calendarWorkDays: WorkDays | nul
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar chave de segurança (para proteger o endpoint)
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET || 'your-secret-key-here'
+    const cronSecret = process.env.CRON_SECRET
+    if (!cronSecret) {
+      console.error('CRON_SECRET nao configurado no ambiente')
+      return NextResponse.json({ error: 'Configuracao do servidor ausente' }, { status: 500 })
+    }
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    const authHeader = request.headers.get('authorization') || ''
+    const expected = `Bearer ${cronSecret}`
+
+    if (authHeader.length !== expected.length) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -214,16 +224,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Generate preventive maintenance error:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
-}
-
-// GET para testar manualmente (remover em produção)
-export async function GET() {
-  return NextResponse.json({
-    message: 'Use POST method to generate preventive maintenance',
-    info: 'Add Authorization header with Bearer token'
-  })
 }

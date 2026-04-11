@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadGEPData, isValidDateFormat } from '@/lib/gep-parser';
+import { getSession } from '@/lib/session';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const startDateTime = searchParams.get('startDateTime');
     const endDateTime = searchParams.get('endDateTime');
@@ -94,7 +100,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Erro ao buscar dados GEP:', error);
     return NextResponse.json(
-      { error: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined },
+      { error: 'Erro ao carregar dados' },
       { status: 500 }
     );
   }

@@ -28,6 +28,22 @@ export async function DELETE(
       )
     }
 
+    // Verificar que o arquivo pertence a empresa do usuario via entidade pai
+    let ownershipVerified = false
+    if ((file as any).assetId) {
+      const { data: parentAsset } = await supabase.from('Asset').select('id').eq('id', (file as any).assetId).eq('companyId', session.companyId).single()
+      ownershipVerified = !!parentAsset
+    } else if ((file as any).workOrderId) {
+      const { data: parentWo } = await supabase.from('WorkOrder').select('id').eq('id', (file as any).workOrderId).eq('companyId', session.companyId).single()
+      ownershipVerified = !!parentWo
+    } else if ((file as any).requestId) {
+      const { data: parentReq } = await supabase.from('Request').select('id').eq('id', (file as any).requestId).eq('companyId', session.companyId).single()
+      ownershipVerified = !!parentReq
+    }
+    if (!ownershipVerified) {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+    }
+
     // Deletar arquivo do storage (ignora URLs legadas silenciosamente)
     try {
       await deleteFileByUrl(file.url)

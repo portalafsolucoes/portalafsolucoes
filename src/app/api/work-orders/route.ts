@@ -4,6 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateInternalId, isValidExternalId, determineSystemStatus } from '@/lib/workOrderUtils'
 import { isOperationalRole } from '@/lib/user-roles'
+import { sanitizeLimit } from '@/lib/pagination'
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number): Date {
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     const systemStatus = searchParams.get('systemStatus')
     const assetId = searchParams.get('assetId')
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = sanitizeLimit(searchParams.get('limit'))
     const skip = (page - 1) * limit
     const summary = searchParams.get('summary') === 'true'
 
@@ -328,10 +329,10 @@ export async function POST(request: NextRequest) {
       { data: workOrder, message: 'Work order created successfully' },
       { status: 201 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Create work order error:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

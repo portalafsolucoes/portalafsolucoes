@@ -84,52 +84,29 @@ export function normalizeUserRole(input: RoleContext | string | null | undefined
     return normalizeUserRole(input.canonicalRole)
   }
 
-  const role = inferLegacyRole(input.role)
-  const email = normalizeText(input.email)
-  const username = normalizeText(input.username)
-  const jobTitle = normalizeText(input.jobTitle)
+  // Determinar papel apenas pelo valor de role do banco (nunca por email/username/jobTitle)
+  const roleStr = (input.role || '').toString().trim().toUpperCase()
 
-  if (role === 'SUPER_ADMIN' || email.includes('super.admin') || username.includes('super.admin')) {
-    return 'SUPER_ADMIN'
+  // Papeis canonicos passados diretamente
+  if (['SUPER_ADMIN', 'ADMIN', 'TECHNICIAN', 'LIMITED_TECHNICIAN', 'REQUESTER', 'VIEW_ONLY'].includes(roleStr)) {
+    return roleStr as CanonicalUserRole
   }
 
-  if (
-    role === 'GESTOR' ||
-    role === 'PLANEJADOR' ||
-    email.startsWith('admin@') ||
-    username.startsWith('admin') ||
-    jobTitle.includes('administrador')
-  ) {
-    return 'ADMIN'
+  // Mapeamento de papeis legados
+  switch (roleStr) {
+    case 'GESTOR':
+    case 'PLANEJADOR':
+      return 'ADMIN'
+    case 'MECANICO':
+      return 'TECHNICIAN'
+    case 'ELETRICISTA':
+    case 'CONSTRUTOR_CIVIL':
+      return 'LIMITED_TECHNICIAN'
+    case 'OPERADOR':
+      return 'REQUESTER'
+    default:
+      return 'REQUESTER'
   }
-
-  if (email.includes('consulta@') || username.includes('consulta') || jobTitle.includes('visualizador')) {
-    return 'VIEW_ONLY'
-  }
-
-  if (email.includes('solicitante@') || username.includes('solicitante') || jobTitle.includes('solicitante')) {
-    return 'REQUESTER'
-  }
-
-  if (
-    role === 'ELETRICISTA' ||
-    role === 'CONSTRUTOR_CIVIL' ||
-    email.includes('tecnico.limitado') ||
-    username.includes('tecnico.limitado') ||
-    jobTitle.includes('limitad')
-  ) {
-    return 'LIMITED_TECHNICIAN'
-  }
-
-  if (role === 'MECANICO' || email.includes('tecnico@') || username.includes('tecnico') || jobTitle.includes('tecnico')) {
-    return 'TECHNICIAN'
-  }
-
-  if (role === 'OPERADOR') {
-    return 'REQUESTER'
-  }
-
-  return 'REQUESTER'
 }
 
 export function toPersistedUserRole(input: RoleContext | string | null | undefined): LegacyUserRole {

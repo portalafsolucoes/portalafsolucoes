@@ -80,9 +80,6 @@ export async function PATCH(
 
     const body = await request.json()
 
-    console.log('=== Update work order body ===')
-    console.log(JSON.stringify(body, null, 2))
-
     // Verificar se a OS existe e pertence à empresa
     let existingQuery = supabase
       .from('WorkOrder')
@@ -159,8 +156,6 @@ export async function PATCH(
       frequencyValue: body.frequencyValue ? parseInt(body.frequencyValue) : null,
       externalId: body.externalId || null
     }
-
-    console.log('Update data:', JSON.stringify(updateData, null, 2))
 
     // Atualizar a work order
     const { data: updatedWorkOrder, error: updateError } = await supabase

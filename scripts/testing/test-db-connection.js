@@ -71,7 +71,7 @@ async function testConnection() {
     console.error('4. Problemas de rede/internet')
     console.error('\n🔧 Soluções:')
     console.error('1. Verifique se o projeto está ativo em:')
-    console.error('   https://supabase.com/dashboard/project/wlantssberjxaxpuipkb')
+    console.error('   https://supabase.com/dashboard')
     console.error('2. Verifique o arquivo .env.local')
     console.error('3. Tente desativar antivírus/firewall temporariamente\n')
     

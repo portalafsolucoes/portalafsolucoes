@@ -18,8 +18,20 @@ export function normalizeEmail(email: string): string {
 }
 
 export function validatePassword(password: string): { valid: boolean; message?: string } {
-  if (password.length < 8) {
-    return { valid: false, message: 'Password must be at least 8 characters long' }
+  if (password.length < 10) {
+    return { valid: false, message: 'A senha deve ter pelo menos 10 caracteres' }
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos uma letra minuscula' }
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos uma letra maiuscula' }
+  }
+  if (!/\d/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos um numero' }
+  }
+  if (!/[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos um caractere especial' }
   }
   return { valid: true }
 }

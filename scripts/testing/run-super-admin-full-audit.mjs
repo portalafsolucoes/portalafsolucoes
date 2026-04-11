@@ -12,8 +12,12 @@ const EVIDENCE_DIR = path.join(OUTPUT_ROOT, 'evidencias')
 const REPORT_MD = path.join(OUTPUT_ROOT, 'RELATORIO.md')
 const REPORT_JSON = path.join(OUTPUT_ROOT, 'relatorio.json')
 
-const QA_EMAIL = 'super.admin@polimix.local'
-const QA_PASSWORD = 'Teste@123'
+const QA_EMAIL = process.env.QA_EMAIL || 'super.admin@polimix.local'
+const QA_PASSWORD = process.env.QA_PASSWORD
+if (!QA_PASSWORD) {
+  console.error('ERRO: QA_PASSWORD nao configurada. Use: QA_PASSWORD=senha node run-super-admin-full-audit.mjs')
+  process.exit(1)
+}
 
 ensureScreenshotAutomationAuthorized('scripts/testing/run-super-admin-full-audit.mjs')
 

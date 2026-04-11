@@ -50,12 +50,10 @@ export async function POST(request: NextRequest) {
       'application/vnd.ms-powerpoint',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       // Texto
-      'text/plain', 'text/csv', 'text/html', 'text/markdown',
+      'text/plain', 'text/csv',
       // Compactados
       'application/zip', 'application/x-zip-compressed',
-      'application/x-rar-compressed', 'application/x-7z-compressed',
-      // Outros
-      'application/json', 'application/xml', 'text/xml'
+      'application/x-rar-compressed', 'application/x-7z-compressed'
     ]
 
     for (const file of files) {
@@ -90,10 +88,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(
-      {
-        error: 'Falha ao fazer upload dos arquivos',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Falha ao fazer upload dos arquivos' },
       { status: 500 }
     )
   }

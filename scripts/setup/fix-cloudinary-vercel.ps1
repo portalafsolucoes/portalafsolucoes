@@ -2,7 +2,12 @@
 
 Write-Host "Adicionando NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME..." -ForegroundColor Cyan
 
-$cloudName = "dgidslzgg"
+$cloudName = $env:NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+if (-not $cloudName) {
+    Write-Host "ERRO: Configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME como variavel de ambiente." -ForegroundColor Red
+    Write-Host "  set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=seu_cloud_name" -ForegroundColor Yellow
+    exit 1
+}
 
 # Production
 Write-Host "1/3 - Production..." -ForegroundColor Yellow

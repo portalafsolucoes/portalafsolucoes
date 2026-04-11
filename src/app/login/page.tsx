@@ -9,6 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { APP_DESCRIPTION, PORTAL_NAME } from '@/lib/branding'
 import { Icon } from '@/components/ui/Icon'
 
+// TODO SEGURANCA (V11): Remover este bloco antes do deploy final para o cliente.
+// O array DEV_QUICK_ACCESS e incluido no bundle JS mesmo em producao.
+// A UI so renderiza em isDevelopment, mas os dados ficam no bundle compilado.
+// Ver docs/SEGURANCA.md item V11.
 const DEV_QUICK_ACCESS = [
   {
     company: 'Cimento Vale do Norte SA',
@@ -77,7 +81,8 @@ function LoginForm() {
       queryClient.removeQueries({ queryKey: ['company-modules'] })
 
       // Redirecionar: returnUrl (módulo clicado) ou entrada padrão do CMMS
-      router.replace(returnUrl || '/cmms')
+      const safeUrl = returnUrl && returnUrl.startsWith('/') && !returnUrl.includes('://') ? returnUrl : null
+      router.replace(safeUrl || '/cmms')
       router.refresh()
     } catch {
       setError('Erro ao conectar ao servidor')

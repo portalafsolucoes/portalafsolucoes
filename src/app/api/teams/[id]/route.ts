@@ -14,7 +14,6 @@ export async function GET(
 
     // Next.js 15+ requires awaiting params
     const { id } = await params
-    console.log('API GET /api/teams/[id] - Received ID:', id)
 
     const { data: team, error: teamError } = await supabase
       .from('Team')
@@ -23,13 +22,11 @@ export async function GET(
       .single()
 
     if (teamError || !team) {
-      console.log('API GET /api/teams/[id] - Team not found')
       return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Validação de segurança: garantir que a equipe pertence à mesma empresa
     if (team.companyId !== session.companyId) {
-      console.log('API GET /api/teams/[id] - Access denied: different company')
       return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
@@ -62,8 +59,6 @@ export async function GET(
         members: (members || []).length
       }
     }
-
-    console.log('API GET /api/teams/[id] - Returning team:', team.name, team.id)
 
     return NextResponse.json({ data: teamData })
   } catch (error) {

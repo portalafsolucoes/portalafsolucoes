@@ -47,6 +47,25 @@ export async function POST(request: NextRequest) {
     let updated = 0
     let errors = 0
 
+    // Whitelist de campos permitidos (protecao contra mass assignment)
+    const ALLOWED_FIELDS: Record<string, string[]> = {
+      MaintenanceType: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      MaintenanceArea: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      ServiceType: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      Calendar: ['name', 'description', 'protheusCode', 'workDays', 'companyId', 'updatedAt'],
+      CostCenter: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      WorkCenter: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      AssetFamily: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      AssetFamilyModel: ['name', 'description', 'protheusCode', 'familyId', 'companyId', 'updatedAt'],
+      Position: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      Characteristic: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      Resource: ['name', 'description', 'type', 'unit', 'unitCost', 'protheusCode', 'companyId', 'updatedAt'],
+      GenericTask: ['name', 'description', 'protheusCode', 'companyId', 'updatedAt'],
+      GenericStep: ['name', 'description', 'optionType', 'protheusCode', 'companyId', 'updatedAt'],
+      Asset: ['name', 'tag', 'description', 'status', 'protheusCode', 'companyId', 'unitId', 'locationId', 'familyId', 'familyModelId', 'updatedAt'],
+      Location: ['name', 'description', 'protheusCode', 'companyId', 'parentId', 'updatedAt'],
+    }
+
     for (const record of records) {
       try {
         if (!record.protheusCode) {
@@ -62,29 +81,33 @@ export async function POST(request: NextRequest) {
           .eq('protheusCode', record.protheusCode)
           .single()
 
-        // Garantir companyId
-        record.companyId = session.companyId
+        // Construir objeto sanitizado com whitelist
+        const allowedFields = ALLOWED_FIELDS[entity] || Object.keys(record).filter(k => !['id', 'createdAt'].includes(k))
+        const sanitized: Record<string, unknown> = { companyId: session.companyId }
+        for (const key of allowedFields) {
+          if (key in record && key !== 'id' && key !== 'createdAt') {
+            sanitized[key] = record[key]
+          }
+        }
 
         if (existing) {
           // Atualizar
-          delete record.id
-          delete record.createdAt
-          record.updatedAt = new Date().toISOString()
+          sanitized.updatedAt = new Date().toISOString()
 
           const { error } = await supabase
             .from(entity)
-            .update(record)
+            .update(sanitized)
             .eq('id', existing.id)
 
           if (error) { errors++; continue }
           updated++
         } else {
           // Criar
-          delete record.id
-          record.id = generateId()
+          sanitized.id = generateId()
+          sanitized.createdAt = new Date().toISOString()
           const { error } = await supabase
             .from(entity)
-            .insert(record)
+            .insert(sanitized)
 
           if (error) { errors++; continue }
           created++

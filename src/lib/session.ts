@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { cookies } from 'next/headers'
 import { canSwitchUnits, type CanonicalUserRole } from './user-roles'
 
@@ -16,34 +17,70 @@ export interface SessionUser {
 
 const SESSION_COOKIE_NAME = 'session'
 
+function signPayload(data: string, secret: string): string {
+  const hmac = crypto.createHmac('sha256', secret).update(data).digest('hex')
+  return `${Buffer.from(data).toString('base64url')}.${hmac}`
+}
+
+function verifyPayload(token: string, secret: string): string | null {
+  const parts = token.split('.')
+  if (parts.length !== 2) return null
+
+  const [b64data, hmac] = parts
+  const data = Buffer.from(b64data, 'base64url').toString('utf8')
+  const expectedHmac = crypto.createHmac('sha256', secret).update(data).digest('hex')
+
+  if (hmac.length !== expectedHmac.length) return null
+
+  try {
+    const isValid = crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(expectedHmac))
+    return isValid ? data : null
+  } catch {
+    return null
+  }
+}
+
 export async function createSession(user: SessionUser): Promise<void> {
+  const secret = process.env.NEXTAUTH_SECRET
+  if (!secret) {
+    console.error('NEXTAUTH_SECRET nao configurado')
+    return
+  }
+
   const sessionData = JSON.stringify(user)
+  const cookieValue = signPayload(sessionData, secret)
   const cookieStore = await cookies()
-  
+
   // Detecta se está rodando via ngrok (HTTPS)
-  const isHttps = process.env.NODE_ENV === 'production' || 
+  const isHttps = process.env.NODE_ENV === 'production' ||
                   process.env.NEXTAUTH_URL?.startsWith('https://') ||
                   false
-  
-  cookieStore.set(SESSION_COOKIE_NAME, sessionData, {
+
+  cookieStore.set(SESSION_COOKIE_NAME, cookieValue, {
     httpOnly: true,
     secure: isHttps,
-    sameSite: isHttps ? 'none' : 'lax', // 'none' para HTTPS cross-origin
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24, // 24 horas
     path: '/',
   })
 }
 
 export async function getSession(): Promise<SessionUser | null> {
+  const secret = process.env.NEXTAUTH_SECRET
+  if (!secret) return null
+
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)
-  
+
   if (!sessionCookie) {
     return null
   }
 
+  const verified = verifyPayload(sessionCookie.value, secret)
+  if (!verified) return null
+
   try {
-    return JSON.parse(sessionCookie.value) as SessionUser
+    return JSON.parse(verified) as SessionUser
   } catch {
     return null
   }

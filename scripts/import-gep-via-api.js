@@ -119,20 +119,12 @@ async function importGEPFolderViaAPI(gepFolderPath, apiUrl, authToken) {
 async function main() {
   const gepFolderPath = process.argv[2] || path.join(__dirname, '..', 'gep');
   const apiUrl = process.argv[3] || 'http://localhost:3000';
-  const authToken = process.argv[4];
-
+  // Configure AUTH_TOKEN como variavel de ambiente (nunca hardcode)
+  // export AUTH_TOKEN=valor_do_token
+  const authToken = process.env.AUTH_TOKEN
   if (!authToken) {
-    console.error('Uso: node import-gep-via-api.js [gepFolderPath] [apiUrl] <authToken>');
-    console.error('');
-    console.error('Exemplo:');
-    console.error('  node import-gep-via-api.js ./gep http://localhost:3000 "next-auth.session-token=..."');
-    console.error('');
-    console.error('Para obter o authToken:');
-    console.error('  1. Faça login no sistema');
-    console.error('  2. Abra o DevTools (F12)');
-    console.error('  3. Vá em Application > Cookies');
-    console.error('  4. Copie o valor do cookie "next-auth.session-token"');
-    process.exit(1);
+    console.error('ERRO: AUTH_TOKEN nao configurada. Use: AUTH_TOKEN=token node import-gep-via-api.js')
+    process.exit(1)
   }
 
   try {

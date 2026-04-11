@@ -6,15 +6,18 @@ Write-Host "Configurando Cloudinary na Vercel" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Credenciais do Cloudinary
-$CLOUD_NAME = "dgidslzgg"
-$API_KEY = "227461488686687"
-$API_SECRET = "UMAv_iVpj4LSDC1sOrKQJ9Hw_8Y"
+# Credenciais lidas de variaveis de ambiente (nunca hardcode)
+$CLOUD_NAME = $env:NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+$API_KEY = $env:CLOUDINARY_API_KEY
+$API_SECRET = $env:CLOUDINARY_API_SECRET
 
-Write-Host "Cloud Name: $CLOUD_NAME" -ForegroundColor Green
-Write-Host "API Key: $API_KEY" -ForegroundColor Green
-Write-Host "API Secret: $API_SECRET" -ForegroundColor Green
-Write-Host ""
+if (-not $CLOUD_NAME -or -not $API_KEY -or -not $API_SECRET) {
+    Write-Host "ERRO: Configure as variaveis de ambiente antes de executar:" -ForegroundColor Red
+    Write-Host "  set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=seu_cloud_name" -ForegroundColor Yellow
+    Write-Host "  set CLOUDINARY_API_KEY=sua_api_key" -ForegroundColor Yellow
+    Write-Host "  set CLOUDINARY_API_SECRET=seu_api_secret" -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "Adicionando variáveis na Vercel..." -ForegroundColor Yellow
 Write-Host ""

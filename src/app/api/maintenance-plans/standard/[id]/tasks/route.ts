@@ -13,6 +13,16 @@ export async function GET(
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     const { id: planId } = await params
 
+    const { data: plan, error: planError } = await supabase
+      .from('StandardMaintenancePlan')
+      .select('id')
+      .eq('id', planId)
+      .eq('companyId', session.companyId)
+      .single()
+    if (planError || !plan) {
+      return NextResponse.json({ error: 'Plano nao encontrado' }, { status: 404 })
+    }
+
     const { data: tasks, error } = await supabase
       .from('StandardMaintenanceTask')
       .select(`
@@ -70,6 +80,17 @@ export async function POST(
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     const { id: planId } = await params
+
+    const { data: plan, error: planError } = await supabase
+      .from('StandardMaintenancePlan')
+      .select('id')
+      .eq('id', planId)
+      .eq('companyId', session.companyId)
+      .single()
+    if (planError || !plan) {
+      return NextResponse.json({ error: 'Plano nao encontrado' }, { status: 404 })
+    }
+
     const body = await request.json()
     const { tasks } = body // Array de { description, taskCode, order, executionTime, steps: [{stepId, order}], resources: [{resourceId, resourceCount, quantity, unit}] }
 

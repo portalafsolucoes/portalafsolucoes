@@ -17,7 +17,9 @@ export function middleware(request: NextRequest) {
   // If user is not authenticated and trying to access protected route
   if (!sessionCookie && !isPublicRoute && pathname !== '/') {
     const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('returnUrl', pathname)
+    if (pathname.startsWith('/') && !pathname.includes('://')) {
+      loginUrl.searchParams.set('returnUrl', pathname)
+    }
     return NextResponse.redirect(loginUrl)
   }
 
