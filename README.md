@@ -37,6 +37,7 @@ npm run dev                  # http://localhost:3000
 |---------|-----------|
 | `npm run dev` | Ambiente de desenvolvimento |
 | `npm run build` | Build de producao |
+| `npm run repo:guard` | Valida higiene da raiz e da pasta `auditoria/` |
 | `npm run test` | Testes E2E (Playwright) |
 | `npm run db:push` | Atualiza schema do banco |
 
@@ -58,6 +59,7 @@ gep/            # Dados de variaveis de processo
 ## Documentacao
 
 Toda documentacao tecnica esta em [`docs/`](./docs/).
+As regras de auditoria estao em [`docs/AUDITORIA.md`](./docs/AUDITORIA.md).
 
 ## Organizacao da Raiz
 
@@ -65,3 +67,4 @@ Toda documentacao tecnica esta em [`docs/`](./docs/).
 - Documentacao auxiliar, inventarios, guias operacionais e notas em Markdown devem ficar em [`docs/`](./docs/)
 - Evidencias de auditoria, screenshots e relatorios de validacao devem ficar em [`auditoria/`](./auditoria/)
 - Nao deixar arquivos soltos de documentacao ou auditoria na raiz
+- Toda auditoria deve seguir o padrao definido em [`docs/AUDITORIA.md`](./docs/AUDITORIA.md)

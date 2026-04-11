@@ -6,6 +6,7 @@ Este repositorio usa `CONVENTIONS.md` como fluxo compartilhado entre agentes.
 - `CONVENTIONS.md`
 - `docs/SPEC.md`
 - `CLAUDE.md`
+- `docs/AUDITORIA.md` para mudancas que gerem evidencias, screenshots ou relatorios de auditoria
 - `.claude/rules/components.md` para mudancas de UI
 - `.claude/rules/api.md` para mudancas de API e server actions
 - `.claude/rules/database.md` para mudancas de schema, Prisma e dados
@@ -18,6 +19,7 @@ Este repositorio usa `CONVENTIONS.md` como fluxo compartilhado entre agentes.
 - Nao adicionar segredos, tokens ou caminhos pessoais ao repositorio
 - Manter a raiz limpa: documentacao auxiliar vai para `docs/` e evidencias de auditoria para `auditoria/`
 - Nunca criar arquivos soltos de Markdown, screenshot ou relatorio na raiz do projeto
+- Seguir obrigatoriamente `docs/AUDITORIA.md` para qualquer screenshot, relatorio, plano de teste ou evidencia de QA; nunca salvar `storageState.json`, scripts temporarios ou logs brutos como evidencia final
 - Ao substituir codigo sem remove-lo, registrar em `docs/DEPRECATIONS.md` com arquivo, motivo, substituto, data e condicao de remocao
 
 ## Tooling Compartilhado

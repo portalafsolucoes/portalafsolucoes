@@ -1,5 +1,0 @@
-locator.fill: Timeout 30000ms exceeded.
-Call log:
-[2m  - waiting for getByPlaceholder('Sensor de Temperatura')[22m
-
-    at [stdin]:102:58

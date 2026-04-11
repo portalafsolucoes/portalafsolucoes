@@ -5,6 +5,7 @@ Leia primeiro `CONVENTIONS.md`.
 ## Sequencia Obrigatoria
 - `docs/SPEC.md` para contrato funcional
 - `CLAUDE.md` para stack, comandos e operacao
+- `docs/AUDITORIA.md` quando a tarefa gerar screenshots, relatorios ou evidencias
 - `.claude/rules/components.md` quando a mudanca tocar UI ou padrao visual
 - `.claude/rules/api.md` quando a mudanca tocar API route, server action ou permissao backend
 - `.claude/rules/database.md` quando a mudanca tocar Prisma, schema ou consultas
@@ -18,4 +19,5 @@ Leia primeiro `CONVENTIONS.md`.
 - Usar `docs/AI_SETUP.md` como inventario canonico de MCPs e skills
 - Manter a raiz do repositorio limpa: documentacao auxiliar em `docs/` e auditorias/evidencias em `auditoria/`
 - Nunca criar arquivos soltos de Markdown, screenshot ou relatorio na raiz
+- Seguir `docs/AUDITORIA.md` para toda auditoria; nao salvar `storageState.json`, cookies, scripts temporarios ou logs tecnicos como evidencia permanente
 - Ao substituir codigo sem remove-lo, registrar em `docs/DEPRECATIONS.md`

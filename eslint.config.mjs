@@ -12,9 +12,14 @@ const eslintConfig = defineConfig([
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   globalIgnores([
     ".next/**",
+    "**/.next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    "auditoria/**",
   ]),
 ]);
 

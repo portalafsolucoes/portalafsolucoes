@@ -6,6 +6,7 @@
 - Stack: Next.js 15 (App Router, React 19, TypeScript), PostgreSQL via Supabase + Prisma ORM, Tailwind CSS v4 + Shadcn/UI + Recharts, Zustand + React Query, Playwright, Vercel + Cloudinary
 - Leia primeiro `CONVENTIONS.md` para o fluxo compartilhado entre Claude Code, Codex e GitHub Copilot
 - Para spec completa do sistema, leia `docs/SPEC.md`
+- Para evidencias de QA, screenshots e relatorios de validacao, leia `docs/AUDITORIA.md`
 
 ## Comandos
 - `npm run dev` - sobe o ambiente local em `http://localhost:3000`
@@ -35,7 +36,9 @@
 - Manter a raiz do repositorio limpa: apenas arquivos estruturais, entrypoints e configuracoes podem ficar no topo
 - Documentacao auxiliar, inventarios e notas operacionais devem ir para `docs/` em subpastas coerentes
 - Screenshots, evidencias, relatorios de auditoria e artefatos de validacao devem ir para `auditoria/`
+- Toda auditoria deve seguir a estrutura canonica de `docs/AUDITORIA.md`
 - Nunca deixar arquivos soltos de documentacao ou auditoria na raiz
+- Nunca salvar em `auditoria/` arquivos sensiveis ou temporarios como `storageState.json`, cookies de sessao, scripts temporarios, `error.log` ou dumps tecnicos sem curadoria
 - Nao duplicar regra de negocio entre UI, API e banco; reutilizar a logica central de permissao
 - Seguir a ordem de leitura definida em `CONVENTIONS.md` antes de implementar mudancas relevantes
 - Sempre alinhar novas features com `docs/SPEC.md` e `.claude/rules/*.md`
@@ -61,6 +64,7 @@
 - `AGENTS.md` e o ponto de entrada para Codex e agentes genericos
 - `.github/copilot-instructions.md` e o ponto de entrada para GitHub Copilot
 - `docs/AI_SETUP.md` define o inventario canonico de MCPs e skills sem armazenar segredos no repositorio
+- `docs/AUDITORIA.md` define a estrutura, nomenclatura, retencao e proibicoes para evidencias de auditoria
 - Ao gerar documentacao ou auditorias com apoio de IA, usar sempre `docs/` e `auditoria/` em vez da raiz do projeto
 
 ## Modulos do Sistema

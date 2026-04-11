@@ -5,6 +5,7 @@
 - Ler `CLAUDE.md` para stack, comandos e regras operacionais
 - Ler a rule relevante em `.claude/rules/` conforme o tipo de mudanca
 - Ler `docs/AI_SETUP.md` quando a tarefa envolver MCPs, skills ou configuracao de agentes
+- Ler `docs/AUDITORIA.md` quando a tarefa envolver screenshots, evidencias, relatorios de validacao, Playwright, QA ou qualquer artefato manual/automatizado de auditoria
 
 ## Fluxo Obrigatorio de Implementacao
 - Antes de escrever codigo, localizar a secao funcional relevante em `docs/SPEC.md`
@@ -15,6 +16,8 @@
 - Toda documentacao auxiliar, operacional, inventarios, guias e notas em Markdown deve ir para `docs/` em uma subpasta coerente
 - Toda evidencia de auditoria, screenshots, relatorios visuais e artefatos de validacao manual devem ir para `auditoria/`
 - Nunca gerar arquivos soltos na raiz para documentacao ou auditoria; antes de criar, escolher a pasta correta em `docs/` ou `auditoria/`
+- Toda auditoria deve seguir a estrutura canonica descrita em `docs/AUDITORIA.md`
+- Nao salvar `storageState.json`, cookies, tokens, logs de erro brutos ou scripts temporarios dentro de `auditoria/`; esses artefatos sao temporarios ou sensiveis e nao fazem parte da evidencia final
 
 ## Atualizacao de Documentacao por Tipo de Mudanca
 - Mudanca funcional, modular, navegacional, de regra de negocio ou permissao: atualizar `docs/SPEC.md`
@@ -23,6 +26,7 @@
 - Mudanca de convencao geral do projeto, stack, comandos ou fluxo operacional: atualizar `CLAUDE.md`
 - Mudanca de inventario de MCPs, skills ou onboarding de agentes: atualizar `docs/AI_SETUP.md`, `AGENTS.md` e `.github/copilot-instructions.md` quando aplicavel
 - Mudanca na organizacao de arquivos auxiliares ou no uso da raiz do repositorio: atualizar `README.md`, `CLAUDE.md`, `AGENTS.md` e `.github/copilot-instructions.md`
+- Mudanca em processo, estrutura, retencao ou convencao de auditoria: atualizar `docs/AUDITORIA.md`, `README.md`, `CLAUDE.md`, `AGENTS.md` e `.github/copilot-instructions.md`
 - Mudanca que substitui componente ou arquivo sem remove-lo: registrar em `docs/DEPRECATIONS.md`
 
 ## Fechamento de Entrega

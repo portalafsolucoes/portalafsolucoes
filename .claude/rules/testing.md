@@ -27,3 +27,10 @@ globs: tests/**,**/*.test.*
 - Capturar screenshots quando ajudarem a diagnosticar regressao visual, permissao ou responsividade
 - Qualquer script ou teste que gere screenshots deve exigir autorizacao explicita via `ALLOW_SCREENSHOT_AUTOMATION=1` antes de criar arquivos
 - Nomear testes e describes de forma explicita, citando rota, modulo ou comportamento validado
+
+## Evidencias e Auditoria
+- Toda evidencia de teste deve seguir `docs/AUDITORIA.md`
+- Nunca salvar screenshots, PDFs, HTMLs, relatorios ou planos de teste na raiz do repositorio
+- Estrutura canonica de uma rodada: `auditoria/YYYY-MM-DD/<slug-da-rodada>/README.md`, com evidencias em `evidencias/` e dados curados em `dados/`
+- `auditoria/` nao deve armazenar `storageState.json`, cookies de sessao, tokens, scripts temporarios de execucao, `error.log` ou dumps tecnicos sem curadoria
+- Se houver necessidade de reter um JSON de apoio, salvar apenas dados sanitizados em `dados/` com contexto explicito no `README.md` da rodada
