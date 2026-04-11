@@ -505,15 +505,15 @@ export default function GEPPage() {
                 <CardHeader><CardTitle>Filtros e Visualização</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
                       <Icon name="calendar_today" className="text-base" />
                       Data do Relatório:
                     </label>
-                    <input 
-                      type="date" 
-                      value={selectedDate} 
-                      onChange={(e) => setSelectedDate(e.target.value)} 
-                      className="w-full md:w-64 px-3 py-2 border rounded-[4px] focus:ring-2 focus:ring-primary" 
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-full md:w-64 px-3 py-2 border border-gray-300 shadow-sm rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Serão exibidos os 4 turnos completos (A, B, C, D) com 6 leituras cada
@@ -521,7 +521,7 @@ export default function GEPPage() {
                   </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Setor:</label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Setor:</label>
               <div className="flex flex-wrap gap-2">
                 {SECTORS.map(sector => (
                   <Button 
@@ -537,7 +537,7 @@ export default function GEPPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">
                 Variáveis Selecionadas: {selectedVariables.length} de {filteredVariables.length}
               </label>
               <Button 
@@ -551,7 +551,7 @@ export default function GEPPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Visualização:</label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Visualização:</label>
               <div className="flex gap-2">
                 <Button variant={viewMode === 'chart' ? 'primary' : 'outline'} size="sm" onClick={() => setViewMode('chart')}>
                   <Icon name="show_chart" className="text-base mr-2" />Gráficos
@@ -563,7 +563,7 @@ export default function GEPPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Modo de Exibição:</label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Modo de Exibição:</label>
               <div className="flex gap-2">
                 <Button variant={displayMode === 'shifts' ? 'primary' : 'outline'} size="sm" onClick={() => setDisplayMode('shifts')}>
                   Por Turnos
@@ -576,7 +576,7 @@ export default function GEPPage() {
 
             {viewMode === 'chart' && selectedVariables.length > 0 && selectedVariables.length <= 6 && (
               <div>
-                <label className="text-sm font-medium mb-2 block">Escala do Gráfico:</label>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Escala do Gráfico:</label>
                 <div className="flex gap-2">
                   <Button 
                     variant={chartScaleMode === 'normalized' ? 'primary' : 'outline'} 

@@ -91,7 +91,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
           <div className="flex gap-2">
             <button
               onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
             >
               <Icon name="edit" className="text-base" />
               Editar

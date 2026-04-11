@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
@@ -89,18 +90,43 @@ export default function PersonDetailPage() {
 
   return (
     <PageContainer variant="narrow">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/people"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4"
-          >
-            <Icon name="arrow_back" className="text-base" />
-            Voltar para Pessoas
-          </Link>
-          
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
+      <Link
+        href="/people"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+      >
+        <Icon name="arrow_back" className="text-base" />
+        Voltar para Pessoas
+      </Link>
+
+      <PageHeader
+        title={`${user.firstName} ${user.lastName}`}
+        description={user.jobTitle || user.email}
+        actions={
+          <div className="flex gap-2">
+            <Link
+              href={`/people/${user.id}/edit`}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
+            >
+              <Icon name="edit" className="text-base" />
+              Editar
+            </Link>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors disabled:opacity-50"
+            >
+              <Icon name="delete" className="text-base" />
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </button>
+          </div>
+        }
+      />
+
+        {/* Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Contact Info */}
+          <div className="bg-card rounded-[4px] ambient-shadow p-6">
+            <div className="flex items-center gap-4 mb-4">
               {user.image ? (
                 <img
                   src={user.image}
@@ -115,40 +141,12 @@ export default function PersonDetailPage() {
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  {user.firstName} {user.lastName}
-                </h1>
-                <p className="text-muted-foreground mt-1">{user.jobTitle || 'Sem cargo definido'}</p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
                 <span className="inline-block mt-2 px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
                   {getRoleLabel(user.role)}
                 </span>
               </div>
             </div>
-            
-            <div className="flex gap-2">
-              <Link
-                href={`/people/${user.id}/edit`}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
-              >
-                <Icon name="edit" className="text-base" />
-                Editar
-              </Link>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                <Icon name="delete" className="text-base" />
-                {deleting ? 'Excluindo...' : 'Excluir'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact Info */}
-          <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Informações de Contato</h2>
             <div className="space-y-4">
               <div className="flex items-center gap-3">

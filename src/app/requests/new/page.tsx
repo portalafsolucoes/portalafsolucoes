@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
@@ -77,12 +78,14 @@ export default function NewRequestPage() {
 
   return (
     <PageContainer variant="form">
-        <Card>
-          <CardHeader>
-            <CardTitle>Nova Solicitação de Manutenção</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title="Nova Solicitação de Manutenção"
+        description="Registre uma solicitação de serviço com prioridade, urgência e contexto operacional."
+      />
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-6">
               <Input
                 label="Título"
                 value={formData.title}
@@ -217,8 +220,8 @@ export default function NewRequestPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </PageContainer>
   )
 }

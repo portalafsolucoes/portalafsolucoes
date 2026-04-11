@@ -33,15 +33,15 @@ export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: S
   const isDraft = schedule.status === 'DRAFT'
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
-        <h2 className="text-xl font-bold text-foreground">
+      <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+        <h2 className="text-lg font-black text-gray-900">
           {schedule.scheduleNumber ? `#${schedule.scheduleNumber}` : 'Programação'}
         </h2>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-muted rounded transition-colors"
+          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
         >
           <Icon name="close" className="text-xl text-muted-foreground" />
         </button>
@@ -51,7 +51,7 @@ export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: S
       <div className="flex-1 overflow-y-auto">
         {/* Action buttons */}
         {canEdit && isDraft && (
-          <div className="p-4 border-b border-border space-y-2">
+          <div className="p-4 border-b border-gray-200 space-y-2">
             <Button
               onClick={() => onConfirm(schedule.id)}
               className="w-full flex items-center justify-center gap-2"
@@ -63,19 +63,19 @@ export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: S
         )}
 
         {/* Data section */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Dados da Programação</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados da Programação</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <div className="col-span-2">
-              <p className="text-xs text-muted-foreground">Descrição</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Descrição</p>
               <p className="text-sm text-foreground">{schedule.description || '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Data</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data</p>
               <p className="text-sm text-foreground">{schedule.scheduleDate ? formatDate(schedule.scheduleDate) : '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status</p>
               <p className="text-sm text-foreground">
                 <span className={`px-2 py-0.5 rounded text-xs ${schedule.status === 'CONFIRMED' ? 'bg-success-light text-success-light-foreground' : 'bg-muted text-muted-foreground'}`}>
                   {STATUS_LABELS[schedule.status || ''] || schedule.status || '—'}
@@ -83,15 +83,15 @@ export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: S
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Data Início</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data Início</p>
               <p className="text-sm text-foreground">{schedule.startDate ? formatDate(schedule.startDate) : '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Data Fim</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data Fim</p>
               <p className="text-sm text-foreground">{schedule.endDate ? formatDate(schedule.endDate) : '—'}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-muted-foreground">Criado por</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Criado por</p>
               <p className="text-sm text-foreground">
                 {schedule.createdBy
                   ? `${schedule.createdBy.firstName || ''} ${schedule.createdBy.lastName || ''}`.trim() || '—'

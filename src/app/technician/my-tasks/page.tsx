@@ -142,7 +142,7 @@ function TaskDetailPanel({
         <div className="p-4 border-b border-border">
           <button
             onClick={onExecute}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-900/90 transition-colors"
           >
             <Icon name={isCompleted ? 'visibility' : 'play_arrow'} className="text-base" />
             {isCompleted ? 'Ver execução' : 'Executar'}
@@ -339,7 +339,7 @@ export default function MyTasksPage() {
               <tr
                 key={wo.id}
                 onClick={() => handleSelectItem(wo, 'workorder')}
-                className={`hover:bg-secondary cursor-pointer transition-colors ${selectedItem?.id === wo.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedItem?.id === wo.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">
                   {wo.internalId || wo.id.slice(0, 8)}
@@ -408,7 +408,7 @@ export default function MyTasksPage() {
               <tr
                 key={req.id}
                 onClick={() => handleSelectItem(req, 'request')}
-                className={`hover:bg-secondary cursor-pointer transition-colors ${selectedItem?.id === req.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedItem?.id === req.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-foreground">{req.title}</div>

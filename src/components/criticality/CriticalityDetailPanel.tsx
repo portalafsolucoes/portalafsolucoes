@@ -66,16 +66,16 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
   const config = classificationConfig[asset.classification]
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
+      <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center gap-2 min-w-0">
           <div className={`w-3 h-3 rounded-full flex-shrink-0 ${config.color}`} />
-          <h2 className="text-xl font-bold text-foreground truncate">{asset.name}</h2>
+          <h2 className="text-lg font-black text-gray-900 truncate">{asset.name}</h2>
         </div>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0 ml-2"
+          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors flex-shrink-0 ml-2"
         >
           <Icon name="close" className="text-xl text-muted-foreground" />
         </button>
@@ -85,10 +85,10 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
       <div className="flex-1 overflow-y-auto">
         {/* Action buttons */}
         {canEdit && (
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-gray-200">
             <button
               onClick={onEdit}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
             >
               <Icon name="edit" className="text-base" />
               Editar GUT
@@ -97,24 +97,24 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
         )}
 
         {/* Classificação e Score */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Classificação</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Classificação</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <div>
-              <p className="text-xs text-muted-foreground">Classificação</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Classificação</p>
               <div className="flex items-center gap-2 mt-0.5">
                 <Icon name={config.icon} className={`text-base ${config.textColor}`} />
                 <span className="text-sm font-semibold text-foreground">{config.label}</span>
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Score Total</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Score Total</p>
               <div className={`inline-flex items-center justify-center w-12 h-12 rounded-[4px] ${config.color} text-white font-bold text-lg mt-0.5`}>
                 {asset.totalScore}
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Status do Ativo</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status do Ativo</p>
               <p className="text-sm text-foreground mt-0.5">
                 {asset.status === 'DOWN' ? 'Parado' :
                   asset.status === 'OPERATIONAL' ? 'Operacional' :
@@ -123,40 +123,40 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Recomendação</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Recomendação</p>
               <p className="text-sm text-foreground mt-0.5">{recommendation[asset.classification]}</p>
             </div>
           </div>
         </div>
 
         {/* Identificação */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Identificação</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Identificação</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             {asset.customId && (
               <div>
-                <p className="text-xs text-muted-foreground">Código</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Código</p>
                 <p className="text-sm text-foreground">{asset.customId}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-muted-foreground">Localização</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Localização</p>
               <p className="text-sm text-foreground">{asset.location?.name || '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Categoria</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Categoria</p>
               <p className="text-sm text-foreground">{asset.category?.name || '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Área</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Área</p>
               <p className="text-sm text-foreground">{asset.area || '—'}</p>
             </div>
           </div>
         </div>
 
         {/* Matriz GUT */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Matriz GUT</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Matriz GUT</h3>
           <div className="space-y-3">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Gravidade (G) — {gutLabels[asset.gutGravity]?.gravity}</p>
@@ -179,22 +179,22 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
 
         {/* Contagens operacionais */}
         <div className="p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Operacional</h3>
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Operacional</h3>
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 bg-surface rounded-[4px] border border-border text-center">
               <Icon name="assignment" className="text-xl text-muted-foreground mx-auto mb-1" />
               <p className="text-2xl font-bold text-foreground">{asset.openRequestsCount}</p>
-              <p className="text-xs text-muted-foreground">SS abertas</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">SS abertas</p>
             </div>
             <div className="p-3 bg-surface rounded-[4px] border border-border text-center">
               <Icon name="construction" className="text-xl text-muted-foreground mx-auto mb-1" />
               <p className="text-2xl font-bold text-foreground">{asset.openWorkOrdersCount}</p>
-              <p className="text-xs text-muted-foreground">OS abertas</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">OS abertas</p>
             </div>
             <div className="p-3 bg-surface rounded-[4px] border border-border text-center">
               <Icon name="warning" className="text-xl text-muted-foreground mx-auto mb-1" />
               <p className="text-2xl font-bold text-foreground">{asset.rafCount}</p>
-              <p className="text-xs text-muted-foreground">RAFs</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">RAFs</p>
             </div>
           </div>
         </div>

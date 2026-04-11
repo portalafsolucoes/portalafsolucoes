@@ -382,7 +382,7 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
         </ModalSection>
       </div>
 
-      <div className="flex gap-3 px-4 py-4 border-t border-border">
+      <div className="flex gap-3 px-4 py-4 border-t border-gray-200 bg-gray-50">
         <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
           Cancelar
         </Button>
@@ -405,13 +405,13 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
 
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         {/* Header */}
-        <div className="flex items-start justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">Analisar Solicitação</h2>
+        <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+          <h2 className="text-lg font-black text-gray-900">Analisar Solicitação</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-muted rounded transition-colors"
+            className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
           >
             <Icon name="close" className="text-xl text-muted-foreground" />
           </button>

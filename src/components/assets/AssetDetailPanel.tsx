@@ -103,15 +103,15 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   }
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
+      <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-xl font-bold text-foreground">{asset.name}</h2>
+            <h2 className="text-lg font-black text-gray-900">{asset.name}</h2>
             <button
               onClick={onClose}
-              className="ml-auto p-1 hover:bg-muted rounded transition-colors"
+              className="ml-auto p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
             >
               <Icon name="close" className="text-xl text-muted-foreground" />
             </button>
@@ -144,10 +144,10 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
           <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
             {/* Ações */}
-            <div className="p-4 border-b border-border space-y-2">
-              <button 
+            <div className="p-4 border-b border-gray-200 space-y-2">
+              <button
                 onClick={() => onEdit(asset)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
               >
                 <Icon name="edit" className="text-base" />
                 Editar Ativo
@@ -163,8 +163,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Imagem do Ativo */}
         {asset.image && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-2">Imagem Principal</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Imagem Principal</h3>
             <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
               <img 
                 src={asset.image} 
@@ -176,8 +176,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         )}
 
         {/* Identificação */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Identificação</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Identificação</h3>
           {asset.description && (
             <div className="mb-3">
               <p className="text-sm text-muted-foreground">{asset.description}</p>
@@ -186,61 +186,61 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.protheusCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Código do Bem</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Código do Bem</p>
                 <p className="text-sm text-foreground font-mono font-semibold">{asset.protheusCode}</p>
               </div>
             )}
             {asset.tag && (
               <div>
-                <p className="text-xs text-muted-foreground">Tag</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tag</p>
                 <p className="text-sm text-foreground font-mono">{asset.tag}</p>
               </div>
             )}
             {asset.barCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Código de Barras</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Código de Barras</p>
                 <p className="text-sm text-foreground font-mono">{asset.barCode}</p>
               </div>
             )}
             {asset.fixedAssetCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Cód. Imobilizado</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Cód. Imobilizado</p>
                 <p className="text-sm text-foreground">{asset.fixedAssetCode}</p>
               </div>
             )}
             {asset.assetPlate && (
               <div>
-                <p className="text-xs text-muted-foreground">Chapa Imobilizado</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Chapa Imobilizado</p>
                 <p className="text-sm text-foreground">{asset.assetPlate}</p>
               </div>
             )}
             {asset.assetCategoryType && (
               <div>
-                <p className="text-xs text-muted-foreground">Categoria</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Categoria</p>
                 <p className="text-sm text-foreground">{asset.assetCategoryType}</p>
               </div>
             )}
             {asset.assetPriority && (
               <div>
-                <p className="text-xs text-muted-foreground">Prioridade</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Prioridade</p>
                 <p className="text-sm text-foreground">{asset.assetPriority}</p>
               </div>
             )}
             {asset.ownershipType && (
               <div>
-                <p className="text-xs text-muted-foreground">Proprietário</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Proprietário</p>
                 <p className="text-sm text-foreground">{asset.ownershipType === 'PROPRIO' ? 'Próprio' : 'Terceiro'}</p>
               </div>
             )}
             {asset.parentAsset?.protheusCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Cód. Bem Pai</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Cód. Bem Pai</p>
                 <p className="text-sm text-foreground font-mono font-semibold">{asset.parentAsset.protheusCode}</p>
               </div>
             )}
             {asset.maintenanceStatus && (
               <div>
-                <p className="text-xs text-muted-foreground">Sit. Manutenção</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Sit. Manutenção</p>
                 <p className="text-sm text-foreground">{asset.maintenanceStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}</p>
               </div>
             )}
@@ -248,30 +248,30 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* Localização e Organização */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Localização</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Localização</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.location && (
               <div>
-                <p className="text-xs text-muted-foreground">Localização</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Localização</p>
                 <p className="text-sm text-foreground">{asset.location.name}</p>
               </div>
             )}
             {asset.warehouse && (
               <div>
-                <p className="text-xs text-muted-foreground">Almoxarifado</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Almoxarifado</p>
                 <p className="text-sm text-foreground">{asset.warehouse}</p>
               </div>
             )}
             {asset.shiftCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Turno</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Turno</p>
                 <p className="text-sm text-foreground">{asset.shiftCode}</p>
               </div>
             )}
             {asset.primaryUser && (
               <div>
-                <p className="text-xs text-muted-foreground">Responsável</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Responsável</p>
                 <p className="text-sm text-foreground">{asset.primaryUser.firstName} {asset.primaryUser.lastName}</p>
               </div>
             )}
@@ -280,40 +280,40 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Dados Técnicos */}
         {(asset.manufacturer || asset.modelName || asset.serialNumber || asset.hasCounter) && (
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Dados Técnicos</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados Técnicos</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.manufacturer && (
               <div>
-                <p className="text-xs text-muted-foreground">Fabricante</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Fabricante</p>
                 <p className="text-sm text-foreground">{asset.manufacturer}</p>
               </div>
             )}
             {asset.modelName && (
               <div>
-                <p className="text-xs text-muted-foreground">Modelo</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Modelo</p>
                 <p className="text-sm text-foreground">{asset.modelName}</p>
               </div>
             )}
             {asset.serialNumber && (
               <div>
-                <p className="text-xs text-muted-foreground">N. Série</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">N. Série</p>
                 <p className="text-sm text-foreground font-mono">{asset.serialNumber}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-muted-foreground">Estrutura</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Estrutura</p>
               <p className="text-sm text-foreground">{asset.hasStructure ? 'Sim' : 'Não'}</p>
             </div>
             {asset.hasCounter && (
               <>
                 <div>
-                  <p className="text-xs text-muted-foreground">Contador</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Contador</p>
                   <p className="text-sm text-foreground">{asset.counterType || 'Sim'}</p>
                 </div>
                 {asset.counterPosition != null && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Posição Contador</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Posição Contador</p>
                     <p className="text-sm text-foreground">{asset.counterPosition}</p>
                   </div>
                 )}
@@ -321,7 +321,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
             )}
             {asset.lifeValue != null && (
               <div>
-                <p className="text-xs text-muted-foreground">Vida Útil</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Vida Útil</p>
                 <p className="text-sm text-foreground">{asset.lifeValue} {asset.lifeUnit || ''}</p>
               </div>
             )}
@@ -331,42 +331,42 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Financeiro */}
         {(asset.acquisitionCost || asset.purchaseValue || asset.hourlyCost || asset.purchaseDate) && (
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Financeiro e Aquisição</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Financeiro e Aquisição</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.purchaseValue != null && (
               <div>
-                <p className="text-xs text-muted-foreground">Valor de Compra</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Valor de Compra</p>
                 <p className="text-sm text-foreground">{formatCurrency(asset.purchaseValue)}</p>
               </div>
             )}
             {asset.acquisitionCost != null && (
               <div>
-                <p className="text-xs text-muted-foreground">Custo de Aquisição</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Custo de Aquisição</p>
                 <p className="text-sm text-foreground">{formatCurrency(asset.acquisitionCost)}</p>
               </div>
             )}
             {asset.hourlyCost != null && asset.hourlyCost > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground">Custo Hora</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Custo Hora</p>
                 <p className="text-sm text-foreground">{formatCurrency(asset.hourlyCost)}</p>
               </div>
             )}
             {asset.purchaseDate && (
               <div>
-                <p className="text-xs text-muted-foreground">Data de Compra</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data de Compra</p>
                 <p className="text-sm text-foreground">{formatDate(asset.purchaseDate)}</p>
               </div>
             )}
             {asset.installationDate && (
               <div>
-                <p className="text-xs text-muted-foreground">Data de Instalação</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data de Instalação</p>
                 <p className="text-sm text-foreground">{formatDate(asset.installationDate)}</p>
               </div>
             )}
             {asset.supplierCode && (
               <div>
-                <p className="text-xs text-muted-foreground">Fornecedor</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Fornecedor</p>
                 <p className="text-sm text-foreground">{asset.supplierCode}{asset.supplierStore ? ` / ${asset.supplierStore}` : ''}</p>
               </div>
             )}
@@ -376,18 +376,18 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Garantia */}
         {(asset.warrantyPeriod || asset.warrantyDate) && (
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Garantia</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Garantia</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {asset.warrantyPeriod != null && (
               <div>
-                <p className="text-xs text-muted-foreground">Prazo</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Prazo</p>
                 <p className="text-sm text-foreground">{asset.warrantyPeriod} {asset.warrantyUnit || ''}</p>
               </div>
             )}
             {asset.warrantyDate && (
               <div>
-                <p className="text-xs text-muted-foreground">Data Garantia</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data Garantia</p>
                 <p className="text-sm text-foreground">{formatDate(asset.warrantyDate)}</p>
               </div>
             )}
@@ -396,21 +396,21 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         )}
 
         {/* Datas */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-gray-200">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
-              <p className="text-xs text-muted-foreground">Criado em</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Criado em</p>
               <p className="text-sm text-foreground">{formatDate(asset.createdAt)}</p>
             </div>
             {asset.deactivationDate && (
               <div>
-                <p className="text-xs text-muted-foreground">Data de Baixa</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data de Baixa</p>
                 <p className="text-sm text-foreground">{formatDate(asset.deactivationDate)}</p>
               </div>
             )}
             {asset.deactivationReason && (
               <div className="col-span-2">
-                <p className="text-xs text-muted-foreground">Motivo da Baixa</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Motivo da Baixa</p>
                 <p className="text-sm text-foreground">{asset.deactivationReason}</p>
               </div>
             )}
@@ -418,8 +418,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* Matriz GUT - Criticidade */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Icon name="monitoring" className="text-base text-primary" />
             Matriz GUT (Criticidade)
           </h3>
@@ -485,8 +485,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         </div>
 
         {/* QR Code */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">QR Code do Ativo</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">QR Code do Ativo</h3>
           <div className="flex flex-col items-center bg-secondary rounded-[4px] p-4">
             <QRCodeSVG 
               value={`${window.location.origin}/assets?id=${asset.id}`}
@@ -502,8 +502,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Arquivos Anexos */}
         {asset.files && asset.files.length > 0 && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
               <Icon name="attach_file" className="text-base" />
               Arquivos Anexos ({asset.files.length})
             </h3>
@@ -529,7 +529,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
         {/* Histórico de Ordens de Serviço */}
         <div className="p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Icon name="construction" className="text-base" />
             Histórico de OS
           </h3>
@@ -544,7 +544,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
                       <Icon name="check_circle" className="text-base text-success" />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{formatDate(wo.createdAt)}</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">{formatDate(wo.createdAt)}</p>
                 </div>
               ))}
               {workOrders.length > 5 && (
@@ -563,7 +563,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
         {/* Arquivos Anexados */}
         {asset.files && asset.files.length > 1 && (
           <div className="p-4 border-t border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Documentos</h3>
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Documentos</h3>
             <div className="space-y-2">
               {asset.files.slice(1).map((file, index) => (
                 <a

@@ -165,7 +165,7 @@ export default function PlansPage() {
               </div>
               {/* Add button */}
               {canCreate('planning') && (
-                <Button onClick={handleCreate}>
+                <Button onClick={handleCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="mr-2 text-base" />
                   Novo Plano
                 </Button>
@@ -217,7 +217,7 @@ export default function PlansPage() {
                           <tr
                             key={p.id}
                             onClick={() => handleSelectPlan(p)}
-                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedPlan?.id === p.id ? 'bg-secondary' : ''}`}
+                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedPlan?.id === p.id ? 'bg-secondary' : ''}`}
                           >
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{p.planNumber}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{p.description}</td>

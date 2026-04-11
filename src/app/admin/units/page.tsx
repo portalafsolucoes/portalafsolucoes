@@ -50,7 +50,7 @@ function UnitDetailPanel({ unit, onClose, onEdit, onDelete }: UnitDetailPanelPro
         <div className="p-4 border-b border-border space-y-2">
           <button
             onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
           >
             <Icon name="edit" className="text-base" />
             Editar
@@ -373,7 +373,7 @@ export default function AdminUnitsPage() {
                   className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-              <Button onClick={openCreate} size="sm">
+              <Button onClick={openCreate} size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                 <Icon name="add" className="mr-1 text-base" />
                 Nova Unidade
               </Button>
@@ -427,7 +427,7 @@ export default function AdminUnitsPage() {
                           <tr
                             key={unit.id}
                             onClick={() => handleSelectUnit(unit)}
-                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
+                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
                           >
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                               <div className="flex items-center gap-3">
@@ -499,7 +499,7 @@ export default function AdminUnitsPage() {
           <div className="p-4 space-y-2">
             <button
               onClick={handleEditOpen}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
             >
               <Icon name="edit" className="text-base" />
               Editar

@@ -220,7 +220,7 @@ export default function WorkOrdersPage() {
                       setShowFinalizeModal(false)
                       setShowCreateModal(true)
                     }}
-                    className="whitespace-nowrap"
+                    className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md"
                   >
                     <Icon name="add" className="mr-2 text-base" />
                     Nova Ordem
@@ -325,7 +325,7 @@ export default function WorkOrdersPage() {
                         {filteredWorkOrders.map((wo) => {
                           const displayId = wo.externalId || wo.internalId || wo.customId || wo.id.slice(0, 8)
                           return (
-                            <tr key={wo.id} onClick={() => handleView(wo.id)} className="hover:bg-secondary cursor-pointer transition-colors">
+                            <tr key={wo.id} onClick={() => handleView(wo.id)} className="odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="text-sm font-semibold text-foreground">{displayId}</span>
                               </td>

@@ -169,7 +169,7 @@ function PeopleSummarySection({ users }: { users: any[] }) {
                 <tbody className="divide-y divide-border">
                   {sortedRoles.map(role => (
                     groupedByRole[role].map(user => (
-                      <tr key={user.id} className="hover:bg-muted/30 transition-colors">
+                      <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light transition-colors">
                         <td className="px-4 py-2.5 text-foreground font-medium">
                           {user.firstName} {user.lastName}
                         </td>
@@ -783,7 +783,7 @@ export default function BasicRegistrationEntityPage() {
               </button>
               {/* Add button */}
               {allowCreate && (
-                <Button onClick={handleCreate} disabled={!!noUnitSelected}>
+                <Button onClick={handleCreate} disabled={!!noUnitSelected} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="mr-2 text-base" />
                   Adicionar
                 </Button>

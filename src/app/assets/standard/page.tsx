@@ -162,7 +162,7 @@ export default function StandardAssetsPage() {
     if (sortField !== field) {
       return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
     }
-    return <Icon name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'} className="text-sm text-foreground" />
+    return <Icon name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'} className="text-sm text-accent-orange" />
   }
 
   const filteredItems = items.filter(item => {
@@ -216,7 +216,7 @@ export default function StandardAssetsPage() {
                 />
               </div>
               <ExportButton data={sortedItems} entity="standard-assets" />
-              <Button onClick={handleNew} className="whitespace-nowrap">
+              <Button onClick={handleNew} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                 <Icon name="add" className="mr-2 text-base" />
                 Novo Bem Padrão
               </Button>
@@ -285,10 +285,10 @@ export default function StandardAssetsPage() {
                             setEditingItem(null)
                             setSelectedItem(item)
                           }}
-                          className={`transition-colors cursor-pointer ${
+                          className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${
                             selectedItem?.id === item.id || editingItem?.id === item.id
                               ? 'bg-secondary'
-                              : 'hover:bg-secondary'
+                              : ''
                           }`}
                         >
                           <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground text-sm">

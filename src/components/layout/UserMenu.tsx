@@ -44,9 +44,9 @@ export function UserMenu() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-[4px] bg-surface-low px-2.5 py-1.5 text-sm transition-all hover:bg-surface-container"
+        className="flex items-center gap-2 rounded-[4px] bg-gray-100 border border-gray-200 px-2.5 py-1.5 text-sm transition-all hover:bg-gray-200"
       >
-        <div className={`w-6 h-6 rounded-[4px] ${getRoleColor(user)} flex items-center justify-center text-white text-xs font-semibold`}>
+        <div className="w-6 h-6 rounded-[4px] bg-gray-900 flex items-center justify-center text-white text-xs font-semibold">
           {getInitials()}
         </div>
 
@@ -59,11 +59,11 @@ export function UserMenu() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-card rounded-[4px] ambient-ambient-shadow py-2 z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-white rounded-[4px] border border-gray-200 shadow-lg py-2 z-50">
           {/* User Info Header */}
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-[4px] ${getRoleColor(user)} flex items-center justify-center text-white font-semibold`}>
+              <div className="w-12 h-12 rounded-[4px] bg-gray-900 flex items-center justify-center text-white font-semibold">
                 {getInitials()}
               </div>
               <div className="flex-1">
@@ -76,19 +76,19 @@ export function UserMenu() {
                 )}
               </div>
             </div>
-            <div className="mt-2 flex items-center gap-2 px-2 py-1 bg-surface-low rounded-[4px] text-xs text-on-surface">
+            <div className="mt-2 flex items-center gap-2 px-2 py-1 bg-gray-100 rounded-[4px] text-xs text-gray-700">
               <Icon name={getRoleIcon(user)} className="text-base" />
               <span>{getRoleDisplayName(user)}</span>
             </div>
           </div>
 
-          <div className="mx-4 h-px bg-on-surface-variant/10" />
+          <div className="mx-4 h-px bg-gray-200" />
 
           {/* Menu Items */}
           <div className="py-2">
             <Link
               href="/profile"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-low transition-colors"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-gray-50 transition-colors"
               onClick={() => setIsOpen(false)}
             >
               <Icon name="person" className="text-lg text-on-surface-variant" />
@@ -97,7 +97,7 @@ export function UserMenu() {
 
             <Link
               href="/settings"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-low transition-colors"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-gray-50 transition-colors"
               onClick={() => setIsOpen(false)}
             >
               <Icon name="settings" className="text-lg text-on-surface-variant" />
@@ -105,20 +105,20 @@ export function UserMenu() {
             </Link>
           </div>
 
-          <div className="mx-4 h-px bg-on-surface-variant/10" />
+          <div className="mx-4 h-px bg-gray-200" />
 
           {/* Portal & Logout */}
           <div className="pt-2">
             <button
               onClick={() => { setIsOpen(false); router.push('/hub') }}
-              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-low transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-gray-50 transition-colors w-full"
             >
               <Icon name="grid_view" className="text-lg text-on-surface-variant" />
               Voltar ao Portal
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-surface-low transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-gray-50 transition-colors w-full"
             >
               <Icon name="logout" className="text-lg text-on-surface-variant" />
               Sair do Sistema

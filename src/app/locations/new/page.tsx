@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
@@ -68,12 +69,14 @@ export default function NewLocationPage() {
 
   return (
     <PageContainer variant="form">
-        <Card>
-          <CardHeader>
-            <CardTitle>Nova Localização</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title="Nova Localização"
+        description="Cadastre uma unidade ou localização física na hierarquia operacional."
+      />
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-6">
               <Input
                 label="Nome"
                 value={formData.name}
@@ -136,8 +139,8 @@ export default function NewLocationPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </PageContainer>
   )
 }

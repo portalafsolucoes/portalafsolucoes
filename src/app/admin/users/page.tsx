@@ -102,7 +102,7 @@ function UserDetailPanel({
         <div className="p-4 border-b border-border space-y-2">
           <button
             onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
           >
             <Icon name="edit" className="text-base" />
             Editar
@@ -771,7 +771,7 @@ export default function AdminUsersPage() {
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}
               </select>
-              <Button onClick={openCreate} size="sm">
+              <Button onClick={openCreate} size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                 <Icon name="person_add" className="mr-1 text-base" />
                 Novo Usuário
               </Button>
@@ -824,7 +824,7 @@ export default function AdminUsersPage() {
                           <tr
                             key={user.id}
                             onClick={() => handleSelectUser(user)}
-                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
+                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
                           >
                             <td className="px-6 py-4 text-sm text-foreground">
                               <div className="flex items-center gap-3">
@@ -935,7 +935,7 @@ export default function AdminUsersPage() {
           <div className="p-4 space-y-2">
             <button
               onClick={handleEditOpen}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
             >
               <Icon name="edit" className="text-base" />
               Editar

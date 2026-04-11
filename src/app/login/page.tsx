@@ -139,6 +139,7 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   required
+                  className="border border-gray-300 shadow-sm focus:ring-gray-900 bg-white"
                 />
 
                 <Input
@@ -148,11 +149,12 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  className="border border-gray-300 shadow-sm focus:ring-gray-900 bg-white"
                 />
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-gray-900 text-white hover:bg-gray-800"
                   disabled={loading}
                 >
                   {loading ? 'Entrando...' : 'Entrar'}

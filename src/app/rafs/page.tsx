@@ -233,7 +233,7 @@ export default function RAFsPage() {
                 <ExportButton data={filteredRAFs} entity="rafs" />
                 <Button
                   onClick={() => { setSelectedRAF(null); setShowEditModal(false); setRafToEdit(null); setShowModal(true) }}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md"
                 >
                   <Icon name="add" className="mr-2 text-base" />
                   Novo RAF
@@ -344,7 +344,7 @@ export default function RAFsPage() {
                           <tr
                             key={raf.id}
                             onClick={() => handleView(raf.id)}
-                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedRAF?.id === raf.id ? 'bg-secondary' : ''}`}
+                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRAF?.id === raf.id ? 'bg-secondary' : ''}`}
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">

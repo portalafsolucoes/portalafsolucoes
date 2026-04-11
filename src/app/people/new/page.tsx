@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 import { Location } from '@/types'
 import { CANONICAL_ROLE_OPTIONS } from '@/lib/user-roles'
@@ -107,16 +108,20 @@ export default function NewPersonPage() {
 
   return (
     <PageContainer variant="form">
-        <Link
-          href="/people"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
-        >
-          <Icon name="arrow_back" className="text-base" />
-          Voltar para Pessoas
-        </Link>
+      <Link
+        href="/people"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+      >
+        <Icon name="arrow_back" className="text-base" />
+        Voltar para Pessoas
+      </Link>
 
-        <div className="bg-card rounded-[4px] ambient-shadow p-6">
-          <h1 className="text-2xl font-bold text-foreground mb-6">Adicionar Nova Pessoa</h1>
+      <PageHeader
+        title="Adicionar Nova Pessoa"
+        description="Cadastre um usuário com papel, cargo, localização e dados operacionais."
+      />
+
+      <div className="bg-card rounded-[4px] ambient-shadow p-6">
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -305,7 +310,7 @@ export default function NewPersonPage() {
               </button>
             </div>
           </form>
-        </div>
+      </div>
     </PageContainer>
   )
 }

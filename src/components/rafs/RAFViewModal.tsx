@@ -58,11 +58,11 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
   // ── inPage (desktop split-panel) ──────────────────────────────────────────
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         {/* Header */}
-        <div className="flex items-start justify-between p-4 border-b border-border">
+        <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-foreground">{raf.rafNumber}</h2>
+            <h2 className="text-lg font-black text-gray-900">{raf.rafNumber}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                 raf.failureType === 'REPETITIVE'
@@ -83,18 +83,18 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors ml-2">
+          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors ml-2">
             <Icon name="close" className="text-xl text-muted-foreground" />
           </button>
         </div>
 
         {/* Ações */}
         {(onEdit || onDelete) && (
-          <div className="p-4 border-b border-border space-y-2">
+          <div className="p-4 border-b border-gray-200 space-y-2">
             {onEdit && (
               <button
                 onClick={() => onEdit(raf.id)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-primary-graphite transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
               >
                 <Icon name="edit" className="text-base" />
                 Editar RAF
@@ -132,64 +132,64 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
 
             {/* Tab: Identificação */}
             <TabsContent value="identificacao" className="flex-1 overflow-y-auto mt-0">
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Dados Gerais</h3>
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados Gerais</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <div>
-                    <p className="text-xs text-muted-foreground">Número RAF</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Número RAF</p>
                     <p className="text-sm text-foreground">{raf.rafNumber}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Área</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Área</p>
                     <p className="text-sm text-foreground">{raf.area}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground">Equipamento</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Equipamento</p>
                     <p className="text-sm text-foreground">{raf.equipment}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Data da Ocorrência</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data da Ocorrência</p>
                     <p className="text-sm text-foreground">{formatDate(raf.occurrenceDate)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Horário</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Horário</p>
                     <p className="text-sm text-foreground">{raf.occurrenceTime}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Operador</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Operador</p>
                     <p className="text-sm text-foreground">{raf.panelOperator}</p>
                   </div>
                   {raf.productionLost != null && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Produção Perdida</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Produção Perdida</p>
                       <p className="text-sm text-foreground">{raf.productionLost} ton</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Descrição da Falha</h3>
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Descrição da Falha</h3>
                 <p className="text-sm text-foreground whitespace-pre-wrap">{raf.failureDescription}</p>
               </div>
 
               {raf.observation && (
-                <div className="p-4 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Observações</h3>
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Observações</h3>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{raf.observation}</p>
                 </div>
               )}
 
               {raf.createdBy && (
-                <div className="p-4 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Registro</h3>
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Registro</h3>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                     <div>
-                      <p className="text-xs text-muted-foreground">Criado por</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Criado por</p>
                       <p className="text-sm text-foreground">{raf.createdBy.firstName} {raf.createdBy.lastName}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Criado em</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Criado em</p>
                       <p className="text-sm text-foreground">{new Date(raf.createdAt).toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
@@ -200,8 +200,8 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
             {/* Tab: Análise */}
             <TabsContent value="analise" className="flex-1 overflow-y-auto mt-0">
               {raf.fiveWhys && raf.fiveWhys.filter(Boolean).length > 0 && (
-                <div className="p-4 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">5 Porquês</h3>
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">5 Porquês</h3>
                   <div className="space-y-2">
                     {raf.fiveWhys.filter(Boolean).map((why, i) => (
                       <div key={i} className="flex gap-3 items-start">
@@ -216,21 +216,21 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
               )}
 
               {raf.hypothesisTests && raf.hypothesisTests.filter(t => t.description).length > 0 && (
-                <div className="p-4 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Teste de Hipóteses</h3>
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Teste de Hipóteses</h3>
                   <div className="space-y-4">
                     {raf.hypothesisTests.filter(t => t.description).map((test, i) => (
                       <div key={i} className="grid grid-cols-2 gap-x-4 gap-y-2 pb-4 border-b border-border last:border-0 last:pb-0">
                         <div className="col-span-2">
-                          <p className="text-xs text-muted-foreground">Descrição</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Descrição</p>
                           <p className="text-sm text-foreground">{test.description}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Possível</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Possível</p>
                           <p className="text-sm text-foreground">{test.possible}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Evidência</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Evidência</p>
                           <p className="text-sm text-foreground">{test.evidence}</p>
                         </div>
                       </div>
@@ -248,27 +248,27 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
 
             {/* Tab: Plano */}
             <TabsContent value="plano" className="flex-1 overflow-y-auto mt-0">
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Ação Imediata</h3>
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Ação Imediata</h3>
                 <p className="text-sm text-foreground whitespace-pre-wrap">{raf.immediateAction || '—'}</p>
               </div>
 
               {raf.actionPlan && raf.actionPlan.filter(a => a.what).length > 0 && (
-                <div className="p-4 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Plano de Ação</h3>
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Plano de Ação</h3>
                   <div className="space-y-4">
                     {raf.actionPlan.filter(a => a.what).map((action, i) => (
                       <div key={i} className="grid grid-cols-2 gap-x-4 gap-y-2 pb-4 border-b border-border last:border-0 last:pb-0">
                         <div className="col-span-2">
-                          <p className="text-xs text-muted-foreground">O Que</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">O Que</p>
                           <p className="text-sm text-foreground">{action.what}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Quem</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Quem</p>
                           <p className="text-sm text-foreground">{action.who}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Quando</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Quando</p>
                           <p className="text-sm text-foreground">{action.when}</p>
                         </div>
                       </div>
@@ -487,7 +487,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-4 py-4 border-t border-border">
+        <div className="flex gap-3 px-4 py-4 border-t border-gray-200 bg-gray-50">
           <Button variant="outline" onClick={onClose} className="flex-1">
             Fechar
           </Button>

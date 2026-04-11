@@ -34,8 +34,8 @@ export function UnitSelector() {
   // Se só tem 1 unidade ou não pode trocar, mostra label estático
   if (!canSwitch || !hasMultipleUnits) {
     return (
-      <div className="flex items-center gap-2 rounded-[4px] bg-surface-low px-2.5 py-1.5 text-sm">
-        <Icon name="location_on" className="text-base text-on-surface-variant" />
+      <div className="flex items-center gap-2 rounded-[4px] bg-gray-100 border border-gray-200 px-2.5 py-1.5 text-sm">
+        <Icon name="location_on" className="text-base text-orange-500" />
         <span className="text-on-surface-variant text-xs font-medium truncate max-w-[140px]">
           {displayName}
         </span>
@@ -48,9 +48,9 @@ export function UnitSelector() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isSwitching}
-        className="flex items-center gap-2 rounded-[4px] bg-surface-low px-2.5 py-1.5 text-sm transition-all hover:bg-surface-container"
+        className="flex items-center gap-2 rounded-[4px] bg-gray-100 border border-gray-200 px-2.5 py-1.5 text-sm transition-all hover:bg-gray-200"
       >
-        <Icon name="location_on" className="text-base text-on-surface-variant" />
+        <Icon name="location_on" className="text-base text-orange-500" />
         <span className="text-on-surface text-xs font-medium truncate max-w-[140px]">
           {isSwitching ? 'Trocando...' : displayName}
         </span>
@@ -58,11 +58,11 @@ export function UnitSelector() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-card rounded-[4px] ambient-shadow py-1 z-50">
-          <div className="px-3 py-2 text-xs font-medium text-on-surface-variant uppercase tracking-wider">
+        <div className="absolute right-0 mt-2 w-56 bg-white rounded-[4px] border border-gray-200 shadow-lg py-1 z-50">
+          <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
             Unidades
           </div>
-          <div className="mx-2 h-px bg-on-surface-variant/10" />
+          <div className="mx-2 h-px bg-gray-200" />
           {availableUnits.map(unit => (
             <button
               key={unit.id}
@@ -74,8 +74,8 @@ export function UnitSelector() {
               }}
               className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                 unit.id === activeUnitId
-                  ? 'bg-surface-low text-on-surface font-medium'
-                  : 'text-on-surface-variant hover:bg-surface-low hover:text-on-surface'
+                  ? 'bg-gray-100 text-gray-900 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
               <Icon

@@ -123,10 +123,10 @@ export function RequestDetailModal({
     <>
       <div className="flex-1 overflow-y-auto">
         {/* Action buttons */}
-        <div className="p-4 border-b border-border space-y-2">
+        <div className="p-4 border-b border-gray-200 space-y-2">
           <button
             onClick={handleEdit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
           >
             <Icon name="edit" className="text-base" />
             Editar
@@ -141,7 +141,7 @@ export function RequestDetailModal({
         </div>
 
         {/* Badges */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-gray-200">
           <div className="flex gap-2 flex-wrap">
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
               {getPriorityLabel(request.priority)}
@@ -154,19 +154,19 @@ export function RequestDetailModal({
 
         {/* Descrição */}
         {request.description && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Descrição</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Descrição</h3>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{request.description}</p>
           </div>
         )}
 
         {/* Dados */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {request.createdBy && (
               <div>
-                <p className="text-xs text-muted-foreground">Solicitado por</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Solicitado por</p>
                 <p className="text-sm text-foreground">
                   {request.createdBy.firstName} {request.createdBy.lastName}
                 </p>
@@ -174,13 +174,13 @@ export function RequestDetailModal({
             )}
             {request.team && (
               <div>
-                <p className="text-xs text-muted-foreground">Equipe Atribuída</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Equipe Atribuída</p>
                 <p className="text-sm text-foreground">{request.team.name}</p>
               </div>
             )}
             {request.dueDate && (
               <div>
-                <p className="text-xs text-muted-foreground">Data Desejada</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data Desejada</p>
                 <p className="text-sm text-foreground">{formatDate(request.dueDate)}</p>
               </div>
             )}
@@ -193,8 +193,8 @@ export function RequestDetailModal({
 
         {/* Anexos */}
         {request.files && request.files.length > 0 && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
               <Icon name="attach_file" className="text-base" />
               Anexos ({request.files.length})
             </h3>
@@ -279,7 +279,7 @@ export function RequestDetailModal({
         {/* Descrição */}
         {request.description && (
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-2">Descrição</h3>
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Descrição</h3>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{request.description}</p>
           </div>
         )}
@@ -330,7 +330,7 @@ export function RequestDetailModal({
         {/* Anexos */}
         {request.files && request.files.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
               <Icon name="attach_file" className="text-base" />
               Anexos ({request.files.length})
             </h3>
@@ -380,10 +380,10 @@ export function RequestDetailModal({
       </div>
 
       {/* Action buttons + footer */}
-      <div className="flex-shrink-0 p-4 border-t border-border space-y-2">
+      <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50 space-y-2">
         <button
           onClick={handleEdit}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
         >
           <Icon name="edit" className="text-base" />
           Editar
@@ -405,15 +405,15 @@ export function RequestDetailModal({
 
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         {/* Header */}
-        <div className="flex items-start justify-between p-4 border-b border-border flex-shrink-0">
-          <h2 className="text-xl font-bold text-foreground">
+        <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-lg font-black text-gray-900">
             {request?.title || 'Solicitação'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-muted rounded transition-colors"
+            className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
           >
             <Icon name="close" className="text-xl text-muted-foreground" />
           </button>

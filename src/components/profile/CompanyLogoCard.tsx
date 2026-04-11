@@ -151,24 +151,25 @@ export function CompanyLogoCard({
           </div>
 
           <div className="space-y-3">
-            <input
-              ref={logoInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/svg+xml"
-              onChange={handleLogoUpload}
-              className="hidden"
-            />
-
             <div className="flex flex-wrap gap-3">
-              <Button
-                type="button"
-                onClick={() => logoInputRef.current?.click()}
-                disabled={uploadingLogo}
-                className="gap-2"
-              >
-                <Icon name="upload" className="text-base" />
-                {uploadingLogo ? 'Enviando...' : logo ? 'Trocar Logo' : 'Enviar Logo'}
-              </Button>
+              <div className="relative">
+                <Button
+                  type="button"
+                  disabled={uploadingLogo}
+                  className="gap-2 pointer-events-none"
+                >
+                  <Icon name="upload" className="text-base" />
+                  {uploadingLogo ? 'Enviando...' : logo ? 'Trocar Logo' : 'Enviar Logo'}
+                </Button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                  onChange={handleLogoUpload}
+                  disabled={uploadingLogo}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                />
+              </div>
 
               {logo && (
                 <Button

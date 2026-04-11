@@ -16,7 +16,7 @@ export function ModalSection({ title, defaultOpen = true, children }: ModalSecti
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted/50 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2.5 bg-gray-100 border border-gray-200 text-[12px] font-bold text-gray-900 uppercase tracking-wider hover:bg-gray-200 transition-colors"
       >
         <Icon name={open ? 'expand_more' : 'chevron_right'} className="text-base" />
         {title}

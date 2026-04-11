@@ -297,14 +297,14 @@ export function UserSettingsPanel({
                   />
 
                   <div className="w-full">
-                    <label htmlFor="locationId" className="label-uppercase mb-1.5 block">
+                    <label htmlFor="locationId" className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">
                       Localização principal
                     </label>
                     <select
                       id="locationId"
                       value={profileForm.locationId}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, locationId: e.target.value }))}
-                      className="flex h-10 w-full rounded-[4px] bg-surface-low px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-[4px] border border-gray-300 shadow-sm bg-white px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={loadingLocations}
                     >
                       <option value="">{loadingLocations ? 'Carregando...' : 'Não definida'}</option>
@@ -318,7 +318,7 @@ export function UserSettingsPanel({
                 </div>
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={profileState.saving} className="gap-2">
+                  <Button type="submit" disabled={profileState.saving} className="gap-2 bg-gray-900 text-white hover:bg-gray-800">
                     <Icon name="save" className="text-base" />
                     {profileState.saving ? 'Salvando...' : 'Salvar perfil'}
                   </Button>
@@ -336,25 +336,25 @@ export function UserSettingsPanel({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="rounded-[4px] bg-surface-low p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Perfil de acesso</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{roleLabel}</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Perfil de acesso</p>
+                <p className="mt-2 text-lg font-semibold text-gray-900">{roleLabel}</p>
                 <p className="mt-2 text-sm text-muted-foreground">{roleDescription}</p>
               </div>
 
               <div className="grid gap-3">
                 <div className="rounded-[4px] border border-border p-4">
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Empresa</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{companyName}</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Empresa</p>
+                  <p className="mt-2 text-[13px] font-medium text-gray-900">{companyName}</p>
                 </div>
                 <div className="rounded-[4px] border border-border p-4">
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Unidade ativa</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Unidade ativa</p>
+                  <p className="mt-2 text-[13px] font-medium text-gray-900">
                     {user.location?.name || 'Definida pelo seletor do cabeçalho'}
                   </p>
                 </div>
                 <div className="rounded-[4px] border border-border p-4">
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Acesso</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Acesso</p>
+                  <p className="mt-2 text-[13px] font-medium text-gray-900">
                     {user.unitIds?.length || 0} unidade(s) vinculada(s)
                   </p>
                 </div>
@@ -410,7 +410,7 @@ export function UserSettingsPanel({
                 />
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={securityState.saving} className="gap-2">
+                  <Button type="submit" disabled={securityState.saving} className="gap-2 bg-gray-900 text-white hover:bg-gray-800">
                     <Icon name="lock_reset" className="text-base" />
                     {securityState.saving ? 'Atualizando...' : 'Atualizar senha'}
                   </Button>

@@ -194,7 +194,7 @@ export default function TreePage() {
       <div key={node.id}>
         <div
           className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded-[4px] transition-colors text-sm ${
-            isSelected ? 'bg-primary/10 text-foreground font-medium' : 'hover:bg-muted/50'
+            isSelected ? 'bg-gray-100 text-gray-900 font-medium' : 'hover:bg-muted/50'
           }`}
           style={{ paddingLeft: `${12 + depth * 20}px` }}
           onClick={() => {
@@ -238,7 +238,7 @@ export default function TreePage() {
               <select
                 value={selectedUnit}
                 onChange={e => selectUnit(e.target.value)}
-                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 px-3 text-sm border border-gray-300 shadow-sm rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
               >
                 <option value="">Selecione a unidade...</option>
                 {availableUnits.map((u: any) => (

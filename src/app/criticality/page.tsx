@@ -90,7 +90,7 @@ function SortIcon({ field, sortBy, sortOrder }: { field: SortField; sortBy: Sort
   return (
     <Icon
       name={sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
-      className="text-sm text-foreground"
+      className="text-sm text-accent-orange"
     />
   )
 }
@@ -395,7 +395,7 @@ export default function CriticalityPage() {
                             return (
                               <tr
                                 key={asset.id}
-                                className={`hover:bg-secondary cursor-pointer transition-colors ${isSelected ? 'bg-secondary' : config.bgLight}`}
+                                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${isSelected ? 'bg-secondary' : ''}`}
                                 onClick={() => handleSelectAsset(asset)}
                               >
                                 <td className="px-6 py-4 whitespace-nowrap">

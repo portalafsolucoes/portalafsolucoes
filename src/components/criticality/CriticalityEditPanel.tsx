@@ -58,7 +58,7 @@ function GutSelector({
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">
         {label}
       </label>
       <div className="flex items-center gap-2">
@@ -119,13 +119,13 @@ export function CriticalityEditPanel({ asset, onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="text-xl font-bold text-foreground truncate">Editar GUT</h2>
+      <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+        <h2 className="text-lg font-black text-gray-900 truncate">Editar GUT</h2>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0 ml-2"
+          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors flex-shrink-0 ml-2"
         >
           <Icon name="close" className="text-xl text-muted-foreground" />
         </button>
@@ -178,7 +178,7 @@ export function CriticalityEditPanel({ asset, onClose, onSuccess }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-4 py-4 border-t border-border">
+        <div className="flex gap-3 px-4 py-4 border-t border-gray-200 bg-gray-50">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>

@@ -150,9 +150,10 @@ export default function HubPage() {
                 onClick={() => handleModuleClick(module)}
                 className={`
                   ambient-shadow relative group overflow-hidden rounded-[4px] transition-all duration-300
+                  border
                   ${module.enabled
-                    ? 'cursor-pointer hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(45,52,53,0.12)]'
-                    : 'cursor-not-allowed opacity-55'
+                    ? 'cursor-pointer hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(45,52,53,0.12)] border-transparent hover:border-orange-500'
+                    : 'cursor-not-allowed opacity-55 border-transparent'
                   }
                   bg-card
                 `}

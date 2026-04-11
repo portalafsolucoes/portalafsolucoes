@@ -64,11 +64,11 @@ const priorityLabels: Record<string, string> = {
 
 export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: StandardAssetDetailPanelProps) {
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
+      <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <div>
-          <h2 className="text-xl font-bold text-foreground">
+          <h2 className="text-lg font-black text-gray-900">
             {item.name || item.family?.name || 'Bem Padrão'}
           </h2>
           {item.family && (
@@ -77,7 +77,7 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
             </p>
           )}
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+        <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
           <Icon name="close" className="text-xl" />
         </button>
       </div>
@@ -86,7 +86,7 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
       <div className="flex-1 overflow-y-auto">
         {/* Ações */}
         <div className="p-4 border-b border-border flex gap-2">
-          <Button onClick={() => onEdit(item)} className="flex-1">
+          <Button onClick={() => onEdit(item)} className="flex-1 bg-gray-900 text-white hover:bg-gray-800">
             <Icon name="edit" className="text-base mr-2" />
             Editar
           </Button>
@@ -98,30 +98,30 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
 
         {/* Localização e Organização */}
         {(item.costCenterCode || item.shiftCode || item.workCenterCode || item.warehouse) && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Localização e Organização</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Localização e Organização</h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {item.costCenterCode && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Centro de Custo</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Centro de Custo</p>
                   <p className="text-sm text-foreground">{item.costCenterCode}{item.costCenterName ? ` - ${item.costCenterName}` : ''}</p>
                 </div>
               )}
               {item.shiftCode && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Turno</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Turno</p>
                   <p className="text-sm text-foreground">{item.shiftCode}</p>
                 </div>
               )}
               {item.workCenterCode && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Centro de Trabalho</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Centro de Trabalho</p>
                   <p className="text-sm text-foreground">{item.workCenterCode}{item.workCenterName ? ` - ${item.workCenterName}` : ''}</p>
                 </div>
               )}
               {item.warehouse && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Estoque</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Estoque</p>
                   <p className="text-sm text-foreground">{item.warehouse}</p>
                 </div>
               )}
@@ -131,36 +131,36 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
 
         {/* Fornecedor e Modelo */}
         {(item.supplierCode || item.modelType || item.manufacturer || item.modelName || item.serialNumber) && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Fornecedor e Modelo</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Fornecedor e Modelo</h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {item.supplierCode && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Fornecedor</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Fornecedor</p>
                   <p className="text-sm text-foreground">{item.supplierCode}{item.supplierStore ? ` / ${item.supplierStore}` : ''}</p>
                 </div>
               )}
               {item.modelType && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Tipo Modelo</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tipo Modelo</p>
                   <p className="text-sm text-foreground">{item.modelType}</p>
                 </div>
               )}
               {item.manufacturer && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Fabricante</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Fabricante</p>
                   <p className="text-sm text-foreground">{item.manufacturer}</p>
                 </div>
               )}
               {item.modelName && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Modelo</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Modelo</p>
                   <p className="text-sm text-foreground">{item.modelName}</p>
                 </div>
               )}
               {item.serialNumber && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Série</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Série</p>
                   <p className="text-sm text-foreground font-mono">{item.serialNumber}</p>
                 </div>
               )}
@@ -170,48 +170,48 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
 
         {/* Operação */}
         {(item.priority || item.hourlyCost || item.assetMovement || item.coupling) && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Operação</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Operação</h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {item.priority && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Prioridade</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Prioridade</p>
                   <p className="text-sm text-foreground">{priorityLabels[item.priority] || item.priority}</p>
                 </div>
               )}
               {item.hourlyCost != null && item.hourlyCost > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Custo Hora</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Custo Hora</p>
                   <p className="text-sm text-foreground">R$ {item.hourlyCost.toFixed(2)}</p>
                 </div>
               )}
               {item.assetMovement && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Movim. Bem</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Movim. Bem</p>
                   <p className="text-sm text-foreground">{item.assetMovement}</p>
                 </div>
               )}
               {item.trackingPeriod && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Per. Acompanhamento</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Per. Acompanhamento</p>
                   <p className="text-sm text-foreground">{item.trackingPeriod}</p>
                 </div>
               )}
               {item.unitOfMeasure && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Unid. Medida</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Unid. Medida</p>
                   <p className="text-sm text-foreground">{item.unitOfMeasure}</p>
                 </div>
               )}
               {item.coupling && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Acoplamento</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Acoplamento</p>
                   <p className="text-sm text-foreground">{item.coupling}</p>
                 </div>
               )}
               {item.annualCoupValue != null && item.annualCoupValue > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Val. Ac. Ano</p>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Val. Ac. Ano</p>
                   <p className="text-sm text-foreground">R$ {item.annualCoupValue.toFixed(2)}</p>
                 </div>
               )}
@@ -220,8 +220,8 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
         )}
 
         {/* Contador */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Contador</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Contador</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
               <p className="text-xs text-muted-foreground">Tem Contador</p>
@@ -238,8 +238,8 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
 
         {/* Características */}
         {item.characteristics && item.characteristics.length > 0 && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Características</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Características</h3>
             <div className="space-y-2">
               {item.characteristics.map((c, i) => (
                 <div key={i} className="flex items-center justify-between p-2 bg-secondary rounded-[4px]">
@@ -257,8 +257,8 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
 
         {/* Imagem */}
         {item.imageUrl && (
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-2">Imagem</h3>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Imagem</h3>
             <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
               <img
                 src={item.imageUrl}

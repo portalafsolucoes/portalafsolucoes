@@ -183,7 +183,7 @@ export function LocationFormPanel({
   )
 
   const formFooter = (
-    <div className="flex gap-3 px-4 py-4 border-t border-border">
+    <div className="flex gap-3 px-4 py-4 border-t border-gray-200 bg-gray-50">
       <Button type="button" variant="outline" onClick={onClose} className="flex-1">
         Cancelar
       </Button>
@@ -196,10 +196,10 @@ export function LocationFormPanel({
 
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">{formTitle}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+          <h2 className="text-lg font-black text-gray-900">{formTitle}</h2>
+          <button onClick={onClose} className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors">
             <Icon name="close" className="text-xl text-muted-foreground" />
           </button>
         </div>

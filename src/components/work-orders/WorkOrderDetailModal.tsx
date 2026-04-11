@@ -161,11 +161,11 @@ export function WorkOrderDetailModal({
       ) : workOrder ? (
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex justify-between items-start pb-4 border-b px-4 md:px-6 pt-4">
+          <div className="flex justify-between items-start pb-4 border-b border-gray-200 px-4 md:px-6 pt-4 bg-gray-50">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <Icon name="description" className="text-2xl text-primary" />
-                <h2 className="text-lg md:text-2xl font-bold text-foreground">{workOrder.title}</h2>
+                <h2 className="text-lg md:text-2xl font-black text-gray-900">{workOrder.title}</h2>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {workOrder.systemStatus === 'IN_SYSTEM' ? (
@@ -209,7 +209,7 @@ export function WorkOrderDetailModal({
               )}
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-muted rounded-[4px] transition-colors"
+                className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
               >
                 <Icon name="close" className="text-2xl text-muted-foreground" />
               </button>
@@ -503,7 +503,7 @@ export function WorkOrderDetailModal({
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <div className="flex gap-3 px-4 py-4 border-t border-gray-200 bg-gray-50">
             <Button variant="outline" onClick={onClose} className="flex-1">
               Fechar
             </Button>

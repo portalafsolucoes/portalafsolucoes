@@ -50,7 +50,7 @@ export default function ProfilePage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/settings?tab=perfil">
-              <Button className="gap-2">
+              <Button className="gap-2 bg-gray-900 text-white hover:bg-gray-800">
                 <Icon name="edit" className="text-base" />
                 Editar perfil
               </Button>
@@ -103,16 +103,16 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-[4px] bg-surface-low p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Resumo</p>
-              <p className="mt-2 text-sm text-foreground">{getRoleDescription(user.role)}</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Resumo</p>
+              <p className="mt-2 text-[13px] font-medium text-gray-900">{getRoleDescription(user.role)}</p>
             </div>
             <div className="rounded-[4px] border border-border p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Empresa</p>
-              <p className="mt-2 text-sm font-medium text-foreground">{companyName}</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Empresa</p>
+              <p className="mt-2 text-[13px] font-medium text-gray-900">{companyName}</p>
             </div>
             <div className="rounded-[4px] border border-border p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Unidades vinculadas</p>
-              <p className="mt-2 text-sm font-medium text-foreground">{user.unitIds?.length || 0} unidade(s)</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Unidades vinculadas</p>
+              <p className="mt-2 text-[13px] font-medium text-gray-900">{user.unitIds?.length || 0} unidade(s)</p>
             </div>
           </CardContent>
         </Card>
@@ -176,8 +176,8 @@ function InfoCard({
       <CardContent className="space-y-4">
         {items.map(([label, value]) => (
           <div key={label}>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
-            <p className="mt-1 text-sm text-foreground">{value}</p>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{label}</p>
+            <p className="mt-1 text-[13px] font-medium text-gray-900">{value}</p>
           </div>
         ))}
       </CardContent>

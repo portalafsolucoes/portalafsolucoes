@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { FileUpload } from '@/components/ui/FileUpload'
@@ -110,12 +111,14 @@ export default function NewAssetPage() {
 
   return (
     <PageContainer variant="form">
-        <Card>
-          <CardHeader>
-            <CardTitle>{parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Novo Ativo'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title={parentAsset ? `Novo Subativo de ${parentAsset.name}` : 'Novo Ativo'}
+        description={parentAsset ? 'Cadastre um novo subativo vinculado ao ativo pai selecionado.' : 'Cadastre um novo ativo com localização, responsável e anexos.'}
+      />
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-6">
               {parentAsset && (
                 <div className="bg-primary/5 border border-blue-200 rounded-[4px] p-4 mb-4">
                   <p className="text-sm text-blue-800">
@@ -255,8 +258,8 @@ export default function NewAssetPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </PageContainer>
   )
 }

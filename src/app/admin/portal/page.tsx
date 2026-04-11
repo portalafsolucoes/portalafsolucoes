@@ -84,7 +84,7 @@ function CompanyDetailPanel({
         <div className="p-4 border-b border-border space-y-2">
           <button
             onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
           >
             <Icon name="edit" className="text-base" />
             Editar
@@ -768,7 +768,7 @@ export default function AdminPortalPage() {
           description="Gerencie empresas, módulos e visualize estatísticas globais"
           className="mb-0"
           actions={
-            <Button onClick={openCreate} size="sm">
+            <Button onClick={openCreate} size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
               <Icon name="add" className="mr-1 text-base" />
               Nova Empresa
             </Button>
@@ -826,7 +826,7 @@ export default function AdminPortalPage() {
                   <Icon name="domain" className="text-6xl text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma empresa cadastrada</h3>
                   <p className="text-muted-foreground mb-4">Adicione a primeira empresa para começar.</p>
-                  <Button onClick={openCreate}>
+                  <Button onClick={openCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                     <Icon name="add" className="mr-1 text-base" />
                     Nova Empresa
                   </Button>
@@ -859,7 +859,7 @@ export default function AdminPortalPage() {
                           <tr
                             key={company.id}
                             onClick={() => handleSelectCompany(company)}
-                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
+                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
                           >
                             <td className="px-6 py-4 text-sm text-foreground">
                               <div className="flex items-center gap-3">
@@ -957,7 +957,7 @@ export default function AdminPortalPage() {
           <div className="p-4 space-y-2">
             <button
               onClick={handleEditOpen}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
             >
               <Icon name="edit" className="text-base" />
               Editar
@@ -1042,14 +1042,6 @@ export default function AdminPortalPage() {
             </div>
           )}
 
-          <input
-            ref={logoInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/svg+xml"
-            onChange={handleLogoFileChange}
-            className="hidden"
-          />
-
           <ModalSection title="Logo Atual">
             <div className="space-y-4">
               <div className="flex justify-center">
@@ -1098,15 +1090,24 @@ export default function AdminPortalPage() {
           >
             Cancelar
           </Button>
-          <Button
-            type="button"
-            onClick={() => logoInputRef.current?.click()}
-            disabled={uploadingLogo}
-            className="flex-1"
-          >
-            <Icon name="upload" className="text-base mr-2" />
-            {uploadingLogo ? 'Enviando...' : logoPreview ? 'Trocar Logo' : 'Enviar Logo'}
-          </Button>
+          <div className="relative flex-1">
+            <Button
+              type="button"
+              disabled={uploadingLogo}
+              className="w-full pointer-events-none"
+            >
+              <Icon name="upload" className="text-base mr-2" />
+              {uploadingLogo ? 'Enviando...' : logoPreview ? 'Trocar Logo' : 'Enviar Logo'}
+            </Button>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/svg+xml"
+              onChange={handleLogoFileChange}
+              disabled={uploadingLogo}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+            />
+          </div>
         </div>
       </Modal>
 

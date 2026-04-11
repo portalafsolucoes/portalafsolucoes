@@ -25,7 +25,7 @@ export function ExportButton({ data, entity, className }: ExportButtonProps) {
   return (
     <button
       onClick={handleExport}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-[4px] bg-surface-low hover:bg-surface-container transition-colors ${className || ''}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-[4px] border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors ${className || ''}`}
       title="Exportar para Excel"
     >
       <Icon name="download" className="text-lg" />

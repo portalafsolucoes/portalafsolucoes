@@ -62,15 +62,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
 
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         {!hideHeader && (
-          <div className="flex-shrink-0 flex items-start justify-between p-4 border-b border-border">
-            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <div className="flex-shrink-0 flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-lg font-black text-gray-900">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-muted rounded transition-colors"
+              className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
             >
-              <Icon name="close" className="text-xl text-muted-foreground" />
+              <Icon name="close" className="text-xl" />
             </button>
           </div>
         )}
@@ -95,7 +95,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
     >
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-on-surface/20 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
@@ -108,11 +108,11 @@ export function Modal({ isOpen, onClose, title, children, size = 'wide', hideHea
         >
           {/* Header */}
           {!hideHeader && (
-            <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="font-headline text-xl font-bold text-card-foreground">{title}</h2>
+            <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
+              <h2 className="font-headline text-lg font-black text-gray-900">{title}</h2>
               <button
                 onClick={onClose}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
               >
                 <Icon name="close" className="text-xl" />
               </button>

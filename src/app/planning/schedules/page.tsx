@@ -156,7 +156,7 @@ export default function SchedulesPage() {
               </div>
               {/* Add button */}
               {canCreate('planning') && (
-                <Button onClick={handleCreate}>
+                <Button onClick={handleCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="mr-2 text-base" />
                   Nova Programação
                 </Button>
@@ -208,7 +208,7 @@ export default function SchedulesPage() {
                           <tr
                             key={s.id}
                             onClick={() => handleSelectSchedule(s)}
-                            className={`hover:bg-secondary cursor-pointer transition-colors ${selectedSchedule?.id === s.id ? 'bg-secondary' : ''}`}
+                            className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedSchedule?.id === s.id ? 'bg-secondary' : ''}`}
                           >
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{s.scheduleNumber}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{s.description}</td>

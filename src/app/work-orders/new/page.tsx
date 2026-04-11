@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
@@ -85,12 +86,14 @@ export default function NewWorkOrderPage() {
 
   return (
     <PageContainer variant="form">
-        <Card>
-          <CardHeader>
-            <CardTitle>Nova Ordem de Serviço</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title="Nova Ordem de Serviço"
+        description="Cadastre uma OS com identificação, prioridade, responsáveis e contexto operacional."
+      />
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-6">
               <div className="bg-primary/5 border border-blue-200 rounded-[4px] p-4 mb-6">
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">Número da OS</h3>
                 <Input
@@ -295,8 +298,8 @@ export default function NewWorkOrderPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </PageContainer>
   )
 }

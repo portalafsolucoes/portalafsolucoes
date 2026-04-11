@@ -121,7 +121,7 @@ export default function RequestApprovalsPage() {
               <tr
                 key={request.id}
                 onClick={() => handleSelectRequest(request)}
-                className={`hover:bg-secondary cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>
@@ -177,7 +177,7 @@ export default function RequestApprovalsPage() {
               <tr
                 key={request.id}
                 onClick={() => handleSelectRequest(request)}
-                className={`hover:bg-secondary cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>
@@ -248,7 +248,7 @@ export default function RequestApprovalsPage() {
               <tr
                 key={request.id}
                 onClick={() => handleSelectRequest(request)}
-                className={`hover:bg-secondary cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>

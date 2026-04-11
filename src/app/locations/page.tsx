@@ -202,7 +202,7 @@ export default function LocationsPage() {
               </div>
 
               {canCreate('locations') && (
-                <Button onClick={handleAddNew} className="whitespace-nowrap">
+                <Button onClick={handleAddNew} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="mr-2 text-base" />
                   Nova Localização
                 </Button>
@@ -353,7 +353,7 @@ function TableView({ locations, selectedId, onSelect }: TableViewProps) {
               <tr
                 key={location.id}
                 onClick={() => onSelect(location)}
-                className={`hover:bg-secondary cursor-pointer transition-colors ${
+                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${
                   selectedId === location.id ? 'bg-secondary' : ''
                 }`}
               >

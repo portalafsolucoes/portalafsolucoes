@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
@@ -137,20 +138,22 @@ export default function EditWorkOrderPage() {
 
   return (
     <PageContainer variant="form">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors"
-        >
-          <Icon name="arrow_back" className="text-xl mr-2" />
-          Voltar
-        </button>
+      <button
+        onClick={() => router.back()}
+        className="flex items-center text-muted-foreground hover:text-foreground mb-6 transition-colors"
+      >
+        <Icon name="arrow_back" className="text-xl mr-2" />
+        Voltar
+      </button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Editar Ordem de Serviço</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title="Editar Ordem de Serviço"
+        description="Atualize os dados da OS, responsáveis, prioridade e identificação externa."
+      />
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-6">
               <div className="bg-primary/5 rounded-[4px] p-4 mb-6">
                 <h3 className="text-sm font-semibold text-foreground mb-2">Número da OS</h3>
                 <Input
@@ -406,8 +409,8 @@ export default function EditWorkOrderPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </PageContainer>
   )
 }

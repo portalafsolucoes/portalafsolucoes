@@ -196,7 +196,7 @@ export default function RequestsPage() {
               <ExportButton data={filteredRequests} entity="requests" />
 
               {canCreateReq('requests') && (
-                <Button onClick={handleAddNew} className="flex-shrink-0">
+                <Button onClick={handleAddNew} className="flex-shrink-0 bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="mr-2 text-base" />
                   Nova Solicitação
                 </Button>
@@ -302,7 +302,7 @@ export default function RequestsPage() {
                             <tr
                               key={request.id}
                               onClick={() => handleRowClick(request)}
-                              className={`hover:bg-secondary cursor-pointer transition-colors ${
+                              className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${
                                 selectedRequest?.id === request.id ? 'bg-secondary' : ''
                               }`}
                             >

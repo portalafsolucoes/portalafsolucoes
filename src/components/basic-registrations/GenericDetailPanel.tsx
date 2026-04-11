@@ -112,15 +112,15 @@ export function GenericDetailPanel({
   const displayTitle = getItemTitle(item, columns) || title
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-border">
-        <h2 className="text-xl font-bold text-foreground">
+      <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+        <h2 className="text-lg font-black text-gray-900">
           {displayTitle}
         </h2>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-muted rounded transition-colors"
+          className="p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
         >
           <Icon name="close" className="text-xl text-muted-foreground" />
         </button>
@@ -130,11 +130,11 @@ export function GenericDetailPanel({
       <div className="flex-1 overflow-y-auto">
         {/* Action buttons */}
         {(canEdit || canDelete) && (
-          <div className="p-4 border-b border-border space-y-2">
+          <div className="p-4 border-b border-gray-200 space-y-2">
             {canEdit && (
               <button
                 onClick={onEdit}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[4px] hover:bg-primary/90 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
               >
                 <Icon name="edit" className="text-base" />
                 Editar
@@ -153,12 +153,12 @@ export function GenericDetailPanel({
         )}
 
         {/* Data section */}
-        <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Dados</h3>
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             {entries.map((entry) => (
               <div key={entry.key}>
-                <p className="text-xs text-muted-foreground">{entry.label}</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">{entry.label}</p>
                 <p className="text-sm text-foreground">
                   {resolveValue(item, entry.key, entry.field, entry.column)}
                 </p>

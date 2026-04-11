@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
@@ -72,12 +73,14 @@ export default function NewTeamPage() {
 
   return (
     <PageContainer variant="form">
-        <Card>
-          <CardHeader>
-            <CardTitle>Nova Equipe</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title="Nova Equipe"
+        description="Crie uma equipe e selecione os membros responsáveis por ativos e ordens de serviço."
+      />
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-6">
               <Input
                 label="Nome da Equipe"
                 value={formData.name}
@@ -145,8 +148,8 @@ export default function NewTeamPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </PageContainer>
   )
 }

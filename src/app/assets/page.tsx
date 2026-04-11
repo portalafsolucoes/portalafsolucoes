@@ -241,7 +241,7 @@ export default function AssetsPage() {
 
               <ExportButton data={filteredAssets} entity="assets" />
               {canCreate('assets') && (
-                <Button onClick={handleAddNewAsset} className="whitespace-nowrap">
+                <Button onClick={handleAddNewAsset} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="mr-2 text-base" />
                   Adicionar
                 </Button>

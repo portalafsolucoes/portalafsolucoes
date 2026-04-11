@@ -153,7 +153,7 @@ export default function StandardMaintenancePlanPage() {
                   className="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
               {canEdit && (
-                <Button onClick={openCreate}>
+                <Button onClick={openCreate} className="bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
                   <Icon name="add" className="text-base mr-1" /> Novo Plano Padrão
                 </Button>
               )}
@@ -187,7 +187,7 @@ export default function StandardMaintenancePlanPage() {
                   ) : filteredStandard.map(p => (
                     <tr
                       key={p.id}
-                      className={`hover:bg-secondary cursor-pointer transition-colors ${selectedPlan?.id === p.id || editingId === p.id ? 'bg-secondary' : ''}`}
+                      className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedPlan?.id === p.id || editingId === p.id ? 'bg-secondary' : ''}`}
                       onClick={() => handleSelectPlan(p.id)}
                     >
                       <td className="px-6 py-3 text-sm">{p.family?.code} - {p.family?.name}</td>
