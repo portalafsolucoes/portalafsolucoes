@@ -347,6 +347,7 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
 - Botoes: ambos com `flex-1` (mesma largura), Cancelar (outline) a esquerda, Salvar (primary) a direita
 - Texto do botao salvar: "Salvar Alterações" (edicao) ou "Salvar" (criacao), com icone `save`
 - O modal `Analisar Solicitação` em Aprovações deve usar `title` no `Modal`, `size="wide"` e `ModalSection`
+- No `ApprovalModal`, os cards de decisao `Aprovar solicitação` e `Rejeitar solicitação` devem usar fundo semantico sutil mesmo quando inativos (`success-light` e `danger-light`), nunca branco puro; o estado selecionado deve reforcar borda e icone sem virar bloco de cor chapada
 
 ### Excecoes
 - Modais de confirmacao (`ConfirmationModal`, `ConfirmDialog`): usam `size="sm"` sem `ModalSection`, permanecem overlay

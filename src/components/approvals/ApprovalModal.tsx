@@ -273,19 +273,20 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <button
                 type="button"
+                aria-pressed={action === 'approve'}
                 onClick={() => {
                   setAction('approve')
                   setRejectionReason('')
                   setError(null)
                 }}
-                className={`rounded-[4px] border p-4 text-left transition-colors ${
+                className={`rounded-[4px] border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                   action === 'approve'
-                    ? 'border-green-500 bg-success-light'
-                    : 'border-input hover:bg-surface-low'
+                    ? 'border-success bg-success-light shadow-sm'
+                    : 'border-green-200 bg-success-light/60 hover:border-success/40 hover:bg-success-light'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Icon name="check_circle" className={`text-2xl ${action === 'approve' ? 'text-success' : 'text-muted-foreground'}`} />
+                  <Icon name="check_circle" className={`text-2xl ${action === 'approve' ? 'text-success' : 'text-success/70'}`} />
                   <div>
                     <p className="text-sm font-semibold text-foreground">Aprovar solicitação</p>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -297,20 +298,21 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
 
               <button
                 type="button"
+                aria-pressed={action === 'reject'}
                 onClick={() => {
                   setAction('reject')
                   setConvertToWorkOrder(false)
                   setAssignedToId('')
                   setError(null)
                 }}
-                className={`rounded-[4px] border p-4 text-left transition-colors ${
+                className={`rounded-[4px] border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                   action === 'reject'
-                    ? 'border-red-500 bg-danger-light'
-                    : 'border-input hover:bg-surface-low'
+                    ? 'border-danger bg-danger-light shadow-sm'
+                    : 'border-red-200 bg-danger-light/60 hover:border-danger/40 hover:bg-danger-light'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Icon name="cancel" className={`text-2xl ${action === 'reject' ? 'text-danger' : 'text-muted-foreground'}`} />
+                  <Icon name="cancel" className={`text-2xl ${action === 'reject' ? 'text-danger' : 'text-danger/70'}`} />
                   <div>
                     <p className="text-sm font-semibold text-foreground">Rejeitar solicitação</p>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -391,9 +393,9 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
           disabled={!action || loading}
           className={`flex-1 ${
             action === 'approve'
-              ? 'bg-success text-white hover:bg-green-700'
+              ? 'bg-success text-white hover:bg-success/90'
               : action === 'reject'
-              ? 'bg-danger text-white hover:bg-red-700'
+              ? 'bg-danger text-white hover:bg-danger/90'
               : ''
           }`}
         >
