@@ -109,7 +109,7 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - Ordem do toggle: **Tabela** primeiro, depois Grade, Arvore (tabela e sempre o default)
 - View mode default: `useState<ViewMode>('table')`
 - Filtros: `h-9 px-3 text-sm border border-input rounded-[4px] bg-background`
-- Botao adicionar: usar `<Button>` component, nunca `<button>` raw
+- Botao adicionar: `bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md`, nunca `<button>` raw
 
 ### Tabelas de listagem
 - Container: `h-full flex flex-col bg-card overflow-hidden` (sem rounded, sem shadow)
@@ -118,34 +118,35 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - Thead: `sticky top-0 bg-secondary z-10`
 - Th: `px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider`
 - Tbody: `bg-card divide-y divide-gray-200`
-- Tr: `hover:bg-secondary cursor-pointer transition-colors`
+- Tr: `odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors`
 - Td: `px-6 py-4 whitespace-nowrap text-sm text-foreground`
 - Sem footer de contagem; a tabela termina limpa
-- Colunas ordenaveis: icone `unfold_more` (inativo) ou `arrow_upward`/`arrow_downward` (ativo)
+- Colunas ordenaveis: icone `unfold_more` (inativo) ou `arrow_upward`/`arrow_downward` (ativo); icone ativo usa `text-accent-orange`
 
 ### Painel lateral (Detail/Edit)
-- Container: `h-full flex flex-col bg-card border-l border-border`
-- Header: `flex items-start justify-between p-4 border-b border-border`
-- Titulo: `text-xl font-bold text-foreground`
-- Close: `p-1 hover:bg-muted rounded transition-colors` com icone `close`
+- Container: `h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]`
+- Header: `flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200`
+- Titulo: `text-lg font-black text-gray-900`
+- Close: `p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm` com icone `close`
 - Tabs: `TabsList className="w-full justify-start border-b rounded-none px-4"`
-- Secoes: `p-4 border-b border-border`
-- Section title: `text-sm font-semibold text-foreground mb-3`
-- Fields grid: `grid grid-cols-2 gap-x-4 gap-y-2`
-- Labels: `text-xs text-muted-foreground`
-- Values: `text-sm text-foreground`
-- Botoes de acao (Editar/Excluir): `w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
-- **NAO** use `border-on-surface-variant/10`; use sempre `border-border`
+- Barras de secao: `flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm`
+- Section title: `font-bold text-[12px] uppercase tracking-wider text-gray-900`
+- Fields grid: `grid grid-cols-2 gap-x-4 gap-y-3 px-1`
+- Labels: `text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5`
+- Values: `text-[13px] font-medium text-gray-900`
+- Botao Editar: `bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
+- Botao Excluir: `border border-danger text-danger hover:bg-danger/10 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px]`
+- **NAO** use `border-on-surface-variant/10`; use sempre `border-gray-200` ou `border-gray-300`
 
 ### Painel de edicao (inPage)
-- Container: `h-full flex flex-col bg-card border-l border-border`
-- Header: `flex items-center justify-between p-4 border-b border-border`
+- Container: `h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]`
+- Header: `flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200`
 - Form: `flex flex-1 min-h-0 flex-col` (NUNCA `h-full`, causa overflow)
 - Content: `flex-1 overflow-y-auto p-4 space-y-3`
-- Footer fixo: `flex gap-3 px-4 py-4 border-t border-border`
+- Footer fixo: `flex gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200`
 - Botoes: ambos com `flex-1` (mesma largura, 50/50)
 - Cancelar: `<Button variant="outline" className="flex-1">Cancelar</Button>`
-- Salvar: `<Button type="submit" className="flex-1"><Icon name="save" /> Salvar Alterações</Button>`
+- Salvar: `<Button type="submit" className="flex-1 bg-gray-900 text-white hover:bg-gray-800"><Icon name="save" /> Salvar Alterações</Button>`
 
 ### Loading state
 ```tsx
@@ -165,6 +166,7 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - A logo deve ficar na mesma linha do botao hamburguer quando a sidebar estiver expandida
 - A imagem deve aparecer **inteira**, sem corte, respeitando a proporcao original
 - Use `object-contain` com alinhamento a esquerda para encaixar marcas horizontais
+- **NAO** aplicar filtros CSS que alterem a arte original da logo, como `invert`, `brightness`, `contrast` ou similares
 - Durante a hidratacao/carregamento inicial, **NAO** exibir o texto fallback `Portal AF Solucoes` no lugar da logo; use placeholder neutro ate os dados do usuario carregarem
 - O fallback textual com nome da empresa ou app so pode aparecer quando realmente nao existir logo configurada no banco
 
@@ -211,16 +213,16 @@ Props: `title` (string), `defaultOpen` (boolean, default: true), `children`.
       <ModalSection title="Secao 1">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Campo</label>
-            <input className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring" />
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Campo</label>
+            <input className="w-full px-3 py-2 text-sm border border-gray-300 rounded-[4px] shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
         </div>
       </ModalSection>
     </div>
 
-    <div className="flex gap-3 px-4 py-4 border-t border-border">
+    <div className="flex gap-3 px-4 py-4 bg-gray-50 border-t border-gray-200">
       <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-      <Button type="submit" className="flex-1">
+      <Button type="submit" className="flex-1 bg-gray-900 text-white hover:bg-gray-800">
         <Icon name="save" className="text-base mr-2" />
         Salvar Alterações
       </Button>

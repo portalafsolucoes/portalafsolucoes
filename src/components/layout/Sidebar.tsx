@@ -169,7 +169,7 @@ export function Sidebar() {
                         src={companyLogo}
                         alt={companyName || APP_NAME}
                         fill
-                        className="object-contain object-left brightness-0 invert"
+                        className="object-contain object-left"
                         priority
                         unoptimized
                         sizes="220px"
@@ -206,7 +206,7 @@ export function Sidebar() {
                         src={companyLogo}
                         alt={companyName || APP_NAME}
                         fill
-                        className="object-contain brightness-0 invert"
+                        className="object-contain"
                         priority
                         unoptimized
                         sizes="28px"
@@ -245,7 +245,7 @@ export function Sidebar() {
                       src={companyLogo}
                       alt={companyName || APP_NAME}
                       fill
-                      className="object-contain object-left brightness-0 invert"
+                      className="object-contain object-left"
                       priority
                       unoptimized
                       sizes="220px"
