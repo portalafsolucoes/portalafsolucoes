@@ -40,14 +40,19 @@ export async function GET() {
       )
     }
 
+    // Supabase joins podem retornar objeto ou array; normalizar
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const company = Array.isArray((user as any).company) ? (user as any).company[0] : (user as any).company
+
     // Enriquecer com dados da session (unitId, unitIds, companyName)
     const enrichedUser = {
       ...user,
+      company,
       role: session.canonicalRole,
       legacyRole: user.role,
       activeUnitId: session.unitId || user.activeUnitId,
       unitIds: session.unitIds || [],
-      companyName: session.companyName || user.company?.name || '',
+      companyName: session.companyName || company?.name || '',
       canonicalRole: session.canonicalRole,
     }
 

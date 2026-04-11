@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const result = ((users || []) as UserListRow[]).map((u) => ({
+    const result = ((users || []) as unknown as UserListRow[]).map((u) => ({
       ...u,
       calendarName: u.calendar?.name || null,
     }))

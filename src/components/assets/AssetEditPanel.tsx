@@ -28,7 +28,7 @@ interface Asset {
   assetCategoryType?: string
   assetPriority?: string
   ownershipType?: string
-  unitId?: string
+  unitId?: string | null
   areaId?: string | null
   workCenterId?: string
   costCenterId?: string

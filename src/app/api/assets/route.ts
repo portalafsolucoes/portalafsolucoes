@@ -25,26 +25,12 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = (page - 1) * limit
 
-    let query = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
       .from('Asset')
       .select(
         summary
-          ? `
-            id,
-            name,
-            description,
-            status,
-            area,
-            areaId,
-            unitId,
-            locationId,
-            categoryId,
-            parentAssetId,
-            protheusCode,
-            tag,
-            createdAt,
-            updatedAt
-          `
+          ? 'id, name, description, status, area, areaId, unitId, locationId, categoryId, parentAssetId, protheusCode, tag, createdAt, updatedAt'
           : '*',
         summary ? undefined : { count: 'exact' }
       )
@@ -71,7 +57,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Enriquecer com dados do bem pai (código + nome)
-    let enrichedAssets = assets || []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let enrichedAssets: any[] = assets || []
     const parentIds = [...new Set(enrichedAssets.filter(a => a.parentAssetId).map(a => a.parentAssetId))]
     if (parentIds.length > 0) {
       const { data: parents } = await supabase
