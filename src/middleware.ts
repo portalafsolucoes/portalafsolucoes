@@ -1,9 +1,24 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+/**
+ * Verifica se o cookie tem o formato HMAC esperado: base64url.hex64
+ * Nao valida o conteudo criptografico (sem acesso ao secret no Edge),
+ * mas rejeita cookies no formato antigo (JSON puro) antes de criar loops.
+ */
+function hasValidSessionFormat(value: string): boolean {
+  const dot = value.lastIndexOf('.')
+  if (dot < 1) return false
+  const hmac = value.slice(dot + 1)
+  return hmac.length === 64 && /^[0-9a-f]{64}$/.test(hmac)
+}
+
 export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session')
   const { pathname } = request.nextUrl
+
+  // Cookie existe mas tem formato antigo (pre-HMAC) — tratar como sem sessao
+  const hasSession = !!sessionCookie && hasValidSessionFormat(sessionCookie.value)
 
   // Registro público desabilitado - redireciona para login
   if (pathname.startsWith('/register')) {
@@ -15,16 +30,21 @@ export function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
 
   // If user is not authenticated and trying to access protected route
-  if (!sessionCookie && !isPublicRoute && pathname !== '/') {
+  if (!hasSession && !isPublicRoute && pathname !== '/') {
     const loginUrl = new URL('/login', request.url)
     if (pathname.startsWith('/') && !pathname.includes('://')) {
       loginUrl.searchParams.set('returnUrl', pathname)
     }
-    return NextResponse.redirect(loginUrl)
+    const response = NextResponse.redirect(loginUrl)
+    // Limpar cookie invalido para quebrar possivel loop
+    if (sessionCookie && !hasSession) {
+      response.cookies.delete('session')
+    }
+    return response
   }
 
   // If user is authenticated and trying to access login (but NOT hub)
-  if (sessionCookie && pathname.startsWith('/login')) {
+  if (hasSession && pathname.startsWith('/login')) {
     const returnUrl = request.nextUrl.searchParams.get('returnUrl')
     return NextResponse.redirect(new URL(returnUrl || '/cmms', request.url))
   }
