@@ -38,6 +38,11 @@ interface UnitOption {
   name: string
 }
 
+interface JobTitleOption {
+  id: string
+  name: string
+}
+
 const ALL_ROLES: { value: string; label: string }[] = [
   { value: 'SUPER_ADMIN', label: 'Super Administrador' },
   { value: 'ADMIN', label: 'Administrador' },
@@ -206,7 +211,7 @@ interface UserFormData {
   email: string
   password: string
   phone: string
-  jobTitle: string
+  jobTitleId: string
   role: string
   rate: string
   enabled: boolean
@@ -218,6 +223,7 @@ interface UserFormPanelProps {
   isEdit: boolean
   formData: UserFormData
   units: UnitOption[]
+  jobTitles: JobTitleOption[]
   saving: boolean
   error: string
   onClose: () => void
@@ -231,6 +237,7 @@ function UserFormPanel({
   isEdit,
   formData,
   units,
+  jobTitles,
   saving,
   error,
   onClose,
@@ -309,12 +316,16 @@ function UserFormPanel({
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cargo</label>
-              <input
-                type="text"
-                value={formData.jobTitle}
-                onChange={(e) => onChange('jobTitle', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+              <select
+                value={formData.jobTitleId}
+                onChange={(e) => onChange('jobTitleId', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Selecione um cargo</option>
+                {jobTitles.map(jobTitle => (
+                  <option key={jobTitle.id} value={jobTitle.id}>{jobTitle.name}</option>
+                ))}
+              </select>
             </div>
           </div>
         </ModalSection>
@@ -432,6 +443,7 @@ export default function AdminUsersPage() {
 
   const [users, setUsers] = useState<AdminUser[]>([])
   const [units, setUnits] = useState<UnitOption[]>([])
+  const [jobTitles, setJobTitles] = useState<JobTitleOption[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
@@ -446,7 +458,7 @@ export default function AdminUsersPage() {
   // Form state
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '', lastName: '', email: '', password: '',
-    phone: '', jobTitle: '', role: 'MECANICO', rate: '0',
+    phone: '', jobTitleId: '', role: 'TECHNICIAN', rate: '0',
     enabled: true, unitIds: [],
   })
   const [saving, setSaving] = useState(false)
@@ -469,6 +481,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers()
     fetchUnits()
+    fetchJobTitles()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter, unitFilter])
 
@@ -500,6 +513,16 @@ export default function AdminUsersPage() {
     }
   }
 
+  const fetchJobTitles = async () => {
+    try {
+      const res = await fetch('/api/basic-registrations/job-titles')
+      const data = await res.json()
+      setJobTitles((data.data || []).map((jobTitle: JobTitleOption) => ({ id: jobTitle.id, name: jobTitle.name })))
+    } catch {
+      console.error('Error loading job titles')
+    }
+  }
+
   const filteredUsers = users.filter(user => {
     const search = searchTerm.toLowerCase()
     return (
@@ -517,7 +540,7 @@ export default function AdminUsersPage() {
     setIsEditing(false)
     setFormData({
       firstName: '', lastName: '', email: '', password: '',
-      phone: '', jobTitle: '', role: 'MECANICO', rate: '0',
+      phone: '', jobTitleId: '', role: 'TECHNICIAN', rate: '0',
       enabled: true, unitIds: [],
     })
     setFormError('')
@@ -544,7 +567,7 @@ export default function AdminUsersPage() {
         email: u.email,
         password: '',
         phone: u.phone || '',
-        jobTitle: u.jobTitle || '',
+        jobTitleId: u.jobTitleId || '',
         role: u.role,
         rate: String(u.rate || 0),
         enabled: u.enabled,
@@ -599,7 +622,7 @@ export default function AdminUsersPage() {
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        jobTitle: formData.jobTitle,
+        jobTitleId: formData.jobTitleId || null,
         role: formData.role,
         rate: parseFloat(formData.rate),
         enabled: formData.enabled,
@@ -629,8 +652,14 @@ export default function AdminUsersPage() {
 
       await fetchUsers()
       if (isEditing && selectedUser) {
+        const selectedJobTitle = jobTitles.find(jobTitle => jobTitle.id === formData.jobTitleId)
         // Refresh selected user data
-        const refreshed = { ...selectedUser, ...body, units: selectedUser.units }
+        const refreshed = {
+          ...selectedUser,
+          ...body,
+          jobTitle: selectedJobTitle?.name || null,
+          units: selectedUser.units,
+        }
         setSelectedUser(refreshed)
         setIsEditing(false)
       } else {
@@ -870,6 +899,7 @@ export default function AdminUsersPage() {
                   isEdit={isEditing}
                   formData={formData}
                   units={units}
+                  jobTitles={jobTitles}
                   saving={saving}
                   error={formError}
                   onClose={handleCloseSidePanel}
@@ -969,6 +999,7 @@ export default function AdminUsersPage() {
             isEdit={isEditing}
             formData={formData}
             units={units}
+            jobTitles={jobTitles}
             saving={saving}
             error={formError}
             onClose={handleCloseSidePanel}

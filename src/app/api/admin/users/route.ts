@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
-import { isAdminRole } from '@/lib/user-roles'
+import { isAdminRole, toPersistedUserRole } from '@/lib/user-roles'
+import { resolveJobTitleSelection } from '@/lib/job-titles'
 
 type AdminUserRow = {
   id: string
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('User')
     .select(`
-      id, email, firstName, lastName, phone, jobTitle, username,
+      id, email, firstName, lastName, phone, jobTitle, jobTitleId, username,
       role, image, rate, enabled, lastLogin, locationId, activeUnitId,
       createdAt, updatedAt
     `)
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const {
     email, password, firstName, lastName, role,
-    phone, jobTitle, rate, calendarId, locationId,
+    phone, jobTitle, jobTitleId, rate, calendarId, locationId,
     unitIds, // string[] - unidades a vincular
   } = body
   const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
@@ -172,6 +173,24 @@ export async function POST(request: NextRequest) {
   const userId = generateId()
   const now = new Date().toISOString()
 
+  let resolvedJobTitleId: string | null = null
+  let resolvedJobTitle: string | null = null
+
+  try {
+    const resolvedJobTitleSelection = await resolveJobTitleSelection({
+      companyId: session.companyId,
+      jobTitleId,
+      jobTitle,
+    })
+    resolvedJobTitleId = resolvedJobTitleSelection.jobTitleId
+    resolvedJobTitle = resolvedJobTitleSelection.jobTitle
+  } catch (error) {
+    if (error instanceof Error && error.message === 'INVALID_JOB_TITLE') {
+      return NextResponse.json({ error: 'Cargo inválido para a empresa ativa' }, { status: 400 })
+    }
+    throw error
+  }
+
   // Definir activeUnitId como a primeira unidade
   const activeUnitId = unitIds && unitIds.length > 0 ? unitIds[0] : null
 
@@ -184,9 +203,10 @@ export async function POST(request: NextRequest) {
       firstName,
       lastName,
       username,
-      role: role || 'TECHNICIAN',
+      role: toPersistedUserRole(role),
       phone: phone || null,
-      jobTitle: jobTitle || null,
+      jobTitle: resolvedJobTitle,
+      jobTitleId: resolvedJobTitleId,
       rate: rate || 0,
       enabled: true,
       companyId: session.companyId,
@@ -196,7 +216,7 @@ export async function POST(request: NextRequest) {
       createdAt: now,
       updatedAt: now,
     })
-    .select('id, email, firstName, lastName, role, enabled')
+    .select('id, email, firstName, lastName, role, jobTitle, jobTitleId, enabled')
     .single()
 
   if (createError) {

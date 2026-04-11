@@ -3,6 +3,8 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
+import { resolveJobTitleSelection } from '@/lib/job-titles'
+import { toPersistedUserRole } from '@/lib/user-roles'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -104,7 +106,7 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, locationId, calendarId, unitIds } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, locationId, calendarId, unitIds } = body
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 
     // Verificar se o usuário existe e pertence à empresa
@@ -166,13 +168,35 @@ export async function PUT(
       }
     }
 
+    let resolvedJobTitleId: string | null = null
+    let resolvedJobTitle: string | null = null
+
+    try {
+      const resolvedJobTitleSelection = await resolveJobTitleSelection({
+        companyId: session.companyId,
+        jobTitleId,
+        jobTitle,
+      })
+      resolvedJobTitleId = resolvedJobTitleSelection.jobTitleId
+      resolvedJobTitle = resolvedJobTitleSelection.jobTitle
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_JOB_TITLE') {
+        return NextResponse.json(
+          { error: 'Cargo inválido para a empresa ativa' },
+          { status: 400 }
+        )
+      }
+      throw error
+    }
+
     const updateData: UserUpdateData = {
       firstName,
       lastName,
       email: normalizedEmail,
-      role,
+      role: toPersistedUserRole(role),
       phone: phone || null,
-      jobTitle: jobTitle || null,
+      jobTitle: resolvedJobTitle,
+      jobTitleId: resolvedJobTitleId,
       rate,
       enabled,
       locationId: locationId !== undefined ? (locationId || null) : undefined,
@@ -193,7 +217,7 @@ export async function PUT(
       .from('User')
       .update(updateData)
       .eq('id', id)
-      .select('id, email, firstName, lastName, phone, jobTitle, username, role, rate, enabled, locationId, updatedAt')
+      .select('id, email, firstName, lastName, phone, jobTitle, jobTitleId, username, role, rate, enabled, locationId, updatedAt')
       .single()
 
     if (updateError) throw updateError

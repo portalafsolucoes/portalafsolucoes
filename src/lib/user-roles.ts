@@ -132,6 +132,40 @@ export function normalizeUserRole(input: RoleContext | string | null | undefined
   return 'REQUESTER'
 }
 
+export function toPersistedUserRole(input: RoleContext | string | null | undefined): LegacyUserRole {
+  if (typeof input === 'string') {
+    switch (input) {
+      case 'SUPER_ADMIN':
+      case 'GESTOR':
+      case 'PLANEJADOR':
+      case 'MECANICO':
+      case 'ELETRICISTA':
+      case 'OPERADOR':
+      case 'CONSTRUTOR_CIVIL':
+        return input
+      default:
+        break
+    }
+  }
+
+  switch (normalizeUserRole(input)) {
+    case 'SUPER_ADMIN':
+      return 'SUPER_ADMIN'
+    case 'ADMIN':
+      return 'GESTOR'
+    case 'TECHNICIAN':
+      return 'MECANICO'
+    case 'LIMITED_TECHNICIAN':
+      return 'ELETRICISTA'
+    case 'REQUESTER':
+      return 'OPERADOR'
+    case 'VIEW_ONLY':
+      return 'CONSTRUTOR_CIVIL'
+    default:
+      return 'OPERADOR'
+  }
+}
+
 export function isSuperAdminRole(input: RoleContext | string | null | undefined): boolean {
   return normalizeUserRole(input) === 'SUPER_ADMIN'
 }

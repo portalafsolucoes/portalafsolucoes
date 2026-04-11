@@ -20,6 +20,7 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - `Company` se relaciona com usuarios, unidades e modulos habilitados
 - `Module` e habilitado por empresa via `CompanyModule`
 - `User` pode ter multiplas unidades de acesso e precisa ser normalizado para os papeis canonicos de produto
+- `User` pode se vincular ao cadastro estruturado de cargos da empresa; sempre que existir selecao de cargo na UI, o banco deve persistir esse relacionamento e manter o nome do cargo sincronizado para exibicao
 - `Team` agrupa tecnicos para atribuicao de OS e ativos
 - `Asset` e hierarquico e pode ter subativos, anexos, pecas, OS relacionadas, solicitacoes relacionadas, contador, imagem e criticidade GUT
 - `Location` organiza a estrutura fisica hierarquica da unidade

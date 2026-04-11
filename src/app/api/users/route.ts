@@ -3,6 +3,8 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
+import { resolveJobTitleSelection } from '@/lib/job-titles'
+import { toPersistedUserRole } from '@/lib/user-roles'
 
 type UserListRow = Record<string, unknown> & {
   calendar?: {
@@ -30,10 +32,11 @@ export async function GET(request: NextRequest) {
     const isBrief = brief === 'true' || brief === 'resource'
     const briefSelect = `
       id, firstName, lastName, email, role, jobTitle, rate, enabled,
+      jobTitleId,
       calendar:Calendar(name)
     `
     const fullSelect = `
-      id, email, firstName, lastName, phone, jobTitle, username,
+      id, email, firstName, lastName, phone, jobTitle, jobTitleId, username,
       role, image, rate, enabled, lastLogin, locationId, calendarId,
       createdAt, updatedAt,
       calendar:Calendar(name),
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, firstName, lastName, role, phone, jobTitle, rate, enabled, calendarId, locationId, unitIds } = body
+    const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId, unitIds } = body
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
 
     if (!email || !password || !firstName || !lastName) {
@@ -167,6 +170,27 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString()
     const userId = generateId()
 
+    let resolvedJobTitleId: string | null = null
+    let resolvedJobTitle: string | null = null
+
+    try {
+      const resolvedJobTitleSelection = await resolveJobTitleSelection({
+        companyId: session.companyId,
+        jobTitleId,
+        jobTitle,
+      })
+      resolvedJobTitleId = resolvedJobTitleSelection.jobTitleId
+      resolvedJobTitle = resolvedJobTitleSelection.jobTitle
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_JOB_TITLE') {
+        return NextResponse.json(
+          { error: 'Cargo inválido para a empresa ativa' },
+          { status: 400 }
+        )
+      }
+      throw error
+    }
+
     // Definir activeUnitId como a primeira unidade se fornecida
     const activeUnitId = unitIds && unitIds.length > 0 ? unitIds[0] : null
 
@@ -179,9 +203,10 @@ export async function POST(request: NextRequest) {
         firstName,
         lastName,
         username,
-        role: role || 'TECHNICIAN',
+        role: toPersistedUserRole(role),
         phone: phone || null,
-        jobTitle: jobTitle || null,
+        jobTitle: resolvedJobTitle,
+        jobTitleId: resolvedJobTitleId,
         rate: rate || 0,
         enabled: enabled ?? true,
         companyId: session.companyId,
@@ -191,7 +216,7 @@ export async function POST(request: NextRequest) {
         createdAt: now,
         updatedAt: now
       })
-      .select('id, email, firstName, lastName, phone, jobTitle, username, role, rate, enabled, createdAt')
+      .select('id, email, firstName, lastName, phone, jobTitle, jobTitleId, username, role, rate, enabled, createdAt')
       .single()
 
     if (createError) {

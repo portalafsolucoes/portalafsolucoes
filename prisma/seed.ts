@@ -190,6 +190,22 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
   })
 
   for (const user of companyData.users) {
+    const jobTitleRecord = await prisma.jobTitle.upsert({
+      where: {
+        companyId_name: {
+          companyId: company.id,
+          name: user.jobTitle,
+        },
+      },
+      update: {
+        name: user.jobTitle,
+      },
+      create: {
+        name: user.jobTitle,
+        companyId: company.id,
+      },
+    })
+
     const createdUser = await prisma.user.upsert({
       where: { email: user.email },
       update: {
@@ -198,6 +214,7 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
         username: user.username,
         role: user.role,
         jobTitle: user.jobTitle,
+        jobTitleId: jobTitleRecord.id,
         enabled: true,
         companyId: company.id,
         locationId: location.id,
@@ -211,6 +228,7 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
         username: user.username,
         role: user.role,
         jobTitle: user.jobTitle,
+        jobTitleId: jobTitleRecord.id,
         enabled: true,
         companyId: company.id,
         locationId: location.id,

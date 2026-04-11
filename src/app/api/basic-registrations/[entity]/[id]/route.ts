@@ -11,6 +11,7 @@ const TABLE_MAP: Record<string, string> = {
   'asset-families': 'AssetFamily',
   'asset-family-models': 'AssetFamilyModel',
   positions: 'Position',
+  'job-titles': 'JobTitle',
   characteristics: 'Characteristic',
   resources: 'Resource',
   'maintenance-types': 'MaintenanceType',

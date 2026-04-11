@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
-import { isAdminRole } from '@/lib/user-roles'
+import { isAdminRole, toPersistedUserRole } from '@/lib/user-roles'
+import { resolveJobTitleSelection } from '@/lib/job-titles'
 
 type UnitSummary = {
   id: string
@@ -88,7 +89,7 @@ export async function PUT(
   const body = await request.json()
   const {
     email, password, firstName, lastName, role,
-    phone, jobTitle, rate, enabled, calendarId, locationId,
+    phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId,
     unitIds, // string[] - novas unidades
   } = body
   const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
@@ -137,6 +138,24 @@ export async function PUT(
     }
   }
 
+  let resolvedJobTitleId: string | null = null
+  let resolvedJobTitle: string | null = null
+
+  try {
+    const resolvedJobTitleSelection = await resolveJobTitleSelection({
+      companyId: session.companyId,
+      jobTitleId,
+      jobTitle,
+    })
+    resolvedJobTitleId = resolvedJobTitleSelection.jobTitleId
+    resolvedJobTitle = resolvedJobTitleSelection.jobTitle
+  } catch (error) {
+    if (error instanceof Error && error.message === 'INVALID_JOB_TITLE') {
+      return NextResponse.json({ error: 'Cargo inválido para a empresa ativa' }, { status: 400 })
+    }
+    throw error
+  }
+
   const updateData: UserUpdateData = {
     updatedAt: new Date().toISOString(),
   }
@@ -144,9 +163,10 @@ export async function PUT(
   if (firstName !== undefined) updateData.firstName = firstName
   if (lastName !== undefined) updateData.lastName = lastName
   if (normalizedEmail !== undefined) updateData.email = normalizedEmail
-  if (role !== undefined) updateData.role = role
+  if (role !== undefined) updateData.role = toPersistedUserRole(role)
   if (phone !== undefined) updateData.phone = phone || null
-  if (jobTitle !== undefined) updateData.jobTitle = jobTitle || null
+  updateData.jobTitle = resolvedJobTitle
+  updateData.jobTitleId = resolvedJobTitleId
   if (rate !== undefined) updateData.rate = rate
   if (enabled !== undefined) updateData.enabled = enabled
   if (calendarId !== undefined) updateData.calendarId = calendarId || null

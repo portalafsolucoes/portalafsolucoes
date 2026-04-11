@@ -65,6 +65,7 @@ Padrao visual:
 Referencia canonica: telas de `Pessoas` e `Ativos`.
 - Excecao documentada: em `/people-teams`, o toggle de visualizacao deve oferecer apenas `Tabela` e `Grade`; o modo `Arvore` nao deve aparecer nessa tela
 - Em `/people-teams`, a coluna e os campos de `Papel` devem usar o papel canonico de acesso do produto; `Cargo` deve usar exclusivamente `jobTitle` como funcao profissional da pessoa
+- Quando o campo `Cargo` aparecer em formularios de usuario, ele deve ser renderizado como selecao baseada em `Cadastros Basicos > Cargos`, e nao como texto livre
 
 ### Estrutura da pagina
 ```tsx

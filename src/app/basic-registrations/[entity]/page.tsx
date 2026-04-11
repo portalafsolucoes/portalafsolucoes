@@ -434,6 +434,19 @@ export default function BasicRegistrationEntityPage() {
       ],
     },
     {
+      key: 'job-titles', label: 'Cargos', entity: 'job-titles',
+      fields: [
+        { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Mecanico, Eletricista, Engenheiro' },
+        { key: 'description', label: 'Descricao', type: 'textarea', placeholder: 'Descricao opcional do cargo' },
+        { key: 'protheusCode', label: 'Codigo Protheus', type: 'text', placeholder: 'Ex: CARG001' },
+      ],
+      columns: [
+        { key: 'name', label: 'Nome' },
+        { key: 'description', label: 'Descricao' },
+        { key: 'protheusCode', label: 'Cod. Protheus' },
+      ],
+    },
+    {
       key: 'resources', label: 'Recursos', entity: 'resources',
       apiQueryParams: 'types=MATERIAL,TOOL',
       fields: [

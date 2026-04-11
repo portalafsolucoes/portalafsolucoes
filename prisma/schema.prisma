@@ -252,6 +252,7 @@ model Company {
   assetFamilies          AssetFamily[]
   assetFamilyModels      AssetFamilyModel[]
   positions              Position[]
+  jobTitles              JobTitle[]
   characteristics        Characteristic[]
   resources              Resource[]
   maintenanceTypes       MaintenanceType[]
@@ -295,6 +296,7 @@ model User {
   lastName          String
   phone             String?
   jobTitle          String?
+  jobTitleId        String?
   username          String   @unique
   role              UserRole @default(MECANICO)
   image             String?
@@ -310,6 +312,8 @@ model User {
 
   locationId String?
   location   Location? @relation("LocationUsers", fields: [locationId], references: [id])
+
+  jobTitleRef JobTitle? @relation("UserJobTitle", fields: [jobTitleId], references: [id])
 
   unitId String?
   unit   Location? @relation("UnitUsers", fields: [unitId], references: [id])
@@ -343,6 +347,7 @@ model User {
 
   @@index([companyId])
   @@index([email])
+  @@index([jobTitleId])
 }
 
 model Team {
@@ -579,6 +584,24 @@ model Position {
 
   assets Asset[]
 
+  @@unique([companyId, protheusCode])
+  @@index([companyId])
+}
+
+model JobTitle {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  protheusCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  users User[] @relation("UserJobTitle")
+
+  @@unique([companyId, name])
   @@unique([companyId, protheusCode])
   @@index([companyId])
 }

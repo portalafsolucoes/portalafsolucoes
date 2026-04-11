@@ -29,6 +29,7 @@ export interface User {
   lastName: string
   phone?: string
   jobTitle?: string
+  jobTitleId?: string
   username: string
   role: UserRole
   image?: string

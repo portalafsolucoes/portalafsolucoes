@@ -199,6 +199,7 @@ Regras complementares:
 - A tela de `Pessoas` oferece apenas visualizacao em `Tabela` e `Grade`; a visualizacao em arvore nao faz parte deste modulo
 - Formularios de pessoa devem exigir email valido com dominio completo e nunca reapresentar senha salva; no modo de edicao, o campo de senha deve permanecer vazio e opcional
 - O modal de pessoa, em criacao e edicao, deve permitir alterar todos os campos operacionais expostos no modulo: nome, sobrenome, email, senha, telefone, cargo, papel, taxa/hora, localizacao principal, calendario, unidades de acesso e status
+- O campo `Cargo` no modal de pessoa deve ser selecionado a partir do cadastro `Cadastros Basicos > Cargos`; o sistema deve salvar o vinculo estruturado do cargo no banco e refletir o nome do cargo na ficha da pessoa
 - A coluna `Cargo` da listagem de pessoas deve exibir `jobTitle` e nunca o perfil de acesso; a coluna `Papel` deve exibir o papel canonico do produto, mesmo quando o registro de origem vier de valor legado
 
 ### 9. Planos de Manutencao
@@ -222,6 +223,7 @@ Cadastros auxiliares do sistema:
 - Centros de Trabalho
 - Areas
 - Posicoes
+- Cargos
 - Caracteristicas
 - Recursos
 - Calendarios

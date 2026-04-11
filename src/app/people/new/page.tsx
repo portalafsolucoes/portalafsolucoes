@@ -7,19 +7,26 @@ import { Icon } from '@/components/ui/Icon'
 import { PageContainer } from '@/components/layout/PageContainer'
 
 import { Location } from '@/types'
+import { CANONICAL_ROLE_OPTIONS } from '@/lib/user-roles'
+
+interface JobTitleOption {
+  id: string
+  name: string
+}
 
 export default function NewPersonPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [locations, setLocations] = useState<Location[]>([])
+  const [jobTitles, setJobTitles] = useState<JobTitleOption[]>([])
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     phone: '',
-    jobTitle: '',
-    role: 'MECANICO',
+    jobTitleId: '',
+    role: 'TECHNICIAN',
     rate: '0',
     locationId: '',
     enabled: true
@@ -27,6 +34,7 @@ export default function NewPersonPage() {
 
   useEffect(() => {
     fetchLocations()
+    fetchJobTitles()
   }, [])
 
   const fetchLocations = async () => {
@@ -38,6 +46,18 @@ export default function NewPersonPage() {
       }
     } catch (error) {
       console.error('Error fetching locations:', error)
+    }
+  }
+
+  const fetchJobTitles = async () => {
+    try {
+      const response = await fetch('/api/basic-registrations/job-titles')
+      const data = await response.json()
+      if (data.data) {
+        setJobTitles(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching job titles:', error)
     }
   }
 
@@ -177,17 +197,23 @@ export default function NewPersonPage() {
                 />
               </div>
               <div>
-                <label htmlFor="jobTitle" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="jobTitleId" className="block text-sm font-medium text-foreground mb-1">
                   Cargo
                 </label>
-                <input
-                  type="text"
-                  id="jobTitle"
-                  name="jobTitle"
-                  value={formData.jobTitle}
+                <select
+                  id="jobTitleId"
+                  name="jobTitleId"
+                  value={formData.jobTitleId}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
+                >
+                  <option value="">Selecione um cargo</option>
+                  {jobTitles.map(jobTitle => (
+                    <option key={jobTitle.id} value={jobTitle.id}>
+                      {jobTitle.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -204,12 +230,11 @@ export default function NewPersonPage() {
                   required
                   className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
-                  <option value="SUPER_ADMIN">Super Administrador</option>
-                  <option value="ADMIN">Administrador</option>
-                  <option value="TECHNICIAN">Técnico</option>
-                  <option value="LIMITED_TECHNICIAN">Técnico Limitado</option>
-                  <option value="REQUESTER">Solicitante</option>
-                  <option value="VIEW_ONLY">Somente Consulta</option>
+                  {CANONICAL_ROLE_OPTIONS.map(roleOption => (
+                    <option key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

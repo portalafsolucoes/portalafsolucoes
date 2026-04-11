@@ -56,6 +56,12 @@ const ENTITY_CONFIG: Record<string, {
     requiredFields: ['name'],
     orderBy: 'name',
   },
+  'job-titles': {
+    table: 'JobTitle',
+    scope: 'company',
+    requiredFields: ['name'],
+    orderBy: 'name',
+  },
   characteristics: {
     table: 'Characteristic',
     scope: 'company',

@@ -21,6 +21,11 @@ interface CalendarOption {
   name: string
 }
 
+interface JobTitleOption {
+  id: string
+  name: string
+}
+
 interface UnitOption {
   id: string
   name: string
@@ -36,6 +41,7 @@ interface EditableUser {
   email: string
   phone?: string | null
   jobTitle?: string | null
+  jobTitleId?: string | null
   role: string
   rate: number
   locationId?: string | null
@@ -48,7 +54,7 @@ interface UserPayload {
   lastName: string
   email: string
   phone: string
-  jobTitle: string
+  jobTitleId: string | null
   role: string
   rate: number
   locationId: string | null
@@ -94,13 +100,14 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
   const [locations, setLocations] = useState<Location[]>([])
   const [units, setUnits] = useState<UnitOption[]>([])
   const [calendars, setCalendars] = useState<CalendarOption[]>([])
+  const [jobTitles, setJobTitles] = useState<JobTitleOption[]>([])
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     phone: '',
-    jobTitle: '',
+    jobTitleId: '',
     role: 'TECHNICIAN',
     rate: '0',
     locationId: '',
@@ -116,7 +123,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
       email: '',
       password: '',
       phone: '',
-      jobTitle: '',
+      jobTitleId: '',
       role: 'TECHNICIAN',
       rate: '0',
       locationId: '',
@@ -150,7 +157,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           email: user.email,
           password: '',
           phone: user.phone || '',
-          jobTitle: user.jobTitle || '',
+          jobTitleId: user.jobTitleId || '',
           role: normalizeUserRole(user.role),
           rate: user.rate.toString(),
           locationId: user.locationId || '',
@@ -200,11 +207,24 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
     }
   }
 
+  const fetchJobTitles = async () => {
+    try {
+      const response = await fetch('/api/basic-registrations/job-titles')
+      const data = await response.json()
+      if (data.data) {
+        setJobTitles(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching job titles:', error)
+    }
+  }
+
   useEffect(() => {
     if (isOpen) {
       void fetchLocations()
       void fetchUnits()
       void fetchCalendars()
+      void fetchJobTitles()
       if (userId) {
         void fetchUser()
       } else {
@@ -243,7 +263,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        jobTitle: formData.jobTitle,
+        jobTitleId: formData.jobTitleId || null,
         role: formData.role,
         rate: parseFloat(formData.rate),
         locationId: formData.locationId || null,
@@ -414,18 +434,23 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   />
                 </div>
                 <div>
-                  <label htmlFor="jobTitle-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  <label htmlFor="jobTitleId-in-page" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Cargo
                   </label>
-                  <input
-                    type="text"
-                    id="jobTitle-in-page"
-                    name="jobTitle"
-                    value={formData.jobTitle}
+                  <select
+                    id="jobTitleId-in-page"
+                    name="jobTitleId"
+                    value={formData.jobTitleId}
                     onChange={handleChange}
-                    placeholder="Ex.: Mecânico, Eletricista, Engenheiro"
                     className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-                  />
+                  >
+                    <option value="">Selecione um cargo</option>
+                    {jobTitles.map((jobTitle) => (
+                      <option key={jobTitle.id} value={jobTitle.id}>
+                        {jobTitle.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -656,18 +681,23 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 />
               </div>
               <div>
-                <label htmlFor="jobTitle" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label htmlFor="jobTitleId" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Cargo
                 </label>
-                <input
-                  type="text"
-                  id="jobTitle"
-                  name="jobTitle"
-                  value={formData.jobTitle}
+                <select
+                  id="jobTitleId"
+                  name="jobTitleId"
+                  value={formData.jobTitleId}
                   onChange={handleChange}
-                  placeholder="Ex.: Mecânico, Eletricista, Engenheiro"
                   className="w-full px-4 py-2 border border-input rounded-[4px] focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
+                >
+                  <option value="">Selecione um cargo</option>
+                  {jobTitles.map((jobTitle) => (
+                    <option key={jobTitle.id} value={jobTitle.id}>
+                      {jobTitle.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
