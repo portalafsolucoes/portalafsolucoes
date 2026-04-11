@@ -17,7 +17,8 @@ type UnitSummary = {
 
 type UserUnitRow = {
   userId: string
-  unit: UnitSummary | null
+  unitId: string
+  unit: UnitSummary | UnitSummary[] | null
 }
 
 type EnrichedAdminUser = AdminUserRow & {
@@ -87,7 +88,8 @@ export async function GET(request: NextRequest) {
   for (const uu of (userUnits || []) as UserUnitRow[]) {
     if (!unitsByUser[uu.userId]) unitsByUser[uu.userId] = []
     if (uu.unit) {
-      unitsByUser[uu.userId].push(uu.unit)
+      const units = Array.isArray(uu.unit) ? uu.unit : [uu.unit]
+      unitsByUser[uu.userId].push(...units)
     }
   }
 
