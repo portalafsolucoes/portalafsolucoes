@@ -12,7 +12,7 @@ type UnitSummary = {
 
 type UserUnitRow = {
   unitId: string
-  unit: UnitSummary | null
+  unit: UnitSummary | UnitSummary[] | null
 }
 
 type UserUpdateData = Record<string, unknown> & {
@@ -62,7 +62,10 @@ export async function GET(
   return NextResponse.json({
     data: {
       ...userSafe,
-      units: ((userUnits || []) as UserUnitRow[]).flatMap((uu) => (uu.unit ? [uu.unit] : [])),
+      units: ((userUnits || []) as UserUnitRow[]).flatMap((uu) => {
+        if (!uu.unit) return []
+        return Array.isArray(uu.unit) ? uu.unit : [uu.unit]
+      }),
       unitIds: ((userUnits || []) as UserUnitRow[]).map((uu) => uu.unitId),
     },
   })
