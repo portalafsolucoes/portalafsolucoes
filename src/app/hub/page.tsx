@@ -1,11 +1,19 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
 import { useAuth } from '@/hooks/useAuth'
 
 import { PORTAL_NAME } from '@/lib/branding'
+
+const IMAGES = {
+  hero: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80',
+  cmms: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
+  gvp: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80',
+  gpa: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600&q=80',
+} as const
 
 interface ModuleCard {
   id: string
@@ -88,6 +96,19 @@ export default function HubPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.7),_rgba(240,244,244,1)_80%)] flex flex-col relative overflow-hidden">
       
+      {/* Hero Background Image */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <Image
+          src={IMAGES.hero}
+          alt=""
+          fill
+          className="object-cover opacity-[0.15]"
+          priority
+          unoptimized
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-white/80" />
+      </div>
+
       {/* Elementos abstratos de contraste no fundo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
         {/* Grid pattern sutil */}
@@ -188,52 +209,61 @@ export default function HubPage() {
                 cursor-pointer flex flex-col h-full border border-white/5
               `}
             >
-              {/* Abstract Background inside dark card */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#111418] via-[#1a1f24] to-[#252b33] opacity-100" />
+              {/* Background Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src={IMAGES.cmms}
+                  alt=""
+                  fill
+                  className="object-cover opacity-35 transition-transform duration-[1.5s] group-hover:scale-110"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#111418]/80 via-[#1a1f24]/70 to-[#252b33]/80" />
+              </div>
               <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-gradient-to-bl from-accent-orange/20 to-transparent rounded-full blur-[100px] transition-transform duration-[1.5s] group-hover:scale-[1.4] group-hover:-translate-x-12 opacity-60" />
               <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-[80px]" />
               
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay" />
-              
-              <div className="relative p-10 sm:p-14 flex flex-col h-full justify-between z-10">
+              <div className="relative p-6 sm:p-10 lg:p-14 flex flex-col h-full justify-between z-10">
                 <div>
-                  <div className="flex items-center justify-between mb-10">
-                    <div className="p-4 bg-white/5 rounded-[16px] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transform transition-all duration-500 group-hover:scale-110 group-hover:bg-accent-orange/20 group-hover:border-accent-orange/30">
+                  <div className="flex items-center justify-between mb-6 sm:mb-10">
+                    <div className="p-3 sm:p-4 bg-white/5 rounded-[12px] sm:rounded-[16px] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transform transition-all duration-500 group-hover:scale-110 group-hover:bg-accent-orange/20 group-hover:border-accent-orange/30">
                       {cmmsModule.icon}
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-sm font-bold text-white transition-all duration-300 group-hover:bg-accent-orange group-hover:border-accent-orange group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]">
-                      {isAuthenticated ? 'Acessar Workspace' : 'Fazer login'}
-                      <Icon name="arrow_forward" className="text-xl transition-transform group-hover:translate-x-1" />
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-xs sm:text-sm font-bold text-white transition-all duration-300 group-hover:bg-accent-orange group-hover:border-accent-orange group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]">
+                      <span className="hidden sm:inline">{isAuthenticated ? 'Acessar Workspace' : 'Fazer login'}</span>
+                      <span className="sm:hidden">Acessar</span>
+                      <Icon name="arrow_forward" className="text-lg sm:text-xl transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
                   
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[6px] bg-white/10 text-[11px] font-bold tracking-[0.25em] uppercase text-white/80 mb-5 border border-white/5">
+                  <span className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-[6px] bg-white/10 text-[10px] sm:text-[11px] font-bold tracking-[0.25em] uppercase text-white/80 mb-3 sm:mb-5 border border-white/5">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
                     {cmmsModule.shortName} • Ativo
                   </span>
                   
-                  <h3 className="font-headline text-4xl sm:text-5xl font-extrabold mb-6 leading-tight tracking-tight drop-shadow-md">
+                  <h3 className="font-headline text-2xl sm:text-4xl lg:text-5xl font-extrabold mb-3 sm:mb-6 leading-tight tracking-tight drop-shadow-md">
                     {cmmsModule.name}
                   </h3>
                   
-                  <p className="text-[1.05rem] text-white/70 leading-[1.7] max-w-xl font-medium">
+                  <p className="text-sm sm:text-[1.05rem] text-white/70 leading-[1.6] sm:leading-[1.7] font-medium">
                     {cmmsModule.description}
                   </p>
                 </div>
 
-                <div className="mt-14 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                  <div className="flex flex-wrap gap-2.5">
+                <div className="mt-8 sm:mt-14 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+                  <div className="flex flex-wrap gap-2">
                     {cmmsModule.features.slice(0, 3).map((feature) => (
                       <span
                         key={feature}
-                        className="flex items-center gap-1.5 rounded-[8px] bg-[#000000]/30 px-3.5 py-2 text-xs font-bold tracking-wide text-white/90 border border-white/5 transition-all group-hover:border-white/15 backdrop-blur-sm"
+                        className="flex items-center gap-1 sm:gap-1.5 rounded-[6px] sm:rounded-[8px] bg-[#000000]/30 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold tracking-wide text-white/90 border border-white/5 transition-all group-hover:border-white/15 backdrop-blur-sm"
                       >
-                        <Icon name="bolt" className="text-[14px] text-accent-orange" />
-                        {feature}
+                        <Icon name="bolt" className="text-[12px] sm:text-[14px] text-accent-orange" />
+                        <span className="hidden sm:inline">{feature}</span>
+                        <span className="sm:hidden">{feature.split(' ')[0]}</span>
                       </span>
                     ))}
-                    <span className="flex items-center justify-center rounded-[8px] bg-white/5 px-3 py-2 text-xs font-bold text-white/60 border border-white/5">
-                      +{cmmsModule.features.length - 3} func.
+                    <span className="flex items-center justify-center rounded-[6px] sm:rounded-[8px] bg-white/5 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-white/60 border border-white/5">
+                      +{cmmsModule.features.length - 3}
                     </span>
                   </div>
                 </div>
@@ -242,11 +272,25 @@ export default function HubPage() {
 
             {/* Coming Soon Modules - Stacked (Span 4) */}
             <div className="lg:col-span-4 flex flex-col gap-8 h-full">
-              {otherModules.map((module, idx) => (
+              {otherModules.map((module, idx) => {
+                const moduleImage = module.id === 'gvp' ? IMAGES.gvp : IMAGES.gpa
+                return (
                 <div
                   key={module.id}
-                  className="group relative overflow-hidden rounded-[24px] bg-white border border-sidebar/5 p-8 flex flex-col justify-between h-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1"
+                  className="group relative overflow-hidden rounded-[24px] bg-white border border-sidebar/5 p-8 flex flex-col justify-between h-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 cursor-not-allowed opacity-75"
+                  title="Em breve"
                 >
+                  {/* Module Background Image */}
+                  <div className="absolute inset-0">
+                    <Image
+                      src={moduleImage}
+                      alt=""
+                      fill
+                      className="object-cover opacity-[0.12] transition-transform duration-500 group-hover:scale-110"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/40 to-white/70" />
+                  </div>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-sidebar/[0.02] rounded-bl-full transition-transform duration-500 group-hover:scale-150" />
                   
                   <div className="relative z-10">
@@ -281,9 +325,38 @@ export default function HubPage() {
                     ))}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
 
+          </div>
+
+          {/* KPIs / Social Proof Section */}
+          <div className="mt-24 grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { value: '99.9%', label: 'Uptime Garantido', icon: 'shield' },
+              { value: '500+', label: 'Ativos Monitorados', icon: 'memory' },
+              { value: '24/7', label: 'Monitoramento Contínuo', icon: 'schedule' },
+              { value: '-40%', label: 'Redução de Paradas', icon: 'trending_down' },
+            ].map((kpi) => (
+              <div
+                key={kpi.label}
+                className="group relative overflow-hidden rounded-[16px] bg-white border border-sidebar/5 p-6 text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all hover:shadow-[0_12px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-orange/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-[10px] bg-sidebar/5 text-sidebar mb-4 group-hover:bg-accent-orange/10 group-hover:text-accent-orange transition-colors">
+                    <Icon name={kpi.icon} className="text-2xl" />
+                  </div>
+                  <div className="font-headline text-3xl font-extrabold text-sidebar tracking-tight">
+                    {kpi.value}
+                  </div>
+                  <div className="text-xs font-bold text-sidebar/50 uppercase tracking-[0.15em] mt-1">
+                    {kpi.label}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </main>
