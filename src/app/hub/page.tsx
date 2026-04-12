@@ -298,8 +298,8 @@ export default function HubPage() {
                       <div className={`p-3.5 rounded-[12px] shadow-sm text-white ${idx === 0 ? 'bg-gradient-to-br from-[#7b8283] to-[#5a6061]' : 'bg-gradient-to-br from-[#9ca3af] to-[#6b7280]'}`}>
                         {module.icon}
                       </div>
-                      <span className="rounded-full bg-sidebar/5 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-sidebar/40 border border-sidebar/10">
-                        Roadmap
+                      <span className="rounded-full bg-amber-500/10 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-amber-600 border border-amber-500/20">
+                        Em breve
                       </span>
                     </div>
 
@@ -329,34 +329,6 @@ export default function HubPage() {
               })}
             </div>
 
-          </div>
-
-          {/* KPIs / Social Proof Section */}
-          <div className="mt-24 grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { value: '99.9%', label: 'Uptime Garantido', icon: 'shield' },
-              { value: '500+', label: 'Ativos Monitorados', icon: 'memory' },
-              { value: '24/7', label: 'Monitoramento Contínuo', icon: 'schedule' },
-              { value: '-40%', label: 'Redução de Paradas', icon: 'trending_down' },
-            ].map((kpi) => (
-              <div
-                key={kpi.label}
-                className="group relative overflow-hidden rounded-[16px] bg-white border border-sidebar/5 p-6 text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all hover:shadow-[0_12px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-accent-orange/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative z-10">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-[10px] bg-sidebar/5 text-sidebar mb-4 group-hover:bg-accent-orange/10 group-hover:text-accent-orange transition-colors">
-                    <Icon name={kpi.icon} className="text-2xl" />
-                  </div>
-                  <div className="font-headline text-3xl font-extrabold text-sidebar tracking-tight">
-                    {kpi.value}
-                  </div>
-                  <div className="text-xs font-bold text-sidebar/50 uppercase tracking-[0.15em] mt-1">
-                    {kpi.label}
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </main>
