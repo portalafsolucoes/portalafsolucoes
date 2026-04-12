@@ -86,26 +86,31 @@ export default function HubPage() {
   const otherModules = modules.filter(m => m.id !== 'cmms')
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,220,198,0.30),_transparent_30%),linear-gradient(180deg,#fbfbfb_0%,#f1f4f4_100%)] flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.7),_rgba(240,244,244,1)_80%)] flex flex-col relative overflow-hidden">
       
       {/* Elementos abstratos de contraste no fundo */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-sidebar/5 blur-[120px]" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[60%] rounded-full bg-accent-orange/10 blur-[120px]" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
+        {/* Grid pattern sutil */}
+        <div 
+          className="absolute inset-0 opacity-[0.02]" 
+          style={{ backgroundImage: 'radial-gradient(#1e2329 1px, transparent 1px)', backgroundSize: '32px 32px' }}
+        />
+        <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-[#e4e9ea] blur-[100px]" />
+        <div className="absolute top-[30%] -right-[5%] w-[50%] h-[50%] rounded-full bg-accent-orange/5 blur-[120px]" />
       </div>
 
       {/* Header */}
       <header className="sticky top-0 z-50 px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-        <div className="max-w-7xl mx-auto bg-card/90 border border-border/50 rounded-[4px] shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto bg-white/70 border border-white/50 rounded-[12px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-16 flex items-center justify-between px-4 sm:px-6 backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[4px] bg-sidebar flex items-center justify-center flex-shrink-0 shadow-inner">
+            <div className="w-10 h-10 rounded-[8px] bg-sidebar flex items-center justify-center flex-shrink-0 shadow-md">
               <Icon name="hub" className="text-2xl text-white" />
             </div>
             <div>
               <h1 className="font-headline text-lg font-extrabold leading-tight text-sidebar tracking-tight">
                 {PORTAL_NAME}
               </h1>
-              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold hidden sm:block">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-sidebar/60 font-bold hidden sm:block">
                 Plataforma Integrada
               </p>
             </div>
@@ -125,13 +130,13 @@ export default function HubPage() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-surface-low border border-border/50 flex items-center justify-center text-sm font-bold text-sidebar shadow-sm">
+                  <div className="h-10 w-10 rounded-full bg-surface border-[2px] border-white flex items-center justify-center text-sm font-bold text-sidebar shadow-md">
                     {userInitials}
                   </div>
                   <button
                     onClick={handleLogout}
                     title="Sair"
-                    className="flex items-center justify-center w-10 h-10 rounded-[4px] text-on-surface-variant transition-colors hover:bg-surface-low hover:text-danger"
+                    className="flex items-center justify-center w-10 h-10 rounded-full text-sidebar/60 transition-all hover:bg-error/10 hover:text-error"
                   >
                     <Icon name="logout" className="text-xl" />
                   </button>
@@ -140,10 +145,10 @@ export default function HubPage() {
             ) : (
               <button
                 onClick={handleLoginClick}
-                className="flex items-center gap-2 rounded-[4px] bg-sidebar px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-sidebar/90 hover:shadow-md active:scale-95"
+                className="flex items-center gap-2 rounded-[8px] bg-sidebar px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-sidebar/20 transition-all hover:bg-sidebar/90 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
               >
                 <Icon name="login" className="text-base" />
-                <span>Fazer Login</span>
+                <span>Acessar</span>
               </button>
             )}
           </div>
@@ -151,115 +156,125 @@ export default function HubPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 pt-12 pb-20">
-        <div className="max-w-7xl w-full">
+      <main className="flex-1 relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 pt-16 pb-24">
+        <div className="max-w-[1200px] w-full">
           
           {/* Hero Title */}
-          <div className="text-center mb-16 max-w-3xl mx-auto mt-8">
-            <p className="text-accent-orange font-bold uppercase tracking-widest text-xs mb-3">
+          <div className="text-center mb-20 max-w-3xl mx-auto mt-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-orange/10 text-accent-orange font-bold uppercase tracking-[0.2em] text-[10px] mb-6 border border-accent-orange/20">
+              <span className="w-2 h-2 rounded-full bg-accent-orange animate-pulse" />
               Ecossistema AF Soluções
-            </p>
-            <h2 className="font-headline text-4xl font-extrabold tracking-tight text-sidebar sm:text-6xl mb-6 leading-tight">
+            </div>
+            <h2 className="font-headline text-5xl lg:text-[4.5rem] font-extrabold tracking-tight text-sidebar mb-6 leading-[1.1] drop-shadow-sm">
               Acelere sua operação <br/>
-              <span className="text-primary-graphite">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-accent-orange to-amber-500">
                 com inteligência.
               </span>
             </h2>
-            <p className="text-lg text-on-surface-variant leading-relaxed font-medium">
-              Selecione o módulo abaixo para acessar a área correspondente da sua planta industrial.
+            <p className="text-[1.1rem] text-sidebar/70 leading-relaxed font-medium max-w-2xl mx-auto">
+              Sua planta conectada, preditiva e sob controle. Escolha o ambiente de trabalho e inicie sua jornada para a excelência industrial.
             </p>
           </div>
 
-          {/* Bento Grid Layout - Alto Contraste */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          {/* Bento Grid Layout - Design Inteligente */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             
-            {/* CMMS - Dark Mode Hero Card (Span 2) */}
+            {/* CMMS - Dark Mode Hero Card (Span 8) */}
             <div
               onClick={() => handleModuleClick(cmmsModule)}
               className={`
-                lg:col-span-2 group relative overflow-hidden rounded-[8px] transition-all duration-300
-                bg-sidebar text-white border-2 border-transparent hover:border-accent-orange shadow-lg hover:shadow-2xl
-                cursor-pointer flex flex-col h-full
+                lg:col-span-8 group relative overflow-hidden rounded-[24px] transition-all duration-500
+                bg-[#111418] text-white shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:shadow-[0_30px_60px_rgba(249,115,22,0.15)]
+                cursor-pointer flex flex-col h-full border border-white/5
               `}
             >
               {/* Abstract Background inside dark card */}
-              <div className="absolute inset-0 bg-gradient-to-br from-sidebar to-[#1a1f24] opacity-90" />
-              <div className="absolute -right-[10%] -top-[10%] w-96 h-96 bg-accent-orange/10 rounded-full blur-[80px] transition-transform duration-700 group-hover:scale-125 group-hover:-translate-x-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#111418] via-[#1a1f24] to-[#252b33] opacity-100" />
+              <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-gradient-to-bl from-accent-orange/20 to-transparent rounded-full blur-[100px] transition-transform duration-[1.5s] group-hover:scale-[1.4] group-hover:-translate-x-12 opacity-60" />
+              <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-[80px]" />
               
-              <div className="relative p-8 sm:p-10 flex flex-col h-full justify-between z-10">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay" />
+              
+              <div className="relative p-10 sm:p-14 flex flex-col h-full justify-between z-10">
                 <div>
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="p-4 bg-white/10 rounded-[8px] backdrop-blur-md border border-white/10 transform transition-transform duration-500 group-hover:scale-110">
+                  <div className="flex items-center justify-between mb-10">
+                    <div className="p-4 bg-white/5 rounded-[16px] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transform transition-all duration-500 group-hover:scale-110 group-hover:bg-accent-orange/20 group-hover:border-accent-orange/30">
                       {cmmsModule.icon}
                     </div>
-                    <div className="flex items-center gap-2 text-sm font-bold text-accent-orange opacity-80 transform transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-2">
-                      {isAuthenticated ? 'Acessar módulo' : 'Fazer login'}
-                      <Icon name="arrow_forward" className="text-xl" />
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-sm font-bold text-white transition-all duration-300 group-hover:bg-accent-orange group-hover:border-accent-orange group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]">
+                      {isAuthenticated ? 'Acessar Workspace' : 'Fazer login'}
+                      <Icon name="arrow_forward" className="text-xl transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
                   
-                  <span className="inline-block px-3 py-1 rounded-[4px] bg-accent-orange/20 text-[10px] font-bold tracking-[0.2em] uppercase text-accent-orange mb-4 border border-accent-orange/30">
-                    Módulo Principal • {cmmsModule.shortName}
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[6px] bg-white/10 text-[11px] font-bold tracking-[0.25em] uppercase text-white/80 mb-5 border border-white/5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
+                    {cmmsModule.shortName} • Ativo
                   </span>
                   
-                  <h3 className="font-headline text-3xl font-extrabold mb-4 leading-tight">
+                  <h3 className="font-headline text-4xl sm:text-5xl font-extrabold mb-6 leading-tight tracking-tight drop-shadow-md">
                     {cmmsModule.name}
                   </h3>
                   
-                  <p className="text-base text-gray-300 leading-relaxed max-w-xl font-medium">
+                  <p className="text-[1.05rem] text-white/70 leading-[1.7] max-w-xl font-medium">
                     {cmmsModule.description}
                   </p>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-white/10">
+                <div className="mt-14 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                   <div className="flex flex-wrap gap-2.5">
-                    {cmmsModule.features.map((feature) => (
+                    {cmmsModule.features.slice(0, 3).map((feature) => (
                       <span
                         key={feature}
-                        className="flex items-center gap-1.5 rounded-[4px] bg-white/5 px-3 py-1.5 text-sm font-medium text-gray-200 border border-white/10 transition-colors group-hover:bg-white/10 group-hover:border-white/20"
+                        className="flex items-center gap-1.5 rounded-[8px] bg-[#000000]/30 px-3.5 py-2 text-xs font-bold tracking-wide text-white/90 border border-white/5 transition-all group-hover:border-white/15 backdrop-blur-sm"
                       >
-                        <Icon name="check" className="text-[16px] text-accent-orange" />
+                        <Icon name="bolt" className="text-[14px] text-accent-orange" />
                         {feature}
                       </span>
                     ))}
+                    <span className="flex items-center justify-center rounded-[8px] bg-white/5 px-3 py-2 text-xs font-bold text-white/60 border border-white/5">
+                      +{cmmsModule.features.length - 3} func.
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Coming Soon Modules - Stacked (Span 1) */}
-            <div className="lg:col-span-1 flex flex-col gap-6 h-full">
-              {otherModules.map((module) => (
+            {/* Coming Soon Modules - Stacked (Span 4) */}
+            <div className="lg:col-span-4 flex flex-col gap-8 h-full">
+              {otherModules.map((module, idx) => (
                 <div
                   key={module.id}
-                  className="relative overflow-hidden rounded-[8px] bg-card border border-border p-6 flex flex-col justify-between h-full shadow-sm transition-all hover:shadow-md opacity-80 hover:opacity-100"
+                  className="group relative overflow-hidden rounded-[24px] bg-white border border-sidebar/5 p-8 flex flex-col justify-between h-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1"
                 >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-sidebar/[0.02] rounded-bl-full transition-transform duration-500 group-hover:scale-150" />
+                  
                   <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-5">
-                      <div className="p-3 bg-surface-low rounded-[4px] border border-border/50 text-sidebar">
+                    <div className="flex items-start justify-between mb-8">
+                      <div className={`p-3.5 rounded-[12px] shadow-sm text-white ${idx === 0 ? 'bg-gradient-to-br from-[#7b8283] to-[#5a6061]' : 'bg-gradient-to-br from-[#9ca3af] to-[#6b7280]'}`}>
                         {module.icon}
                       </div>
-                      <span className="rounded-[4px] bg-surface-low px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant border border-border/50">
-                        Em breve
+                      <span className="rounded-full bg-sidebar/5 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-sidebar/40 border border-sidebar/10">
+                        Roadmap
                       </span>
                     </div>
 
-                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-on-surface-variant mb-2 block">
+                    <span className="text-[10px] font-extrabold tracking-[0.25em] uppercase text-sidebar/40 mb-3 block">
                       {module.shortName}
                     </span>
-                    <h3 className="font-headline text-xl font-extrabold text-sidebar mb-3 leading-tight">
+                    <h3 className="font-headline text-2xl font-extrabold text-sidebar mb-3 leading-tight tracking-tight group-hover:text-accent-orange transition-colors">
                       {module.name}
                     </h3>
-                    <p className="text-sm text-on-surface-variant leading-relaxed mb-6 font-medium">
+                    <p className="text-sm text-sidebar/60 leading-relaxed font-medium mb-8">
                       {module.description}
                     </p>
                   </div>
 
                   <div className="relative z-10 flex flex-wrap gap-2 mt-auto">
-                    {module.features.map((feature) => (
+                    {module.features.slice(0, 2).map((feature) => (
                       <span
                         key={feature}
-                        className="rounded-[4px] bg-surface-low px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant border border-border/40"
+                        className="rounded-[6px] bg-surface-low px-3 py-1.5 text-[10px] font-bold tracking-wide text-sidebar/60 border border-sidebar/5"
                       >
                         {feature}
                       </span>
@@ -274,14 +289,17 @@ export default function HubPage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 py-6 mt-auto">
+      <footer className="relative z-10 py-8 mt-auto border-t border-sidebar/5 bg-white/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm font-bold text-on-surface-variant">
-            &copy; {new Date().getFullYear()} AF Soluções.
-          </p>
+          <div className="flex items-center gap-3 text-sidebar/60">
+            <Icon name="memory" className="text-xl" />
+            <p className="text-xs font-bold tracking-wide">
+              &copy; {new Date().getFullYear()} AF Soluções Industriais.
+            </p>
+          </div>
           <div className="flex items-center gap-6">
-            <span className="text-[10px] font-bold tracking-widest text-on-surface-variant uppercase">
-              Versão 1.0.0
+            <span className="px-3 py-1 rounded-full bg-sidebar/5 text-[9px] font-bold tracking-[0.2em] text-sidebar/50 uppercase border border-sidebar/5">
+              System v1.0.0
             </span>
           </div>
         </div>
