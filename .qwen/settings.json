@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "mcp__playwright__browser_navigate"
+      "mcp__playwright__browser_navigate",
+      "Read(E:\\Google Drive/**)"
     ]
   },
   "$version": 3

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -71,14 +71,7 @@ export default function WorkOrdersPage() {
     }
   }, [currentUser, router])
 
-  useEffect(() => {
-    if (!currentUser || !hasPermission(currentUser, 'work-orders', 'view')) {
-      return
-    }
-    loadWorkOrders()
-  }, [currentUser, statusFilter, systemStatusFilter])
-
-  const loadWorkOrders = async () => {
+  const loadWorkOrders = useCallback(async () => {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.append('status', statusFilter)
@@ -96,7 +89,15 @@ export default function WorkOrdersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter, systemStatusFilter])
+
+  useEffect(() => {
+    if (!currentUser || !hasPermission(currentUser, 'work-orders', 'view')) {
+      return
+    }
+
+    void loadWorkOrders()
+  }, [currentUser, loadWorkOrders])
 
   const handleView = (workOrderId: string) => {
     setSelectedWorkOrderId(workOrderId)
@@ -105,6 +106,16 @@ export default function WorkOrdersPage() {
   const handleEdit = (workOrder: WorkOrder) => {
     setEditingWorkOrderId(workOrder.id)
     setShowEditModal(true)
+  }
+
+  const openDeleteDialog = (workOrderId: string) => {
+    const workOrder = workOrders.find((item) => item.id === workOrderId)
+    if (!workOrder) {
+      return
+    }
+
+    setWorkOrderToDelete(workOrder)
+    setShowDeleteDialog(true)
   }
 
   const handleDelete = async () => {
@@ -116,6 +127,9 @@ export default function WorkOrdersPage() {
         method: 'DELETE'
       })
       if (response.ok) {
+        if (selectedWorkOrderId === workOrderToDelete.id) {
+          setSelectedWorkOrderId('')
+        }
         setShowDeleteDialog(false)
         setWorkOrderToDelete(null)
         loadWorkOrders()
@@ -186,7 +200,7 @@ export default function WorkOrdersPage() {
       onClose={() => setSelectedWorkOrderId('')}
       workOrderId={selectedWorkOrderId}
       onEdit={handleEdit}
-      onDelete={handleDelete}
+      onDelete={openDeleteDialog}
       currentUserId={currentUser?.id}
       inPage
     />

@@ -7,12 +7,25 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 
-const crudDataCache = new Map<string, any[]>()
-const crudPromiseCache = new Map<string, Promise<any[]>>()
+type CrudRecord = Record<string, unknown>
+type FormValue = string | number | boolean
+type FormState = Record<string, FormValue>
+type EditableItem = CrudRecord & { id?: string }
+
+const crudDataCache = new Map<string, CrudRecord[]>()
+const crudPromiseCache = new Map<string, Promise<CrudRecord[]>>()
 
 function invalidateCrudData(url: string) {
   crudDataCache.delete(url)
   crudPromiseCache.delete(url)
+}
+
+function toFormValue(value: unknown, fallback: FormValue): FormValue {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value
+  }
+
+  return fallback
 }
 
 export interface FieldConfig {
@@ -29,7 +42,7 @@ export interface FieldConfig {
 }
 
 interface GenericEditPanelProps {
-  editingItem: any | null
+  editingItem: EditableItem | null
   entity: string
   title: string
   fields: FieldConfig[]
@@ -80,7 +93,7 @@ function ComboboxField({ value, onChange, options, placeholder }: {
           }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 pr-8 text-sm border border-input rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 pr-8 text-sm border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
         />
         <button
           type="button"
@@ -91,7 +104,7 @@ function ComboboxField({ value, onChange, options, placeholder }: {
         </button>
       </div>
       {open && (
-        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-card rounded-[4px] ambient-shadow">
+        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
           {filtered.length > 0 ? filtered.map(opt => (
             <button
               key={opt.value}
@@ -102,19 +115,19 @@ function ComboboxField({ value, onChange, options, placeholder }: {
                 setOpen(false)
               }}
               className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${
-                opt.value === value ? 'bg-muted font-medium' : ''
+                opt.value === value ? 'bg-gray-100 font-medium text-gray-900' : 'text-gray-700'
               }`}
             >
               {opt.label}
             </button>
           )) : (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
+            <div className="px-3 py-2 text-sm text-gray-500">
               Nenhuma opção encontrada
             </div>
           )}
           {isCustom && filtered.length > 0 && (
-            <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
-              Valor personalizado: <span className="font-medium text-foreground">{inputValue}</span>
+            <div className="border-t border-gray-200 px-3 py-2 text-xs text-gray-500">
+              Valor personalizado: <span className="font-medium text-gray-900">{inputValue}</span>
             </div>
           )}
         </div>
@@ -125,9 +138,9 @@ function ComboboxField({ value, onChange, options, placeholder }: {
 
 function renderFields(
   fields: FieldConfig[],
-  formData: Record<string, any>,
-  setFormData: (data: Record<string, any>) => void,
-  editingItem: any | null,
+  formData: FormState,
+  setFormData: (data: FormState) => void,
+  editingItem: EditableItem | null,
   allFields: FieldConfig[]
 ) {
   return fields.filter(f => {
@@ -169,7 +182,7 @@ function renderFields(
             })
             setFormData(updated)
           }}
-          className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
           disabled={field.readOnly}
         >
           <option value="">Selecione...</option>
@@ -183,19 +196,19 @@ function renderFields(
           onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
           placeholder={field.placeholder}
           rows={3}
-          className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
           readOnly={field.readOnly}
         />
       ) : field.type === 'checkbox' ? (
-        <label className="flex items-center gap-2">
+        <label className="flex min-h-[44px] items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm">
           <input
             type="checkbox"
             checked={!!formData[field.key]}
             onChange={e => setFormData({ ...formData, [field.key]: e.target.checked })}
-            className="rounded border-border"
+            className="rounded border-gray-300"
             disabled={field.readOnly}
           />
-          <span className="text-sm text-muted-foreground">{field.placeholder || 'Sim'}</span>
+          <span className="text-sm text-gray-700">{field.placeholder || 'Sim'}</span>
         </label>
       ) : (
         <input
@@ -206,7 +219,7 @@ function renderFields(
             [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value
           })}
           placeholder={field.placeholder}
-          className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
           readOnly={field.readOnly}
         />
       )}
@@ -226,19 +239,19 @@ export function GenericEditPanel({
   onSaved,
   inPage = false,
 }: GenericEditPanelProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({})
+  const [formData, setFormData] = useState<FormState>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (editingItem) {
-      const data: Record<string, any> = {}
+      const data: FormState = {}
       fields.forEach(f => {
-        data[f.key] = editingItem[f.key] ?? (f.type === 'checkbox' ? false : '')
+        data[f.key] = toFormValue(editingItem[f.key], f.type === 'checkbox' ? false : '')
       })
       setFormData(data)
     } else {
-      const defaults: Record<string, any> = {}
+      const defaults: FormState = {}
       fields.forEach(f => {
         if (f.defaultValue !== undefined) defaults[f.key] = f.defaultValue
         else if (f.type === 'checkbox') defaults[f.key] = false
@@ -309,17 +322,23 @@ export function GenericEditPanel({
         </div>
       )}
       <ModalSection title="Dados">
-        {renderFields(fields, formData, setFormData, editingItem, fields)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderFields(fields, formData, setFormData, editingItem, fields)}
+        </div>
       </ModalSection>
     </>
   )
 
   const formFooter = (
-    <div className="flex gap-3 px-4 py-4 border-t border-gray-200 bg-gray-50">
+    <div className="flex gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
       <Button type="button" variant="outline" onClick={onClose} className="flex-1">
         Cancelar
       </Button>
-      <Button type="submit" disabled={saving} className="flex-1">
+      <Button
+        type="submit"
+        disabled={saving}
+        className="flex-1 bg-gray-900 text-white hover:bg-gray-800"
+      >
         <Icon name="save" className="text-base mr-2" />
         {saving ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Salvar')}
       </Button>

@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
+import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 
 interface FieldConfig {
   key: string
@@ -99,7 +99,7 @@ function mergeKeys(columns: ColumnConfig[], fields: FieldConfig[]) {
 
 export function GenericDetailPanel({
   item,
-  entity: _entity,
+  entity,
   title,
   columns,
   fields,
@@ -109,12 +109,24 @@ export function GenericDetailPanel({
   canEdit,
   canDelete,
 }: GenericDetailPanelProps) {
-  const entries = mergeKeys(columns, fields)
+  void entity
+
+  const entries = mergeKeys(columns, fields).filter((entry) => {
+    if (!entry.field?.visibleWhen) {
+      return true
+    }
+
+    const dependentValue = item[entry.field.visibleWhen.field]
+    const expected = entry.field.visibleWhen.value
+
+    return Array.isArray(expected)
+      ? expected.includes(dependentValue)
+      : dependentValue === expected
+  })
   const displayTitle = getItemTitle(item, columns) || title
 
   return (
     <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
-      {/* Header */}
       <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
         <h2 className="text-lg font-black text-gray-900">
           {displayTitle}
@@ -122,40 +134,25 @@ export function GenericDetailPanel({
         <PanelCloseButton onClick={onClose} />
       </div>
 
-      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Action buttons */}
         {(canEdit || canDelete) && (
-          <div className="p-4 border-b border-gray-200 space-y-2">
-            {canEdit && (
-              <button
-                onClick={onEdit}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
-              >
-                <Icon name="edit" className="text-base" />
-                Editar
-              </button>
-            )}
-            {canDelete && (
-              <button
-                onClick={onDelete}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
-              >
-                <Icon name="delete" className="text-base" />
-                Excluir
-              </button>
-            )}
-          </div>
+          <PanelActionButtons
+            onEdit={canEdit ? onEdit : undefined}
+            onDelete={canDelete ? onDelete : undefined}
+          />
         )}
 
-        {/* Data section */}
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados</h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+            <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">
+              Dados do Cadastro
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
             {entries.map((entry) => (
               <div key={entry.key}>
                 <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">{entry.label}</p>
-                <p className="text-sm text-foreground">
+                <p className="text-[13px] font-medium text-gray-900 break-words">
                   {resolveValue(item, entry.key, entry.field, entry.column)}
                 </p>
               </div>
