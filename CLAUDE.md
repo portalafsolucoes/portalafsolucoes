@@ -69,29 +69,16 @@
 - `docs/AUDITORIA.md` define a estrutura, nomenclatura, retencao e proibicoes para evidencias de auditoria
 - Ao gerar documentacao ou auditorias com apoio de IA, usar sempre `docs/` e `auditoria/` em vez da raiz do projeto
 
-## Modulos do Sistema
-- Hub: pagina inicial apos login com modulos disponiveis por empresa
-- Login e Autenticacao: acesso por email e senha sem cadastro publico
-- Dashboard: visao operacional e corporativa conforme perfil
-- Ordens de Servico (OS): ciclo completo de execucao, controle e historico
-- Solicitacoes (SS): abertura, aprovacao/rejeicao e conversao em OS
-- Gestao de Ativos: arvore, tabela, detalhe tecnico e historico
-- Localizacoes: estrutura hierarquica de unidades e locais fisicos
-- Pessoas e Equipes: usuarios, equipes e acessos por unidade
-- Planos de Manutencao: planos padrao e por ativo com tarefas e recursos
-- Planejamento e Programacao: geracao em lote e agenda de OS preventivas
-- Cadastros Basicos: tabelas auxiliares de manutencao, ativos e recursos
-- Criticidade de Ativos: classificacao GUT de 1 a 125
-- RAF: relatorio de analise de falha com plano de acao
-- KPI - Indicadores: metricas operacionais, custo e desempenho
-- Painel Administrativo: gestao global de empresas, modulos, unidades e usuarios
-- Perfil do Usuario: visualizacao somente leitura dos dados do usuario
-- Configuracoes do Usuario: abas `Perfil` e `Seguranca`
-- Pecas e Estoque: modulo desativado com redirect para OS
-- Arvore Hierarquica: navegacao visual da estrutura completa de ativos
-- Relatorios e Analiticos: modulo em desenvolvimento
-- Integracao com TOTVS/Protheus: importacao e exportacao de dados
-- Exportacao de Dados: exportacao Excel de entidades principais
-- Upload de Arquivos: anexos com validacao, preview e limite de quantidade
-- Notificacoes: badge de pendencias e historico de leitura
-- Troca de Unidade: seletor global da unidade ativa
+## Produtos do Portal
+
+O Portal AF Solucoes e uma plataforma com 3 produtos comerciais independentes:
+
+- **CMMS** — Gestao de Manutencao (`ACTIVE`): controle operacional de manutencao de ativos industriais
+- **GVP** — Gestao de Variaveis de Processo (`COMING_SOON`): monitoramento de variaveis operacionais
+- **GPA** — Gestao de Portaria e Acesso (`COMING_SOON`): controle de acesso e leitura de placas (LPR)
+
+Cada produto e habilitado por empresa via `CompanyProduct`. A spec completa de produtos esta em `docs/PRODUTOS.md`.
+
+## Features do CMMS (Modulos de navegacao)
+
+Hub, Login e Autenticacao, Dashboard, Ordens de Servico (OS), Solicitacoes (SS), Gestao de Ativos, Localizacoes, Pessoas e Equipes, Planos de Manutencao, Planejamento e Programacao, Cadastros Basicos, Criticidade de Ativos, RAF, KPI - Indicadores, Painel Administrativo, Perfil do Usuario, Configuracoes do Usuario, Arvore Hierarquica, Relatorios e Analiticos (em desenvolvimento)

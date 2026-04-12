@@ -1,0 +1,1 @@
+-- Migration applied directly to Supabase (no SQL file)

@@ -2,7 +2,7 @@
 
 ## Referencia
 - Repositorio GitHub: https://github.com/portalafsolucoes/portalafsolucoes
-- Produto: Portal AF Solucoes - Gestao de Manutencao (CMMS), multiempresa e multiunidade, com foco em controle operacional, planejamento, execucao e analise da manutencao
+- Produto: Portal AF Solucoes - Plataforma multiempresa e multiunidade com 3 produtos: CMMS (Gestao de Manutencao - ativo), GVP (Gestao de Variaveis de Processo - em breve), GPA (Gestao de Portaria e Acesso - em breve)
 - Localizacao oficial da spec funcional: `docs/SPEC.md`
 - Referencia canonica de seguranca, hardening e readiness de producao: `docs/SEGURANCA.md`
 - Este arquivo e a referencia funcional para o sistema; `CLAUDE.md` na raiz ficou restrito a stack, comandos, convencoes e regras operacionais
@@ -155,8 +155,12 @@ Regras complementares:
 
 ### 1. Hub
 - Pagina inicial apos login
-- Exibe modulos disponiveis por empresa
-- `CMMS` ativo; outros modulos externos ao CMMS podem aparecer como "Em breve" quando desabilitados
+- Exibe os produtos disponiveis por empresa com seus respectivos status
+- **CMMS** (Gestao de Manutencao): `ACTIVE` — rota `/dashboard` (ou `/work-orders` para perfis operacionais)
+- **GVP** (Gestao de Variaveis de Processo): `COMING_SOON` — rota futura `/gvp`
+- **GPA** (Gestao de Portaria e Acesso): `COMING_SOON` — rota futura `/portaria`
+- Produtos nao habilitados para a empresa aparecem como "Em breve" e nao sao acessiveis
+- Spec completa de produtos em `docs/PRODUTOS.md`
 
 ### 2. Login e Autenticacao
 - Login por email e senha

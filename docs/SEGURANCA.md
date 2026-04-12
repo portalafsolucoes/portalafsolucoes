@@ -106,6 +106,7 @@ Toda mudanca que afete autenticacao, sessao, permissao, uploads, logs sensiveis,
 - Rate limiting, atraso progressivo ou lock temporario para mitigar brute force
 - Logout precisa invalidar a sessao atual de forma confiavel
 - Troca de contexto autenticado precisa invalidar cache cliente dependente de usuario
+- **Duracao da sessao**: 24 horas (`maxAge: 60 * 60 * 24` em `src/lib/session.ts`). Esta e a duracao canonica; qualquer documentacao que cite 7 dias esta desatualizada (V21 corrigido)
 
 ### Autorizacao
 - Reutilizar um nucleo central de permissao

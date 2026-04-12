@@ -171,7 +171,56 @@ enum AssetAttachmentCategory {
 }
 
 // ============================================
-// MÓDULOS DO PORTAL
+// PRODUTOS DO PORTAL (macro-módulos comerciais)
+// ============================================
+
+enum ProductSlug {
+  CMMS
+  GVP
+  GPA
+}
+
+enum ProductStatus {
+  ACTIVE
+  COMING_SOON
+  DISABLED
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  slug        ProductSlug   @unique
+  name        String
+  description String?
+  icon        String?
+  order       Int           @default(0)
+  status      ProductStatus @default(COMING_SOON)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  modules          Module[]
+  companyProducts  CompanyProduct[]
+}
+
+model CompanyProduct {
+  id          String   @id @default(cuid())
+  enabled     Boolean  @default(true)
+  activatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, productId])
+  @@index([companyId])
+  @@index([productId])
+}
+
+// ============================================
+// FEATURES DO PORTAL (itens de navegação por produto)
 // ============================================
 
 model Module {
@@ -183,6 +232,10 @@ model Module {
   order       Int      @default(0) // Ordem no menu
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Produto ao qual esta feature pertence
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
 
   companyModules CompanyModule[]
 }
@@ -219,8 +272,9 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Módulos habilitados para esta empresa
+  // Módulos e produtos habilitados para esta empresa
   companyModules         CompanyModule[]
+  companyProducts        CompanyProduct[]
 
   // units removido — Location agora serve como unidade
   users                  User[]

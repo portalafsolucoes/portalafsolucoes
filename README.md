@@ -1,6 +1,6 @@
 # CMM Gestor de Manutencao
 
-Sistema CMMS (Computerized Maintenance Management System) para gestao de ativos, ordens de servico, estoque e analise de falhas com monitoramento de variaveis de processo industrial (GEP).
+Portal AF Solucoes — plataforma multiempresa e multiunidade com 3 produtos comerciais: **CMMS** (Gestao de Manutencao - ativo), **GVP** (Gestao de Variaveis de Processo - em breve) e **GPA** (Gestao de Portaria e Acesso - em breve).
 
 ## Stack
 
@@ -20,7 +20,7 @@ Sistema CMMS (Computerized Maintenance Management System) para gestao de ativos,
 | Solicitacoes (SS) | Portal de chamados com fluxo de aprovacao |
 | Estoque & Compras | Pecas, fornecedores, ordens de compra |
 | RAF | Analise de falhas (5 Porques + plano de acao) |
-| GEP | Variaveis de processo industrial (automacao) |
+| GVP | Variaveis de processo industrial (automacao) — em breve |
 
 ## Setup
 

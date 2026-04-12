@@ -46,7 +46,7 @@ export function middleware(request: NextRequest) {
   // If user is authenticated and trying to access login (but NOT hub)
   if (hasSession && pathname.startsWith('/login')) {
     const returnUrl = request.nextUrl.searchParams.get('returnUrl')
-    return NextResponse.redirect(new URL(returnUrl || '/cmms', request.url))
+    return NextResponse.redirect(new URL(returnUrl || '/hub', request.url))
   }
 
   // Root always goes to hub (public)

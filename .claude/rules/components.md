@@ -373,31 +373,31 @@ Toda tela de listagem DEVE usar o padrao split-panel no desktop para TODOS os fl
 Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 
 ## Mapa de Telas e Modais
-| Rota | Titulo | Tipo | Paineis inPage (desktop) | Overlay (mobile + confirmacao) |
-|------|--------|------|--------------------------|-------------------------------|
-| `/hub` | Hub | Portal | - | - |
-| `/login` | Login | Form | - | - |
-| `/dashboard` | Dashboard | Stats | - | - |
-| `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal | ConfirmDialog |
-| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal | ConfirmDialog |
-| `/assets/standard` | Bens Padrao | Listagem split-panel | StandardAssetDetailPanel, StandardAssetFormPanel(inPage) | ConfirmDialog |
-| `/work-orders` | Ordens de Servico | Listagem split-panel | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal | ConfirmDialog |
-| `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal(inPage), RequestFormModal(inPage) | ConfirmDialog |
-| `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal(inPage) | - |
-| `/rafs` | RAF | Listagem split-panel | RAFViewModal, RAFEditModal, RAFFormModal | ConfirmationModal |
-| `/locations` | Localizacoes | Listagem split-panel | LocationDetailPanel, LocationFormPanel | ConfirmDialog |
-| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem split-panel | GenericDetailPanel, GenericEditPanel, CalendarModal, ResourceModal, AssetFamilyModal, GenericStepModal | ConfirmDialog |
-| `/criticality` | Criticidade | Listagem split-panel | CriticalityDetailPanel, CriticalityEditPanel | ConfirmDialog |
-| `/maintenance-plan/standard` | Plano Padrao | Listagem split-panel | PlanDetailPanel, PlanFormPanel(inPage) | ConfirmDialog |
-| `/maintenance-plan/asset` | Plano por Ativo | Listagem split-panel | AssetPlanDetailPanel, AssetPlanFormPanel(inPage) | ConfirmDialog |
-| `/planning/plans` | Planejamento | Listagem split-panel | PlanDetailPanel, PlanFormPanel | ConfirmDialog |
-| `/planning/schedules` | Programacao | Listagem split-panel | ScheduleDetailPanel, ScheduleFormPanel | ConfirmDialog |
-| `/kpi` | KPI | Dashboard | - | - |
-| `/gep` | GEP | Dashboard | - | - |
-| `/tree` | Arvore | Visualizacao | AssetDetailPanel | - |
-| `/admin/portal` | Configuracoes | Admin split-panel | CompanyDetailPanel, CompanyFormPanel | ConfirmDialog |
-| `/admin/users` | Usuarios | Admin split-panel | AdminUserDetailPanel, AdminUserFormPanel | ConfirmDialog |
-| `/admin/units` | Unidades | Admin split-panel | UnitDetailPanel, UnitFormPanel | ConfirmDialog |
-| `/profile` | Perfil | Detalhe | - | - |
-| `/settings` | Configuracoes Usuario | Form | - | - |
-| `/technician/my-tasks` | Minhas Tarefas | Listagem split-panel | TaskDetailPanel | ConfirmDialog |
+| Rota | Titulo | Tipo | Paineis inPage (desktop) | Overlay (mobile + confirmacao) | Produto |
+|------|--------|------|--------------------------|-------------------------------|---------|
+| `/hub` | Hub | Portal | - | - | - |
+| `/login` | Login | Form | - | - | - |
+| `/dashboard` | Dashboard | Stats | - | - | CMMS |
+| `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal | ConfirmDialog | CMMS |
+| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal | ConfirmDialog | CMMS |
+| `/assets/standard` | Bens Padrao | Listagem split-panel | StandardAssetDetailPanel, StandardAssetFormPanel(inPage) | ConfirmDialog | CMMS |
+| `/work-orders` | Ordens de Servico | Listagem split-panel | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal | ConfirmDialog | CMMS |
+| `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal(inPage), RequestFormModal(inPage) | ConfirmDialog | CMMS |
+| `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal(inPage) | - | CMMS |
+| `/rafs` | RAF | Listagem split-panel | RAFViewModal, RAFEditModal, RAFFormModal | ConfirmationModal | CMMS |
+| `/locations` | Localizacoes | Listagem split-panel | LocationDetailPanel, LocationFormPanel | ConfirmDialog | CMMS |
+| `/basic-registrations/[entity]` | Cadastros Basicos | Listagem split-panel | GenericDetailPanel, GenericEditPanel, CalendarModal, ResourceModal, AssetFamilyModal, GenericStepModal | ConfirmDialog | CMMS |
+| `/criticality` | Criticidade | Listagem split-panel | CriticalityDetailPanel, CriticalityEditPanel | ConfirmDialog | CMMS |
+| `/maintenance-plan/standard` | Plano Padrao | Listagem split-panel | PlanDetailPanel, PlanFormPanel(inPage) | ConfirmDialog | CMMS |
+| `/maintenance-plan/asset` | Plano por Ativo | Listagem split-panel | AssetPlanDetailPanel, AssetPlanFormPanel(inPage) | ConfirmDialog | CMMS |
+| `/planning/plans` | Planejamento | Listagem split-panel | PlanDetailPanel, PlanFormPanel | ConfirmDialog | CMMS |
+| `/planning/schedules` | Programacao | Listagem split-panel | ScheduleDetailPanel, ScheduleFormPanel | ConfirmDialog | CMMS |
+| `/kpi` | KPI | Dashboard | - | - | CMMS |
+| `/gep` | GEP (redirect → /gvp) | Dashboard | - | - | GVP |
+| `/tree` | Arvore | Visualizacao | AssetDetailPanel | - | CMMS |
+| `/admin/portal` | Configuracoes | Admin split-panel | CompanyDetailPanel, CompanyFormPanel | ConfirmDialog | - |
+| `/admin/users` | Usuarios | Admin split-panel | AdminUserDetailPanel, AdminUserFormPanel | ConfirmDialog | - |
+| `/admin/units` | Unidades | Admin split-panel | UnitDetailPanel, UnitFormPanel | ConfirmDialog | - |
+| `/profile` | Perfil | Detalhe | - | - | - |
+| `/settings` | Configuracoes Usuario | Form | - | - | - |
+| `/technician/my-tasks` | Minhas Tarefas | Listagem split-panel | TaskDetailPanel | ConfirmDialog | CMMS |

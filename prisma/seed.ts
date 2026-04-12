@@ -1,4 +1,4 @@
-import { PrismaClient, type UserRole } from '@prisma/client'
+import { PrismaClient, type UserRole, type ProductSlug, type ProductStatus } from '@prisma/client'
 import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -6,7 +6,37 @@ const prisma = new PrismaClient()
 const DEFAULT_PASSWORD = 'Teste@123'
 
 // ============================================
-// MÓDULOS DO PORTAL
+// PRODUTOS DO PORTAL (macro-módulos comerciais)
+// ============================================
+const PORTAL_PRODUCTS: { slug: ProductSlug; name: string; description: string; icon: string; order: number; status: ProductStatus }[] = [
+  {
+    slug: 'CMMS',
+    name: 'Gestão de Manutenção',
+    description: 'Planejamento, execução e controle de manutenção preventiva e corretiva de ativos industriais.',
+    icon: 'construction',
+    order: 1,
+    status: 'ACTIVE',
+  },
+  {
+    slug: 'GVP',
+    name: 'Gestão de Variáveis de Processo',
+    description: 'Monitoramento e análise de variáveis operacionais em tempo real para controle de qualidade e eficiência.',
+    icon: 'bar_chart',
+    order: 2,
+    status: 'COMING_SOON',
+  },
+  {
+    slug: 'GPA',
+    name: 'Gestão de Portaria e Acesso',
+    description: 'Controle inteligente e automatizado de acesso com leitura de placas e gestão integrada de portaria.',
+    icon: 'photo_camera',
+    order: 3,
+    status: 'COMING_SOON',
+  },
+]
+
+// ============================================
+// FEATURES DO PORTAL (itens de navegação por produto)
 // ============================================
 const PORTAL_MODULES = [
   { slug: 'dashboard', name: 'Dashboard', icon: 'dashboard', order: 1 },
@@ -255,29 +285,64 @@ async function seedCompany(companyData: SeedCompany, passwordHash: string) {
   return { company, location }
 }
 
-async function seedModules() {
-  console.log('Seeding portal modules...')
+async function seedProducts() {
+  console.log('Seeding portal products...')
+  const products: { id: string; slug: ProductSlug }[] = []
+
+  for (const prod of PORTAL_PRODUCTS) {
+    const created = await prisma.product.upsert({
+      where: { slug: prod.slug },
+      update: {
+        name: prod.name,
+        description: prod.description,
+        icon: prod.icon,
+        order: prod.order,
+        status: prod.status,
+      },
+      create: {
+        slug: prod.slug,
+        name: prod.name,
+        description: prod.description,
+        icon: prod.icon,
+        order: prod.order,
+        status: prod.status,
+      },
+    })
+    products.push({ id: created.id, slug: created.slug })
+  }
+
+  console.log(`  ✓ ${products.length} products seeded`)
+  return products
+}
+
+async function seedModules(productMap: Record<string, string>) {
+  console.log('Seeding portal modules (features)...')
   const modules: { id: string; slug: string }[] = []
 
   for (const mod of PORTAL_MODULES) {
+    // gep pertence ao GVP; todos os demais ao CMMS
+    const productId = mod.slug === 'gep' ? productMap['GVP'] : productMap['CMMS']
+
     const created = await prisma.module.upsert({
       where: { slug: mod.slug },
       update: {
         name: mod.name,
         icon: mod.icon,
         order: mod.order,
+        productId,
       },
       create: {
         name: mod.name,
         slug: mod.slug,
         icon: mod.icon,
         order: mod.order,
+        productId,
       },
     })
     modules.push({ id: created.id, slug: created.slug })
   }
 
-  console.log(`  ✓ ${modules.length} modules seeded`)
+  console.log(`  ✓ ${modules.length} modules seeded and linked to products`)
   return modules
 }
 
@@ -300,22 +365,50 @@ async function enableAllModulesForCompany(companyId: string, modules: { id: stri
   }
 }
 
+async function enableCmmsProductForCompany(companyId: string, cmmsProductId: string) {
+  await prisma.companyProduct.upsert({
+    where: {
+      companyId_productId: {
+        companyId,
+        productId: cmmsProductId,
+      },
+    },
+    update: { enabled: true },
+    create: {
+      companyId,
+      productId: cmmsProductId,
+      enabled: true,
+    },
+  })
+}
+
 async function main() {
-  console.log('Seeding database with portal modules, companies and users...')
+  console.log('Seeding database with portal products, modules, companies and users...')
 
   const passwordHash = await hash(DEFAULT_PASSWORD, 12)
 
-  // 1. Criar módulos do portal
-  const modules = await seedModules()
+  // 1. Criar produtos do portal (macro-módulos comerciais)
+  const products = await seedProducts()
+  const productMap: Record<string, string> = {}
+  for (const p of products) {
+    productMap[p.slug] = p.id
+  }
 
-  // 2. Criar empresas e usuários
+  // 2. Criar features do portal (itens de navegação) e vincular aos produtos
+  const modules = await seedModules(productMap)
+
+  // 3. Criar empresas e usuários
   for (const companyData of seedCompanies) {
     const { company } = await seedCompany(companyData, passwordHash)
     console.log(`✓ Company seeded: ${company.name}`)
 
-    // 3. Habilitar todos os módulos para cada empresa
+    // 4. Habilitar todos os módulos de features para cada empresa
     await enableAllModulesForCompany(company.id, modules)
-    console.log(`  ✓ All modules enabled for ${company.name}`)
+    console.log(`  ✓ All feature modules enabled for ${company.name}`)
+
+    // 5. Habilitar produto CMMS para cada empresa (ACTIVE por padrão)
+    await enableCmmsProductForCompany(company.id, productMap['CMMS'])
+    console.log(`  ✓ CMMS product enabled for ${company.name}`)
   }
 
   console.log('\n✅ Seed completed successfully!')

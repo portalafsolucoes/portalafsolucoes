@@ -1,5 +1,12 @@
 # Convencoes Compartilhadas
 
+## Nomenclatura: Produto vs Feature
+
+- **Produto**: unidade comercial (CMMS, GVP, GPA) — habilitado por empresa via `CompanyProduct`.
+- **Feature / Modulo de menu**: item navegavel dentro de um produto (ex: `work-orders`) — `Module.productId` indica o dono.
+- Usar sempre o qualificador: "produto CMMS", "feature work-orders", nunca apenas "modulo".
+- Ver glossario completo e regras em `.claude/rules/products.md`.
+
 ## Ordem de Leitura Obrigatoria
 - Ler `docs/SPEC.md` para contrato funcional e regra de negocio
 - Ler `CLAUDE.md` para stack, comandos e regras operacionais
