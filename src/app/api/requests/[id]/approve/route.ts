@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { generateInternalId } from '@/lib/workOrderUtils'
+import { generateSequentialId } from '@/lib/workOrderUtils'
 import { isAdminRole } from '@/lib/user-roles'
 
 export async function POST(
@@ -75,20 +75,21 @@ export async function POST(
 
     // Se admin escolheu converter em OS
     if (convertToWorkOrder) {
-      const internalId = await generateInternalId()
+      const externalId = await generateSequentialId()
 
       // Criar Work Order a partir da Request
       const { data: workOrder, error: woError } = await supabase
         .from('WorkOrder')
         .insert({
           id: generateId(),
-          internalId,
+          externalId,
+          internalId: null,
           title: maintenanceRequest.title,
           description: maintenanceRequest.description || null,
           priority: maintenanceRequest.priority,
           status: 'PENDING',
           type: 'CORRECTIVE',
-          systemStatus: 'OUT_OF_SYSTEM',
+          systemStatus: 'IN_SYSTEM',
           dueDate: maintenanceRequest.dueDate || null,
           companyId: session.companyId,
           createdById: session.id,

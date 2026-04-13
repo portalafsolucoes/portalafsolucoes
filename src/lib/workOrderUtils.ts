@@ -1,57 +1,73 @@
 import { supabase } from './supabase'
 
 /**
- * Gera o próximo código interno para Work Order no formato MAN-XXXXXX
+ * Gera o próximo ID sequencial para Work Order no formato XXXXXX (6 dígitos numéricos).
+ * Todas as OSs usam externalId com 6 dígitos e ficam IN_SYSTEM.
+ * Considera tanto internalId (legado MAN-) quanto externalId para evitar colisões.
  */
-export async function generateInternalId(): Promise<string> {
-  // Buscar a última OS com código interno
-  const { data: workOrders, error } = await supabase
-    .from('WorkOrder')
-    .select('internalId')
-    .like('internalId', 'MAN-%')
-    .order('internalId', { ascending: false })
-    .limit(1)
+export async function generateSequentialId(): Promise<string> {
+  const [internalResult, externalResult] = await Promise.all([
+    supabase
+      .from('WorkOrder')
+      .select('internalId')
+      .not('internalId', 'is', null),
+    supabase
+      .from('WorkOrder')
+      .select('externalId')
+      .not('externalId', 'is', null),
+  ])
 
-  if (error) {
-    console.error('Error generating internal work order id:', error)
-    throw new Error('Failed to generate internal work order id')
+  if (internalResult.error) {
+    console.error('Error generating sequential work order id:', internalResult.error)
+    throw new Error('Failed to generate sequential work order id')
   }
 
-  const lastWorkOrder = workOrders?.[0]
+  let maxNumber = 0
 
-  let nextNumber = 1
-
-  if (lastWorkOrder?.internalId) {
-    // Extrair o número do código (MAN-000001 -> 000001)
-    const currentNumber = parseInt(lastWorkOrder.internalId.replace('MAN-', ''))
-    nextNumber = currentNumber + 1
+  // Considerar internalIds legados (MAN-XXXXXX ou numérico puro)
+  for (const row of (internalResult.data || [])) {
+    const cleaned = (row.internalId || '').replace('MAN-', '')
+    const num = parseInt(cleaned)
+    if (!isNaN(num) && num > maxNumber) maxNumber = num
   }
 
-  // Formatar com 6 dígitos
-  const paddedNumber = nextNumber.toString().padStart(6, '0')
-  return `MAN-${paddedNumber}`
+  // Considerar externalIds existentes
+  for (const row of (externalResult.data || [])) {
+    if (row.externalId && /^\d+$/.test(row.externalId)) {
+      const num = parseInt(row.externalId)
+      if (!isNaN(num) && num > maxNumber) maxNumber = num
+    }
+  }
+
+  const nextNumber = maxNumber + 1
+  return nextNumber.toString().padStart(6, '0')
 }
 
+/** @deprecated Use generateSequentialId() */
+export const generateInternalId = generateSequentialId
+
 /**
- * Valida se um número externo está no formato correto (6 dígitos numéricos)
+ * Valida se um ID está no formato correto (6 dígitos numéricos)
  */
 export function isValidExternalId(externalId: string): boolean {
   return /^\d{6}$/.test(externalId)
 }
 
 /**
- * Determina o systemStatus baseado no externalId
- */
-export function determineSystemStatus(externalId: string | null | undefined): 'IN_SYSTEM' | 'OUT_OF_SYSTEM' {
-  if (externalId && isValidExternalId(externalId)) {
-    return 'IN_SYSTEM'
-  }
-  return 'OUT_OF_SYSTEM'
-}
-
-/**
- * Retorna o ID de exibição da OS (externalId se existir, senão internalId)
+ * Retorna o ID de exibição da OS (externalId se existir, senão internalId legado)
  */
 export function getDisplayId(workOrder: { externalId?: string | null, internalId?: string | null, id: string }): string {
   return workOrder.externalId || workOrder.internalId || workOrder.id.slice(0, 8)
+}
+
+/**
+ * Calcula a prioridade da OS baseada no score GUT do ativo.
+ * GUT = (Gravidade × Urgência × Tendência / 125) × 100
+ */
+export function getPriorityFromGut(gutGravity: number, gutUrgency: number, gutTendency: number): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' {
+  const gutScore = (gutGravity * gutUrgency * gutTendency / 125) * 100
+  if (gutScore >= 70) return 'CRITICAL'
+  if (gutScore >= 40) return 'HIGH'
+  if (gutScore >= 20) return 'MEDIUM'
+  return 'LOW'
 }

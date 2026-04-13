@@ -32,6 +32,8 @@ interface Plan {
   endDate?: string
   status?: string
   isFinished?: boolean
+  trackingType?: string
+  currentHorimeter?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -49,6 +51,7 @@ export default function PlansPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -90,7 +93,8 @@ export default function PlansPage() {
     setIsCreating(false)
     loadData()
     if (generatedCount !== undefined) {
-      // generatedCount available for future toast/feedback
+      setSuccessMsg(`Plano criado com sucesso! ${generatedCount} Ordem(ns) de Serviço gerada(s).`)
+      setTimeout(() => setSuccessMsg(''), 8000)
     }
   }
 
@@ -239,6 +243,17 @@ export default function PlansPage() {
           }
         />
       </div>
+
+      {/* Success feedback */}
+      {successMsg && (
+        <div className="mx-4 mt-2 md:mx-6 p-3 bg-green-50 border border-green-200 text-green-800 rounded-[4px] text-sm flex items-center gap-2">
+          <Icon name="check_circle" className="text-base text-green-600" />
+          {successMsg}
+          <button onClick={() => setSuccessMsg('')} className="ml-auto p-0.5 hover:bg-green-100 rounded transition-colors">
+            <Icon name="close" className="text-sm text-green-600" />
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">

@@ -36,8 +36,11 @@ interface WorkOrder {
   priority: string
   status: string
   dueDate?: string
-  asset?: { name: string }
+  dueMeterReading?: number
+  asset?: { name: string; tag?: string; protheusCode?: string }
   location?: { name: string }
+  maintenancePlanExec?: { planNumber: number; trackingType?: string }
+  assetMaintenancePlan?: { trackingType?: string; maintenanceTime?: number; timeUnit?: string }
   createdAt: string
 }
 
@@ -271,16 +274,6 @@ export default function WorkOrdersPage() {
                 <option value="COMPLETE">Completa</option>
               </select>
 
-              <select
-                value={systemStatusFilter}
-                onChange={(e) => setSystemStatusFilter(e.target.value)}
-                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto"
-              >
-                <option value="">Sistema</option>
-                <option value="IN_SYSTEM">Sistema</option>
-                <option value="OUT_OF_SYSTEM">Fora</option>
-              </select>
-
               <ExportButton data={filteredWorkOrders} entity="work-orders" />
               {canCreateWO('work-orders') && (
                 <Button
@@ -338,15 +331,6 @@ export default function WorkOrdersPage() {
                         >
                           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
                             <h3 className="text-base md:text-lg font-bold text-foreground">{displayId}</h3>
-                            {wo.systemStatus === 'IN_SYSTEM' ? (
-                              <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-success-light text-success-light-foreground">
-                                Sistema
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full bg-surface-high text-foreground">
-                                Fora
-                              </span>
-                            )}
                             <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
                               {wo.status}
                             </span>
@@ -388,11 +372,13 @@ export default function WorkOrdersPage() {
                       <thead className="sticky top-0 bg-secondary z-10">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Sistema</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Plano</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cód. Bem</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativo</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Vencimento</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criado</th>
                         </tr>
                       </thead>
@@ -404,16 +390,8 @@ export default function WorkOrdersPage() {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="text-sm font-semibold text-foreground">{displayId}</span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {wo.systemStatus === 'IN_SYSTEM' ? (
-                                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-success-light text-success-light-foreground">
-                                    No Sistema
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-surface-high text-foreground">
-                                    Fora
-                                  </span>
-                                )}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                {wo.maintenancePlanExec ? `#${wo.maintenancePlanExec.planNumber}` : '-'}
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-sm font-medium text-foreground max-w-xs truncate">{wo.title}</div>
@@ -428,8 +406,18 @@ export default function WorkOrdersPage() {
                                   {wo.priority}
                                 </span>
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-foreground">
+                                {wo.asset?.protheusCode || wo.asset?.tag || '-'}
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                 {wo.asset?.name || '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                {wo.dueMeterReading
+                                  ? `${wo.dueMeterReading.toLocaleString('pt-BR')} h`
+                                  : wo.dueDate
+                                    ? formatDate(wo.dueDate)
+                                    : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 {formatDate(wo.createdAt)}

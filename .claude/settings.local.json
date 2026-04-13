@@ -40,7 +40,17 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/maintenance-plan/standard)",
       "Bash(xargs grep:*)",
       "Bash(grep -n \"generatesReserve\" src/app/api/maintenance-plans/standard/[id]/tasks/route.ts)",
-      "Bash(curl -s http://localhost:3000/api/maintenance-plans/asset -H \"Cookie: $\\(cat /dev/null\\)\")"
+      "Bash(curl -s http://localhost:3000/api/maintenance-plans/asset -H \"Cookie: $\\(cat /dev/null\\)\")",
+      "Bash(npx kill-port:*)",
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq npm*\")",
+      "Bash(taskkill //F //FI \"IMAGENAME eq node.exe\")",
+      "Bash(npx playwright:*)",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@polimix.local\",\"password\":\"Teste@123\"}' -c /tmp/cookies.txt)",
+      "Bash(curl -s -X POST http://localhost:3000/api/planning/plans -H 'Content-Type: application/json' -b /tmp/cookies.txt -d '{\"description\":\"TEST MARKER\",\"startDate\":\"2026-04-01\",\"endDate\":\"2026-05-16\",\"trackingType\":\"TIME\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/planning/plans -H 'Content-Type: application/json' -b /tmp/cookies.txt -d '{\"description\":\"DEBUG RUN\",\"startDate\":\"2026-04-01\",\"endDate\":\"2026-05-16\",\"trackingType\":\"TIME\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:3000/api/planning/plans -H 'Content-Type: application/json' -b /tmp/cookies.txt -d '{\"description\":\"DEBUG ERROR\",\"startDate\":\"2026-04-01\",\"endDate\":\"2026-05-16\",\"trackingType\":\"TIME\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/planning/plans -H 'Content-Type: application/json' -b /tmp/cookies.txt -d '{\"description\":\"TEST MULTI OS\",\"startDate\":\"2026-04-01\",\"endDate\":\"2026-05-16\",\"trackingType\":\"TIME\"}')"
     ],
     "deny": [],
     "ask": []

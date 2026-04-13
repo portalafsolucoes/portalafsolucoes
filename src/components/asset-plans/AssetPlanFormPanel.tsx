@@ -20,7 +20,8 @@ import type {
 /*  Tipos                                                               */
 /* ------------------------------------------------------------------ */
 
-interface TaskStep { stepId: string; order: number }
+interface TaskStep { stepId: string; order: number; optionType: string }
+interface GenericStepWithType { id: string; name: string; optionType?: string }
 interface TaskResource { resourceId: string; resourceCount: number; quantity: number; unit: string }
 interface TaskRow {
   key: string
@@ -49,7 +50,7 @@ interface PlanTaskResponse {
   id?: string
   description?: string | null
   executionTime?: number | null
-  steps?: TaskStep[]
+  steps?: Array<{ stepId: string; order: number; optionType?: string }>
   resources?: Array<{
     resourceId: string
     resourceCount?: number | null
@@ -106,6 +107,95 @@ const inputCls = 'w-full px-3 py-2 text-sm border border-input rounded-[4px] foc
 const selectCls = inputCls
 
 /* ------------------------------------------------------------------ */
+/*  Autocomplete de Bem/Ativo                                          */
+/* ------------------------------------------------------------------ */
+
+function AssetAutocomplete({ value, onChange, assets }: {
+  value: string
+  onChange: (id: string) => void
+  assets: AssetOption[]
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  const formatLabel = (a: AssetOption) =>
+    `${a.tag ? `[${a.tag}] ` : ''}${a.name}`
+
+  // Sync display when value changes externally (e.g. edit load)
+  useEffect(() => {
+    if (value) {
+      const match = assets.find(a => a.id === value)
+      setSearch(match ? formatLabel(match) : '')
+    } else {
+      setSearch('')
+    }
+  }, [value, assets])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const filtered = assets.filter(a => {
+    if (!search) return true
+    const label = formatLabel(a).toLowerCase()
+    return label.includes(search.toLowerCase())
+  })
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={search}
+          onChange={e => {
+            setSearch(e.target.value)
+            setOpen(true)
+            if (!e.target.value) onChange('')
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Buscar bem/ativo..."
+          title={search}
+          className={`${inputCls} pr-8 truncate`}
+        />
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          <Icon name="expand_more" className="text-base" />
+        </button>
+      </div>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
+          {filtered.length > 0 ? filtered.map(a => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => {
+                onChange(a.id)
+                setSearch(formatLabel(a))
+                setOpen(false)
+              }}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-accent-orange-light transition-colors truncate ${a.id === value ? 'bg-accent-orange text-white font-semibold' : ''}`}
+              title={formatLabel(a)}
+            >
+              {formatLabel(a)}
+            </button>
+          )) : (
+            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum resultado</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Props                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -135,7 +225,7 @@ export default function AssetPlanFormPanel({
   const [serviceTypes, setServiceTypes] = useState<ServiceTypeOption[]>([])
   const [assets, setAssets] = useState<AssetOption[]>([])
   const [calendars, setCalendars] = useState<CalendarOption[]>([])
-  const [genericSteps, setGenericSteps] = useState<NamedEntity[]>([])
+  const [genericSteps, setGenericSteps] = useState<GenericStepWithType[]>([])
   const [resources, setResources] = useState<ResourceOption[]>([])
   const [families, setFamilies] = useState<AssetFamilyOption[]>([])
   const [familyModels, setFamilyModels] = useState<AssetFamilyModelOption[]>([])
@@ -216,7 +306,7 @@ export default function AssetPlanFormPanel({
       stRes.json() as Promise<ApiListResponse<ServiceTypeOption>>,
       assRes.json() as Promise<ApiListResponse<AssetOption>>,
       calRes.json() as Promise<ApiListResponse<CalendarOption>>,
-      stepsRes.json() as Promise<ApiListResponse<NamedEntity>>,
+      stepsRes.json() as Promise<ApiListResponse<GenericStepWithType>>,
       resRes.json() as Promise<ApiListResponse<ResourceOption>>,
       famRes.json() as Promise<ApiListResponse<AssetFamilyOption>>,
       modelsRes.json() as Promise<ApiListResponse<AssetFamilyModelOption>>,
@@ -262,7 +352,7 @@ export default function AssetPlanFormPanel({
           key: t.id || crypto.randomUUID(),
           description: t.description || '',
           executionTime: t.executionTime ?? '',
-          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order })),
+          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order, optionType: s.optionType || 'NONE' })),
           resources: (t.resources || []).map((r) => ({
             resourceId: r.resourceId,
             resourceCount: r.resourceCount ?? 1,
@@ -395,7 +485,7 @@ export default function AssetPlanFormPanel({
           key: crypto.randomUUID(),
           description: t.description || '',
           executionTime: t.executionTime ?? '',
-          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order })),
+          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order, optionType: s.optionType || 'NONE' })),
           resources: (t.resources || []).map((r) => ({
             resourceId: r.resourceId,
             resourceCount: r.resourceCount ?? 1,
@@ -426,17 +516,37 @@ export default function AssetPlanFormPanel({
   }
 
   const addStepToTask = (taskKey: string, stepId: string) => {
+    const gs = genericSteps.find(g => g.id === stepId)
     setTasks(prev => prev.map(t => {
       if (t.key !== taskKey) return t
       if (t.steps.some(s => s.stepId === stepId)) return t
-      return { ...t, steps: [...t.steps, { stepId, order: t.steps.length }] }
+      return { ...t, steps: [...t.steps, { stepId, order: t.steps.length, optionType: gs?.optionType || 'NONE' }] }
     }))
   }
 
   const removeStepFromTask = (taskKey: string, stepId: string) => {
     setTasks(prev => prev.map(t => {
       if (t.key !== taskKey) return t
-      return { ...t, steps: t.steps.filter(s => s.stepId !== stepId) }
+      const filtered = t.steps.filter(s => s.stepId !== stepId)
+      return { ...t, steps: filtered.map((s, i) => ({ ...s, order: i })) }
+    }))
+  }
+
+  const moveStepInTask = (taskKey: string, index: number, direction: 'up' | 'down') => {
+    setTasks(prev => prev.map(t => {
+      if (t.key !== taskKey) return t
+      const newSteps = [...t.steps]
+      const target = direction === 'up' ? index - 1 : index + 1
+      if (target < 0 || target >= newSteps.length) return t
+      ;[newSteps[index], newSteps[target]] = [newSteps[target], newSteps[index]]
+      return { ...t, steps: newSteps.map((s, i) => ({ ...s, order: i })) }
+    }))
+  }
+
+  const updateStepOptionType = (taskKey: string, stepId: string, optionType: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.key !== taskKey) return t
+      return { ...t, steps: t.steps.map(s => s.stepId === stepId ? { ...s, optionType } : s) }
     }))
   }
 
@@ -548,13 +658,14 @@ export default function AssetPlanFormPanel({
 
       {/* ============ CLASSIFICAÇÃO ============ */}
       <ModalSection title="Classificação">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="col-span-2">
             <label className={labelCls}>Bem/Ativo <span className="text-danger">*</span></label>
-            <select value={formData.assetId || ''} onChange={e => setFormData({ ...formData, assetId: e.target.value })} className={selectCls}>
-              <option value="">Selecione...</option>
-              {assets.map((a) => <option key={a.id} value={a.id}>{a.tag ? `[${a.tag}] ` : ''}{a.name}</option>)}
-            </select>
+            <AssetAutocomplete
+              value={formData.assetId || ''}
+              onChange={id => setFormData({ ...formData, assetId: id })}
+              assets={assets}
+            />
           </div>
           <div>
             <label className={labelCls}>Família de Bens</label>
@@ -710,19 +821,41 @@ export default function AssetPlanFormPanel({
               </div>
               <div>
                 <label className={labelCls}>Etapas</label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {task.steps.map(s => {
-                    const step = genericSteps.find((gs) => gs.id === s.stepId)
-                    return (
-                      <span key={s.stepId} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-muted rounded-[4px]">
-                        {step?.name || s.stepId}
-                        <button type="button" onClick={() => removeStepFromTask(task.key, s.stepId)} className="hover:text-danger">
-                          <Icon name="close" className="text-xs" />
-                        </button>
-                      </span>
-                    )
-                  })}
-                </div>
+                {task.steps.length > 0 && (
+                  <div className="space-y-1.5 mb-2">
+                    {task.steps.map((s, sIdx) => {
+                      const step = genericSteps.find((gs) => gs.id === s.stepId)
+                      return (
+                        <div key={s.stepId} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
+                          <span className="text-xs font-bold text-muted-foreground w-5 text-center shrink-0">{sIdx + 1}</span>
+                          <div className="flex flex-col gap-0.5 shrink-0">
+                            <button type="button" disabled={sIdx === 0}
+                              onClick={() => moveStepInTask(task.key, sIdx, 'up')}
+                              className="p-0.5 hover:bg-background rounded disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Icon name="arrow_upward" className="text-xs" />
+                            </button>
+                            <button type="button" disabled={sIdx === task.steps.length - 1}
+                              onClick={() => moveStepInTask(task.key, sIdx, 'down')}
+                              className="p-0.5 hover:bg-background rounded disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Icon name="arrow_downward" className="text-xs" />
+                            </button>
+                          </div>
+                          <span className="text-sm flex-1 min-w-0 truncate">{step?.name || s.stepId}</span>
+                          <select value={s.optionType || 'NONE'}
+                            onChange={e => updateStepOptionType(task.key, s.stepId, e.target.value)}
+                            className="px-2 py-1 text-xs border border-input rounded-[4px] bg-background">
+                            <option value="NONE">Nenhuma</option>
+                            <option value="RESPONSE">Resposta</option>
+                            <option value="OPTION">Opção</option>
+                          </select>
+                          <button type="button" onClick={() => removeStepFromTask(task.key, s.stepId)} className="p-0.5 hover:text-danger shrink-0">
+                            <Icon name="close" className="text-sm" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
                 <div className="relative" ref={el => { stepDropdownRefs.current[task.key] = el }}>
                   <input
                     type="text"

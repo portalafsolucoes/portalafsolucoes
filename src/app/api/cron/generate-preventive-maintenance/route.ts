@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
+import { generateSequentialId } from '@/lib/workOrderUtils'
 import { getCalendarsForPlans } from '@/lib/calendarData'
 import { adjustToWorkingDay, WorkDays } from '@/lib/calendarUtils'
 
@@ -125,8 +126,13 @@ export async function POST(request: NextRequest) {
           })
         }
 
+        const cronExternalId = await generateSequentialId()
+
         const newWoData = {
           id: generateId(),
+          externalId: cronExternalId,
+          internalId: null as string | null,
+          systemStatus: 'IN_SYSTEM' as const,
           title: wo.title,
           description: wo.description,
           type: 'PREVENTIVE',

@@ -1188,6 +1188,8 @@ model MaintenancePlanExecution {
   endDate        DateTime
   status         String   @default("OPEN")
   isFinished     Boolean  @default(false)
+  trackingType   String   @default("TIME")
+  currentHorimeter Float?
   costCenterFrom String?
   costCenterTo   String?
   workCenterFrom String?
@@ -1286,8 +1288,9 @@ model WorkOrder {
   description  String?
   priority     WorkOrderPriority @default(NONE)
   status       WorkOrderStatus   @default(PENDING)
-  dueDate      DateTime?
-  completedOn  DateTime?
+  dueDate          DateTime?
+  dueMeterReading  Float?
+  completedOn      DateTime?
   estimatedDuration Int?
   actualDuration    Int?
   archived     Boolean           @default(false)

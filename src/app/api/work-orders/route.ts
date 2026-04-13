@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
-import { generateInternalId, isValidExternalId, determineSystemStatus } from '@/lib/workOrderUtils'
+import { generateSequentialId, isValidExternalId, getPriorityFromGut } from '@/lib/workOrderUtils'
 import { isOperationalRole } from '@/lib/user-roles'
 import { sanitizeLimit } from '@/lib/pagination'
 
@@ -66,15 +66,21 @@ export async function GET(request: NextRequest) {
       .select(summary
         ? `
             id, customId, externalId, internalId, systemStatus, title, description,
-            priority, status, dueDate, createdAt, assignedToId,
-            asset:Asset(name),
-            location:Location!locationId(name)
+            priority, status, dueDate, dueMeterReading, createdAt, assignedToId,
+            maintenancePlanExecId,
+            assetMaintenancePlanId,
+            asset:Asset(name, tag, protheusCode),
+            location:Location!locationId(name),
+            maintenancePlanExec:MaintenancePlanExecution(planNumber, trackingType),
+            assetMaintenancePlan:AssetMaintenancePlan(trackingType, maintenanceTime, timeUnit)
           `
         : `
             *,
             asset:Asset(*),
             location:Location!locationId(*),
-            createdBy:User!createdById(id, firstName, lastName, email)
+            createdBy:User!createdById(id, firstName, lastName, email),
+            maintenancePlanExec:MaintenancePlanExecution(planNumber, trackingType),
+            assetMaintenancePlan:AssetMaintenancePlan(trackingType, maintenanceTime, timeUnit)
           `,
         { count: summary ? undefined : 'exact' }
       )
@@ -173,28 +179,21 @@ export async function POST(request: NextRequest) {
       ? assignedTeamIds.filter((id: string) => id && id.trim()) 
       : undefined
 
-    // Validar e processar externalId
-    let processedExternalId = null
-    let internalId = null
-    let systemStatus: 'IN_SYSTEM' | 'OUT_OF_SYSTEM' = 'OUT_OF_SYSTEM'
+    // Validar externalId fornecido ou gerar sequencial
+    let processedExternalId: string
 
     if (externalId && externalId.trim()) {
       const cleanedExternalId = externalId.trim()
       if (isValidExternalId(cleanedExternalId)) {
         processedExternalId = cleanedExternalId
-        systemStatus = 'IN_SYSTEM'
       } else {
         return NextResponse.json(
           { error: 'Número externo deve conter exatamente 6 dígitos numéricos' },
           { status: 400 }
         )
       }
-    }
-
-    // Se não tiver externalId, gerar internalId
-    if (!processedExternalId) {
-      internalId = await generateInternalId()
-      systemStatus = 'OUT_OF_SYSTEM'
+    } else {
+      processedExternalId = await generateSequentialId()
     }
 
     // Calcular nextExecutionDate se for preventiva
@@ -273,6 +272,19 @@ export async function POST(request: NextRequest) {
       validCategoryId = category?.id
     }
 
+    // Auto-priorização por GUT se tiver ativo vinculado e prioridade não informada
+    let effectivePriority = priority || 'NONE'
+    if ((!priority || priority === 'NONE') && validAssetId) {
+      const { data: assetGut } = await supabase
+        .from('Asset')
+        .select('gutGravity, gutUrgency, gutTendency')
+        .eq('id', validAssetId)
+        .single()
+      if (assetGut) {
+        effectivePriority = getPriorityFromGut(assetGut.gutGravity, assetGut.gutUrgency, assetGut.gutTendency)
+      }
+    }
+
     // Criar WorkOrder principal
     const { data: workOrder, error: woError } = await supabase
       .from('WorkOrder')
@@ -281,12 +293,12 @@ export async function POST(request: NextRequest) {
         title,
         description,
         type: type || 'CORRECTIVE',
-        priority: priority || 'NONE',
+        priority: effectivePriority,
         status: 'PENDING',
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         externalId: processedExternalId,
-        internalId,
-        systemStatus,
+        internalId: null,
+        systemStatus: 'IN_SYSTEM',
         companyId: session.companyId,
         unitId: session.unitId || null,
         createdById: session.id,
