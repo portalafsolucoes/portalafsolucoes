@@ -4,6 +4,7 @@ import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
+import { getPlanStatusLabel } from '@/lib/status-labels'
 
 interface Schedule {
   id: string
@@ -23,11 +24,6 @@ interface ScheduleDetailPanelProps {
   onClose: () => void
   onConfirm: (id: string) => void
   canEdit: boolean
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Rascunho',
-  CONFIRMED: 'Confirmada',
 }
 
 export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: ScheduleDetailPanelProps) {
@@ -74,7 +70,7 @@ export function ScheduleDetailPanel({ schedule, onClose, onConfirm, canEdit }: S
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status</p>
               <p className="text-sm text-foreground">
                 <span className={`px-2 py-0.5 rounded text-xs ${schedule.status === 'CONFIRMED' ? 'bg-success-light text-success-light-foreground' : 'bg-muted text-muted-foreground'}`}>
-                  {STATUS_LABELS[schedule.status || ''] || schedule.status || '—'}
+                  {getPlanStatusLabel(schedule.status)}
                 </span>
               </p>
             </div>

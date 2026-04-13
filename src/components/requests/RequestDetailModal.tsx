@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import { formatDate, formatDateTime, getPriorityColor, getStatusColor } from '@/lib/utils'
+import { getWorkOrderPriorityLabel, getRequestStatusLabel, getApprovalStatusLabel } from '@/lib/status-labels'
 
 interface BasicUser {
   id: string
@@ -94,47 +95,6 @@ function DetailField({
       <div className="break-words text-[13px] font-medium text-gray-900">{value}</div>
     </div>
   )
-}
-
-function getPriorityLabel(priority: string): string {
-  switch (priority) {
-    case 'HIGH':
-      return 'Alta'
-    case 'MEDIUM':
-      return 'Média'
-    case 'LOW':
-      return 'Baixa'
-    default:
-      return 'Nenhuma'
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case 'PENDING':
-      return 'Pendente'
-    case 'APPROVED':
-      return 'Aprovada'
-    case 'REJECTED':
-      return 'Rejeitada'
-    case 'CANCELLED':
-      return 'Cancelada'
-    default:
-      return status
-  }
-}
-
-function getApprovalStatusLabel(status?: string | null): string {
-  switch (status) {
-    case 'PENDING':
-      return 'Pendente'
-    case 'APPROVED':
-      return 'Aprovada'
-    case 'REJECTED':
-      return 'Rejeitada'
-    default:
-      return 'Nenhuma'
-  }
 }
 
 function isImageFile(file: RequestFile): boolean {
@@ -291,10 +251,10 @@ export function RequestDetailModal({
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 px-1">
             <span className={`rounded-md border border-gray-200 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide shadow-sm ${getPriorityColor(request.priority)}`}>
-              {getPriorityLabel(request.priority)}
+              {getWorkOrderPriorityLabel(request.priority)}
             </span>
             <span className={`rounded-md border border-gray-200 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide shadow-sm ${getStatusColor(request.status)}`}>
-              {getStatusLabel(request.status)}
+              {getRequestStatusLabel(request.status)}
             </span>
             {request.teamApprovalStatus && (
               <span className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">
@@ -342,7 +302,7 @@ export function RequestDetailModal({
               <DetailField
                 label="OS Gerada"
                 className="sm:col-span-2"
-                value={`${request.generatedWorkOrder.title} (${getStatusLabel(request.generatedWorkOrder.status)})`}
+                value={`${request.generatedWorkOrder.title} (${getRequestStatusLabel(request.generatedWorkOrder.status)})`}
               />
             )}
           </div>

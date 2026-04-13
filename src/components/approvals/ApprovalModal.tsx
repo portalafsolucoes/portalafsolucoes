@@ -8,6 +8,7 @@ import { ModalSection } from '../ui/ModalSection'
 import { Button } from '../ui/Button'
 import { ImageViewerModal } from '../ui/ImageViewerModal'
 import { formatDate } from '@/lib/utils'
+import { getRequestStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 
 interface Request {
   id: string
@@ -134,15 +135,6 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
     }
   }
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return '🔴 Alta'
-      case 'MEDIUM': return '🟡 Média'
-      case 'LOW': return '🟢 Baixa'
-      default: return 'Nenhuma'
-    }
-  }
-
   const currentRequest = requestDetails || request
 
   const formContent = (
@@ -168,10 +160,10 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className={`rounded-full px-3 py-1.5 text-xs font-medium ${getPriorityColor(request.priority)}`}>
-                    {getPriorityLabel(request.priority)}
+                    {getWorkOrderPriorityLabel(request.priority)}
                   </span>
                   <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-info-light-foreground">
-                    {request.status}
+                    {getRequestStatusLabel(request.status)}
                   </span>
                 </div>
               </div>

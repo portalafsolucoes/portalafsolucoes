@@ -9,6 +9,12 @@ import { Icon } from '@/components/ui/Icon'
 
 import Link from 'next/link'
 
+import {
+  getWorkOrderStatusLabel,
+  getWorkOrderPriorityLabel,
+  getWorkOrderTypeLabel,
+} from '@/lib/status-labels'
+
 interface DashboardStats {
   teamName: string
   totalMembers: number
@@ -196,15 +202,15 @@ export default function TeamDashboardPage() {
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-foreground">{wo.title}</h4>
                         <Badge className={getStatusColor(wo.status)}>
-                          {wo.status}
+                          {getWorkOrderStatusLabel(wo.status)}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap gap-2 text-sm">
                         <Badge className={getTypeColor(wo.type)}>
-                          {wo.type}
+                          {getWorkOrderTypeLabel(wo.type)}
                         </Badge>
                         <Badge className={getPriorityColor(wo.priority)}>
-                          {wo.priority}
+                          {getWorkOrderPriorityLabel(wo.priority)}
                         </Badge>
                         {wo.assignedTo && (
                           <span className="text-muted-foreground">
@@ -248,7 +254,7 @@ export default function TeamDashboardPage() {
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-foreground">{req.title}</h4>
                         <Badge className={getPriorityColor(req.priority)}>
-                          {req.priority}
+                          {getWorkOrderPriorityLabel(req.priority)}
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">

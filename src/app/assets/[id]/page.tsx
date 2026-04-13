@@ -14,6 +14,7 @@ import { Icon } from '@/components/ui/Icon'
 import AssetTimeline from '@/components/assets/AssetTimelineEnhanced'
 import AssetAttachments from '@/components/assets/AssetAttachments'
 import { getStatusColor, formatCurrency, formatDate } from '@/lib/utils'
+import { getAssetStatusLabel } from '@/lib/status-labels'
 import Link from 'next/link'
 
 interface UploadedFile {
@@ -178,7 +179,7 @@ export default function AssetDetailPage() {
             <>
               {!editing && (
                 <>
-                  <Badge className={getStatusColor(asset.status)}>{asset.status}</Badge>
+                  <Badge className={getStatusColor(asset.status)}>{getAssetStatusLabel(asset.status)}</Badge>
                   <Button variant="outline" onClick={() => setEditing(true)}>
                     <Icon name="edit" className="mr-2 text-base" />
                     Editar
@@ -420,7 +421,7 @@ export default function AssetDetailPage() {
                       <Link key={child.id} href={`/assets/${child.id}`}>
                         <div className="flex items-center justify-between p-3 rounded-[4px] hover:bg-secondary cursor-pointer">
                           <span className="font-medium text-foreground">{child.name}</span>
-                          <Badge className={getStatusColor(child.status)}>{child.status}</Badge>
+                          <Badge className={getStatusColor(child.status)}>{getAssetStatusLabel(child.status)}</Badge>
                         </div>
                       </Link>
                     ))}
@@ -502,7 +503,7 @@ export default function AssetDetailPage() {
                 <div className="inline-flex items-center gap-2 p-3 bg-surface border-2 border-border rounded-[4px]">
                   <Icon name="account_tree" className="text-xl text-muted-foreground" />
                   <span className="font-medium text-foreground">{asset.name}</span>
-                  <Badge className={getStatusColor(asset.status)}>{asset.status}</Badge>
+                  <Badge className={getStatusColor(asset.status)}>{getAssetStatusLabel(asset.status)}</Badge>
                 </div>
               </div>
 
@@ -529,7 +530,7 @@ export default function AssetDetailPage() {
                             <Icon name="account_tree" className="text-base text-muted-foreground" />
                             <span className="font-medium text-foreground">{child.name}</span>
                           </div>
-                          <Badge className={getStatusColor(child.status)}>{child.status}</Badge>
+                          <Badge className={getStatusColor(child.status)}>{getAssetStatusLabel(child.status)}</Badge>
                         </div>
                       </Link>
                     ))}

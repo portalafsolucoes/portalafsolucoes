@@ -13,6 +13,7 @@ import { hasPermission } from '@/lib/permissions'
 import { canSwitchUnits, getDefaultCmmsPath } from '@/lib/user-roles'
 
 import { getStatusColor } from '@/lib/utils'
+import { getWorkOrderStatusLabel, getRequestStatusLabel } from '@/lib/status-labels'
 
 interface TreeNode {
   id: string
@@ -328,7 +329,7 @@ export default function TreePage() {
                               {assetDetail.workOrders.map((wo: any) => (
                                 <div key={wo.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-[4px] text-sm">
                                   <span className="font-medium text-foreground">{wo.title}</span>
-                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(wo.status)}`}>{wo.status}</span>
+                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(wo.status)}`}>{getWorkOrderStatusLabel(wo.status)}</span>
                                 </div>
                               ))}
                             </div>
@@ -344,7 +345,7 @@ export default function TreePage() {
                               {assetDetail.requests.map((ss: any) => (
                                 <div key={ss.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-[4px] text-sm">
                                   <span className="font-medium text-foreground">{ss.title}</span>
-                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(ss.status)}`}>{ss.status}</span>
+                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(ss.status)}`}>{getRequestStatusLabel(ss.status)}</span>
                                 </div>
                               ))}
                             </div>

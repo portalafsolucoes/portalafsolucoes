@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import { formatDate, formatDateTime, getPriorityColor, getStatusColor } from '@/lib/utils'
+import { getWorkOrderStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 
 interface BasicUser {
   id: string
@@ -122,28 +123,6 @@ function DetailField({
       <div className="text-[13px] font-medium text-gray-900 break-words">{value}</div>
     </div>
   )
-}
-
-function getPriorityLabel(priority: string): string {
-  switch (priority) {
-    case 'CRITICAL': return 'Crítica'
-    case 'HIGH': return 'Alta'
-    case 'MEDIUM': return 'Média'
-    case 'LOW': return 'Baixa'
-    default: return 'Nenhuma'
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case 'PENDING': return 'Pendente'
-    case 'RELEASED': return 'Liberada'
-    case 'OPEN': return 'Aberta'
-    case 'IN_PROGRESS': return 'Em Progresso'
-    case 'ON_HOLD': return 'Em Espera'
-    case 'COMPLETE': return 'Concluída'
-    default: return status
-  }
 }
 
 function getSystemStatusLabel(systemStatus?: string | null): string {
@@ -331,10 +310,10 @@ export function WorkOrderDetailModal({
               {getSystemStatusLabel(workOrder.systemStatus)}
             </span>
             <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 shadow-sm ${getStatusColor(workOrder.status)}`}>
-              {getStatusLabel(workOrder.status)}
+              {getWorkOrderStatusLabel(workOrder.status)}
             </span>
             <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 shadow-sm ${getPriorityColor(workOrder.priority)}`}>
-              {getPriorityLabel(workOrder.priority)}
+              {getWorkOrderPriorityLabel(workOrder.priority)}
             </span>
           </div>
 

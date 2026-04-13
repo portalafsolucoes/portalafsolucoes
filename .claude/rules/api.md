@@ -14,6 +14,7 @@ globs: src/app/api/**,src/actions/**
 - A normalizacao de papel deve usar exclusivamente o campo `role` persistido no banco; email, username e jobTitle NAO podem influenciar o papel efetivo (V04 — escalada de privilegio por padrao de email foi corrigida e nao deve ser reintroduzida)
 - Em payloads e respostas do modulo de `Pessoas`, `role` representa o papel de acesso do sistema e `jobTitle` representa o cargo profissional; APIs nao devem misturar esses conceitos nem rotular valores legados operacionais como se fossem o papel exibido ao usuario
 - Quando a UI enviar `jobTitleId`, as APIs de usuario devem validar que o cargo pertence a empresa ativa, persistir o vinculo no banco e manter o nome do cargo refletido no campo textual exibido na ficha da pessoa
+- APIs devem retornar valores canonicos de enum (ex: `PENDING`, `HIGH`, `PREVENTIVE`) em ingles; traducao para PT-BR e responsabilidade exclusiva da UI via `@/lib/status-labels`
 
 ## Autenticacao e Sessao
 - O endpoint `/api/auth/me` e a leitura de modulos da empresa devem ser tratados como dados dinamicos de sessao, sem cache compartilhado entre usuarios

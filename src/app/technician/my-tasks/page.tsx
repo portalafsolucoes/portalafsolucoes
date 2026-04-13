@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 import { formatDate } from '@/lib/utils'
+import { getWorkOrderPriorityLabel, getWorkOrderStatusLabel } from '@/lib/status-labels'
 
 const ExecutionModal = dynamic(
   () => import('@/components/execution/ExecutionModal').then(m => ({ default: m.ExecutionModal })),
@@ -45,28 +46,12 @@ interface Request {
 
 type TabType = 'workorders' | 'requests'
 
-const PRIORITY_LABELS: Record<string, string> = {
-  CRITICAL: 'Crítica',
-  HIGH: 'Alta',
-  MEDIUM: 'Média',
-  LOW: 'Baixa',
-  NONE: 'Sem prioridade',
-}
-
 const PRIORITY_COLORS: Record<string, string> = {
   CRITICAL: 'bg-danger text-white',
   HIGH: 'bg-warning text-foreground',
   MEDIUM: 'bg-primary/80 text-white',
   LOW: 'bg-secondary text-foreground',
   NONE: 'bg-muted text-muted-foreground',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Aberta',
-  IN_PROGRESS: 'Em andamento',
-  ON_HOLD: 'Em espera',
-  COMPLETE: 'Concluída',
-  APPROVED: 'Aprovada',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -80,7 +65,7 @@ const STATUS_COLORS: Record<string, string> = {
 function PriorityBadge({ priority }: { priority: string }) {
   return (
     <Badge className={PRIORITY_COLORS[priority] || PRIORITY_COLORS.NONE}>
-      {PRIORITY_LABELS[priority] || priority}
+      {getWorkOrderPriorityLabel(priority)}
     </Badge>
   )
 }
@@ -88,7 +73,7 @@ function PriorityBadge({ priority }: { priority: string }) {
 function StatusBadge({ status }: { status: string }) {
   return (
     <Badge className={STATUS_COLORS[status] || 'bg-secondary text-foreground'}>
-      {STATUS_LABELS[status] || status}
+      {getWorkOrderStatusLabel(status)}
     </Badge>
   )
 }

@@ -11,6 +11,7 @@ import { Icon } from '@/components/ui/Icon'
 
 import dynamic from 'next/dynamic'
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
+import { getWorkOrderStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useResponsiveLayout } from '@/hooks/useMediaQuery'
@@ -332,10 +333,10 @@ export default function WorkOrdersPage() {
                           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
                             <h3 className="text-base md:text-lg font-bold text-foreground">{displayId}</h3>
                             <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
-                              {wo.status}
+                              {getWorkOrderStatusLabel(wo.status)}
                             </span>
                             <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
-                              {wo.priority}
+                              {getWorkOrderPriorityLabel(wo.priority)}
                             </span>
                           </div>
                           <p className="text-foreground font-semibold mb-2 text-sm md:text-base">{wo.title}</p>
@@ -398,12 +399,12 @@ export default function WorkOrdersPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
-                                  {wo.status}
+                                  {getWorkOrderStatusLabel(wo.status)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
-                                  {wo.priority}
+                                  {getWorkOrderPriorityLabel(wo.priority)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-foreground">

@@ -17,6 +17,13 @@ globs: src/components/**,src/app/**/page.tsx
 - Usar o design system existente com `Tailwind CSS v4`, `Shadcn/UI`, `Recharts` e icones no padrao `Material Symbols`
 - O botao de acao principal deve usar o componente `<Button>`; nao usar `<button>` raw para acoes padronizadas
 
+## Rotulos de Enum (OBRIGATORIO)
+- Todo render de valor de enum do Prisma (`status`, `priority`, `type`, `frequency`) em JSX deve usar os helpers de `@/lib/status-labels`
+- Nao renderizar `{obj.status}` cru, nem duplicar mapas locais tipo `STATUS_LABELS` / `getStatusLabel`
+- Nao usar emojis em rotulos de prioridade (ex: 🔴 Alta) — usar apenas texto PT-BR
+- Helpers disponiveis: `getWorkOrderStatusLabel`, `getWorkOrderPriorityLabel`, `getWorkOrderTypeLabel`, `getOsTypeLabel`, `getRequestStatusLabel`, `getApprovalStatusLabel`, `getAssetStatusLabel`, `getSystemStatusLabel`, `getFrequencyLabel`, `getPlanStatusLabel`
+- Cores continuam em `@/lib/utils` (`getStatusColor`, `getPriorityColor`); labels e cores sao responsabilidades separadas
+
 ## Responsividade (OBRIGATORIO)
 
 ### Breakpoints oficiais

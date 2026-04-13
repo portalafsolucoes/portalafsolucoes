@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { getWorkOrderStatusLabel, getWorkOrderTypeLabel } from '@/lib/status-labels'
 
 interface FinalizeModalProps {
   isOpen: boolean
@@ -318,8 +319,8 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div><span className="text-muted-foreground">OS:</span> <span className="font-medium">{workOrder.internalId || workOrder.id.slice(0,8)}</span></div>
             <div><span className="text-muted-foreground">Ativo:</span> <span className="font-medium">{workOrder.asset?.name || '-'}</span></div>
-            <div><span className="text-muted-foreground">Status:</span> <span className="font-medium">{workOrder.status}</span></div>
-            <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{workOrder.type}</span></div>
+            <div><span className="text-muted-foreground">Status:</span> <span className="font-medium">{getWorkOrderStatusLabel(workOrder.status)}</span></div>
+            <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{getWorkOrderTypeLabel(workOrder.type)}</span></div>
           </div>
         </div>
 
