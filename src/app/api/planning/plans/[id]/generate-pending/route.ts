@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, getPriorityFromGut } from '@/lib/workOrderUtils'
+import { copyPlanResourcesToWorkOrder, copyPlanTasksToWorkOrder } from '@/lib/woResourceCopy'
 
 // POST - Gerar OSs para ativos selecionados manualmente (sem dailyVariation)
 export async function POST(
@@ -83,10 +84,11 @@ export async function POST(
         dueMeterReading = currentPos + (ap.maintenanceTime || 0)
       }
 
+      const woId = generateId()
       const { error: woError } = await supabase
         .from('WorkOrder')
         .insert({
-          id: generateId(),
+          id: woId,
           externalId,
           internalId: null,
           systemStatus: 'IN_SYSTEM',
@@ -107,7 +109,12 @@ export async function POST(
           updatedAt: new Date().toISOString(),
         })
 
-      if (!woError) generatedCount++
+      if (!woError) {
+        generatedCount++
+        // Copiar recursos e tarefas do plano de manutenção para a OS
+        await copyPlanResourcesToWorkOrder(ap.id, woId)
+        await copyPlanTasksToWorkOrder(ap.id, woId)
+      }
     }
 
     return NextResponse.json({

@@ -24,17 +24,21 @@ export async function GET(
       .from('WorkOrder')
       .select(`
         *,
-        asset:Asset(*),
+        asset:Asset(*, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId))),
         location:Location!locationId(*),
         createdBy:User!createdById(id, firstName, lastName, email, image),
         completedBy:User!completedById(id, firstName, lastName, email),
+        assignedTo:User!assignedToId(id, firstName, lastName),
         tasks:Task(*),
+        woResources:WorkOrderResource(id, resourceType, quantity, hours, unit, resource:Resource(id, name), jobTitle:JobTitle(id, name), user:User(id, firstName, lastName)),
         files:File(*),
         sourceRequest:Request(
           *,
           files:File(*),
           createdBy:User!createdById(id, firstName, lastName, email)
-        )
+        ),
+        assetMaintenancePlan:AssetMaintenancePlan(id, name, sequence),
+        maintenancePlanExec:MaintenancePlanExecution(id, planNumber)
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -50,7 +54,23 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ data: workOrder })
+    // Buscar equipes atribuídas via tabela de junção
+    let assignedTeams: { id: string; name: string }[] = []
+    const { data: teamLinks } = await supabase
+      .from('_WorkOrderTeams')
+      .select('B')
+      .eq('A', id)
+
+    if (teamLinks && teamLinks.length > 0) {
+      const teamIds = teamLinks.map((l: any) => l.B)
+      const { data: teams } = await supabase
+        .from('Team')
+        .select('id, name')
+        .in('id', teamIds)
+      assignedTeams = teams || []
+    }
+
+    return NextResponse.json({ data: { ...workOrder, assignedTeams } })
   } catch (error) {
     console.error('Get work order error:', error)
     return NextResponse.json(
@@ -154,7 +174,8 @@ export async function PATCH(
       assignedToId: validAssignedToId,
       maintenanceFrequency: body.maintenanceFrequency || null,
       frequencyValue: body.frequencyValue ? parseInt(body.frequencyValue) : null,
-      externalId: body.externalId || null
+      externalId: body.externalId || null,
+      estimatedDuration: body.estimatedDuration != null ? Number(body.estimatedDuration) : undefined
     }
 
     // Atualizar a work order

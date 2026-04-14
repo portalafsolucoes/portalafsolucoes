@@ -7,10 +7,19 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
+import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
 
 interface NamedItem {
   id: string
   name: string
+}
+
+interface AssetItem {
+  id: string
+  name: string
+  locationId?: string | null
+  parentAssetId?: string | null
+  parentAsset?: { id: string; protheusCode?: string; name: string } | null
 }
 
 interface TeamMember {
@@ -33,6 +42,7 @@ interface WorkOrderData {
   assignedTeams?: Array<{ id: string }>
   assignedToId?: string | null
   externalId?: string | null
+  estimatedDuration?: number | null
 }
 
 interface WorkOrderEditModalProps {
@@ -52,10 +62,11 @@ export function WorkOrderEditModal({
 }: WorkOrderEditModalProps) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [assets, setAssets] = useState<NamedItem[]>([])
+  const [assets, setAssets] = useState<AssetItem[]>([])
   const [locations, setLocations] = useState<NamedItem[]>([])
   const [teams, setTeams] = useState<NamedItem[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [woResources, setWoResources] = useState<TaskResourceItem[]>([])
 
   const [formData, setFormData] = useState({
     title: '',
@@ -68,7 +79,8 @@ export function WorkOrderEditModal({
     locationId: '',
     assignedTeamIds: [] as string[],
     assignedToId: '',
-    externalId: ''
+    externalId: '',
+    estimatedDuration: ''
   })
 
   const loadTeamMembers = useCallback(async (teamId: string) => {
@@ -86,11 +98,12 @@ export function WorkOrderEditModal({
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [woRes, assetsRes, locationsRes, teamsRes] = await Promise.all([
+      const [woRes, assetsRes, locationsRes, teamsRes, resRes] = await Promise.all([
         fetch(`/api/work-orders/${workOrderId}`),
-        fetch('/api/assets'),
+        fetch('/api/assets?summary=true'),
         fetch('/api/locations'),
-        fetch('/api/teams')
+        fetch('/api/teams'),
+        fetch(`/api/work-orders/${workOrderId}/resources`)
       ])
 
       if (woRes.ok) {
@@ -109,7 +122,8 @@ export function WorkOrderEditModal({
             locationId: wo.locationId || '',
             assignedTeamIds: wo.assignedTeams?.map((team) => team.id) || [],
             assignedToId: wo.assignedToId || '',
-            externalId: wo.externalId || ''
+            externalId: wo.externalId || '',
+            estimatedDuration: wo.estimatedDuration != null ? String(wo.estimatedDuration) : ''
           })
 
           if (wo.assignedTeams && wo.assignedTeams.length > 0) {
@@ -119,7 +133,7 @@ export function WorkOrderEditModal({
       }
 
       if (assetsRes.ok) {
-        const assetsData = await assetsRes.json() as { data?: NamedItem[] }
+        const assetsData = await assetsRes.json() as { data?: AssetItem[] }
         setAssets(assetsData.data || [])
       }
 
@@ -131,6 +145,20 @@ export function WorkOrderEditModal({
       if (teamsRes.ok) {
         const teamsData = await teamsRes.json() as { data?: NamedItem[] }
         setTeams(teamsData.data || [])
+      }
+
+      if (resRes.ok) {
+        const resData = await resRes.json() as { data?: any[] }
+        const mapped: TaskResourceItem[] = (resData.data || []).map((r: any) => ({
+          resourceType: r.resourceType as TaskResourceItem['resourceType'],
+          resourceId: r.resource?.id || null,
+          jobTitleId: r.jobTitle?.id || null,
+          userId: r.user?.id || null,
+          quantity: r.quantity,
+          hours: r.hours,
+          unit: r.unit,
+        }))
+        setWoResources(mapped)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -165,11 +193,28 @@ export function WorkOrderEditModal({
           locationId: formData.locationId || null,
           assignedToId: formData.assignedToId || null,
           externalId: formData.externalId || null,
-          assignedTeamIds: formData.assignedTeamIds
+          assignedTeamIds: formData.assignedTeamIds,
+          estimatedDuration: formData.estimatedDuration ? Number(formData.estimatedDuration) : null
         })
       })
 
       if (response.ok) {
+        // Salvar recursos em paralelo
+        await fetch(`/api/work-orders/${workOrderId}/resources`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resources: woResources.map(r => ({
+              resourceType: r.resourceType,
+              resourceId: r.resourceId || null,
+              jobTitleId: r.jobTitleId || null,
+              userId: r.userId || null,
+              quantity: r.quantity ?? null,
+              hours: r.hours ?? null,
+              unit: r.unit || null,
+            })),
+          }),
+        })
         onSuccess()
         onClose()
       } else {
@@ -183,6 +228,30 @@ export function WorkOrderEditModal({
       setSaving(false)
     }
   }
+
+  const getAssetHierarchy = (assetId: string): string[] => {
+    const chain: string[] = []
+    const assetMap = new Map(assets.map(a => [a.id, a]))
+    let current = assetMap.get(assetId)
+    const visited = new Set<string>()
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id)
+      chain.unshift(current.name)
+      current = current.parentAssetId ? assetMap.get(current.parentAssetId) : undefined
+    }
+    return chain
+  }
+
+  const handleAssetChange = (assetId: string) => {
+    const asset = assets.find(a => a.id === assetId)
+    setFormData(prev => ({
+      ...prev,
+      assetId,
+      locationId: asset?.locationId || prev.locationId
+    }))
+  }
+
+  const selectedAssetHierarchy = formData.assetId ? getAssetHierarchy(formData.assetId) : []
 
   const formSections = (
     <>
@@ -275,7 +344,7 @@ export function WorkOrderEditModal({
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Ativo</label>
             <select
               value={formData.assetId}
-              onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
+              onChange={(e) => handleAssetChange(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Nenhum</option>
@@ -298,6 +367,19 @@ export function WorkOrderEditModal({
             </select>
           </div>
         </div>
+        {selectedAssetHierarchy.length > 1 && (
+          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-[4px] px-3 py-2">
+            <Icon name="account_tree" className="text-sm text-gray-400 mr-1" />
+            {selectedAssetHierarchy.map((name, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {i > 0 && <Icon name="chevron_right" className="text-sm text-gray-400" />}
+                <span className={i === selectedAssetHierarchy.length - 1 ? 'font-semibold text-gray-700' : ''}>
+                  {name}
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
       </ModalSection>
 
       <ModalSection title="Atribuição">
@@ -341,6 +423,29 @@ export function WorkOrderEditModal({
             </select>
           </div>
         </div>
+      </ModalSection>
+
+      <ModalSection title="Recursos">
+        <div className="mb-3">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Tempo de Execucao (min)
+          </label>
+          <input
+            type="number"
+            min={1}
+            value={formData.estimatedDuration}
+            onChange={(e) => setFormData({ ...formData, estimatedDuration: e.target.value })}
+            placeholder="Ex: 30"
+            className="w-full sm:w-40 px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Tempo que cada recurso de pessoa/ferramenta levara para executar a OS
+          </p>
+        </div>
+        <ResourceSelector
+          resources={woResources}
+          onChange={setWoResources}
+        />
       </ModalSection>
     </>
   )

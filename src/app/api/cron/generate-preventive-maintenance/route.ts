@@ -4,6 +4,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { generateSequentialId } from '@/lib/workOrderUtils'
 import { getCalendarsForPlans } from '@/lib/calendarData'
 import { adjustToWorkingDay, WorkDays } from '@/lib/calendarUtils'
+import { copyWorkOrderResources, copyWorkOrderTasks } from '@/lib/woResourceCopy'
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number, fromDate: Date = new Date()): Date {
@@ -176,6 +177,10 @@ export async function POST(request: NextRequest) {
           }))
           await supabase.from('_UserWorkOrders').insert(userLinks)
         }
+
+        // Copiar recursos e tarefas da OS original para a nova
+        await copyWorkOrderResources(wo.id, newWorkOrder.id)
+        await copyWorkOrderTasks(wo.id, newWorkOrder.id)
 
         // Atualizar a OS original para indicar que foi gerada uma nova
         const rawOriginalNext = calculateNextExecutionDate(

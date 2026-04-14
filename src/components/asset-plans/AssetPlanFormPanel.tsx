@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
+import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
 import type { ApiItemResponse, ApiListResponse } from '@/types/api'
 import type {
   AssetFamilyModelOption,
@@ -12,7 +13,6 @@ import type {
   AssetOption,
   CalendarOption,
   NamedEntity,
-  ResourceOption,
   ServiceTypeOption,
 } from '@/types/catalog'
 
@@ -22,13 +22,12 @@ import type {
 
 interface TaskStep { stepId: string; order: number; optionType: string }
 interface GenericStepWithType { id: string; name: string; optionType?: string }
-interface TaskResource { resourceId: string; resourceCount: number; quantity: number; unit: string }
 interface TaskRow {
   key: string
   description: string
   executionTime: number | ''
   steps: TaskStep[]
-  resources: TaskResource[]
+  resources: TaskResourceItem[]
 }
 
 interface AssetPlanFormData {
@@ -52,9 +51,13 @@ interface PlanTaskResponse {
   executionTime?: number | null
   steps?: Array<{ stepId: string; order: number; optionType?: string }>
   resources?: Array<{
-    resourceId: string
+    resourceType?: string | null
+    resourceId?: string | null
+    jobTitleId?: string | null
+    userId?: string | null
     resourceCount?: number | null
     quantity?: number | null
+    hours?: number | null
     unit?: string | null
   }>
 }
@@ -226,7 +229,6 @@ export default function AssetPlanFormPanel({
   const [assets, setAssets] = useState<AssetOption[]>([])
   const [calendars, setCalendars] = useState<CalendarOption[]>([])
   const [genericSteps, setGenericSteps] = useState<GenericStepWithType[]>([])
-  const [resources, setResources] = useState<ResourceOption[]>([])
   const [families, setFamilies] = useState<AssetFamilyOption[]>([])
   const [familyModels, setFamilyModels] = useState<AssetFamilyModelOption[]>([])
 
@@ -293,21 +295,19 @@ export default function AssetPlanFormPanel({
   }, [editingId])
 
   const loadDependencies = async () => {
-    const [stRes, assRes, calRes, stepsRes, resRes, famRes, modelsRes] = await Promise.all([
+    const [stRes, assRes, calRes, stepsRes, famRes, modelsRes] = await Promise.all([
       fetch('/api/basic-registrations/service-types'),
       fetch('/api/assets?limit=1000'),
       fetch('/api/basic-registrations/calendars'),
       fetch('/api/basic-registrations/generic-steps'),
-      fetch('/api/basic-registrations/resources'),
       fetch('/api/basic-registrations/asset-families'),
       fetch('/api/basic-registrations/asset-family-models'),
     ])
-    const [stData, assData, calData, stepsData, resData, famData, modelsData] = await Promise.all([
+    const [stData, assData, calData, stepsData, famData, modelsData] = await Promise.all([
       stRes.json() as Promise<ApiListResponse<ServiceTypeOption>>,
       assRes.json() as Promise<ApiListResponse<AssetOption>>,
       calRes.json() as Promise<ApiListResponse<CalendarOption>>,
       stepsRes.json() as Promise<ApiListResponse<GenericStepWithType>>,
-      resRes.json() as Promise<ApiListResponse<ResourceOption>>,
       famRes.json() as Promise<ApiListResponse<AssetFamilyOption>>,
       modelsRes.json() as Promise<ApiListResponse<AssetFamilyModelOption>>,
     ])
@@ -315,7 +315,6 @@ export default function AssetPlanFormPanel({
     setAssets(assData.data || [])
     setCalendars(calData.data || [])
     setGenericSteps(stepsData.data || [])
-    setResources(resData.data || [])
     setFamilies(famData.data || [])
     setFamilyModels(modelsData.data || [])
   }
@@ -354,9 +353,12 @@ export default function AssetPlanFormPanel({
           executionTime: t.executionTime ?? '',
           steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order, optionType: s.optionType || 'NONE' })),
           resources: (t.resources || []).map((r) => ({
-            resourceId: r.resourceId,
-            resourceCount: r.resourceCount ?? 1,
-            quantity: r.quantity ?? 0,
+            resourceType: (r.resourceType || 'MATERIAL') as TaskResourceItem['resourceType'],
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            quantity: r.resourceCount ?? r.quantity ?? 1,
+            hours: r.hours ?? 0,
             unit: r.unit || 'UN',
           })),
         })))
@@ -487,9 +489,12 @@ export default function AssetPlanFormPanel({
           executionTime: t.executionTime ?? '',
           steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order, optionType: s.optionType || 'NONE' })),
           resources: (t.resources || []).map((r) => ({
-            resourceId: r.resourceId,
-            resourceCount: r.resourceCount ?? 1,
-            quantity: r.quantity ?? 0,
+            resourceType: (r.resourceType || 'MATERIAL') as TaskResourceItem['resourceType'],
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            quantity: r.resourceCount ?? r.quantity ?? 1,
+            hours: r.hours ?? 0,
             unit: r.unit || 'UN',
           })),
         })))
@@ -550,28 +555,8 @@ export default function AssetPlanFormPanel({
     }))
   }
 
-  const addResourceToTask = (taskKey: string, resourceId: string) => {
-    const res = resources.find((r) => r.id === resourceId)
-    const defaultUnit = res?.unit || 'UN'
-    setTasks(prev => prev.map(t => {
-      if (t.key !== taskKey) return t
-      if (t.resources.some(r => r.resourceId === resourceId)) return t
-      return { ...t, resources: [...t.resources, { resourceId, resourceCount: 1, quantity: 0, unit: defaultUnit }] }
-    }))
-  }
-
-  const removeResourceFromTask = (taskKey: string, resourceId: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.key !== taskKey) return t
-      return { ...t, resources: t.resources.filter(r => r.resourceId !== resourceId) }
-    }))
-  }
-
-  const updateResource = (taskKey: string, resourceId: string, patch: Partial<TaskResource>) => {
-    setTasks(prev => prev.map(t => {
-      if (t.key !== taskKey) return t
-      return { ...t, resources: t.resources.map(r => r.resourceId === resourceId ? { ...r, ...patch } : r) }
-    }))
+  const updateTaskResources = (taskKey: string, newResources: TaskResourceItem[]) => {
+    setTasks(prev => prev.map(t => t.key === taskKey ? { ...t, resources: newResources } : t))
   }
 
   /* ---------------------------------------------------------------- */
@@ -622,10 +607,14 @@ export default function AssetPlanFormPanel({
           executionTime: t.executionTime !== '' ? Number(t.executionTime) : null,
           steps: t.steps.map((s, j) => ({ stepId: s.stepId, order: j })),
           resources: t.resources.map(r => ({
-            resourceId: r.resourceId,
-            resourceCount: r.resourceCount,
-            quantity: r.quantity,
-            unit: r.unit,
+            resourceType: r.resourceType,
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            resourceCount: r.quantity ?? 1,
+            quantity: r.quantity ?? 0,
+            hours: r.hours ?? 0,
+            unit: r.unit || null,
           })),
         }))
         const tasksRes = await fetch(`/api/maintenance-plans/asset/${planId}/tasks`, {
@@ -895,56 +884,10 @@ export default function AssetPlanFormPanel({
                   })()}
                 </div>
               </div>
-              <div>
-                <label className={labelCls}>Recursos</label>
-                {task.resources.length > 0 && (
-                  <div className="space-y-2 mb-2">
-                    {task.resources.map(r => {
-                      const res = resources.find((rs) => rs.id === r.resourceId)
-                      const isMaoDeObra = res?.type === 'MAO_DE_OBRA' || res?.type === 'LABOR'
-                      return (
-                        <div key={r.resourceId} className="flex items-center gap-2 p-2 bg-muted rounded-[4px]">
-                          <span className="text-sm flex-1 min-w-0 truncate">{res?.name || r.resourceId}</span>
-                          <div className="flex items-center gap-1">
-                            <label className="text-xs text-muted-foreground whitespace-nowrap">Qtd:</label>
-                            <input type="number" min={0} step={0.01} value={r.resourceCount}
-                              onChange={e => updateResource(task.key, r.resourceId, { resourceCount: e.target.value === '' ? 0 : Number(e.target.value) })}
-                              className="w-20 px-2 py-1 text-xs border border-input rounded-[4px]" />
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <label className="text-xs text-muted-foreground whitespace-nowrap">Und:</label>
-                            <input type="text" value={r.unit}
-                              onChange={e => updateResource(task.key, r.resourceId, { unit: e.target.value })}
-                              placeholder="Ex: UN, KG, L"
-                              className="w-20 px-2 py-1 text-xs border border-input rounded-[4px]" />
-                          </div>
-                          {isMaoDeObra && (
-                            <div className="flex items-center gap-1">
-                              <label className="text-xs text-muted-foreground whitespace-nowrap">Horas:</label>
-                              <input type="number" min={0} step={0.5} value={r.quantity}
-                                onChange={e => updateResource(task.key, r.resourceId, { quantity: Number(e.target.value) || 0 })}
-                                className="w-16 px-2 py-1 text-xs border border-input rounded-[4px]" />
-                            </div>
-                          )}
-                          <button type="button" onClick={() => removeResourceFromTask(task.key, r.resourceId)} className="p-0.5 hover:text-danger">
-                            <Icon name="close" className="text-sm" />
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-                <select
-                  value=""
-                  onChange={e => { if (e.target.value) addResourceToTask(task.key, e.target.value) }}
-                  className={selectCls}
-                >
-                  <option value="">+ Adicionar recurso...</option>
-                  {resources
-                    .filter((rs) => !task.resources.some(r => r.resourceId === rs.id))
-                    .map((rs) => <option key={rs.id} value={rs.id}>{rs.name} ({rs.type})</option>)}
-                </select>
-              </div>
+              <ResourceSelector
+                resources={task.resources}
+                onChange={(newRes) => updateTaskResources(task.key, newRes)}
+              />
             </div>
           ))}
           <button type="button" onClick={addTask}

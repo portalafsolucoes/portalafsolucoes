@@ -30,10 +30,12 @@ export async function GET(
         steps:StandardMaintenanceTaskStep(*, step:GenericStep!stepId(id, name, optionType, options:GenericStepOption(id, label, order))),
         resources:StandardMaintenanceTaskResource(
           *,
-          resource:Resource!resourceId(
+          resource:Resource(
             id, name, type, unit, unitCost, calendarId,
             calendar:Calendar!calendarId(id, name, workDays)
-          )
+          ),
+          jobTitle:JobTitle(id, name),
+          user:User(id, firstName, lastName, jobTitle)
         )
       `)
       .eq('planId', planId)
@@ -136,9 +138,13 @@ export async function POST(
         const resourcesToInsert = task.resources.map((r: any) => ({
           id: generateId(),
           taskId: newTask.id,
-          resourceId: r.resourceId,
-          resourceCount: r.resourceCount || 1,
+          resourceType: r.resourceType || 'MATERIAL',
+          resourceId: r.resourceId || null,
+          jobTitleId: r.jobTitleId || null,
+          userId: r.userId || null,
+          resourceCount: r.resourceCount ?? r.quantity ?? 1,
           quantity: r.quantity || 0,
+          hours: r.hours || 0,
           unit: r.unit || 'H',
           generatesReserve: r.generatesReserve !== false,
         }))

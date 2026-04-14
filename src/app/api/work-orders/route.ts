@@ -156,7 +156,8 @@ export async function POST(request: NextRequest) {
       tasks,
       externalId,
       maintenanceFrequency,
-      frequencyValue
+      frequencyValue,
+      estimatedDuration
     } = body
     const now = new Date().toISOString()
 
@@ -309,6 +310,7 @@ export async function POST(request: NextRequest) {
         maintenanceFrequency: maintenanceFrequency || null,
         frequencyValue: frequencyValue ? parseInt(frequencyValue) : null,
         nextExecutionDate: nextExecutionDate ? nextExecutionDate.toISOString() : null,
+        estimatedDuration: estimatedDuration ? Number(estimatedDuration) : null,
         createdAt: now,
         updatedAt: now
       })
@@ -334,8 +336,22 @@ export async function POST(request: NextRequest) {
       await supabase.from('Task').insert(taskInserts).select()
     }
 
-    // TODO: Adicionar relacionamentos many-to-many quando disponíveis no schema
-    // Atualmente não temos tabelas de junção para assignedUsers/Teams
+    // Criar recursos se fornecidos
+    const { resources } = body
+    if (Array.isArray(resources) && resources.length > 0) {
+      const resourceInserts = resources.map((r: any) => ({
+        id: generateId(),
+        workOrderId: workOrder.id,
+        resourceType: r.resourceType,
+        resourceId: r.resourceId || null,
+        jobTitleId: r.jobTitleId || null,
+        userId: r.userId || null,
+        quantity: r.quantity ?? null,
+        hours: r.hours ?? null,
+        unit: r.unit || null,
+      }))
+      await supabase.from('WorkOrderResource').insert(resourceInserts)
+    }
 
     return NextResponse.json(
       { data: workOrder, message: 'Work order created successfully' },

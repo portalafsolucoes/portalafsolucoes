@@ -24,9 +24,18 @@ interface WorkOrderFile {
   size?: number | null
 }
 
+interface AssetParent {
+  id: string
+  name: string
+  parentAssetId?: string | null
+  parentAsset?: AssetParent | null
+}
+
 interface WorkOrderAsset {
   id?: string
   name: string
+  parentAssetId?: string | null
+  parentAsset?: AssetParent | null
 }
 
 interface WorkOrderLocation {
@@ -51,16 +60,46 @@ interface SourceRequest {
   files?: WorkOrderFile[]
 }
 
+interface WOResourceDetail {
+  id: string
+  resourceType: string
+  quantity?: number | null
+  hours?: number | null
+  unit?: string | null
+  resource?: { id: string; name: string } | null
+  jobTitle?: { id: string; name: string } | null
+  user?: { id: string; firstName: string; lastName: string } | null
+}
+
+interface TaskStep {
+  stepId?: string
+  stepName: string
+  optionType: string
+  options?: { id?: string; label: string; order: number }[]
+}
+
+interface WOTask {
+  id: string
+  label: string
+  notes?: string | null
+  completed: boolean
+  order: number
+  executionTime?: number | null
+  steps?: TaskStep[] | string | null
+}
+
 interface WorkOrderDetail {
   id: string
   title: string
   description?: string | null
+  type?: string | null
   status: string
   priority: string
   systemStatus?: string | null
   externalId?: string | null
   internalId?: string | null
   customId?: string | null
+  estimatedDuration?: number | null
   createdAt?: string | null
   dueDate?: string | null
   completedOn?: string | null
@@ -69,12 +108,19 @@ interface WorkOrderDetail {
   beforePhotoUrl?: string | null
   afterPhotoUrl?: string | null
   assignedToId?: string | null
+  assignedTo?: BasicUser | null
+  assignedTeams?: { id: string; name: string }[]
   asset?: WorkOrderAsset | null
   location?: WorkOrderLocation | null
   createdBy?: BasicUser | null
   sourceRequest?: SourceRequest | null
   files?: WorkOrderFile[]
   executionSteps?: ExecutionStep[]
+  tasks?: WOTask[]
+  woResources?: WOResourceDetail[]
+  assetMaintenancePlanId?: string | null
+  assetMaintenancePlan?: { id: string; name?: string | null; sequence: number } | null
+  maintenancePlanExec?: { id: string; planNumber: number } | null
 }
 
 interface WorkOrderDetailModalProps {
@@ -126,9 +172,9 @@ function DetailField({
 
 function getPriorityLabel(priority: string): string {
   switch (priority) {
-    case 'CRITICAL': return 'Crítica'
+    case 'CRITICAL': return 'Critica'
     case 'HIGH': return 'Alta'
-    case 'MEDIUM': return 'Média'
+    case 'MEDIUM': return 'Media'
     case 'LOW': return 'Baixa'
     default: return 'Nenhuma'
   }
@@ -141,13 +187,33 @@ function getStatusLabel(status: string): string {
     case 'OPEN': return 'Aberta'
     case 'IN_PROGRESS': return 'Em Progresso'
     case 'ON_HOLD': return 'Em Espera'
-    case 'COMPLETE': return 'Concluída'
+    case 'COMPLETE': return 'Concluida'
     default: return status
   }
 }
 
 function getSystemStatusLabel(systemStatus?: string | null): string {
   return systemStatus === 'IN_SYSTEM' ? 'Sistema' : 'Fora do Sistema'
+}
+
+function getTypeLabel(type?: string | null): string {
+  switch (type) {
+    case 'PREVENTIVE': return 'Preventiva'
+    case 'CORRECTIVE': return 'Corretiva'
+    case 'PREDICTIVE': return 'Preditiva'
+    case 'REACTIVE': return 'Reativa'
+    default: return type || '-'
+  }
+}
+
+function getResourceTypeLabel(type: string): string {
+  switch (type) {
+    case 'MATERIAL': return 'Material'
+    case 'TOOL': return 'Ferramenta'
+    case 'LABOR': return 'Mao de Obra'
+    case 'SPECIALTY': return 'Especialidade'
+    default: return type
+  }
 }
 
 function isImageFile(file: WorkOrderFile): boolean {
@@ -157,6 +223,16 @@ function isImageFile(file: WorkOrderFile): boolean {
 
   const lowerName = file.name.toLowerCase()
   return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'].some(ext => lowerName.endsWith(ext))
+}
+
+function parseTaskSteps(steps: TaskStep[] | string | null | undefined): TaskStep[] {
+  if (!steps) return []
+  if (Array.isArray(steps)) return steps
+  try {
+    return JSON.parse(steps)
+  } catch {
+    return []
+  }
 }
 
 export function WorkOrderDetailModal({
@@ -197,8 +273,8 @@ export function WorkOrderDetailModal({
             setWorkOrder(null)
             setError(
               response.status === 404
-                ? 'Ordem de serviço não encontrada.'
-                : 'Erro ao carregar ordem de serviço.'
+                ? 'Ordem de servico nao encontrada.'
+                : 'Erro ao carregar ordem de servico.'
             )
           }
           return
@@ -209,7 +285,7 @@ export function WorkOrderDetailModal({
         if (!ignore) {
           if (!data.data) {
             setWorkOrder(null)
-            setError('Ordem de serviço não encontrada.')
+            setError('Ordem de servico nao encontrada.')
             return
           }
 
@@ -291,6 +367,26 @@ export function WorkOrderDetailModal({
     executionFiles.length > 0
   )
 
+  const sortedTasks = useMemo(
+    () => [...(workOrder?.tasks || [])].sort((a, b) => a.order - b.order),
+    [workOrder?.tasks]
+  )
+
+  const groupedResources = useMemo(() => {
+    const resources = workOrder?.woResources || []
+    if (resources.length === 0) return null
+    const groups: Record<string, WOResourceDetail[]> = {}
+    for (const r of resources) {
+      const type = r.resourceType || 'MATERIAL'
+      if (!groups[type]) groups[type] = []
+      groups[type].push(r)
+    }
+    return groups
+  }, [workOrder?.woResources])
+
+  const hasSourceRequest = !!workOrder?.sourceRequest?.id
+  const hasPlanOrigin = !!workOrder?.assetMaintenancePlanId
+
   const content = loading ? (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
@@ -304,7 +400,7 @@ export function WorkOrderDetailModal({
         <Icon name="description" className="text-5xl text-muted-foreground mx-auto mb-4" />
         <p className="text-sm font-medium text-foreground mb-1">{error}</p>
         <p className="text-xs text-muted-foreground">
-          A ordem de serviço pode ter sido excluída ou você não tem permissão para visualizá-la.
+          A ordem de servico pode ter sido excluida ou voce nao tem permissao para visualiza-la.
         </p>
         {!inPage && (
           <div className="mt-4">
@@ -324,6 +420,7 @@ export function WorkOrderDetailModal({
         />
       )}
 
+      {/* 1. Resumo da OS */}
       <DetailSection title="Resumo da OS" icon="assignment">
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 px-1">
@@ -336,18 +433,21 @@ export function WorkOrderDetailModal({
             <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 shadow-sm ${getPriorityColor(workOrder.priority)}`}>
               {getPriorityLabel(workOrder.priority)}
             </span>
+            <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 bg-white text-gray-900 shadow-sm">
+              {getTypeLabel(workOrder.type)}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
             {workOrder.externalId && (
               <DetailField
-                label="Código Externo"
+                label="Codigo Externo"
                 value={<span className="font-mono">{workOrder.externalId}</span>}
               />
             )}
             {workOrder.internalId && (
               <DetailField
-                label="Número Interno"
+                label="Numero Interno"
                 value={<span className="font-mono">{workOrder.internalId}</span>}
               />
             )}
@@ -357,46 +457,74 @@ export function WorkOrderDetailModal({
             {workOrder.dueDate && (
               <DetailField label="Vencimento" value={formatDate(workOrder.dueDate)} />
             )}
+            {workOrder.estimatedDuration != null && workOrder.estimatedDuration > 0 && (
+              <DetailField label="Tempo de Execucao" value={`${workOrder.estimatedDuration} min`} />
+            )}
           </div>
-        </div>
-      </DetailSection>
 
-      <DetailSection title="Solicitação de Serviço (SS)" icon="description">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
-          <DetailField
-            label="Descrição da Solicitação"
-            className="sm:col-span-2"
-            value={workOrder.sourceRequest?.description || workOrder.description || 'Sem descrição'}
-          />
-          {workOrder.sourceRequest?.createdBy && (
-            <DetailField
-              label="Solicitado por"
-              value={`${workOrder.sourceRequest.createdBy.firstName} ${workOrder.sourceRequest.createdBy.lastName}`}
-            />
-          )}
-          {workOrder.createdBy && (
-            <DetailField
-              label="Atribuído por"
-              value={`${workOrder.createdBy.firstName} ${workOrder.createdBy.lastName}`}
-            />
-          )}
-          {workOrder.createdAt && (
-            <DetailField
-              label="Data da Solicitação"
-              value={formatDateTime(workOrder.sourceRequest?.createdAt || workOrder.createdAt)}
-            />
-          )}
-          {workOrder.asset && (
-            <DetailField label="Ativo" value={workOrder.asset.name} />
-          )}
-          {workOrder.location && (
-            <DetailField label="Localização" value={workOrder.location.name} />
+          {workOrder.description && (
+            <div className="px-1">
+              <DetailField label="Descricao" value={workOrder.description} />
+            </div>
           )}
         </div>
       </DetailSection>
 
+      {/* 2. Plano de Origem (condicional - só para OSs de plano) */}
+      {hasPlanOrigin && (
+        <DetailSection title="Plano de Origem" icon="engineering">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+            {workOrder.assetMaintenancePlan?.name && (
+              <DetailField
+                label="Nome da Manutencao"
+                value={workOrder.assetMaintenancePlan.name}
+                className="sm:col-span-2"
+              />
+            )}
+            {workOrder.maintenancePlanExec?.planNumber && (
+              <DetailField
+                label="Plano de Execucao"
+                value={`Plano #${workOrder.maintenancePlanExec.planNumber}`}
+              />
+            )}
+            {typeof workOrder.assetMaintenancePlan?.sequence === 'number' && (
+              <DetailField
+                label="Sequencia"
+                value={workOrder.assetMaintenancePlan.sequence}
+              />
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 3. Solicitação de Serviço - SOMENTE quando sourceRequest existir */}
+      {hasSourceRequest && (
+        <DetailSection title="Solicitacao de Servico (SS)" icon="description">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+            <DetailField
+              label="Descricao da Solicitacao"
+              className="sm:col-span-2"
+              value={workOrder.sourceRequest?.description || 'Sem descricao'}
+            />
+            {workOrder.sourceRequest?.createdBy && (
+              <DetailField
+                label="Solicitado por"
+                value={`${workOrder.sourceRequest.createdBy.firstName} ${workOrder.sourceRequest.createdBy.lastName}`}
+              />
+            )}
+            {workOrder.sourceRequest?.createdAt && (
+              <DetailField
+                label="Data da Solicitacao"
+                value={formatDateTime(workOrder.sourceRequest.createdAt)}
+              />
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Imagens da Solicitação Original */}
       {sourceRequestImages.length > 0 && (
-        <DetailSection title="Imagens da Solicitação Original" icon="image">
+        <DetailSection title="Imagens da Solicitacao Original" icon="image">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-1">
             {sourceRequestImages.map((file) => (
               <button
@@ -419,23 +547,178 @@ export function WorkOrderDetailModal({
         </DetailSection>
       )}
 
+      {/* 4. Ativo e Localização */}
+      {(workOrder.asset || workOrder.location) && (
+        <DetailSection title="Ativo e Localizacao" icon="location_on">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+            {workOrder.asset && (
+              <DetailField label="Ativo" value={workOrder.asset.name} />
+            )}
+            {workOrder.location && (
+              <DetailField label="Localizacao" value={workOrder.location.name} />
+            )}
+          </div>
+          {workOrder.asset?.parentAsset && (() => {
+            const chain: string[] = []
+            let current: AssetParent | null | undefined = workOrder.asset?.parentAsset
+            while (current) {
+              chain.unshift(current.name)
+              current = current.parentAsset
+            }
+            chain.push(workOrder.asset!.name)
+            return (
+              <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-[4px] px-3 py-2">
+                <Icon name="account_tree" className="text-sm text-gray-400 mr-1" />
+                {chain.map((name, i) => (
+                  <span key={i} className="flex items-center gap-1">
+                    {i > 0 && <Icon name="chevron_right" className="text-sm text-gray-400" />}
+                    <span className={i === chain.length - 1 ? 'font-semibold text-gray-700' : ''}>
+                      {name}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )
+          })()}
+        </DetailSection>
+      )}
+
+      {/* 5. Atribuição */}
+      {(workOrder.assignedTo || (workOrder.assignedTeams && workOrder.assignedTeams.length > 0) || workOrder.createdBy) && (
+        <DetailSection title="Atribuicao" icon="group">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+            {workOrder.assignedTeams && workOrder.assignedTeams.length > 0 && (
+              <DetailField
+                label="Equipe(s)"
+                value={workOrder.assignedTeams.map(t => t.name).join(', ')}
+              />
+            )}
+            {workOrder.assignedTo && (
+              <DetailField
+                label="Executante"
+                value={`${workOrder.assignedTo.firstName} ${workOrder.assignedTo.lastName}`}
+              />
+            )}
+            {workOrder.createdBy && (
+              <DetailField
+                label="Criado por"
+                value={`${workOrder.createdBy.firstName} ${workOrder.createdBy.lastName}`}
+              />
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 6. Tarefas */}
+      {sortedTasks.length > 0 && (
+        <DetailSection title={`Tarefas (${sortedTasks.length})`} icon="checklist">
+          <div className="space-y-3 px-1">
+            {sortedTasks.map((task) => {
+              const steps = parseTaskSteps(task.steps)
+              return (
+                <div
+                  key={task.id}
+                  className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden"
+                >
+                  <div className="flex items-start gap-3 px-4 py-3">
+                    <Icon
+                      name={task.completed ? 'check_circle' : 'radio_button_unchecked'}
+                      className={`mt-0.5 text-base flex-shrink-0 ${task.completed ? 'text-success' : 'text-gray-400'}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-semibold text-gray-900">{task.label}</p>
+                        {task.executionTime && (
+                          <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                            <Icon name="schedule" className="text-sm" />
+                            {task.executionTime} min
+                          </span>
+                        )}
+                      </div>
+                      {task.notes && (
+                        <p className="mt-1 text-xs text-gray-500">{task.notes}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {steps.length > 0 && (
+                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-2.5">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Etapas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {steps.map((step, idx) => (
+                          <span
+                            key={step.stepId || idx}
+                            className="inline-block px-2.5 py-1 text-[11px] font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm"
+                          >
+                            {step.stepName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 7. Recursos */}
+      {groupedResources && (
+        <DetailSection title="Recursos" icon="inventory_2">
+          <div className="space-y-4 px-1">
+            {Object.entries(groupedResources).map(([type, resources]) => (
+              <div key={type}>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">
+                  {getResourceTypeLabel(type)}
+                </p>
+                <div className="space-y-1.5">
+                  {resources.map((r) => {
+                    const name = r.resource?.name
+                      || r.jobTitle?.name
+                      || (r.user ? `${r.user.firstName} ${r.user.lastName}` : 'Recurso')
+                    return (
+                      <div
+                        key={r.id}
+                        className="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm"
+                      >
+                        <span className="text-[13px] font-medium text-gray-900">{name}</span>
+                        <div className="flex items-center gap-3 text-[12px] text-gray-500">
+                          {r.quantity != null && r.quantity > 0 && (
+                            <span>{r.quantity} {r.unit || 'un'}</span>
+                          )}
+                          {r.hours != null && r.hours > 0 && (
+                            <span>{r.hours}h</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 8. Execução */}
       {hasExecutionDetails && (
-        <DetailSection title="Execução" icon="construction">
+        <DetailSection title="Execucao" icon="construction">
           <div className="space-y-4 px-1">
             {(workOrder.completedOn || workOrder.actualDuration) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                 {workOrder.completedOn && (
-                  <DetailField label="Concluída em" value={formatDateTime(workOrder.completedOn)} />
+                  <DetailField label="Concluida em" value={formatDateTime(workOrder.completedOn)} />
                 )}
                 {typeof workOrder.actualDuration === 'number' && (
-                  <DetailField label="Duração" value={`${workOrder.actualDuration} min`} />
+                  <DetailField label="Duracao" value={`${workOrder.actualDuration} min`} />
                 )}
               </div>
             )}
 
             {workOrder.executionNotes && (
               <DetailField
-                label="Descrição do Trabalho"
+                label="Descricao do Trabalho"
                 value={workOrder.executionNotes}
               />
             )}
@@ -460,7 +743,7 @@ export function WorkOrderDetailModal({
                             <p className="mt-1 text-xs text-gray-500">Resposta: {step.responseValue}</p>
                           )}
                           {step.optionType === 'OPTION' && step.selectedOption && (
-                            <p className="mt-1 text-xs text-gray-500">Opção: {step.selectedOption}</p>
+                            <p className="mt-1 text-xs text-gray-500">Opcao: {step.selectedOption}</p>
                           )}
                         </div>
                       </div>
@@ -472,7 +755,7 @@ export function WorkOrderDetailModal({
 
             {(workOrder.beforePhotoUrl || workOrder.afterPhotoUrl) && (
               <div>
-                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Fotos de Execução</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Fotos de Execucao</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {workOrder.beforePhotoUrl && (
                     <button
@@ -567,7 +850,7 @@ export function WorkOrderDetailModal({
     </div>
   ) : (
     <div className="flex-1 flex items-center justify-center p-6">
-      <p className="text-muted-foreground">Ordem de serviço não encontrada.</p>
+      <p className="text-muted-foreground">Ordem de servico nao encontrada.</p>
     </div>
   )
 
@@ -576,7 +859,7 @@ export function WorkOrderDetailModal({
       <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
           <div className="min-w-0">
-            <h2 className="text-lg font-black text-gray-900 truncate">{workOrder?.title || 'Ordem de Serviço'}</h2>
+            <h2 className="text-lg font-black text-gray-900 truncate">{workOrder?.title || 'Ordem de Servico'}</h2>
           </div>
           <PanelCloseButton onClick={onClose} />
         </div>
@@ -596,7 +879,7 @@ export function WorkOrderDetailModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={workOrder?.title || 'Ordem de Serviço'} size="wide" noPadding>
+    <Modal isOpen={isOpen} onClose={onClose} title={workOrder?.title || 'Ordem de Servico'} size="wide" noPadding>
       {content}
 
       {imageViewer && (

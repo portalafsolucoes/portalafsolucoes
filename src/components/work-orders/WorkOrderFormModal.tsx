@@ -5,6 +5,15 @@ import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
+
+interface AssetItem {
+  id: string
+  name: string
+  locationId?: string | null
+  parentAssetId?: string | null
+  parentAsset?: { id: string; protheusCode?: string; name: string } | null
+}
 
 interface WorkOrderFormModalProps {
   isOpen: boolean
@@ -20,10 +29,12 @@ export function WorkOrderFormModal({
   inPage = false
 }: WorkOrderFormModalProps) {
   const [loading, setLoading] = useState(false)
-  const [assets, setAssets] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
-  const [teams, setTeams] = useState<any[]>([])
+  const [assets, setAssets] = useState<AssetItem[]>([])
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [teamMembers, setTeamMembers] = useState<any[]>([])
+  const [woResources, setWoResources] = useState<TaskResourceItem[]>([])
 
   const [formData, setFormData] = useState({
     title: '',
@@ -37,7 +48,8 @@ export function WorkOrderFormModal({
     assignedToId: '',
     externalId: '',
     maintenanceFrequency: '',
-    frequencyValue: '1'
+    frequencyValue: '1',
+    estimatedDuration: ''
   })
 
   useEffect(() => {
@@ -60,15 +72,17 @@ export function WorkOrderFormModal({
       assignedToId: '',
       externalId: '',
       maintenanceFrequency: '',
-      frequencyValue: '1'
+      frequencyValue: '1',
+      estimatedDuration: ''
     })
     setTeamMembers([])
+    setWoResources([])
   }
 
   const loadData = async () => {
     try {
       const [assetsRes, locationsRes, teamsRes] = await Promise.all([
-        fetch('/api/assets'),
+        fetch('/api/assets?summary=true'),
         fetch('/api/locations'),
         fetch('/api/teams')
       ])
@@ -107,7 +121,19 @@ export function WorkOrderFormModal({
       const res = await fetch('/api/work-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          estimatedDuration: formData.estimatedDuration ? Number(formData.estimatedDuration) : null,
+          resources: woResources.map(r => ({
+            resourceType: r.resourceType,
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            quantity: r.quantity ?? null,
+            hours: r.hours ?? null,
+            unit: r.unit || null,
+          })),
+        })
       })
 
       if (res.ok) {
@@ -122,6 +148,30 @@ export function WorkOrderFormModal({
       setLoading(false)
     }
   }
+
+  const getAssetHierarchy = (assetId: string): string[] => {
+    const chain: string[] = []
+    const assetMap = new Map(assets.map(a => [a.id, a]))
+    let current = assetMap.get(assetId)
+    const visited = new Set<string>()
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id)
+      chain.unshift(current.name)
+      current = current.parentAssetId ? assetMap.get(current.parentAssetId) : undefined
+    }
+    return chain
+  }
+
+  const handleAssetChange = (assetId: string) => {
+    const asset = assets.find(a => a.id === assetId)
+    setFormData(prev => ({
+      ...prev,
+      assetId,
+      locationId: asset?.locationId || prev.locationId
+    }))
+  }
+
+  const selectedAssetHierarchy = formData.assetId ? getAssetHierarchy(formData.assetId) : []
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nova Ordem de Servico" size="wide" inPage={inPage}>
@@ -225,7 +275,7 @@ export function WorkOrderFormModal({
                 </label>
                 <select
                   value={formData.assetId}
-                  onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
+                  onChange={(e) => handleAssetChange(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Selecione um ativo</option>
@@ -254,6 +304,19 @@ export function WorkOrderFormModal({
                 </select>
               </div>
             </div>
+            {selectedAssetHierarchy.length > 1 && (
+              <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-[4px] px-3 py-2">
+                <Icon name="account_tree" className="text-sm text-gray-400 mr-1" />
+                {selectedAssetHierarchy.map((name, i) => (
+                  <span key={i} className="flex items-center gap-1">
+                    {i > 0 && <Icon name="chevron_right" className="text-sm text-gray-400" />}
+                    <span className={i === selectedAssetHierarchy.length - 1 ? 'font-semibold text-gray-700' : ''}>
+                      {name}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
           </ModalSection>
 
           <ModalSection title="Atribuicao">
@@ -344,6 +407,29 @@ export function WorkOrderFormModal({
               </div>
             </ModalSection>
           )}
+
+          <ModalSection title="Recursos">
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Tempo de Execucao (min)
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={formData.estimatedDuration}
+                onChange={(e) => setFormData({ ...formData, estimatedDuration: e.target.value })}
+                placeholder="Ex: 30"
+                className="w-full sm:w-40 px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Tempo que cada recurso de pessoa/ferramenta levara para executar a OS
+              </p>
+            </div>
+            <ResourceSelector
+              resources={woResources}
+              onChange={setWoResources}
+            />
+          </ModalSection>
         </div>
 
         <div className="flex gap-3 px-4 py-4 border-t border-border">

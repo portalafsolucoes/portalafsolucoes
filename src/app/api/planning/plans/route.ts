@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, getPriorityFromGut } from '@/lib/workOrderUtils'
+import { copyPlanResourcesToWorkOrder, copyPlanTasksToWorkOrder } from '@/lib/woResourceCopy'
 
 // GET - Listar planos de manutenção emitidos
 export async function GET(request: NextRequest) {
@@ -263,10 +264,11 @@ async function createWorkOrder(db: any, params: {
     dueMeterReading = currentPos + (ap.maintenanceTime || 0)
   }
 
+  const woId = generateId()
   const { error } = await db
     .from('WorkOrder')
     .insert({
-      id: generateId(),
+      id: woId,
       externalId,
       internalId: null,
       systemStatus: 'IN_SYSTEM',
@@ -286,6 +288,11 @@ async function createWorkOrder(db: any, params: {
       companyId,
       updatedAt: new Date().toISOString(),
     })
-  if (error) console.error('[createWO] Error:', error.message)
+  if (error) {
+    console.error('[createWO] Error:', error.message)
+  } else {
+    await copyPlanResourcesToWorkOrder(ap.id, woId)
+    await copyPlanTasksToWorkOrder(ap.id, woId)
+  }
   return { success: !error }
 }

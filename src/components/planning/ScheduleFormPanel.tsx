@@ -8,7 +8,7 @@ import { ModalSection } from '@/components/ui/ModalSection'
 
 interface ScheduleFormPanelProps {
   onClose: () => void
-  onSaved: () => void
+  onSaved: (newScheduleId?: string) => void
   inPage?: boolean
 }
 
@@ -37,7 +37,7 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
         setSaving(false)
         return
       }
-      onSaved()
+      onSaved(data.data?.id)
     } catch {
       setError('Erro de conexão')
     }
@@ -50,8 +50,8 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
         <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>
       )}
       <ModalSection title="Programação">
-        <div className="grid grid-cols-1 gap-3">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2">
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Descrição <span className="text-danger">*</span>
             </label>

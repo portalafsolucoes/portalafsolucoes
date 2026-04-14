@@ -395,6 +395,9 @@ model User {
   createdRAFs                FailureAnalysisReport[] @relation("RAFCreatedBy")
   createdSchedules           WorkOrderSchedule[]     @relation("ScheduleCreatedBy")
   resources                  Resource[]              @relation("UserResources")
+  standardTaskLabors         StandardMaintenanceTaskResource[] @relation("StandardTaskLabor")
+  assetTaskLabors            AssetMaintenanceTaskResource[]    @relation("AssetTaskLabor")
+  woResourceLabors           WorkOrderResource[]               @relation("WOResourceLabor")
 
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
@@ -655,6 +658,10 @@ model JobTitle {
 
   users User[] @relation("UserJobTitle")
 
+  standardTaskResources StandardMaintenanceTaskResource[] @relation("StandardTaskJobTitle")
+  assetTaskResources    AssetMaintenanceTaskResource[]    @relation("AssetTaskJobTitle")
+  woResources           WorkOrderResource[]               @relation("WOResourceJobTitle")
+
   @@unique([companyId, name])
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -701,6 +708,7 @@ model Resource {
 
   standardTaskResources StandardMaintenanceTaskResource[]
   assetTaskResources    AssetMaintenanceTaskResource[]
+  woResources           WorkOrderResource[] @relation("WOResource")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -1078,16 +1086,27 @@ model StandardMaintenanceTaskStep {
 
 model StandardMaintenanceTaskResource {
   id               String  @id @default(cuid())
+  resourceType     String  @default("MATERIAL") // SPECIALTY | LABOR | MATERIAL | TOOL
   resourceCount    Float   @default(1)
   quantity         Float   @default(0)
+  hours            Float   @default(0)
   unit             String  @default("H")
   generatesReserve Boolean @default(true)
 
   taskId String
   task   StandardMaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  resourceId String
-  resource   Resource @relation(fields: [resourceId], references: [id])
+  resourceId String?
+  resource   Resource? @relation(fields: [resourceId], references: [id])
+
+  jobTitleId String?
+  jobTitle   JobTitle? @relation("StandardTaskJobTitle", fields: [jobTitleId], references: [id])
+
+  userId String?
+  user   User? @relation("StandardTaskLabor", fields: [userId], references: [id])
+
+  @@index([jobTitleId])
+  @@index([userId])
 }
 
 model AssetMaintenancePlan {
@@ -1163,16 +1182,27 @@ model AssetMaintenanceTaskStep {
 
 model AssetMaintenanceTaskResource {
   id               String  @id @default(cuid())
+  resourceType     String  @default("MATERIAL") // SPECIALTY | LABOR | MATERIAL | TOOL
   resourceCount    Float   @default(1)
   quantity         Float   @default(0)
+  hours            Float   @default(0)
   unit             String  @default("H")
   generatesReserve Boolean @default(true)
 
   taskId String
   task   AssetMaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  resourceId String
-  resource   Resource @relation(fields: [resourceId], references: [id])
+  resourceId String?
+  resource   Resource? @relation(fields: [resourceId], references: [id])
+
+  jobTitleId String?
+  jobTitle   JobTitle? @relation("AssetTaskJobTitle", fields: [jobTitleId], references: [id])
+
+  userId String?
+  user   User? @relation("AssetTaskLabor", fields: [userId], references: [id])
+
+  @@index([jobTitleId])
+  @@index([userId])
 }
 
 // ============================================
@@ -1373,6 +1403,7 @@ model WorkOrder {
   additionalCosts AdditionalCost[]
   files           File[]
   scheduleItems   WorkOrderScheduleItem[]
+  woResources     WorkOrderResource[]
 
   @@index([companyId])
   @@index([assetId])
@@ -1385,13 +1416,15 @@ model WorkOrder {
 }
 
 model Task {
-  id        String   @id @default(cuid())
-  label     String
-  notes     String?
-  completed Boolean  @default(false)
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  label         String
+  notes         String?
+  completed     Boolean  @default(false)
+  order         Int      @default(0)
+  executionTime Int?
+  steps         Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
@@ -1430,6 +1463,31 @@ model AdditionalCost {
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   @@index([workOrderId])
+}
+
+model WorkOrderResource {
+  id           String  @id @default(cuid())
+  resourceType String  // SPECIALTY | LABOR | MATERIAL | TOOL
+  quantity     Float?
+  hours        Float?
+  unit         String?
+
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  resourceId String?
+  resource   Resource? @relation("WOResource", fields: [resourceId], references: [id])
+
+  jobTitleId String?
+  jobTitle   JobTitle? @relation("WOResourceJobTitle", fields: [jobTitleId], references: [id])
+
+  userId String?
+  user   User? @relation("WOResourceLabor", fields: [userId], references: [id])
+
+  @@index([workOrderId])
+  @@index([resourceId])
+  @@index([jobTitleId])
+  @@index([userId])
 }
 
 // ============================================
