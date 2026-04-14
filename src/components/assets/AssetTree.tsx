@@ -14,6 +14,8 @@ interface Asset {
   area?: string
   areaId?: string | null
   assetArea?: { id: string; name: string } | null
+  workCenterId?: string | null
+  assetWorkCenter?: { id: string; name: string } | null
   location?: { id: string; name: string }
   category?: { name: string; id: string }
   primaryUser?: { firstName: string; lastName: string }
@@ -161,18 +163,67 @@ interface AssetTreeProps {
   onAddSubAsset?: (parentAsset: Asset) => void
 }
 
+interface GroupNodeProps {
+  label: string
+  icon: string
+  iconColor: string
+  level: number
+  children: React.ReactNode
+}
+
+function GroupNode({ label, icon, iconColor, level, children }: GroupNodeProps) {
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-primary/5 rounded transition-colors"
+        style={{ paddingLeft: `${level * 16 + 8}px` }}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <button className="p-0.5 hover:bg-muted rounded">
+          {isExpanded ? (
+            <Icon name="expand_more" className="text-base text-muted-foreground" />
+          ) : (
+            <Icon name="chevron_right" className="text-base text-muted-foreground" />
+          )}
+        </button>
+        <Icon name={icon} className={`text-base ${iconColor}`} />
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+      </div>
+      {isExpanded && <div>{children}</div>}
+    </div>
+  )
+}
+
+const NO_KEY = '__none__'
+
+function sortedGroupKeys(keys: Iterable<string>, names: Map<string, string>): string[] {
+  return Array.from(keys).sort((a, b) => {
+    if (a === NO_KEY) return 1
+    if (b === NO_KEY) return -1
+    const nameA = names.get(a) || ''
+    const nameB = names.get(b) || ''
+    return nameA.localeCompare(nameB, 'pt-BR')
+  })
+}
+
+interface AreaGroup {
+  areaName: string
+  workCenterGroups: Map<string, { wcName: string; assets: Asset[] }>
+}
+
 export function AssetTree({ assets, onSelectAsset, selectedAssetId, onAddSubAsset }: AssetTreeProps) {
-  // Construir hierarquia de ativos
-  const buildHierarchy = (assets: Asset[]): Asset[] => {
+  const buildHierarchy = (assets: Asset[]): Map<string, AreaGroup> => {
     const assetMap = new Map<string, Asset>()
     const rootAssets: Asset[] = []
 
-    // Primeiro, criar mapa de todos os ativos
+    // Criar mapa de todos os ativos
     assets.forEach(asset => {
       assetMap.set(asset.id, { ...asset, childAssets: [] })
     })
 
-    // Depois, construir hierarquia
+    // Construir hierarquia pai-filho
     assets.forEach(asset => {
       const assetWithChildren = assetMap.get(asset.id)!
       if (!asset.parentAssetId) {
@@ -180,36 +231,88 @@ export function AssetTree({ assets, onSelectAsset, selectedAssetId, onAddSubAsse
       } else {
         const parent = assetMap.get(asset.parentAssetId)
         if (parent) {
-          if (!parent.childAssets) {
-            parent.childAssets = []
-          }
+          if (!parent.childAssets) parent.childAssets = []
           parent.childAssets.push(assetWithChildren)
         } else {
-          // Mantém o ativo visível mesmo se o pai não vier na listagem filtrada.
           rootAssets.push(assetWithChildren)
         }
       }
     })
 
-    return rootAssets
+    // Agrupar: Área → Centro de Trabalho → Ativos
+    const areaMap = new Map<string, AreaGroup>()
+
+    rootAssets.forEach(asset => {
+      const areaKey = asset.areaId || NO_KEY
+      const areaName = asset.assetArea?.name || 'Sem Área'
+      const wcKey = asset.workCenterId || NO_KEY
+      const wcName = asset.assetWorkCenter?.name || 'Sem Centro de Trabalho'
+
+      if (!areaMap.has(areaKey)) {
+        areaMap.set(areaKey, { areaName, workCenterGroups: new Map() })
+      }
+      const areaGroup = areaMap.get(areaKey)!
+
+      if (!areaGroup.workCenterGroups.has(wcKey)) {
+        areaGroup.workCenterGroups.set(wcKey, { wcName, assets: [] })
+      }
+      areaGroup.workCenterGroups.get(wcKey)!.assets.push(asset)
+    })
+
+    return areaMap
   }
 
-  const hierarchy = buildHierarchy(assets)
+  const areaMap = buildHierarchy(assets)
+
+  const areaNames = new Map<string, string>()
+  areaMap.forEach((group, key) => areaNames.set(key, group.areaName))
+  const sortedAreaKeys = sortedGroupKeys(areaMap.keys(), areaNames)
 
   return (
     <div className="h-full overflow-auto bg-card">
       <div className="p-2">
-        {hierarchy.length > 0 ? (
-          hierarchy.map((asset) => (
-            <AssetTreeNode
-              key={asset.id}
-              asset={asset}
-              level={0}
-              onSelect={onSelectAsset}
-              selectedId={selectedAssetId}
-              onAddSubAsset={onAddSubAsset}
-            />
-          ))
+        {sortedAreaKeys.length > 0 ? (
+          sortedAreaKeys.map((areaKey) => {
+            const areaGroup = areaMap.get(areaKey)!
+
+            const wcNames = new Map<string, string>()
+            areaGroup.workCenterGroups.forEach((wc, key) => wcNames.set(key, wc.wcName))
+            const sortedWcKeys = sortedGroupKeys(areaGroup.workCenterGroups.keys(), wcNames)
+
+            return (
+              <GroupNode
+                key={areaKey}
+                label={areaGroup.areaName}
+                icon="folder"
+                iconColor="text-amber-600"
+                level={0}
+              >
+                {sortedWcKeys.map((wcKey) => {
+                  const wcGroup = areaGroup.workCenterGroups.get(wcKey)!
+                  return (
+                    <GroupNode
+                      key={wcKey}
+                      label={wcGroup.wcName}
+                      icon="engineering"
+                      iconColor="text-blue-600"
+                      level={1}
+                    >
+                      {wcGroup.assets.map((asset) => (
+                        <AssetTreeNode
+                          key={asset.id}
+                          asset={asset}
+                          level={2}
+                          onSelect={onSelectAsset}
+                          selectedId={selectedAssetId}
+                          onAddSubAsset={onAddSubAsset}
+                        />
+                      ))}
+                    </GroupNode>
+                  )
+                })}
+              </GroupNode>
+            )
+          })
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <Icon name="error" className="text-3xl mx-auto mb-2 text-muted-foreground" />

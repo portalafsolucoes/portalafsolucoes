@@ -129,6 +129,8 @@ interface WorkOrderDetailModalProps {
   workOrderId: string
   onEdit: (workOrder: WorkOrderDetail) => void
   onDelete: (workOrderId: string) => void
+  onPrint?: (workOrder: WorkOrderDetail) => void
+  onFinalize?: (workOrder: WorkOrderDetail) => void
   currentUserId?: string
   inPage?: boolean
 }
@@ -137,18 +139,26 @@ function DetailSection({
   title,
   icon,
   children,
+  defaultOpen = true,
 }: {
   title: string
   icon: string
   children: ReactNode
+  defaultOpen?: boolean
 }) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="px-6 py-4 border-b border-gray-200">
-      <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-3 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm hover:bg-gray-200 transition-colors"
+      >
+        <Icon name={open ? 'expand_more' : 'chevron_right'} className="text-base text-gray-600" />
         <Icon name={icon} className="text-base text-gray-600" />
         <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">{title}</span>
-      </div>
-      {children}
+      </button>
+      {open && <div className="mt-4">{children}</div>}
     </div>
   )
 }
@@ -241,6 +251,8 @@ export function WorkOrderDetailModal({
   workOrderId,
   onEdit,
   onDelete,
+  onPrint,
+  onFinalize,
   currentUserId,
   inPage = false,
 }: WorkOrderDetailModalProps) {
@@ -335,6 +347,17 @@ export function WorkOrderDetailModal({
     onDelete(workOrder.id)
   }
 
+  const handlePrint = () => {
+    if (!workOrder || !onPrint) return
+    onPrint(workOrder)
+  }
+
+  const handleFinalize = () => {
+    if (!workOrder || !onFinalize) return
+    onFinalize(workOrder)
+    onClose()
+  }
+
   const sourceRequestImages = useMemo(
     () => workOrder?.sourceRequest?.files?.filter(isImageFile) ?? [],
     [workOrder?.sourceRequest?.files]
@@ -416,6 +439,8 @@ export function WorkOrderDetailModal({
       {!isOnlyExecutor && (
         <PanelActionButtons
           onEdit={handleEdit}
+          onPrint={onPrint ? handlePrint : undefined}
+          onFinalize={onFinalize ? handleFinalize : undefined}
           onDelete={handleDelete}
         />
       )}
@@ -436,9 +461,14 @@ export function WorkOrderDetailModal({
             <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 bg-white text-gray-900 shadow-sm">
               {getTypeLabel(workOrder.type)}
             </span>
+            {workOrder.osType && (
+              <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 bg-white text-gray-900 shadow-sm">
+                {workOrder.osType === 'CORRECTIVE_IMMEDIATE' ? 'Corretiva Imediata' : workOrder.osType === 'CORRECTIVE_PLANNED' ? 'Corretiva Planejada' : workOrder.osType === 'PREVENTIVE_MANUAL' ? 'Preventiva Manual' : workOrder.osType}
+              </span>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3 px-1">
             {workOrder.externalId && (
               <DetailField
                 label="Codigo Externo"
@@ -460,6 +490,15 @@ export function WorkOrderDetailModal({
             {workOrder.estimatedDuration != null && workOrder.estimatedDuration > 0 && (
               <DetailField label="Tempo de Execucao" value={`${workOrder.estimatedDuration} min`} />
             )}
+            {workOrder.maintenanceArea && (
+              <DetailField label="Area de Manutencao" value={workOrder.maintenanceArea.code ? `${workOrder.maintenanceArea.code} - ${workOrder.maintenanceArea.name}` : workOrder.maintenanceArea.name} />
+            )}
+            {workOrder.serviceType && (
+              <DetailField label="Tipo de Servico" value={`${workOrder.serviceType.code} - ${workOrder.serviceType.name}`} />
+            )}
+            {workOrder.raf && (
+              <DetailField label="RAF" value={<span className="font-mono text-amber-700">{workOrder.raf.rafNumber}</span>} />
+            )}
           </div>
 
           {workOrder.description && (
@@ -470,84 +509,7 @@ export function WorkOrderDetailModal({
         </div>
       </DetailSection>
 
-      {/* 2. Plano de Origem (condicional - só para OSs de plano) */}
-      {hasPlanOrigin && (
-        <DetailSection title="Plano de Origem" icon="engineering">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
-            {workOrder.assetMaintenancePlan?.name && (
-              <DetailField
-                label="Nome da Manutencao"
-                value={workOrder.assetMaintenancePlan.name}
-                className="sm:col-span-2"
-              />
-            )}
-            {workOrder.maintenancePlanExec?.planNumber && (
-              <DetailField
-                label="Plano de Execucao"
-                value={`Plano #${workOrder.maintenancePlanExec.planNumber}`}
-              />
-            )}
-            {typeof workOrder.assetMaintenancePlan?.sequence === 'number' && (
-              <DetailField
-                label="Sequencia"
-                value={workOrder.assetMaintenancePlan.sequence}
-              />
-            )}
-          </div>
-        </DetailSection>
-      )}
-
-      {/* 3. Solicitação de Serviço - SOMENTE quando sourceRequest existir */}
-      {hasSourceRequest && (
-        <DetailSection title="Solicitacao de Servico (SS)" icon="description">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
-            <DetailField
-              label="Descricao da Solicitacao"
-              className="sm:col-span-2"
-              value={workOrder.sourceRequest?.description || 'Sem descricao'}
-            />
-            {workOrder.sourceRequest?.createdBy && (
-              <DetailField
-                label="Solicitado por"
-                value={`${workOrder.sourceRequest.createdBy.firstName} ${workOrder.sourceRequest.createdBy.lastName}`}
-              />
-            )}
-            {workOrder.sourceRequest?.createdAt && (
-              <DetailField
-                label="Data da Solicitacao"
-                value={formatDateTime(workOrder.sourceRequest.createdAt)}
-              />
-            )}
-          </div>
-        </DetailSection>
-      )}
-
-      {/* Imagens da Solicitação Original */}
-      {sourceRequestImages.length > 0 && (
-        <DetailSection title="Imagens da Solicitacao Original" icon="image">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-1">
-            {sourceRequestImages.map((file) => (
-              <button
-                key={file.id}
-                type="button"
-                onClick={() => setImageViewer({ url: file.url, name: file.name })}
-                className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
-              >
-                <img
-                  src={file.url}
-                  alt={file.name}
-                  className="h-48 w-full object-cover"
-                />
-                <div className="border-t border-gray-200 px-3 py-2">
-                  <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </DetailSection>
-      )}
-
-      {/* 4. Ativo e Localização */}
+      {/* 2. Ativo e Localização */}
       {(workOrder.asset || workOrder.location) && (
         <DetailSection title="Ativo e Localizacao" icon="location_on">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
@@ -583,33 +545,34 @@ export function WorkOrderDetailModal({
         </DetailSection>
       )}
 
-      {/* 5. Atribuição */}
-      {(workOrder.assignedTo || (workOrder.assignedTeams && workOrder.assignedTeams.length > 0) || workOrder.createdBy) && (
-        <DetailSection title="Atribuicao" icon="group">
+      {/* 3. Plano de Origem (condicional - só para OSs de plano) */}
+      {hasPlanOrigin && (
+        <DetailSection title="Plano de Origem" icon="engineering">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
-            {workOrder.assignedTeams && workOrder.assignedTeams.length > 0 && (
+            {workOrder.assetMaintenancePlan?.name && (
               <DetailField
-                label="Equipe(s)"
-                value={workOrder.assignedTeams.map(t => t.name).join(', ')}
+                label="Nome da Manutencao"
+                value={workOrder.assetMaintenancePlan.name}
+                className="sm:col-span-2"
               />
             )}
-            {workOrder.assignedTo && (
+            {workOrder.maintenancePlanExec?.planNumber && (
               <DetailField
-                label="Executante"
-                value={`${workOrder.assignedTo.firstName} ${workOrder.assignedTo.lastName}`}
+                label="Plano de Execucao"
+                value={`Plano #${workOrder.maintenancePlanExec.planNumber}`}
               />
             )}
-            {workOrder.createdBy && (
+            {typeof workOrder.assetMaintenancePlan?.sequence === 'number' && (
               <DetailField
-                label="Criado por"
-                value={`${workOrder.createdBy.firstName} ${workOrder.createdBy.lastName}`}
+                label="Sequencia"
+                value={workOrder.assetMaintenancePlan.sequence}
               />
             )}
           </div>
         </DetailSection>
       )}
 
-      {/* 6. Tarefas */}
+      {/* 4. Tarefas */}
       {sortedTasks.length > 0 && (
         <DetailSection title={`Tarefas (${sortedTasks.length})`} icon="checklist">
           <div className="space-y-3 px-1">
@@ -663,7 +626,7 @@ export function WorkOrderDetailModal({
         </DetailSection>
       )}
 
-      {/* 7. Recursos */}
+      {/* 5. Recursos */}
       {groupedResources && (
         <DetailSection title="Recursos" icon="inventory_2">
           <div className="space-y-4 px-1">
@@ -696,6 +659,82 @@ export function WorkOrderDetailModal({
                   })}
                 </div>
               </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 6. Atribuição */}
+      {(workOrder.assignedTo || (workOrder.assignedTeams && workOrder.assignedTeams.length > 0) || workOrder.createdBy) && (
+        <DetailSection title="Atribuicao" icon="group">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+            {workOrder.assignedTeams && workOrder.assignedTeams.length > 0 && (
+              <DetailField
+                label="Equipe(s)"
+                value={workOrder.assignedTeams.map(t => t.name).join(', ')}
+              />
+            )}
+            {workOrder.assignedTo && (
+              <DetailField
+                label="Executante"
+                value={`${workOrder.assignedTo.firstName} ${workOrder.assignedTo.lastName}`}
+              />
+            )}
+            {workOrder.createdBy && (
+              <DetailField
+                label="Criado por"
+                value={`${workOrder.createdBy.firstName} ${workOrder.createdBy.lastName}`}
+              />
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 7. Solicitação de Serviço - SOMENTE quando sourceRequest existir */}
+      {hasSourceRequest && (
+        <DetailSection title="Solicitacao de Servico (SS)" icon="description">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 px-1">
+            <DetailField
+              label="Descricao da Solicitacao"
+              className="sm:col-span-2"
+              value={workOrder.sourceRequest?.description || 'Sem descricao'}
+            />
+            {workOrder.sourceRequest?.createdBy && (
+              <DetailField
+                label="Solicitado por"
+                value={`${workOrder.sourceRequest.createdBy.firstName} ${workOrder.sourceRequest.createdBy.lastName}`}
+              />
+            )}
+            {workOrder.sourceRequest?.createdAt && (
+              <DetailField
+                label="Data da Solicitacao"
+                value={formatDateTime(workOrder.sourceRequest.createdAt)}
+              />
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Imagens da Solicitação Original */}
+      {sourceRequestImages.length > 0 && (
+        <DetailSection title="Imagens da Solicitacao Original" icon="image">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-1">
+            {sourceRequestImages.map((file) => (
+              <button
+                key={file.id}
+                type="button"
+                onClick={() => setImageViewer({ url: file.url, name: file.name })}
+                className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
+              >
+                <img
+                  src={file.url}
+                  alt={file.name}
+                  className="h-48 w-full object-cover"
+                />
+                <div className="border-t border-gray-200 px-3 py-2">
+                  <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                </div>
+              </button>
             ))}
           </div>
         </DetailSection>

@@ -49,14 +49,29 @@ export async function GET(
       supabase.from('AssetPart').select('*, part:Part(*)').eq('assetId', id),
       supabase.from('WorkOrder').select('*').eq('assetId', id).order('createdAt', { ascending: false }).limit(10),
       asset.parentAssetId
-        ? supabase.from('Asset').select('id, name, protheusCode').eq('id', asset.parentAssetId).single()
+        ? supabase.from('Asset').select('id, name, protheusCode, parentAssetId').eq('id', asset.parentAssetId).single()
         : Promise.resolve({ data: null })
     ])
+
+    // Buscar avô (pai do pai) se existir
+    let grandparentAsset = null
+    if (parentResult.data?.parentAssetId) {
+      const { data: gp } = await supabase
+        .from('Asset')
+        .select('id, name, protheusCode')
+        .eq('id', parentResult.data.parentAssetId)
+        .single()
+      grandparentAsset = gp || null
+    }
+
+    const parentAsset = parentResult.data
+      ? { ...parentResult.data, parentAsset: grandparentAsset }
+      : null
 
     return NextResponse.json({
       data: {
         ...asset,
-        parentAsset: parentResult.data || null,
+        parentAsset,
         childAssets: childAssets || [],
         files: files || [],
         parts: parts || [],

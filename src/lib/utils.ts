@@ -39,6 +39,7 @@ export function getStatusColor(status: string): string {
     APPROVED: 'bg-success-light text-success-light-foreground',
     REJECTED: 'bg-danger-light text-danger-light-foreground',
     CANCELLED: 'bg-muted text-muted-foreground',
+    COMPLETED: 'bg-success-light text-success-light-foreground',
     // Asset status
     OPERATIONAL: 'bg-success-light text-success-light-foreground',
     DOWN: 'bg-danger-light text-danger-light-foreground',

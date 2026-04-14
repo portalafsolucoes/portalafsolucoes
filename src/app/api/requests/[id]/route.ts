@@ -29,7 +29,7 @@ export async function GET(
         createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(*),
-        generatedWorkOrder:WorkOrder(id, title, status)
+        asset:Asset(id, name, protheusCode, tag, parentAssetId)
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -42,7 +42,18 @@ export async function GET(
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ data: maintenanceRequest })
+    // Buscar OS vinculada separadamente (evita retorno como array do Supabase)
+    let generatedWorkOrder = null
+    if (maintenanceRequest.workOrderId) {
+      const { data: wo } = await supabase
+        .from('WorkOrder')
+        .select('id, title, status, externalId, internalId')
+        .eq('id', maintenanceRequest.workOrderId)
+        .single()
+      generatedWorkOrder = wo
+    }
+
+    return NextResponse.json({ data: { ...maintenanceRequest, generatedWorkOrder } })
   } catch (error) {
     console.error('Get request error:', error)
     return NextResponse.json(
@@ -71,7 +82,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { title, description, priority, dueDate, teamId, files = [] } = body
+    const { title, description, priority, dueDate, teamId, assetId, files = [] } = body
     const now = new Date().toISOString()
     const canonicalRole = normalizeUserRole(session)
 
@@ -103,14 +114,16 @@ export async function PUT(
         description,
         priority: priority || 'NONE',
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-        teamId: teamId || null
+        teamId: teamId || null,
+        assetId: assetId || null
       })
       .eq('id', id)
       .select(`
         *,
         createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
-        files:File(*)
+        files:File(*),
+        asset:Asset(id, name, protheusCode, tag, parentAssetId)
       `)
       .single()
 

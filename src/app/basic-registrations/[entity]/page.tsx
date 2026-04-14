@@ -337,10 +337,12 @@ export default function BasicRegistrationEntityPage() {
     {
       key: 'maintenance-areas', label: 'Areas de Manutencao', entity: 'maintenance-areas',
       fields: [
+        { key: 'code', label: 'Codigo', type: 'text', placeholder: 'Ex: MEC, ELE, INS' },
         { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Mecanica' },
         { key: 'protheusCode', label: 'Codigo Protheus', type: 'text', placeholder: 'Ex: MEC' },
       ],
       columns: [
+        { key: 'code', label: 'Codigo' },
         { key: 'name', label: 'Nome' },
         { key: 'protheusCode', label: 'Cod. Protheus' },
       ],

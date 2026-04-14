@@ -13,17 +13,41 @@ interface FinalizeModalProps {
   inPage?: boolean
 }
 
-interface ExecutionResource {
-  resourceId?: string
-  memberName: string
+type ResourceCategory = 'LABOR' | 'SPECIALTY' | 'MATERIAL' | 'TOOL'
+
+interface PlannedResource {
+  id: string
+  resourceType: ResourceCategory
+  resourceId?: string | null
+  jobTitleId?: string | null
+  userId?: string | null
+  resourceName: string
   quantity: number
   hours: number
+  unit: string
+}
+
+interface ExecutionResourceLabor {
+  type: 'LABOR' | 'SPECIALTY'
+  resourceName: string
+  plannedResourceId?: string
   startDate: string
   startTime: string
   endDate: string
   endTime: string
   observation: string
 }
+
+interface ExecutionResourceMaterial {
+  type: 'MATERIAL' | 'TOOL'
+  resourceName: string
+  plannedResourceId?: string
+  quantity: number
+  unit: string
+  observation: string
+}
+
+type ExecutionResource = ExecutionResourceLabor | ExecutionResourceMaterial
 
 interface ExecutionStep {
   stepId: string
@@ -49,6 +73,20 @@ interface PlanTask {
       options: { id: string; label: string; order: number }[]
     }
   }[]
+  resources: {
+    id: string
+    resourceType: string
+    resourceId: string | null
+    jobTitleId: string | null
+    userId: string | null
+    resourceCount: number
+    quantity: number
+    hours: number
+    unit: string
+    resource?: { id: string; name: string; type: string; unit?: string } | null
+    jobTitle?: { id: string; name: string } | null
+    user?: { id: string; firstName: string; lastName: string; jobTitle?: string } | null
+  }[]
 }
 
 interface CalendarWarning {
@@ -64,11 +102,34 @@ interface CalendarDetail {
   efficiency: string
 }
 
+const UNIT_OPTIONS = ['un', 'kg', 'L', 'm', 'm²', 'm³', 'pç', 'cx', 'par', 'jg', 'rl', 'gl', 'fl', 'tb', 'H']
+
+function getResourceTypeLabel(type: string): string {
+  switch (type) {
+    case 'MATERIAL': return 'Material'
+    case 'TOOL': return 'Ferramenta'
+    case 'LABOR': return 'Mao de Obra'
+    case 'SPECIALTY': return 'Especialidade'
+    default: return type
+  }
+}
+
+function getResourceTypeIcon(type: string): string {
+  switch (type) {
+    case 'MATERIAL': return 'inventory_2'
+    case 'TOOL': return 'construction'
+    case 'LABOR': return 'person'
+    case 'SPECIALTY': return 'engineering'
+    default: return 'category'
+  }
+}
+
+function isLaborType(type: string): boolean {
+  return type === 'LABOR' || type === 'SPECIALTY'
+}
+
 export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized, inPage = false }: FinalizeModalProps) {
-  const [resources, setResources] = useState<ExecutionResource[]>([{
-    memberName: '', quantity: 1, hours: 0,
-    startDate: '', startTime: '', endDate: '', endTime: '', observation: '',
-  }])
+  const [executionResources, setExecutionResources] = useState<ExecutionResource[]>([])
   const [executionNotes, setExecutionNotes] = useState('')
   const [generateCorrective, setGenerateCorrective] = useState(false)
   const [correctiveTitle, setCorrectiveTitle] = useState('')
@@ -76,47 +137,79 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Estado de calendário
+  // RAF pendente
+  const [rafPending, setRafPending] = useState<{ rafNumber: string; pendingCount: number } | null>(null)
+
+  // Calendário
   const [calendarWarnings, setCalendarWarnings] = useState<CalendarWarning[]>([])
   const [calendarDetails, setCalendarDetails] = useState<CalendarDetail[]>([])
   const [checkingCalendar, setCheckingCalendar] = useState(false)
 
-  // Carregar recursos do plano (se existirem) com suas informações de calendário
-  const [planResources, setPlanResources] = useState<any[]>([])
+  // Recursos previstos do plano
+  const [plannedResources, setPlannedResources] = useState<PlannedResource[]>([])
+  const [loadingPlan, setLoadingPlan] = useState(false)
+
   // Etapas de execução
   const [executionSteps, setExecutionSteps] = useState<ExecutionStep[]>([])
   const [loadingSteps, setLoadingSteps] = useState(false)
 
+  // Verificar se há RAF com PA pendente para OS corretiva imediata
   useEffect(() => {
     if (!isOpen || !workOrder) return
-    // Buscar recursos e tarefas do plano se houver assetMaintenancePlanId
-    if (workOrder.assetMaintenancePlanId) {
-      loadPlanResources(workOrder.assetMaintenancePlanId)
-      loadPlanSteps(workOrder.assetMaintenancePlanId)
+    setRafPending(null)
+    if (workOrder.osType === 'CORRECTIVE_IMMEDIATE' && workOrder.raf) {
+      // Buscar detalhes da RAF
+      fetch(`/api/rafs/${workOrder.raf.id}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.data?.actionPlan) {
+            const pending = (data.data.actionPlan as any[]).filter((a: any) => a.status !== 'COMPLETED')
+            if (pending.length > 0) {
+              setRafPending({ rafNumber: data.data.rafNumber, pendingCount: pending.length })
+            }
+          }
+        })
+        .catch(() => {})
     }
   }, [isOpen, workOrder])
 
-  const loadPlanResources = async (planId: string) => {
-    try {
-      const res = await fetch(`/api/maintenance-plans/asset/${planId}/resources`)
-      if (res.ok) {
-        const data = await res.json()
-        setPlanResources(data.data || [])
-      }
-    } catch {
-      // silently fail - it's informational
+  useEffect(() => {
+    if (!isOpen || !workOrder) return
+    if (workOrder.assetMaintenancePlanId) {
+      loadPlanTasksAndResources(workOrder.assetMaintenancePlanId)
     }
-  }
+  }, [isOpen, workOrder])
 
-  const loadPlanSteps = async (planId: string) => {
+  const loadPlanTasksAndResources = async (planId: string) => {
+    setLoadingPlan(true)
     setLoadingSteps(true)
     try {
       const res = await fetch(`/api/maintenance-plans/asset/${planId}/tasks`)
       if (res.ok) {
         const { data: tasks } = await res.json()
-        // Achatar todas as steps de todas as tasks em uma lista
+        const allPlannedResources: PlannedResource[] = []
         const allSteps: ExecutionStep[] = []
+
         for (const task of (tasks as PlanTask[] || [])) {
+          // Coletar recursos
+          for (const r of (task.resources || [])) {
+            const name = r.resource?.name
+              || r.jobTitle?.name
+              || (r.user ? `${r.user.firstName} ${r.user.lastName}` : 'Recurso')
+            allPlannedResources.push({
+              id: r.id,
+              resourceType: r.resourceType as ResourceCategory,
+              resourceId: r.resourceId,
+              jobTitleId: r.jobTitleId,
+              userId: r.userId,
+              resourceName: name,
+              quantity: r.quantity || r.resourceCount || 1,
+              hours: r.hours || 0,
+              unit: r.unit || (isLaborType(r.resourceType) ? 'H' : 'un'),
+            })
+          }
+
+          // Coletar etapas
           const sortedSteps = (task.steps || []).sort((a, b) => a.order - b.order)
           for (const ts of sortedSteps) {
             if (!ts.step) continue
@@ -131,11 +224,14 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
             })
           }
         }
+
+        setPlannedResources(allPlannedResources)
         setExecutionSteps(allSteps)
       }
     } catch {
       // silently fail
     }
+    setLoadingPlan(false)
     setLoadingSteps(false)
   }
 
@@ -147,10 +243,75 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
     })
   }
 
-  // Verificação de calendário quando datas/horas mudam
+  // Transferir previstos para realizados
+  const transferPlannedToRealized = () => {
+    const newResources: ExecutionResource[] = plannedResources.map(pr => {
+      if (isLaborType(pr.resourceType)) {
+        return {
+          type: pr.resourceType as 'LABOR' | 'SPECIALTY',
+          resourceName: pr.resourceName,
+          plannedResourceId: pr.id,
+          startDate: '',
+          startTime: '',
+          endDate: '',
+          endTime: '',
+          observation: '',
+        } as ExecutionResourceLabor
+      } else {
+        return {
+          type: pr.resourceType as 'MATERIAL' | 'TOOL',
+          resourceName: pr.resourceName,
+          plannedResourceId: pr.id,
+          quantity: pr.quantity,
+          unit: pr.unit || 'un',
+          observation: '',
+        } as ExecutionResourceMaterial
+      }
+    })
+    setExecutionResources(prev => [...prev, ...newResources])
+  }
+
+  // Adicionar recurso realizado
+  const addLaborResource = () => {
+    setExecutionResources(prev => [...prev, {
+      type: 'LABOR',
+      resourceName: '',
+      startDate: '',
+      startTime: '',
+      endDate: '',
+      endTime: '',
+      observation: '',
+    } as ExecutionResourceLabor])
+  }
+
+  const addMaterialResource = () => {
+    setExecutionResources(prev => [...prev, {
+      type: 'MATERIAL',
+      resourceName: '',
+      quantity: 1,
+      unit: 'un',
+      observation: '',
+    } as ExecutionResourceMaterial])
+  }
+
+  const removeResource = (index: number) => {
+    setExecutionResources(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateResource = (index: number, field: string, value: any) => {
+    setExecutionResources(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  // Verificação de calendário
   const checkCalendarAvailability = useCallback(async () => {
-    const validResources = resources.filter(r => r.resourceId && r.startDate)
-    if (validResources.length === 0) {
+    const laborResources = executionResources.filter(
+      r => isLaborType(r.type) && (r as ExecutionResourceLabor).startDate && r.plannedResourceId
+    )
+    if (laborResources.length === 0) {
       setCalendarWarnings([])
       setCalendarDetails([])
       return
@@ -158,41 +319,41 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
 
     setCheckingCalendar(true)
     try {
-      const resourceIds = validResources.map(r => r.resourceId!).join(',')
-      const res = await fetch(`/api/resources/availability?resourceIds=${resourceIds}&date=${validResources[0].startDate}`)
-      if (!res.ok) return
+      const planRes = plannedResources.filter(pr => pr.resourceId)
+      if (planRes.length === 0) { setCheckingCalendar(false); return }
+
+      const resourceIds = planRes.map(pr => pr.resourceId!).join(',')
+      const firstDate = (laborResources[0] as ExecutionResourceLabor).startDate
+      const res = await fetch(`/api/resources/availability?resourceIds=${resourceIds}&date=${firstDate}`)
+      if (!res.ok) { setCheckingCalendar(false); return }
 
       const { data } = await res.json()
       const warnings: CalendarWarning[] = []
       const details: CalendarDetail[] = []
 
-      for (const r of validResources) {
-        const resAvail = data?.find((d: any) => d.resourceId === r.resourceId)
+      for (const r of laborResources) {
+        const lr = r as ExecutionResourceLabor
+        const planned = plannedResources.find(pr => pr.id === r.plannedResourceId)
+        if (!planned?.resourceId) continue
+
+        const resAvail = data?.find((d: any) => d.resourceId === planned.resourceId)
         if (!resAvail?.hasCalendar) continue
 
-        const resourceLabel = r.memberName || resAvail.resourceName || 'Recurso'
+        const resourceLabel = lr.resourceName || resAvail.resourceName || 'Recurso'
         const resourceWarnings: string[] = []
 
-        // Verificar data início
-        if (r.startDate && resAvail.dateAvailability && !resAvail.dateAvailability.isWorkingDay) {
-          resourceWarnings.push(`${r.startDate} não é dia útil no calendário "${resAvail.calendarName}"`)
+        if (lr.startDate && resAvail.dateAvailability && !resAvail.dateAvailability.isWorkingDay) {
+          resourceWarnings.push(`${lr.startDate} nao e dia util no calendario "${resAvail.calendarName}"`)
         }
 
-        // Verificar horários
-        if (r.startTime && resAvail.dateAvailability) {
-          const shiftInfo = resAvail.weeklySummary?.find((s: any) => s.hours > 0)
-          if (shiftInfo && resAvail.dateAvailability.availableHours > 0) {
-            // Informativo: mostrar horas disponíveis
-            details.push({
-              resource: resourceLabel,
-              calendar: resAvail.calendarName,
-              registeredHours: r.hours || 0,
-              effectiveHours: resAvail.dateAvailability.availableHours,
-              efficiency: r.hours > 0
-                ? Math.round((Math.min(r.hours, resAvail.dateAvailability.availableHours) / r.hours) * 100) + '%'
-                : '-',
-            })
-          }
+        if (lr.startDate && resAvail.dateAvailability?.availableHours > 0) {
+          details.push({
+            resource: resourceLabel,
+            calendar: resAvail.calendarName,
+            registeredHours: 0,
+            effectiveHours: resAvail.dateAvailability.availableHours,
+            efficiency: '-',
+          })
         }
 
         if (resourceWarnings.length > 0) {
@@ -206,50 +367,56 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
       // silently fail
     }
     setCheckingCalendar(false)
-  }, [resources])
+  }, [executionResources, plannedResources])
 
-  // Debounce na verificação de calendário
   useEffect(() => {
-    const hasResourceWithCalendarData = resources.some(r => r.resourceId && r.startDate)
-    if (!hasResourceWithCalendarData) return
-
+    const hasLabor = executionResources.some(
+      r => isLaborType(r.type) && (r as ExecutionResourceLabor).startDate
+    )
+    if (!hasLabor) return
     const timer = setTimeout(checkCalendarAvailability, 500)
     return () => clearTimeout(timer)
-  }, [resources, checkCalendarAvailability])
-
-  const addResource = () => {
-    setResources([...resources, {
-      memberName: '', quantity: 1, hours: 0,
-      startDate: '', startTime: '', endDate: '', endTime: '', observation: '',
-    }])
-  }
-
-  const removeResource = (index: number) => {
-    setResources(resources.filter((_, i) => i !== index))
-  }
-
-  const updateResource = (index: number, field: string, value: any) => {
-    const updated = [...resources]
-    updated[index] = { ...updated[index], [field]: value }
-    setResources(updated)
-  }
-
-  const selectPlanResource = (index: number, planRes: any) => {
-    const updated = [...resources]
-    updated[index] = {
-      ...updated[index],
-      resourceId: planRes.resourceId,
-      memberName: planRes.resourceName || planRes.resource?.name || '',
-    }
-    setResources(updated)
-  }
+  }, [executionResources, checkCalendarAvailability])
 
   const handleFinalize = async () => {
     setSaving(true)
     setError('')
     try {
+      // Converter executionResources para o formato esperado pela API
+      const apiResources = executionResources
+        .filter(r => r.resourceName)
+        .map(r => {
+          if (isLaborType(r.type)) {
+            const lr = r as ExecutionResourceLabor
+            return {
+              memberName: lr.resourceName,
+              quantity: 1,
+              hours: 0,
+              startDate: lr.startDate,
+              startTime: lr.startTime,
+              endDate: lr.endDate,
+              endTime: lr.endTime,
+              observation: lr.observation,
+              resourceId: r.plannedResourceId || undefined,
+            }
+          } else {
+            const mr = r as ExecutionResourceMaterial
+            return {
+              memberName: mr.resourceName,
+              quantity: mr.quantity,
+              hours: 0,
+              startDate: '',
+              startTime: '',
+              endDate: '',
+              endTime: '',
+              observation: mr.observation,
+              resourceId: r.plannedResourceId || undefined,
+            }
+          }
+        })
+
       const body: any = {
-        executionResources: resources.filter(r => r.memberName),
+        executionResources: apiResources,
         executionSteps: executionSteps.length > 0
           ? executionSteps.map(s => ({
               stepId: s.stepId,
@@ -264,11 +431,12 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         generateCorrectiveOS: generateCorrective,
       }
 
-      // Calcular datas reais da primeira e última entrada
-      const validResources = resources.filter(r => r.startDate)
-      if (validResources.length > 0) {
-        const first = validResources[0]
-        const last = validResources[validResources.length - 1]
+      // Calcular datas reais da primeira e última entrada de mão de obra
+      const laborEntries = executionResources.filter(r => isLaborType(r.type)) as ExecutionResourceLabor[]
+      const validLabor = laborEntries.filter(r => r.startDate)
+      if (validLabor.length > 0) {
+        const first = validLabor[0]
+        const last = validLabor[validLabor.length - 1]
         if (first.startDate && first.startTime) {
           body.realMaintenanceStart = `${first.startDate}T${first.startTime || '00:00'}:00`
         }
@@ -301,22 +469,42 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
       onFinalized()
       onClose()
     } catch {
-      setError('Erro de conexão')
+      setError('Erro de conexao')
     }
     setSaving(false)
   }
 
   if (!workOrder) return null
 
+  const laborRealized = executionResources.filter(r => isLaborType(r.type))
+  const materialRealized = executionResources.filter(r => !isLaborType(r.type))
+  const plannedLabor = plannedResources.filter(r => isLaborType(r.resourceType))
+  const plannedMaterial = plannedResources.filter(r => !isLaborType(r.resourceType))
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Finalizar OS: ${workOrder.title}`} size="wide" inPage={inPage}>
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-4">
         {error && <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>}
+
+        {/* Aviso de RAF com PA pendente */}
+        {rafPending && (
+          <div className="p-3 bg-danger/10 border border-danger/30 rounded-[4px] flex items-start gap-3">
+            <Icon name="block" className="text-xl text-danger flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-danger">Finalização bloqueada</p>
+              <p className="text-sm text-foreground mt-1">
+                A RAF <span className="font-mono font-bold">{rafPending.rafNumber}</span> possui{' '}
+                <span className="font-bold">{rafPending.pendingCount}</span> item(ns) do Plano de Ação ainda não concluído(s).
+                Finalize todos os itens do PA antes de encerrar esta OS.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Info da OS */}
         <div className="p-3 bg-muted rounded-[4px] text-sm">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div><span className="text-muted-foreground">OS:</span> <span className="font-medium">{workOrder.internalId || workOrder.id.slice(0,8)}</span></div>
+            <div><span className="text-muted-foreground">OS:</span> <span className="font-medium">{workOrder.internalId || workOrder.id.slice(0, 8)}</span></div>
             <div><span className="text-muted-foreground">Ativo:</span> <span className="font-medium">{workOrder.asset?.name || '-'}</span></div>
             <div><span className="text-muted-foreground">Status:</span> <span className="font-medium">{workOrder.status}</span></div>
             <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{workOrder.type}</span></div>
@@ -325,39 +513,35 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
 
         {/* Avisos de Calendário */}
         {calendarWarnings.length > 0 && (
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-[4px]">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-[4px]">
             <div className="flex items-center gap-2 mb-2">
-              <Icon name="warning" className="text-base text-amber-600 dark:text-amber-400" />
-              <span className="text-sm font-medium text-amber-800 dark:text-amber-300">Avisos de Calendário</span>
+              <Icon name="warning" className="text-base text-amber-600" />
+              <span className="text-sm font-medium text-amber-800">Avisos de Calendario</span>
             </div>
             <ul className="space-y-1">
               {calendarWarnings.map((cw, i) => (
-                <li key={i} className="text-xs text-amber-700 dark:text-amber-400">
-                  <span className="font-medium">{cw.resource}:</span>{' '}
-                  {cw.warnings.join('; ')}
+                <li key={i} className="text-xs text-amber-700">
+                  <span className="font-medium">{cw.resource}:</span> {cw.warnings.join('; ')}
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        {/* Detalhes de eficiência de calendário */}
         {calendarDetails.length > 0 && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-[4px]">
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-[4px]">
             <div className="flex items-center gap-2 mb-2">
-              <Icon name="schedule" className="text-base text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-info-light-foreground dark:text-blue-300">Disponibilidade por Calendário</span>
+              <Icon name="schedule" className="text-base text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Disponibilidade por Calendario</span>
             </div>
             <div className="space-y-1">
               {calendarDetails.map((cd, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="text-blue-700 dark:text-blue-400">
+                  <span className="text-blue-700">
                     <span className="font-medium">{cd.resource}</span>
-                    <span className="text-blue-500 dark:text-blue-500 ml-1">({cd.calendar})</span>
+                    <span className="text-blue-500 ml-1">({cd.calendar})</span>
                   </span>
-                  <span className="text-blue-600 dark:text-blue-400">
-                    {cd.effectiveHours}h disponíveis no dia
-                  </span>
+                  <span className="text-blue-600">{cd.effectiveHours}h disponiveis no dia</span>
                 </div>
               ))}
             </div>
@@ -369,12 +553,11 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Icon name="check_box" className="text-base" />
-              Etapas de Execução ({executionSteps.filter(s => s.completed).length}/{executionSteps.length})
+              Etapas de Execucao ({executionSteps.filter(s => s.completed).length}/{executionSteps.length})
             </h3>
             <div className="space-y-2">
               {executionSteps.map((step, i) => (
                 <div key={i} className="p-3 rounded-[4px] space-y-2">
-                  {/* Linha principal: checkbox + nome */}
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -391,14 +574,13 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                           {step.optionType === 'RESPONSE' ? (
                             <><Icon name="chat" className="text-xs" /> Resposta</>
                           ) : (
-                            <><Icon name="list" className="text-xs" /> Opção</>
+                            <><Icon name="list" className="text-xs" /> Opcao</>
                           )}
                         </span>
                       )}
                     </div>
                   </label>
 
-                  {/* Campo de Resposta (RESPONSE) */}
                   {step.optionType === 'RESPONSE' && step.completed && (
                     <div className="pl-6">
                       <input
@@ -406,18 +588,17 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                         value={step.responseValue}
                         onChange={e => updateStep(i, 'responseValue', e.target.value)}
                         placeholder="Digite o valor observado (ex: 72°C, 2.3 mm/s...)"
-                        className="w-full px-2 py-1.5 text-sm rounded bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-2 py-1.5 text-sm rounded bg-card border border-gray-300 focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                   )}
 
-                  {/* Campo de Opção (OPTION) */}
                   {step.optionType === 'OPTION' && step.completed && (
                     <div className="pl-6">
                       <select
                         value={step.selectedOption}
                         onChange={e => updateStep(i, 'selectedOption', e.target.value)}
-                        className="w-full px-2 py-1.5 text-sm rounded bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-2 py-1.5 text-sm rounded bg-card border border-gray-300 focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <option value="">Selecione...</option>
                         {step.options.map(opt => (
@@ -438,113 +619,235 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           </div>
         )}
 
-        {/* Dados Reais de Execução */}
+        {/* ============================== */}
+        {/* INSUMOS PREVISTOS (read-only) */}
+        {/* ============================== */}
+        {plannedResources.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Icon name="assignment" className="text-base" />
+                Insumos Previstos
+              </h3>
+              <Button size="sm" onClick={transferPlannedToRealized} className="bg-gray-900 text-white hover:bg-gray-800">
+                <Icon name="arrow_downward" className="text-sm mr-1" /> Transferir para Realizados
+              </Button>
+            </div>
+
+            <div className="rounded-[4px] border border-gray-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-3 py-2 text-[10px] font-bold text-gray-500 uppercase">Tipo</th>
+                    <th className="text-left px-3 py-2 text-[10px] font-bold text-gray-500 uppercase">Recurso</th>
+                    <th className="text-center px-3 py-2 text-[10px] font-bold text-gray-500 uppercase">Qtd</th>
+                    <th className="text-center px-3 py-2 text-[10px] font-bold text-gray-500 uppercase">Unidade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {plannedResources.map((pr) => (
+                    <tr key={pr.id} className="border-b border-gray-100">
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                          <Icon name={getResourceTypeIcon(pr.resourceType)} className="text-sm" />
+                          {getResourceTypeLabel(pr.resourceType)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-sm font-medium text-gray-900">{pr.resourceName}</td>
+                      <td className="px-3 py-2 text-center text-sm">{pr.quantity}</td>
+                      <td className="px-3 py-2 text-center text-sm">{pr.unit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {loadingPlan && (
+          <div className="text-center py-3 text-sm text-muted-foreground">
+            Carregando recursos do plano...
+          </div>
+        )}
+
+        {/* ============================== */}
+        {/* INSUMOS REALIZADOS (editável) */}
+        {/* ============================== */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">Dados Reais de Execução</h3>
-            <Button size="sm" variant="outline" onClick={addResource}>
-              <Icon name="add" className="text-sm mr-1" /> Recurso
-            </Button>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Icon name="checklist" className="text-base" />
+              Insumos Realizados
+            </h3>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={addLaborResource}>
+                <Icon name="person_add" className="text-sm mr-1" /> Mao de Obra
+              </Button>
+              <Button size="sm" variant="outline" onClick={addMaterialResource}>
+                <Icon name="add" className="text-sm mr-1" /> Material/Ferramenta
+              </Button>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {resources.map((r, i) => (
-              <div key={i} className="p-3 rounded-[4px] space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Recurso #{i + 1}</span>
-                  <div className="flex items-center gap-2">
-                    {/* Seletor de recurso do plano (se disponível) */}
-                    {planResources.length > 0 && (
-                      <select
-                        value={r.resourceId || ''}
-                        onChange={e => {
-                          const selected = planResources.find((pr: any) => pr.resourceId === e.target.value)
-                          if (selected) selectPlanResource(i, selected)
-                          else updateResource(i, 'resourceId', '')
-                        }}
-                        className="px-2 py-1 text-xs rounded bg-card"
-                        title="Vincular a recurso do plano"
-                      >
-                        <option value="">Vincular recurso...</option>
-                        {planResources.map((pr: any) => (
-                          <option key={pr.resourceId} value={pr.resourceId}>
-                            {pr.resourceName || pr.resource?.name || pr.resourceId?.slice(0, 8)}
-                            {pr.calendarName ? ` (${pr.calendarName})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    {r.resourceId && (
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/30 rounded text-xs text-blue-600 dark:text-blue-400" title="Recurso vinculado ao calendário">
-                        <Icon name="calendar_today" className="text-sm" />
-                      </span>
-                    )}
-                    {resources.length > 1 && (
-                      <button onClick={() => removeResource(i)} className="p-1 hover:bg-danger-light rounded">
-                        <Icon name="delete" className="text-sm text-danger" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Nome do Integrante</label>
-                    <input type="text" value={r.memberName} onChange={e => updateResource(i, 'memberName', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Qtd. Recurso</label>
-                    <input type="number" value={r.quantity} onChange={e => updateResource(i, 'quantity', Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Horas</label>
-                    <input type="number" step="0.5" value={r.hours} onChange={e => updateResource(i, 'hours', Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Data Início</label>
-                    <input type="date" value={r.startDate} onChange={e => updateResource(i, 'startDate', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Hora Início</label>
-                    <input type="time" value={r.startTime} onChange={e => updateResource(i, 'startTime', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Data Fim</label>
-                    <input type="date" value={r.endDate} onChange={e => updateResource(i, 'endDate', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Hora Fim</label>
-                    <input type="time" value={r.endTime} onChange={e => updateResource(i, 'endTime', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm rounded bg-card" />
-                  </div>
-                </div>
+          {executionResources.length === 0 ? (
+            <div className="text-center py-6 text-sm text-muted-foreground border border-dashed border-gray-300 rounded-[4px]">
+              <Icon name="inventory_2" className="text-3xl text-gray-300 mb-2" />
+              <p>Nenhum insumo realizado adicionado.</p>
+              <p className="text-xs mt-1">
+                {plannedResources.length > 0
+                  ? 'Use "Transferir para Realizados" para copiar os previstos ou adicione manualmente.'
+                  : 'Adicione mao de obra ou materiais/ferramentas utilizados.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Mão de Obra Realizada */}
+              {laborRealized.length > 0 && (
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Observação</label>
-                  <input type="text" value={r.observation} onChange={e => updateResource(i, 'observation', e.target.value)}
-                    className="w-full px-2 py-1.5 text-sm rounded bg-card" />
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                    <Icon name="person" className="text-sm" /> Mao de Obra / Especialidade
+                  </p>
+                  <div className="space-y-2">
+                    {laborRealized.map((r, globalIdx) => {
+                      const idx = executionResources.indexOf(r)
+                      const lr = r as ExecutionResourceLabor
+                      return (
+                        <div key={idx} className="p-3 border border-gray-200 rounded-[4px] bg-white space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                              <Icon name={getResourceTypeIcon(lr.type)} className="text-sm" />
+                              {getResourceTypeLabel(lr.type)} #{globalIdx + 1}
+                            </span>
+                            <button onClick={() => removeResource(idx)} className="p-1 hover:bg-danger-light rounded">
+                              <Icon name="delete" className="text-sm text-danger" />
+                            </button>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Nome</label>
+                            <input
+                              type="text"
+                              value={lr.resourceName}
+                              onChange={e => updateResource(idx, 'resourceName', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                              placeholder="Nome do integrante"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Data Inicio</label>
+                              <input type="date" value={lr.startDate} onChange={e => updateResource(idx, 'startDate', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card" />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Hora Inicio</label>
+                              <input type="time" value={lr.startTime} onChange={e => updateResource(idx, 'startTime', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card" />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Data Fim</label>
+                              <input type="date" value={lr.endDate} onChange={e => updateResource(idx, 'endDate', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card" />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Hora Fim</label>
+                              <input type="time" value={lr.endTime} onChange={e => updateResource(idx, 'endTime', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Observacao</label>
+                            <input type="text" value={lr.observation} onChange={e => updateResource(idx, 'observation', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card"
+                              placeholder="Observacao..." />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+
+              {/* Materiais/Ferramentas Realizados */}
+              {materialRealized.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                    <Icon name="inventory_2" className="text-sm" /> Materiais / Ferramentas
+                  </p>
+                  <div className="space-y-2">
+                    {materialRealized.map((r, globalIdx) => {
+                      const idx = executionResources.indexOf(r)
+                      const mr = r as ExecutionResourceMaterial
+                      return (
+                        <div key={idx} className="p-3 border border-gray-200 rounded-[4px] bg-white space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                              <Icon name={getResourceTypeIcon(mr.type)} className="text-sm" />
+                              {getResourceTypeLabel(mr.type)} #{globalIdx + 1}
+                            </span>
+                            <button onClick={() => removeResource(idx)} className="p-1 hover:bg-danger-light rounded">
+                              <Icon name="delete" className="text-sm text-danger" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Nome</label>
+                              <input
+                                type="text"
+                                value={mr.resourceName}
+                                onChange={e => updateResource(idx, 'resourceName', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Nome do recurso"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Quantidade</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={mr.quantity}
+                                onChange={e => updateResource(idx, 'quantity', Number(e.target.value))}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">Unidade</label>
+                              <select
+                                value={mr.unit}
+                                onChange={e => updateResource(idx, 'unit', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card"
+                              >
+                                {UNIT_OPTIONS.map(u => (
+                                  <option key={u} value={u}>{u}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Observacao</label>
+                            <input type="text" value={mr.observation} onChange={e => updateResource(idx, 'observation', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card"
+                              placeholder="Observacao..." />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Observação geral */}
         <div>
-          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Observação Geral</label>
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Observacao Geral</label>
           <textarea value={executionNotes} onChange={e => setExecutionNotes(e.target.value)}
-            rows={3} className="w-full px-3 py-2 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="Notas sobre a execução..." />
+            rows={3} className="w-full px-3 py-2 text-sm rounded-[4px] border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Notas sobre a execucao..." />
         </div>
 
         {/* Emitir OS corretiva */}
-        <div className="p-3 rounded-[4px] space-y-3">
+        <div className="p-3 border border-gray-200 rounded-[4px] space-y-3">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={generateCorrective} onChange={e => setGenerateCorrective(e.target.checked)} className="rounded border-border" />
             <span className="text-sm font-medium">Emitir OS Corretiva?</span>
@@ -552,14 +855,14 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           {generateCorrective && (
             <div className="space-y-3 pl-6">
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Título da OS Corretiva</label>
+                <label className="block text-xs text-muted-foreground mb-1">Titulo da OS Corretiva</label>
                 <input type="text" value={correctiveTitle} onChange={e => setCorrectiveTitle(e.target.value)}
-                  placeholder="Ex: Substituição de rolamento" className="w-full px-2 py-1.5 text-sm rounded bg-card" />
+                  placeholder="Ex: Substituicao de rolamento" className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card" />
               </div>
               <div>
                 <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
                 <select value={correctiveType} onChange={e => setCorrectiveType(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm rounded bg-card">
+                  className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card">
                   <option value="CORRECTIVE_PLANNED">Corretiva Programada</option>
                   <option value="CORRECTIVE_IMMEDIATE">Corretiva Imediata</option>
                 </select>
@@ -571,7 +874,8 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         {/* Botões */}
         <div className="flex gap-3 px-4 py-4 border-t border-border">
           <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={handleFinalize} disabled={saving} className="flex-1">
+          <Button onClick={handleFinalize} disabled={saving || !!rafPending} className="flex-1 bg-gray-900 text-white hover:bg-gray-800">
+            <Icon name="check_circle" className="text-base mr-2" />
             {saving ? 'Finalizando...' : 'Finalizar OS'}
           </Button>
         </div>

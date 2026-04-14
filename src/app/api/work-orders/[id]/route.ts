@@ -38,7 +38,10 @@ export async function GET(
           createdBy:User!createdById(id, firstName, lastName, email)
         ),
         assetMaintenancePlan:AssetMaintenancePlan(id, name, sequence),
-        maintenancePlanExec:MaintenancePlanExecution(id, planNumber)
+        maintenancePlanExec:MaintenancePlanExecution(id, planNumber),
+        serviceType:ServiceType(id, code, name),
+        maintenanceArea:MaintenanceArea(id, name, code),
+        raf:FailureAnalysisReport(id, rafNumber)
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -164,6 +167,7 @@ export async function PATCH(
       title: body.title,
       description: body.description,
       type: body.type,
+      osType: body.osType !== undefined ? (body.osType || null) : undefined,
       priority: body.priority,
       status: body.status,
       dueDate: body.dueDate ? new Date(body.dueDate).toISOString() : null,
@@ -172,6 +176,8 @@ export async function PATCH(
       locationId: validLocationId,
       categoryId: validCategoryId,
       assignedToId: validAssignedToId,
+      serviceTypeId: body.serviceTypeId !== undefined ? (body.serviceTypeId || null) : undefined,
+      maintenanceAreaId: body.maintenanceAreaId !== undefined ? (body.maintenanceAreaId || null) : undefined,
       maintenanceFrequency: body.maintenanceFrequency || null,
       frequencyValue: body.frequencyValue ? parseInt(body.frequencyValue) : null,
       externalId: body.externalId || null,

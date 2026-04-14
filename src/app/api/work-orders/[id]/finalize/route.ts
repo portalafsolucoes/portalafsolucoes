@@ -5,7 +5,6 @@ import { getCalendarsForResources } from '@/lib/calendarData'
 import {
   validateTimeAgainstCalendar,
   calculateEffectiveHours,
-  formatDateLocal,
 } from '@/lib/calendarUtils'
 
 // POST - Finalizar uma Ordem de Serviço com dados reais de execução
@@ -32,6 +31,29 @@ export async function POST(
 
     if (wo.status === 'COMPLETE') {
       return NextResponse.json({ error: 'OS já finalizada' }, { status: 400 })
+    }
+
+    // Verificar se a OS é corretiva imediata e tem RAF com PA incompleto
+    if (wo.osType === 'CORRECTIVE_IMMEDIATE') {
+      const { data: raf } = await supabase
+        .from('FailureAnalysisReport')
+        .select('id, rafNumber, actionPlan')
+        .eq('workOrderId', id)
+        .single()
+
+      if (raf) {
+        const actionPlan = (raf.actionPlan as any[]) || []
+        if (actionPlan.length > 0) {
+          const pendingItems = actionPlan.filter(
+            (item: any) => item.status !== 'COMPLETED'
+          )
+          if (pendingItems.length > 0) {
+            return NextResponse.json({
+              error: `A RAF ${raf.rafNumber} possui ${pendingItems.length} item(ns) do Plano de Ação ainda não concluído(s). Finalize todos os itens do PA antes de encerrar esta OS.`
+            }, { status: 400 })
+          }
+        }
+      }
     }
 
     const body = await request.json()
@@ -170,6 +192,25 @@ export async function POST(
       .single()
 
     if (updateError) throw updateError
+
+    // Finalizar a SS vinculada (se existir)
+    if (wo.sourceRequestId) {
+      const { data: linkedRequest } = await supabase
+        .from('Request')
+        .select('id, status')
+        .eq('id', wo.sourceRequestId)
+        .single()
+
+      if (linkedRequest && linkedRequest.status === 'APPROVED') {
+        await supabase
+          .from('Request')
+          .update({
+            status: 'COMPLETED',
+            updatedAt: new Date().toISOString()
+          })
+          .eq('id', wo.sourceRequestId)
+      }
+    }
 
     // Atualizar a data da última manutenção no plano do bem (se existir)
     if (wo.assetMaintenancePlanId) {

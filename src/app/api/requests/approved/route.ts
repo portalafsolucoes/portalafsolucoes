@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
         assignedTo:User!assignedToId(id, firstName, lastName, email),
         team:Team(id, name),
         asset:Asset(id, name),
-        location:Location(id, name),
-        generatedWorkOrder:WorkOrder(id, internalId, status),
+        location:Location!locationId(id, name),
+        generatedWorkOrder:WorkOrder!workOrderId(id, internalId, status),
         files:File(*)
       `, { count: 'exact' })
       .eq('companyId', session.companyId)

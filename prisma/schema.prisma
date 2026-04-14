@@ -78,6 +78,7 @@ enum RequestStatus {
   APPROVED
   REJECTED
   CANCELLED
+  COMPLETED
 }
 
 enum FailureType {
@@ -736,6 +737,7 @@ model MaintenanceType {
 model MaintenanceArea {
   id           String   @id @default(cuid())
   name         String
+  code         String?  @db.VarChar(10)
   protheusCode String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -745,7 +747,9 @@ model MaintenanceArea {
 
   serviceTypes          ServiceType[]
   assetMaintenancePlans AssetMaintenancePlan[]
+  workOrders            WorkOrder[]
 
+  @@unique([companyId, code])
   @@unique([companyId, protheusCode])
   @@index([companyId])
 }
@@ -1389,6 +1393,11 @@ model WorkOrder {
   serviceTypeId String?
   serviceType   ServiceType? @relation(fields: [serviceTypeId], references: [id])
 
+  maintenanceAreaId String?
+  maintenanceArea   MaintenanceArea? @relation(fields: [maintenanceAreaId], references: [id])
+
+  raf FailureAnalysisReport?
+
   assetMaintenancePlanId String?
   assetMaintenancePlan   AssetMaintenancePlan? @relation(fields: [assetMaintenancePlanId], references: [id])
 
@@ -1413,6 +1422,7 @@ model WorkOrder {
   @@index([assignedToId])
   @@index([companyId, status])
   @@index([companyId, unitId])
+  @@index([maintenanceAreaId])
 }
 
 model Task {
@@ -1496,6 +1506,7 @@ model WorkOrderResource {
 
 model Request {
   id                 String            @id @default(cuid())
+  requestNumber      String?           @unique
   title              String
   description        String?
   priority           WorkOrderPriority @default(NONE)
@@ -1814,21 +1825,19 @@ model Notification {
 model FailureAnalysisReport {
   id               String      @id @default(cuid())
   rafNumber        String      @unique
-  area             String
-  equipment        String
   occurrenceDate   DateTime
   occurrenceTime   String
   panelOperator    String
   stopExtension    Boolean     @default(false)
   failureBreakdown Boolean     @default(false)
   productionLost   Float?
-  failureDescription String    @db.Text
-  observation      String      @db.Text
-  immediateAction  String      @db.Text
-  fiveWhys         Json
-  hypothesisTests  Json
+  failureDescription String?   @db.Text
+  observation      String?     @db.Text
+  immediateAction  String?     @db.Text
+  fiveWhys         Json?
+  hypothesisTests  Json?
   failureType      FailureType @default(RANDOM)
-  actionPlan       Json
+  actionPlan       Json?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
@@ -1841,9 +1850,13 @@ model FailureAnalysisReport {
   unitId String?
   unit   Location? @relation(fields: [unitId], references: [id])
 
+  workOrderId String  @unique
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
   @@index([companyId])
   @@index([createdById])
   @@index([occurrenceDate])
+  @@index([workOrderId])
 }
 
 // ============================================

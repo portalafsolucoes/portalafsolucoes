@@ -22,9 +22,14 @@ const RequestFormModal = dynamic(
   () => import('@/components/requests/RequestFormModal').then(m => ({ default: m.RequestFormModal })),
   { ssr: false }
 )
+const RequestPrintView = dynamic(
+  () => import('@/components/requests/RequestPrintView').then(m => ({ default: m.RequestPrintView })),
+  { ssr: false }
+)
 
 interface Request {
   id: string
+  requestNumber?: string | null
   title: string
   description?: string
   priority: string
@@ -33,6 +38,8 @@ interface Request {
   teamApprovalStatus?: string
   createdBy?: { id: string; firstName: string; lastName: string }
   team?: { id: string; name: string }
+  asset?: { id: string; name: string; protheusCode?: string; tag?: string } | null
+  assetId?: string
   files?: Array<{ id: string; name: string; url: string }>
   createdAt: string
 }
@@ -55,6 +62,7 @@ export default function RequestsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [printRequestId, setPrintRequestId] = useState<string | null>(null)
 
   const showSidePanel = !!(selectedRequest !== null || isCreating)
 
@@ -169,6 +177,15 @@ export default function RequestsPage() {
         const req = requests.find(r => r.id === requestId)
         if (req) openDeleteDialog(req)
       }}
+      onFinalize={() => {
+        loadRequests()
+        handleClosePanel()
+      }}
+      onGenerateWorkOrder={() => {
+        loadRequests()
+        handleClosePanel()
+      }}
+      onPrint={(requestId) => setPrintRequestId(requestId)}
       inPage
     />
   ) : null
@@ -238,7 +255,16 @@ export default function RequestsPage() {
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Nº da SS
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Solicitação
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Código do Bem
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Nome do Bem
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Status / Prioridade
@@ -266,11 +292,20 @@ export default function RequestsPage() {
                   selectedRequest?.id === request.id ? 'bg-secondary' : ''
                 }`}
               >
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm font-bold text-gray-900">{request.requestNumber || '-'}</span>
+                </td>
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>
                   {request.description && (
                     <div className="text-sm text-muted-foreground truncate max-w-xs">{request.description}</div>
                   )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {request.asset?.protheusCode || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {request.asset?.name || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col gap-1">
@@ -316,7 +351,7 @@ export default function RequestsPage() {
       {/* Header */}
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
-          title="Solicitações de Serviço (SC)"
+          title="Solicitações de Serviço (SS)"
           description="Gerencie solicitações de manutenção e serviços"
           className="mb-0"
           actions={
@@ -386,6 +421,14 @@ export default function RequestsPage() {
           />
         </div>
       </div>
+
+      {/* Print view */}
+      {printRequestId && (
+        <RequestPrintView
+          requestId={printRequestId}
+          onClose={() => setPrintRequestId(null)}
+        />
+      )}
 
       {/* Delete confirmation */}
       <ConfirmDialog

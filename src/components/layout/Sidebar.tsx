@@ -65,7 +65,7 @@ export function Sidebar() {
       { name: 'Bens', href: '/assets' },
       { name: 'Criticidade de Ativos', href: '/criticality' },
     ]},
-    { name: 'Plano de Manutenção', href: '/maintenance-plan', icon: 'event_upcoming', module: 'maintenance-plan', subItems: [
+    { name: 'Cadastro de Manutenção', href: '/maintenance-plan', icon: 'event_upcoming', module: 'maintenance-plan', subItems: [
       { name: 'Manutenção Padrão', href: '/maintenance-plan/standard' },
       { name: 'Manutenção do Bem', href: '/maintenance-plan/asset' },
     ]},

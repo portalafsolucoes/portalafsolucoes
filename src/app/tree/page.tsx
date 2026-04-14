@@ -1,132 +1,65 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { AssetTree } from '@/components/assets/AssetTree'
 import { useAuth } from '@/hooks/useAuth'
-import { useActiveUnit } from '@/hooks/useActiveUnit'
+import { usePermissions } from '@/hooks/usePermissions'
 import { hasPermission } from '@/lib/permissions'
-import { canSwitchUnits, getDefaultCmmsPath } from '@/lib/user-roles'
+import { getDefaultCmmsPath } from '@/lib/user-roles'
 
-import { getStatusColor } from '@/lib/utils'
+const AssetDetailPanel = dynamic(() => import('@/components/assets/AssetDetailPanel').then(m => ({ default: m.AssetDetailPanel })), { ssr: false })
+const AssetEditPanel = dynamic(() => import('@/components/assets/AssetEditPanel').then(m => ({ default: m.AssetEditPanel })), { ssr: false })
+const AssetCreateModal = dynamic(() => import('@/components/assets/AssetCreateModal').then(m => ({ default: m.AssetCreateModal })), { ssr: false })
 
-interface TreeNode {
+interface Asset {
   id: string
   name: string
-  tag?: string
-  type: 'unit' | 'area' | 'workCenter' | 'asset'
-  status?: string
+  description?: string
+  status: string
+  barCode?: string
+  acquisitionCost?: number
+  area?: string
+  areaId?: string | null
+  assetArea?: { id: string; name: string } | null
+  workCenterId?: string | null
+  assetWorkCenter?: { id: string; name: string } | null
+  unitId?: string | null
+  unit?: { id: string; name: string } | null
+  location?: { name: string; id: string }
+  category?: { name: string; id: string }
+  primaryUser?: { firstName: string; lastName: string }
   parentAssetId?: string | null
-  children?: TreeNode[]
-}
-
-interface AssetDetail {
-  workOrders: any[]
-  requests: any[]
-  rafs: any[]
-}
-
-function findTreeNode(nodes: TreeNode[], nodeId: string): TreeNode | null {
-  for (const node of nodes) {
-    if (node.id === nodeId) return node
-    if (node.children?.length) {
-      const childNode = findTreeNode(node.children, nodeId)
-      if (childNode) return childNode
-    }
-  }
-
-  return null
+  parentAsset?: { id: string; protheusCode?: string; name: string } | null
+  childAssets?: Asset[]
+  files?: Array<{ id: string; url: string; name: string; mimeType?: string }>
+  createdAt: string
+  updatedAt: string
 }
 
 export default function TreePage() {
   const router = useRouter()
-  const { user, unitId: authUnitId } = useAuth()
-  const { activeUnitId, availableUnits } = useActiveUnit()
-  const isAdmin = canSwitchUnits(user)
-
-  const [treeData, setTreeData] = useState<TreeNode[]>([])
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const [selectedUnit, setSelectedUnit] = useState<string>('')
-  const [selectedAsset, setSelectedAsset] = useState<string>('')
-  const [assetDetail, setAssetDetail] = useState<AssetDetail | null>(null)
+  const { user } = useAuth()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
-  const [detailLoading, setDetailLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const [parentAssetForNew, setParentAssetForNew] = useState<{ id: string; name: string } | undefined>(undefined)
+  const [isEditingInPanel, setIsEditingInPanel] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  const fetchUnitTree = useCallback(async (unitId: string) => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/tree?unitId=${unitId}`)
-      const data = await res.json()
-      const { areas, workCenters, assets } = data.data || {}
-
-      // Construir árvore hierárquica
-      const parentAssets = (assets || []).filter((a: any) => !a.parentAssetId)
-      const childAssets = (assets || []).filter((a: any) => a.parentAssetId)
-
-      const buildAssetChildren = (parentId: string): TreeNode[] => {
-        return childAssets
-          .filter((a: any) => a.parentAssetId === parentId)
-          .map((a: any) => ({
-            id: a.id,
-            name: a.tag ? `[${a.tag}] ${a.name}` : a.name,
-            tag: a.tag,
-            type: 'asset' as const,
-            status: a.status,
-            children: buildAssetChildren(a.id),
-          }))
-      }
-
-      const tree: TreeNode[] = (areas || []).map((area: any) => {
-        const areaWorkCenters = (workCenters || []).filter((wc: any) => wc.areaId === area.id)
-        return {
-          id: area.id,
-          name: area.name,
-          type: 'area' as const,
-          children: areaWorkCenters.map((wc: any) => {
-            const wcAssets = parentAssets.filter((a: any) => a.workCenterId === wc.id)
-            return {
-              id: wc.id,
-              name: wc.name,
-              type: 'workCenter' as const,
-              children: wcAssets.map((a: any) => ({
-                id: a.id,
-                name: a.tag ? `[${a.tag}] ${a.name}` : a.name,
-                tag: a.tag,
-                type: 'asset' as const,
-                status: a.status,
-                children: buildAssetChildren(a.id),
-              })),
-            }
-          }),
-        }
-      })
-
-      // Ativos sem área/centro de trabalho
-      const unassigned = parentAssets.filter((a: any) => !a.workCenterId && !a.areaId)
-      if (unassigned.length > 0) {
-        tree.push({
-          id: 'unassigned',
-          name: 'Sem Classificação',
-          type: 'area' as const,
-          children: unassigned.map((a: any) => ({
-            id: a.id,
-            name: a.tag ? `[${a.tag}] ${a.name}` : a.name,
-            tag: a.tag,
-            type: 'asset' as const,
-            status: a.status,
-            children: buildAssetChildren(a.id),
-          })),
-        })
-      }
-
-      setTreeData(tree)
-    } catch { setTreeData([]) }
-    setLoading(false)
-  }, [])
+  useEffect(() => {
+    if (!user || !hasPermission(user, 'tree', 'view')) return
+    loadAssets()
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -135,247 +68,215 @@ export default function TreePage() {
     }
   }, [router, user])
 
-  // Auto-selecionar unidade ativa da session
-  useEffect(() => {
-    if (!user || !hasPermission(user, 'tree', 'view')) return
-    const unitToUse = activeUnitId || authUnitId
-    if (unitToUse && !selectedUnit) {
-      setSelectedUnit(unitToUse)
-      fetchUnitTree(unitToUse)
-    } else if (!unitToUse) {
+  const loadAssets = async () => {
+    try {
+      const res = await fetch('/api/assets?summary=true')
+      const data = await res.json()
+      setAssets(data.data || [])
+    } catch (error) {
+      console.error('Error loading assets:', error)
+    } finally {
       setLoading(false)
     }
-  }, [activeUnitId, authUnitId, fetchUnitTree, selectedUnit, user])
+  }
 
-  const fetchAssetDetail = async (assetId: string) => {
-    setDetailLoading(true)
-    setSelectedAsset(assetId)
+  const loadAssetDetails = async (assetId: string) => {
     try {
-      const res = await fetch(`/api/tree?assetId=${assetId}`)
+      const res = await fetch(`/api/assets/${assetId}`)
       const data = await res.json()
-      setAssetDetail(data.data || { workOrders: [], requests: [], rafs: [] })
-    } catch { setAssetDetail(null) }
-    setDetailLoading(false)
-  }
-
-  const toggleExpand = (nodeId: string) => {
-    setExpanded(prev => {
-      const next = new Set(prev)
-      if (next.has(nodeId)) next.delete(nodeId)
-      else next.add(nodeId)
-      return next
-    })
-  }
-
-  const selectUnit = (unitId: string) => {
-    setSelectedUnit(unitId)
-    setSelectedAsset('')
-    setAssetDetail(null)
-    if (unitId) fetchUnitTree(unitId)
-    else setTreeData([])
-  }
-
-  const getNodeIcon = (type: string) => {
-    switch (type) {
-      case 'unit': return <Icon name="business" className="text-base text-foreground" />
-      case 'area': return <Icon name="location_on" className="text-base text-muted-foreground" />
-      case 'workCenter': return <Icon name="construction" className="text-base text-muted-foreground" />
-      case 'asset': return <Icon name="inventory_2" className="text-base text-foreground" />
-      default: return null
+      if (data.data) {
+        setSelectedAsset(data.data)
+      }
+    } catch (error) {
+      console.error('Error loading asset details:', error)
     }
   }
 
-  const renderNode = (node: TreeNode, depth: number = 0) => {
-    const hasChildren = node.children && node.children.length > 0
-    const isExpanded = expanded.has(node.id)
-    const isSelected = selectedAsset === node.id
-    const isAsset = node.type === 'asset'
-
-    return (
-      <div key={node.id}>
-        <div
-          className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded-[4px] transition-colors text-sm ${
-            isSelected ? 'bg-gray-100 text-gray-900 font-medium' : 'hover:bg-muted/50'
-          }`}
-          style={{ paddingLeft: `${12 + depth * 20}px` }}
-          onClick={() => {
-            if (hasChildren) toggleExpand(node.id)
-            if (isAsset) fetchAssetDetail(node.id)
-          }}
-        >
-          {hasChildren ? (
-            isExpanded ? <Icon name="expand_more" className="text-sm flex-shrink-0" /> : <Icon name="chevron_right" className="text-sm flex-shrink-0" />
-          ) : (
-            <span className="w-3.5" />
-          )}
-          {getNodeIcon(node.type)}
-          <span className="truncate">{node.name}</span>
-          {node.status && (
-            <span className={`ml-auto px-1.5 py-0.5 rounded text-xs ${getStatusColor(node.status)}`}>
-              {node.status === 'OPERATIONAL' ? 'OK' : 'DOWN'}
-            </span>
-          )}
-        </div>
-        {isExpanded && hasChildren && (
-          <div>
-            {node.children!.map(child => renderNode(child, depth + 1))}
-          </div>
-        )}
-      </div>
-    )
+  const handleAssetSelect = (asset: Asset) => {
+    setIsEditingInPanel(false)
+    setIsCreating(false)
+    setParentAssetForNew(undefined)
+    loadAssetDetails(asset.id)
   }
 
-  const selectedAssetNode = selectedAsset ? findTreeNode(treeData, selectedAsset) : null
+  const handleAddSubAsset = (parentAsset: Asset) => {
+    setSelectedAsset(null)
+    setIsEditingInPanel(false)
+    setParentAssetForNew({ id: parentAsset.id, name: parentAsset.name })
+    setIsCreating(true)
+  }
+
+  const handleAddNewAsset = () => {
+    setSelectedAsset(null)
+    setIsEditingInPanel(false)
+    setParentAssetForNew(undefined)
+    setIsCreating(true)
+  }
+
+  const handleEdit = () => {
+    setIsEditingInPanel(true)
+  }
+
+  const handleDelete = async (assetId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este ativo? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/assets/${assetId}`, { method: 'DELETE' })
+      if (res.ok) {
+        loadAssets()
+        setSelectedAsset(null)
+      } else {
+        alert('Erro ao excluir ativo')
+      }
+    } catch {
+      alert('Erro ao conectar ao servidor')
+    }
+  }
+
+  const handleEditSuccess = () => {
+    loadAssets()
+    if (selectedAsset) {
+      loadAssetDetails(selectedAsset.id)
+    }
+    setIsEditingInPanel(false)
+  }
+
+  const handleCreateSuccess = () => {
+    loadAssets()
+    setIsCreating(false)
+    setParentAssetForNew(undefined)
+  }
+
+  const handleCreateClose = () => {
+    setIsCreating(false)
+    setParentAssetForNew(undefined)
+  }
+
+  const closeSidePanel = () => {
+    setSelectedAsset(null)
+    setIsCreating(false)
+    setIsEditingInPanel(false)
+    setParentAssetForNew(undefined)
+  }
+
+  const filteredAssets = assets.filter(asset => {
+    const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || asset.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const showSidePanel = !!(selectedAsset || isCreating)
+
+  const activePanel = isCreating ? (
+    <AssetCreateModal
+      isOpen={true}
+      onClose={handleCreateClose}
+      onSuccess={handleCreateSuccess}
+      parentAsset={parentAssetForNew}
+      inPage
+    />
+  ) : selectedAsset && isEditingInPanel ? (
+    <AssetEditPanel
+      asset={selectedAsset}
+      onClose={() => setIsEditingInPanel(false)}
+      onSuccess={handleEditSuccess}
+    />
+  ) : selectedAsset ? (
+    <AssetDetailPanel
+      asset={selectedAsset}
+      onClose={() => {
+        setSelectedAsset(null)
+        setIsEditingInPanel(false)
+      }}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
+  ) : null
+
+  const listContent = loading ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+        <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+        <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+          Hierarquia de Ativos
+        </p>
+      </div>
+      <div className="flex-1 min-h-0 overflow-auto">
+        <AssetTree
+          assets={filteredAssets}
+          onSelectAsset={handleAssetSelect}
+          selectedAssetId={selectedAsset?.id}
+          onAddSubAsset={canCreate('assets') ? handleAddSubAsset : undefined}
+        />
+      </div>
+    </div>
+  )
+
+  if (!user || !hasPermission(user, 'tree', 'view')) {
+    return null
+  }
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
-          className="mb-0"
           title="Árvore"
           description="Navegação hierárquica de ativos"
+          className="mb-0"
           actions={
-            isAdmin && availableUnits.length > 1 ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-full sm:w-48 xl:w-64">
+                <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar ativos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
               <select
-                value={selectedUnit}
-                onChange={e => selectUnit(e.target.value)}
-                className="h-9 px-3 text-sm border border-gray-300 shadow-sm rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-9 px-3 text-sm border border-input rounded-[4px] bg-background focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto"
               >
-                <option value="">Selecione a unidade...</option>
-                {availableUnits.map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
+                <option value="all">Todos os Status</option>
+                <option value="OPERATIONAL">Operacional</option>
+                <option value="DOWN">Parado</option>
+                <option value="IN_REPAIR">Em Reparo</option>
+                <option value="INACTIVE">Inativo</option>
               </select>
-            ) : undefined
+
+              {canCreate('assets') && (
+                <Button onClick={handleAddNewAsset} className="whitespace-nowrap bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md">
+                  <Icon name="add" className="text-base" />
+                  <span className="hidden sm:inline ml-1">Adicionar</span>
+                </Button>
+              )}
+            </div>
           }
         />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border bg-card">
-          {!selectedUnit ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center px-6">
-                <p className="text-muted-foreground">Selecione uma unidade para visualizar a árvore de ativos.</p>
-              </div>
-            </div>
-          ) : loading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                <p className="mt-2 text-muted-foreground">Carregando...</p>
-              </div>
-            </div>
-          ) : (
-            <AdaptiveSplitPanel
-              showPanel={!!selectedAsset}
-              panelTitle={selectedAssetNode?.name || 'Detalhes do Ativo'}
-              onClosePanel={() => { setSelectedAsset(''); setAssetDetail(null) }}
-              list={
-                <div className="h-full flex flex-col bg-card overflow-hidden">
-                  <div className="flex items-center justify-between p-4 border-b border-border">
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">Estrutura de Ativos</h2>
-                      <p className="text-sm text-muted-foreground">Expanda áreas e centros de trabalho para navegar na hierarquia.</p>
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-auto min-h-0 p-2">
-                    {treeData.length === 0 ? (
-                      <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                        Nenhum ativo cadastrado nesta unidade.
-                      </div>
-                    ) : (
-                      treeData.map(node => renderNode(node))
-                    )}
-                  </div>
-                </div>
-              }
-              panel={selectedAsset ? (
-                <div className="h-full flex flex-col bg-card border-l border-border">
-                    <div className="flex items-start justify-between p-4 border-b border-border">
-                      <div>
-                        <h2 className="text-xl font-bold text-foreground">{selectedAssetNode?.name || 'Detalhes do Ativo'}</h2>
-                        <p className="text-sm text-muted-foreground">Ordens, solicitações e RAFs relacionadas ao ativo selecionado.</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAsset('')
-                          setAssetDetail(null)
-                        }}
-                      >
-                        <Icon name="close" className="text-base" />
-                      </Button>
-                    </div>
-
-                    {detailLoading ? (
-                      <div className="flex-1 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
-                          <p className="mt-2 text-muted-foreground">Carregando...</p>
-                        </div>
-                      </div>
-                    ) : assetDetail ? (
-                      <div className="flex-1 overflow-y-auto min-h-0">
-                        <div className="p-4 border-b border-border">
-                          <h3 className="text-sm font-semibold text-foreground mb-3">Ordens de Serviço ({assetDetail.workOrders.length})</h3>
-                          {assetDetail.workOrders.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Nenhuma OS aberta.</p>
-                          ) : (
-                            <div className="space-y-2">
-                              {assetDetail.workOrders.map((wo: any) => (
-                                <div key={wo.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-[4px] text-sm">
-                                  <span className="font-medium text-foreground">{wo.title}</span>
-                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(wo.status)}`}>{wo.status}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-4 border-b border-border">
-                          <h3 className="text-sm font-semibold text-foreground mb-3">Solicitações ({assetDetail.requests.length})</h3>
-                          {assetDetail.requests.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Nenhuma SS aberta.</p>
-                          ) : (
-                            <div className="space-y-2">
-                              {assetDetail.requests.map((ss: any) => (
-                                <div key={ss.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-[4px] text-sm">
-                                  <span className="font-medium text-foreground">{ss.title}</span>
-                                  <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(ss.status)}`}>{ss.status}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-4">
-                          <h3 className="text-sm font-semibold text-foreground mb-3">Ações Pendentes RAF ({assetDetail.rafs.length})</h3>
-                          {assetDetail.rafs.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Nenhuma ação pendente.</p>
-                          ) : (
-                            <div className="space-y-2">
-                              {assetDetail.rafs.map((raf: any) => (
-                                <div key={raf.id} className="p-3 border border-border rounded-[4px] text-sm">
-                                  <span className="font-medium text-foreground">{raf.rafNumber}</span>
-                                  <span className="text-muted-foreground ml-2">{raf.equipment}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                        Clique em um ativo na árvore para ver OSs, SSs e ações pendentes.
-                      </div>
-                    )}
-                </div>
-              ) : null}
-            />
-          )}
+          <AdaptiveSplitPanel
+            list={listContent}
+            panel={activePanel}
+            showPanel={showSidePanel}
+            panelTitle="Ativo"
+            onClosePanel={closeSidePanel}
+          />
         </div>
       </div>
     </PageContainer>

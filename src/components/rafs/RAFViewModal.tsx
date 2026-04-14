@@ -8,37 +8,52 @@ import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { formatDate } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 
+interface ActionPlanItem {
+  item: number
+  subject: string
+  deadline: string
+  actionDescription: string
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+  linkedWorkOrderId?: string
+  linkedWorkOrderNumber?: string
+}
+
 interface RAF {
   id: string
   rafNumber: string
-  area: string
-  equipment: string
   occurrenceDate: string
   occurrenceTime: string
   panelOperator: string
-  stopExtension: boolean
-  failureBreakdown: boolean
-  productionLost: number | null
-  failureDescription: string
-  observation: string
-  immediateAction: string
-  fiveWhys: string[]
-  hypothesisTests: Array<{
+  stopExtension?: boolean
+  failureBreakdown?: boolean
+  productionLost?: number | null
+  failureDescription?: string
+  observation?: string
+  immediateAction?: string
+  fiveWhys?: string[]
+  hypothesisTests?: Array<{
     item: number
     description: string
     possible: string
     evidence: string
   }>
   failureType: string
-  actionPlan: Array<{
-    what: string
-    who: string
-    when: string
-  }>
+  actionPlan?: ActionPlanItem[]
   createdAt: string
   createdBy?: {
     firstName: string
     lastName: string
+  }
+  workOrder?: {
+    id: string
+    internalId?: string
+    title?: string
+    status?: string
+    osType?: string
+    type?: string
+    maintenanceArea?: { id: string; name: string; code?: string }
+    serviceType?: { id: string; code: string; name: string }
+    asset?: { id: string; name: string; tag?: string }
   }
 }
 
@@ -51,10 +66,24 @@ interface RAFViewModalProps {
   onDelete?: (id: string) => void
 }
 
+const statusLabel = (s: string) => {
+  if (s === 'IN_PROGRESS') return 'Andamento'
+  if (s === 'COMPLETED') return 'Concluido'
+  return 'Pendente'
+}
+
+const statusBadge = (s: string) => {
+  if (s === 'COMPLETED') return 'bg-green-100 text-green-800'
+  if (s === 'IN_PROGRESS') return 'bg-blue-100 text-blue-800'
+  return 'bg-gray-100 text-gray-800'
+}
+
 export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onDelete }: RAFViewModalProps) {
   const [activeTab, setActiveTab] = useState('identificacao')
 
   if (!raf) return null
+
+  const wo = raf.workOrder
 
   // ── inPage (desktop split-panel) ──────────────────────────────────────────
   if (inPage) {
@@ -70,7 +99,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                   ? 'bg-danger-light text-foreground'
                   : 'bg-warning-light text-foreground'
               }`}>
-                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
+                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatoria'}
               </span>
               {raf.stopExtension && (
                 <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-foreground border border-border">
@@ -87,7 +116,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
           <PanelCloseButton onClick={onClose} className="ml-2" />
         </div>
 
-        {/* Ações */}
+        {/* Acoes */}
         {(onEdit || onDelete) && (
           <div className="p-4 border-b border-gray-200 space-y-2">
             {onEdit && (
@@ -96,7 +125,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
               >
                 <Icon name="edit" className="text-base" />
-                Editar RAF
+                Editar
               </button>
             )}
             {onDelete && (
@@ -105,7 +134,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:opacity-90 transition-colors"
               >
                 <Icon name="delete" className="text-base" />
-                Excluir RAF
+                Excluir
               </button>
             )}
           </div>
@@ -117,41 +146,72 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
             <TabsList className="w-full justify-start border-b rounded-none px-4 flex-shrink-0">
               <TabsTrigger value="identificacao" className="flex items-center gap-1.5">
                 <Icon name="info" className="text-base" />
-                Identificação
+                Identificacao
               </TabsTrigger>
               <TabsTrigger value="analise" className="flex items-center gap-1.5">
                 <Icon name="analytics" className="text-base" />
-                Análise
+                Analise
               </TabsTrigger>
               <TabsTrigger value="plano" className="flex items-center gap-1.5">
                 <Icon name="checklist" className="text-base" />
-                Plano
+                Plano de Acao
               </TabsTrigger>
             </TabsList>
 
-            {/* Tab: Identificação */}
+            {/* Tab: Identificacao */}
             <TabsContent value="identificacao" className="flex-1 overflow-y-auto mt-0">
+              {/* OS Vinculada */}
+              {wo && (
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">OS Vinculada</h3>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {wo.internalId && (
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">N° OS</p>
+                        <p className="text-sm font-mono text-foreground">{wo.internalId}</p>
+                      </div>
+                    )}
+                    {wo.asset && (
+                      <>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Codigo do Bem</p>
+                          <p className="text-sm font-mono text-foreground">{wo.asset.tag || '—'}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Nome do Bem</p>
+                          <p className="text-sm text-foreground">{wo.asset.name}</p>
+                        </div>
+                      </>
+                    )}
+                    {wo.maintenanceArea && (
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Area de Manutencao</p>
+                        <p className="text-sm text-foreground">{wo.maintenanceArea.code ? `${wo.maintenanceArea.code} - ${wo.maintenanceArea.name}` : wo.maintenanceArea.name}</p>
+                      </div>
+                    )}
+                    {wo.serviceType && (
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tipo de Servico</p>
+                        <p className="text-sm text-foreground">{wo.serviceType.code} - {wo.serviceType.name}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 border-b border-gray-200">
                 <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Dados Gerais</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <div>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Número RAF</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Numero RAF</p>
                     <p className="text-sm text-foreground">{raf.rafNumber}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Área</p>
-                    <p className="text-sm text-foreground">{raf.area}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Equipamento</p>
-                    <p className="text-sm text-foreground">{raf.equipment}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data da Ocorrência</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data da Ocorrencia</p>
                     <p className="text-sm text-foreground">{formatDate(raf.occurrenceDate)}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Horário</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Horario</p>
                     <p className="text-sm text-foreground">{raf.occurrenceTime}</p>
                   </div>
                   <div>
@@ -160,21 +220,23 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                   </div>
                   {raf.productionLost != null && (
                     <div>
-                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Produção Perdida</p>
+                      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Producao Perdida</p>
                       <p className="text-sm text-foreground">{raf.productionLost} ton</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Descrição da Falha</h3>
-                <p className="text-sm text-foreground whitespace-pre-wrap">{raf.failureDescription}</p>
-              </div>
+              {raf.failureDescription && (
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Descricao da Falha</h3>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{raf.failureDescription}</p>
+                </div>
+              )}
 
               {raf.observation && (
                 <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Observações</h3>
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Observacoes</h3>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{raf.observation}</p>
                 </div>
               )}
@@ -196,11 +258,11 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
               )}
             </TabsContent>
 
-            {/* Tab: Análise */}
+            {/* Tab: Analise */}
             <TabsContent value="analise" className="flex-1 overflow-y-auto mt-0">
               {raf.fiveWhys && raf.fiveWhys.filter(Boolean).length > 0 && (
                 <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">5 Porquês</h3>
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">5 Porques</h3>
                   <div className="space-y-2">
                     {raf.fiveWhys.filter(Boolean).map((why, i) => (
                       <div key={i} className="flex gap-3 items-start">
@@ -216,20 +278,20 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
 
               {raf.hypothesisTests && raf.hypothesisTests.filter(t => t.description).length > 0 && (
                 <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Teste de Hipóteses</h3>
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Teste de Hipoteses</h3>
                   <div className="space-y-4">
                     {raf.hypothesisTests.filter(t => t.description).map((test, i) => (
                       <div key={i} className="grid grid-cols-2 gap-x-4 gap-y-2 pb-4 border-b border-border last:border-0 last:pb-0">
                         <div className="col-span-2">
-                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Descrição</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Descricao</p>
                           <p className="text-sm text-foreground">{test.description}</p>
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Possível</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Possivel</p>
                           <p className="text-sm text-foreground">{test.possible}</p>
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Evidência</p>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Evidencia</p>
                           <p className="text-sm text-foreground">{test.evidence}</p>
                         </div>
                       </div>
@@ -238,41 +300,63 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                 </div>
               )}
 
-              {raf.fiveWhys?.filter(Boolean).length === 0 && raf.hypothesisTests?.filter(t => t.description).length === 0 && (
+              {(!raf.fiveWhys || raf.fiveWhys.filter(Boolean).length === 0) && (!raf.hypothesisTests || raf.hypothesisTests.filter(t => t.description).length === 0) && (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  Nenhuma análise registrada.
+                  Nenhuma analise registrada.
                 </div>
               )}
             </TabsContent>
 
-            {/* Tab: Plano */}
+            {/* Tab: Plano de Acao */}
             <TabsContent value="plano" className="flex-1 overflow-y-auto mt-0">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Ação Imediata</h3>
-                <p className="text-sm text-foreground whitespace-pre-wrap">{raf.immediateAction || '—'}</p>
-              </div>
-
-              {raf.actionPlan && raf.actionPlan.filter(a => a.what).length > 0 && (
+              {raf.immediateAction && (
                 <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Plano de Ação</h3>
-                  <div className="space-y-4">
-                    {raf.actionPlan.filter(a => a.what).map((action, i) => (
-                      <div key={i} className="grid grid-cols-2 gap-x-4 gap-y-2 pb-4 border-b border-border last:border-0 last:pb-0">
-                        <div className="col-span-2">
-                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">O Que</p>
-                          <p className="text-sm text-foreground">{action.what}</p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Quem</p>
-                          <p className="text-sm text-foreground">{action.who}</p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Quando</p>
-                          <p className="text-sm text-foreground">{action.when}</p>
-                        </div>
-                      </div>
-                    ))}
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Acao Imediata</h3>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{raf.immediateAction}</p>
+                </div>
+              )}
+
+              {raf.actionPlan && raf.actionPlan.length > 0 && (
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Plano de Acao</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-10">Item</th>
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase">Assunto</th>
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-28">Prazo</th>
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase">Descricao</th>
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-24">Status</th>
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-24">N° OS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {raf.actionPlan.map((action, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="px-2 py-2 text-xs font-mono text-muted-foreground">{action.item || i + 1}</td>
+                            <td className="px-2 py-2 text-sm text-foreground">{action.subject || '—'}</td>
+                            <td className="px-2 py-2 text-sm text-foreground">{action.deadline ? formatDate(action.deadline) : '—'}</td>
+                            <td className="px-2 py-2 text-sm text-foreground">{action.actionDescription || '—'}</td>
+                            <td className="px-2 py-2">
+                              <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${statusBadge(action.status || 'PENDING')}`}>
+                                {statusLabel(action.status || 'PENDING')}
+                              </span>
+                            </td>
+                            <td className="px-2 py-2 text-xs font-mono text-primary">
+                              {action.linkedWorkOrderNumber || '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
+              )}
+
+              {!raf.immediateAction && (!raf.actionPlan || raf.actionPlan.length === 0) && (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Nenhum plano de acao registrado.
                 </div>
               )}
             </TabsContent>
@@ -299,190 +383,77 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                   ? 'bg-danger-light text-foreground'
                   : 'bg-warning-light text-foreground'
               }`}>
-                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
+                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatoria'}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-1">
             {onEdit && (
-              <button
-                onClick={() => onEdit(raf.id)}
-                className="p-2 hover:bg-muted rounded-[4px] transition-colors"
-                title="Editar"
-              >
+              <button onClick={() => onEdit(raf.id)} className="p-2 hover:bg-muted rounded-[4px] transition-colors" title="Editar">
                 <Icon name="edit" className="text-xl text-muted-foreground" />
               </button>
             )}
             {onDelete && (
-              <button
-                onClick={() => onDelete(raf.id)}
-                className="p-2 hover:bg-danger-light rounded-[4px] transition-colors"
-                title="Excluir"
-              >
+              <button onClick={() => onDelete(raf.id)} className="p-2 hover:bg-danger-light rounded-[4px] transition-colors" title="Excluir">
                 <Icon name="delete" className="text-xl text-danger" />
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-muted rounded-[4px] transition-colors"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-muted rounded-[4px] transition-colors">
               <Icon name="close" className="text-2xl text-muted-foreground" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto bg-card p-3 md:p-6">
-          <div className="mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
-              📋 INFORMAÇÕES BÁSICAS
-            </h2>
-            <div className="space-y-2 md:space-y-3 bg-secondary p-2 md:p-3 rounded-[4px]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-1">Área:</label>
-                  <p className="text-sm md:text-base text-foreground bg-card p-2 rounded border">{raf.area}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-1">Equipamento:</label>
-                  <p className="text-sm md:text-base text-foreground bg-card p-2 rounded border">{raf.equipment}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-1">Data da Ocorrência:</label>
-                  <p className="text-sm md:text-base text-foreground bg-card p-2 rounded border">
-                    {formatDate(raf.occurrenceDate)} às {raf.occurrenceTime}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-1">Operador:</label>
-                  <p className="text-sm md:text-base text-foreground bg-card p-2 rounded border">{raf.panelOperator}</p>
-                </div>
-                {raf.productionLost != null && (
-                  <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">Produção Perdida:</label>
-                    <p className="text-sm md:text-base text-foreground bg-card p-2 rounded border">{raf.productionLost} ton</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="my-4 md:my-6 border-t-2 border-dashed border-input"></div>
-
-          <div className="mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-danger-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-danger">
-              ⚠️ DESCRIÇÃO DA FALHA
-            </h2>
-            <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
-              <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
-                {raf.failureDescription}
-              </p>
-            </div>
-          </div>
-
-          {raf.observation && (
-            <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-warning-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-warning">
-                📝 OBSERVAÇÕES
-              </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
-                <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
-                  {raf.observation}
-                </p>
+        <div className="flex-1 overflow-y-auto bg-card p-3 md:p-6 space-y-4">
+          {wo && (
+            <div className="bg-gray-50 border border-gray-200 rounded-[4px] p-3">
+              <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">OS Vinculada</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {wo.internalId && <div><span className="text-gray-500">OS:</span> <span className="font-mono">{wo.internalId}</span></div>}
+                {wo.asset?.tag && <div><span className="text-gray-500">Bem:</span> <span className="font-mono">{wo.asset.tag}</span> — {wo.asset.name}</div>}
+                {wo.maintenanceArea && <div><span className="text-gray-500">Area:</span> {wo.maintenanceArea.code || ''} {wo.maintenanceArea.name}</div>}
               </div>
             </div>
           )}
 
-          <div className="mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-border">
-              ✅ AÇÃO IMEDIATA
-            </h2>
-            <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
-              <p className="text-sm md:text-base text-foreground whitespace-pre-wrap bg-card p-2 rounded border">
-                {raf.immediateAction}
-              </p>
+          {raf.failureDescription && (
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase mb-1">Descricao da Falha</h3>
+              <p className="text-sm whitespace-pre-wrap">{raf.failureDescription}</p>
             </div>
-          </div>
+          )}
 
-          {raf.fiveWhys && raf.fiveWhys.filter(Boolean).length > 0 && (
-            <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-primary/5 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-primary">
-                🔍 5 PORQUÊS
-              </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px]">
-                {raf.fiveWhys.filter(Boolean).map((why, index) => (
-                  <div key={index} className="flex gap-2">
-                    <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
-                      {index + 1}
-                    </span>
-                    <p className="text-sm md:text-base text-foreground bg-card p-2 rounded border flex-1">{why}</p>
+          {raf.immediateAction && (
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase mb-1">Acao Imediata</h3>
+              <p className="text-sm whitespace-pre-wrap">{raf.immediateAction}</p>
+            </div>
+          )}
+
+          {raf.actionPlan && raf.actionPlan.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">Plano de Acao</h3>
+              <div className="space-y-2">
+                {raf.actionPlan.map((a, i) => (
+                  <div key={i} className="bg-gray-50 border border-gray-200 rounded-[4px] p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono text-gray-500">#{a.item || i + 1}</span>
+                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${statusBadge(a.status || 'PENDING')}`}>
+                        {statusLabel(a.status || 'PENDING')}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium mt-1">{a.subject || '—'}</p>
+                    {a.actionDescription && <p className="text-xs text-gray-600 mt-0.5">{a.actionDescription}</p>}
+                    <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                      {a.deadline && <span>Prazo: {formatDate(a.deadline)}</span>}
+                      {a.linkedWorkOrderNumber && <span>OS: {a.linkedWorkOrderNumber}</span>}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {raf.hypothesisTests && raf.hypothesisTests.filter(t => t.description).length > 0 && (
-            <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-surface-low px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-border">
-                🧪 TESTE DE HIPÓTESES
-              </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px] overflow-x-auto">
-                <table className="w-full text-sm rounded-[4px]">
-                  <thead className="bg-secondary">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Item</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Possível</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Evidência</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-card divide-y divide-gray-200">
-                    {raf.hypothesisTests.filter(t => t.description).map((test, index) => (
-                      <tr key={index} className="hover:bg-secondary">
-                        <td className="px-3 py-2 text-sm text-foreground">{test.item}</td>
-                        <td className="px-3 py-2 text-sm text-foreground">{test.description}</td>
-                        <td className="px-3 py-2 text-sm text-foreground">{test.possible}</td>
-                        <td className="px-3 py-2 text-sm text-foreground">{test.evidence}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {raf.actionPlan && raf.actionPlan.filter(a => a.what).length > 0 && (
-            <div className="mb-4 md:mb-6">
-              <h2 className="text-base md:text-lg font-bold text-foreground mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 bg-success-light/10 px-2 md:px-3 py-1.5 md:py-2 rounded-[4px] border-l-4 border-border">
-                📋 PLANO DE AÇÃO
-              </h2>
-              <div className="space-y-2 bg-secondary p-2 md:p-3 rounded-[4px] overflow-x-auto">
-                <table className="w-full text-sm rounded-[4px]">
-                  <thead className="bg-secondary">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">O Que</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Quem</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Quando</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-card divide-y divide-gray-200">
-                    {raf.actionPlan.filter(a => a.what).map((action, index) => (
-                      <tr key={index} className="hover:bg-secondary">
-                        <td className="px-3 py-2 text-sm text-foreground">{action.what}</td>
-                        <td className="px-3 py-2 text-sm text-foreground">{action.who}</td>
-                        <td className="px-3 py-2 text-sm text-foreground">{action.when}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 md:mt-6 pt-2 md:pt-3 border-t border-input text-center text-xs md:text-sm text-muted-foreground">
-            <p>Relatório gerado automaticamente - {new Date().toLocaleString('pt-BR')}</p>
-          </div>
         </div>
 
         {/* Footer */}

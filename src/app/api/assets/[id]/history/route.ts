@@ -18,6 +18,9 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
     const eventType = searchParams.get('eventType')
+    const startDate = searchParams.get('startDate')
+    const endDate = searchParams.get('endDate')
+    const sourceFilter = searchParams.get('source') // 'os', 'ss', or null/empty for all
 
     // Verificar se o ativo existe e pertence à empresa
     const { data: asset, error: assetError } = await supabase
@@ -41,6 +44,25 @@ export async function GET(
 
     if (eventType) {
       query = query.eq('eventType', eventType)
+    }
+
+    // Filtro por data
+    if (startDate) {
+      query = query.gte('createdAt', new Date(startDate).toISOString())
+    }
+    if (endDate) {
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      query = query.lte('createdAt', end.toISOString())
+    }
+
+    // Filtro por origem (OS, SS ou ambos)
+    const osEventTypes = ['WORK_ORDER_CREATED', 'WORK_ORDER_STARTED', 'WORK_ORDER_COMPLETED']
+    const ssEventTypes = ['REQUEST_CREATED', 'REQUEST_APPROVED', 'REQUEST_REJECTED']
+    if (sourceFilter === 'os') {
+      query = query.in('eventType', osEventTypes)
+    } else if (sourceFilter === 'ss') {
+      query = query.in('eventType', ssEventTypes)
     }
 
     const { data: history, error: historyError, count } = await query

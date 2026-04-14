@@ -35,11 +35,15 @@ export function WorkOrderFormModal({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [teamMembers, setTeamMembers] = useState<any[]>([])
   const [woResources, setWoResources] = useState<TaskResourceItem[]>([])
+  const [maintenanceAreas, setMaintenanceAreas] = useState<{ id: string; name: string; code?: string }[]>([])
+  const [serviceTypes, setServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string }[]>([])
+  const [allServiceTypes, setAllServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string }[]>([])
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     type: 'CORRECTIVE',
+    osType: '',
     priority: 'NONE',
     dueDate: '',
     assetId: '',
@@ -49,7 +53,9 @@ export function WorkOrderFormModal({
     externalId: '',
     maintenanceFrequency: '',
     frequencyValue: '1',
-    estimatedDuration: ''
+    estimatedDuration: '',
+    maintenanceAreaId: '',
+    serviceTypeId: ''
   })
 
   useEffect(() => {
@@ -64,6 +70,7 @@ export function WorkOrderFormModal({
       title: '',
       description: '',
       type: 'CORRECTIVE',
+      osType: '',
       priority: 'NONE',
       dueDate: '',
       assetId: '',
@@ -73,7 +80,9 @@ export function WorkOrderFormModal({
       externalId: '',
       maintenanceFrequency: '',
       frequencyValue: '1',
-      estimatedDuration: ''
+      estimatedDuration: '',
+      maintenanceAreaId: '',
+      serviceTypeId: ''
     })
     setTeamMembers([])
     setWoResources([])
@@ -81,21 +90,27 @@ export function WorkOrderFormModal({
 
   const loadData = async () => {
     try {
-      const [assetsRes, locationsRes, teamsRes] = await Promise.all([
+      const [assetsRes, locationsRes, teamsRes, areasRes, stRes] = await Promise.all([
         fetch('/api/assets?summary=true'),
         fetch('/api/locations'),
-        fetch('/api/teams')
+        fetch('/api/teams'),
+        fetch('/api/basic-registrations/maintenance-areas'),
+        fetch('/api/basic-registrations/service-types')
       ])
 
-      const [assetsData, locationsData, teamsData] = await Promise.all([
+      const [assetsData, locationsData, teamsData, areasData, stData] = await Promise.all([
         assetsRes.json(),
         locationsRes.json(),
-        teamsRes.json()
+        teamsRes.json(),
+        areasRes.json(),
+        stRes.json()
       ])
 
       setAssets(assetsData.data || [])
       setLocations(locationsData.data || [])
       setTeams(teamsData.data || [])
+      setMaintenanceAreas(areasData.data || [])
+      setAllServiceTypes(stData.data || [])
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -171,6 +186,15 @@ export function WorkOrderFormModal({
     }))
   }
 
+  // Filtrar tipos de serviço pela área selecionada
+  useEffect(() => {
+    if (formData.maintenanceAreaId) {
+      setServiceTypes(allServiceTypes.filter(st => st.maintenanceAreaId === formData.maintenanceAreaId))
+    } else {
+      setServiceTypes(allServiceTypes)
+    }
+  }, [formData.maintenanceAreaId, allServiceTypes])
+
   const selectedAssetHierarchy = formData.assetId ? getAssetHierarchy(formData.assetId) : []
 
   return (
@@ -228,7 +252,7 @@ export function WorkOrderFormModal({
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value, osType: '' })}
                   className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="CORRECTIVE">Corretiva</option>
@@ -237,6 +261,42 @@ export function WorkOrderFormModal({
                   <option value="REACTIVE">Reativa</option>
                 </select>
               </div>
+              {formData.type === 'CORRECTIVE' && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Sub-tipo Corretiva
+                  </label>
+                  <select
+                    value={formData.osType}
+                    onChange={(e) => setFormData({ ...formData, osType: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Selecione</option>
+                    <option value="CORRECTIVE_PLANNED">Corretiva Planejada</option>
+                    <option value="CORRECTIVE_IMMEDIATE">Corretiva Imediata</option>
+                  </select>
+                  {formData.osType === 'CORRECTIVE_IMMEDIATE' && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Uma RAF sera gerada automaticamente para esta OS
+                    </p>
+                  )}
+                </div>
+              )}
+              {formData.type === 'PREVENTIVE' && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Sub-tipo Preventiva
+                  </label>
+                  <select
+                    value={formData.osType}
+                    onChange={(e) => setFormData({ ...formData, osType: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Selecione</option>
+                    <option value="PREVENTIVE_MANUAL">Preventiva Manual</option>
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Prioridade
@@ -251,6 +311,40 @@ export function WorkOrderFormModal({
                   <option value="MEDIUM">Media</option>
                   <option value="HIGH">Alta</option>
                   <option value="CRITICAL">Critica</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Area de Manutencao
+                </label>
+                <select
+                  value={formData.maintenanceAreaId}
+                  onChange={(e) => setFormData({ ...formData, maintenanceAreaId: e.target.value, serviceTypeId: '' })}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Selecione</option>
+                  {maintenanceAreas.map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.code ? `${area.code} - ${area.name}` : area.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Tipo de Servico
+                </label>
+                <select
+                  value={formData.serviceTypeId}
+                  onChange={(e) => setFormData({ ...formData, serviceTypeId: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Selecione</option>
+                  {serviceTypes.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.code} - {st.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

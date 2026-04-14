@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .from('Asset')
       .select(
         summary
-          ? 'id, name, description, status, area, areaId, unitId, locationId, categoryId, parentAssetId, protheusCode, tag, createdAt, updatedAt'
+          ? 'id, name, description, status, area, areaId, workCenterId, unitId, locationId, categoryId, parentAssetId, protheusCode, tag, createdAt, updatedAt'
           : '*',
         summary ? undefined : { count: 'exact' }
       )
@@ -49,6 +49,9 @@ export async function GET(request: NextRequest) {
 
     if (locationId) query = query.eq('locationId', locationId)
     if (status) query = query.eq('status', status)
+
+    const search = searchParams.get('search')
+    if (search) query = query.or(`name.ilike.%${search}%,protheusCode.ilike.%${search}%,tag.ilike.%${search}%`)
 
     const { data: assets, error, count: total } = await query
 
@@ -84,6 +87,20 @@ export async function GET(request: NextRequest) {
       enrichedAssets = enrichedAssets.map(a => ({
         ...a,
         assetArea: a.areaId ? areaMap.get(a.areaId) || null : null,
+      }))
+    }
+
+    // Enriquecer com nome do centro de trabalho (via workCenterId → WorkCenter)
+    const workCenterIds = [...new Set(enrichedAssets.filter(a => a.workCenterId).map(a => a.workCenterId))]
+    if (workCenterIds.length > 0) {
+      const { data: workCenters } = await supabase
+        .from('WorkCenter')
+        .select('id, name')
+        .in('id', workCenterIds)
+      const wcMap = new Map((workCenters || []).map(wc => [wc.id, wc]))
+      enrichedAssets = enrichedAssets.map(a => ({
+        ...a,
+        assetWorkCenter: a.workCenterId ? wcMap.get(a.workCenterId) || null : null,
       }))
     }
 

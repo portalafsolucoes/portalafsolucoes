@@ -29,17 +29,19 @@ export async function GET(request: NextRequest) {
       .from('Request')
       .select(summary
         ? `
-            id, title, description, priority, status, dueDate, teamApprovalStatus, createdAt,
+            id, requestNumber, title, description, priority, status, dueDate, teamApprovalStatus, createdAt, assetId,
             createdBy:User!createdById(id, firstName, lastName),
             team:Team(id, name),
-            files:File(id)
+            files:File(id),
+            asset:Asset(id, name, protheusCode, tag)
           `
         : `
             *,
             createdBy:User!createdById(id, firstName, lastName, email),
             team:Team(id, name),
             files:File(id, name, url, type, size, createdAt),
-            generatedWorkOrder:WorkOrder(id, title, status)
+            generatedWorkOrder:WorkOrder(id, title, status),
+            asset:Asset(id, name, protheusCode, tag, parentAssetId)
           `,
         { count: summary ? undefined : 'exact' }
       )
@@ -53,6 +55,10 @@ export async function GET(request: NextRequest) {
     if (effectiveUnitId) query = query.eq('unitId', effectiveUnitId)
 
     if (status) query = query.eq('status', status)
+
+    const assetId = searchParams.get('assetId')
+    if (assetId) query = query.eq('assetId', assetId)
+
     if (canonicalRole === 'REQUESTER') query = query.eq('createdById', session.id)
 
     const { data: requests, error, count: total } = await query
@@ -94,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, priority, dueDate, teamId, files = [] } = body
+    const { title, description, priority, dueDate, teamId, assetId, files = [] } = body
     const now = new Date().toISOString()
 
     if (!title) {
@@ -104,16 +110,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Gerar próximo número sequencial SS-XXXXXX
+    const { data: lastRequest } = await supabase
+      .from('Request')
+      .select('requestNumber')
+      .not('requestNumber', 'is', null)
+      .order('requestNumber', { ascending: false })
+      .limit(1)
+      .single()
+
+    let nextNum = 1
+    if (lastRequest?.requestNumber) {
+      const num = parseInt(lastRequest.requestNumber.replace('SS-', ''))
+      if (!isNaN(num)) nextNum = num + 1
+    }
+    const requestNumber = `SS-${nextNum.toString().padStart(6, '0')}`
+
     const { data: maintenanceRequest, error: createError } = await supabase
       .from('Request')
       .insert({
         id: generateId(),
+        requestNumber,
         title,
         description,
         priority: priority || 'NONE',
         status: 'PENDING',
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         teamId: teamId || null,
+        assetId: assetId || null,
         teamApprovalStatus: 'PENDING',
         convertToWorkOrder: false,
         companyId: session.companyId,

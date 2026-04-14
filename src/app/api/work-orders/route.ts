@@ -5,6 +5,7 @@ import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, isValidExternalId, getPriorityFromGut } from '@/lib/workOrderUtils'
 import { isOperationalRole } from '@/lib/user-roles'
 import { sanitizeLimit } from '@/lib/pagination'
+import { generateRafNumber } from '@/lib/rafUtils'
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number): Date {
@@ -145,10 +146,11 @@ export async function POST(request: NextRequest) {
       title,
       description,
       type,
-      priority, 
-      dueDate, 
-      assetId, 
-      locationId, 
+      osType,
+      priority,
+      dueDate,
+      assetId,
+      locationId,
       categoryId,
       assignedUserIds,
       assignedTeamIds,
@@ -157,7 +159,9 @@ export async function POST(request: NextRequest) {
       externalId,
       maintenanceFrequency,
       frequencyValue,
-      estimatedDuration
+      estimatedDuration,
+      serviceTypeId,
+      maintenanceAreaId
     } = body
     const now = new Date().toISOString()
 
@@ -307,6 +311,9 @@ export async function POST(request: NextRequest) {
         locationId: validLocationId || null,
         categoryId: validCategoryId || null,
         assignedToId: validAssignedToId || null,
+        osType: osType || null,
+        serviceTypeId: serviceTypeId || null,
+        maintenanceAreaId: maintenanceAreaId || null,
         maintenanceFrequency: maintenanceFrequency || null,
         frequencyValue: frequencyValue ? parseInt(frequencyValue) : null,
         nextExecutionDate: nextExecutionDate ? nextExecutionDate.toISOString() : null,
@@ -353,8 +360,42 @@ export async function POST(request: NextRequest) {
       await supabase.from('WorkOrderResource').insert(resourceInserts)
     }
 
+    // Criar RAF automaticamente se OS for corretiva imediata
+    let createdRaf = null
+    if (osType === 'CORRECTIVE_IMMEDIATE') {
+      try {
+        const rafNum = await generateRafNumber(
+          validAssetId || null,
+          maintenanceAreaId || null,
+          session.companyId
+        )
+
+        const { data: rafData } = await supabase
+          .from('FailureAnalysisReport')
+          .insert({
+            id: generateId(),
+            rafNumber: rafNum,
+            occurrenceDate: now,
+            occurrenceTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            panelOperator: session.firstName ? `${session.firstName} ${session.lastName || ''}`.trim() : 'N/A',
+            workOrderId: workOrder.id,
+            companyId: session.companyId,
+            unitId: session.unitId || null,
+            createdById: session.id,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .select('id, rafNumber')
+          .single()
+
+        createdRaf = rafData
+      } catch (rafError) {
+        console.error('Error creating RAF for corrective immediate OS:', rafError)
+      }
+    }
+
     return NextResponse.json(
-      { data: workOrder, message: 'Work order created successfully' },
+      { data: workOrder, raf: createdRaf, message: 'Work order created successfully' },
       { status: 201 }
     )
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
@@ -29,7 +29,13 @@ interface Asset {
   gutTendency?: number
   createdAt: string
   updatedAt: string
-  parentAsset?: { id: string; name: string; protheusCode?: string } | null
+  parentAsset?: {
+    id: string
+    name: string
+    protheusCode?: string
+    parentAsset?: { id: string; name: string; protheusCode?: string } | null
+  } | null
+  childAssets?: { id: string; name: string; protheusCode?: string }[]
   // Campos TOTVS
   protheusCode?: string
   tag?: string
@@ -65,6 +71,27 @@ interface Asset {
   lifeUnit?: string
 }
 
+interface OpenWorkOrder {
+  id: string
+  title: string
+  status: string
+  priority: string
+  type?: string
+  internalId?: string
+  createdAt: string
+  assignedTo?: { firstName: string; lastName: string } | null
+}
+
+interface OpenRequest {
+  id: string
+  requestNumber?: string
+  title: string
+  status: string
+  priority: string
+  createdAt: string
+  createdBy?: { firstName: string; lastName: string } | null
+}
+
 interface WorkOrder {
   id: string
   title: string
@@ -84,7 +111,41 @@ interface AssetDetailPanelProps {
 
 export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders = [] }: AssetDetailPanelProps) {
   const [activeTab, setActiveTab] = useState('details')
-  
+  const [openWorkOrders, setOpenWorkOrders] = useState<OpenWorkOrder[]>([])
+  const [openRequests, setOpenRequests] = useState<OpenRequest[]>([])
+  const [loadingWOs, setLoadingWOs] = useState(false)
+  const [loadingSSs, setLoadingSSs] = useState(false)
+
+  // Fetch open work orders for this asset
+  useEffect(() => {
+    if (activeTab !== 'open-wo') return
+    setLoadingWOs(true)
+    fetch(`/api/work-orders?assetId=${asset.id}&limit=100`)
+      .then(res => res.json())
+      .then(result => {
+        const openStatuses = ['PENDING', 'RELEASED', 'IN_PROGRESS', 'ON_HOLD']
+        const items = (result.data || []).filter((wo: OpenWorkOrder) => openStatuses.includes(wo.status))
+        setOpenWorkOrders(items)
+      })
+      .catch(() => setOpenWorkOrders([]))
+      .finally(() => setLoadingWOs(false))
+  }, [activeTab, asset.id])
+
+  // Fetch open requests for this asset
+  useEffect(() => {
+    if (activeTab !== 'open-ss') return
+    setLoadingSSs(true)
+    fetch(`/api/requests?assetId=${asset.id}&limit=100`)
+      .then(res => res.json())
+      .then(result => {
+        const openStatuses = ['PENDING', 'APPROVED']
+        const items = (result.data || []).filter((r: OpenRequest) => openStatuses.includes(r.status))
+        setOpenRequests(items)
+      })
+      .catch(() => setOpenRequests([]))
+      .finally(() => setLoadingSSs(false))
+  }, [activeTab, asset.id])
+
   const getStatusBadge = (status: string) => {
     const colors = {
       OPERATIONAL: 'bg-success-light text-success-light-foreground border-border',
@@ -101,6 +162,48 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
       MAINTENANCE: 'Em Manutenção'
     }
     return texts[status as keyof typeof texts] || status
+  }
+
+  const getWOStatusText = (status: string) => {
+    const texts: Record<string, string> = {
+      PENDING: 'Pendente', RELEASED: 'Liberada', IN_PROGRESS: 'Em Progresso',
+      ON_HOLD: 'Em Espera', COMPLETE: 'Concluída'
+    }
+    return texts[status] || status
+  }
+
+  const getWOStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      PENDING: 'bg-gray-100 text-gray-700',
+      RELEASED: 'bg-blue-100 text-blue-700',
+      IN_PROGRESS: 'bg-yellow-100 text-yellow-700',
+      ON_HOLD: 'bg-orange-100 text-orange-700',
+    }
+    return colors[status] || 'bg-gray-100 text-gray-700'
+  }
+
+  const getSSStatusText = (status: string) => {
+    const texts: Record<string, string> = {
+      PENDING: 'Pendente', APPROVED: 'Aprovada', REJECTED: 'Rejeitada',
+      CANCELLED: 'Cancelada', COMPLETED: 'Concluída'
+    }
+    return texts[status] || status
+  }
+
+  const getSSStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      PENDING: 'bg-gray-100 text-gray-700',
+      APPROVED: 'bg-green-100 text-green-700',
+    }
+    return colors[status] || 'bg-gray-100 text-gray-700'
+  }
+
+  const getPriorityText = (priority: string) => {
+    const texts: Record<string, string> = {
+      NONE: 'Nenhuma', LOW: 'Baixa', MEDIUM: 'Média',
+      HIGH: 'Alta', CRITICAL: 'Crítica'
+    }
+    return texts[priority] || priority
   }
 
   return (
@@ -140,6 +243,14 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
             <TabsTrigger value="history" className="flex items-center gap-2">
               <Icon name="history" className="text-base" />
               Histórico
+            </TabsTrigger>
+            <TabsTrigger value="open-wo" className="flex items-center gap-2">
+              <Icon name="assignment" className="text-base" />
+              OSs em aberto
+            </TabsTrigger>
+            <TabsTrigger value="open-ss" className="flex items-center gap-2">
+              <Icon name="description" className="text-base" />
+              SSs em aberto
             </TabsTrigger>
           </TabsList>
 
@@ -576,8 +687,77 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
             <AssetAttachments assetId={asset.id} />
           </TabsContent>
 
-          <TabsContent value="history" className="flex-1 overflow-y-auto mt-0 p-4">
-            <AssetTimeline assetId={asset.id} />
+          <TabsContent value="history" className="flex-1 overflow-y-auto mt-0">
+            <AssetTimeline assetId={asset.id} embedded />
+          </TabsContent>
+
+          {/* OSs em aberto */}
+          <TabsContent value="open-wo" className="flex-1 overflow-y-auto mt-0">
+            {loadingWOs ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
+                <p className="ml-2 text-muted-foreground">Carregando...</p>
+              </div>
+            ) : openWorkOrders.length === 0 ? (
+              <div className="text-center py-12">
+                <Icon name="assignment" className="text-5xl text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">Nenhuma OS em aberto para este ativo</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {openWorkOrders.map((wo) => (
+                  <div key={wo.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-sm font-medium text-foreground flex-1">{wo.title}</p>
+                      <span className={`ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full ${getWOStatusColor(wo.status)}`}>
+                        {getWOStatusText(wo.status)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {wo.internalId && <span className="font-mono">{wo.internalId}</span>}
+                      <span>{getPriorityText(wo.priority)}</span>
+                      {wo.type && <span>{wo.type === 'PREVENTIVE' ? 'Preventiva' : wo.type === 'CORRECTIVE' ? 'Corretiva' : wo.type === 'PREDICTIVE' ? 'Preditiva' : 'Reativa'}</span>}
+                      <span>{formatDate(wo.createdAt)}</span>
+                      {wo.assignedTo && <span>{wo.assignedTo.firstName} {wo.assignedTo.lastName}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* SSs em aberto */}
+          <TabsContent value="open-ss" className="flex-1 overflow-y-auto mt-0">
+            {loadingSSs ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
+                <p className="ml-2 text-muted-foreground">Carregando...</p>
+              </div>
+            ) : openRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <Icon name="description" className="text-5xl text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">Nenhuma SS em aberto para este ativo</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {openRequests.map((req) => (
+                  <div key={req.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-sm font-medium text-foreground flex-1">{req.title}</p>
+                      <span className={`ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full ${getSSStatusColor(req.status)}`}>
+                        {getSSStatusText(req.status)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {req.requestNumber && <span className="font-mono">{req.requestNumber}</span>}
+                      <span>{getPriorityText(req.priority)}</span>
+                      <span>{formatDate(req.createdAt)}</span>
+                      {req.createdBy && <span>{req.createdBy.firstName} {req.createdBy.lastName}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

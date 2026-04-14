@@ -33,10 +33,21 @@ interface GeneratedWorkOrder {
   id: string
   title: string
   status: string
+  externalId?: string | null
+  internalId?: string | null
+}
+
+interface RequestAsset {
+  id: string
+  name: string
+  protheusCode?: string | null
+  tag?: string | null
+  parentAssetId?: string | null
 }
 
 interface RequestDetail {
   id: string
+  requestNumber?: string | null
   title: string
   description?: string | null
   priority: string
@@ -44,9 +55,11 @@ interface RequestDetail {
   dueDate?: string | null
   createdAt?: string | null
   teamApprovalStatus?: string | null
+  workOrderId?: string | null
   createdBy?: BasicUser | null
   team?: RequestTeam | null
   files?: RequestFile[]
+  asset?: RequestAsset | null
   generatedWorkOrder?: GeneratedWorkOrder | null
 }
 
@@ -54,8 +67,12 @@ interface RequestDetailModalProps {
   isOpen: boolean
   onClose: () => void
   requestId: string
-  onEdit: (request: RequestDetail) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onEdit: (request: any) => void
   onDelete: (requestId: string) => void
+  onFinalize?: () => void
+  onGenerateWorkOrder?: () => void
+  onPrint?: (requestId: string) => void
   inPage?: boolean
 }
 
@@ -119,6 +136,8 @@ function getStatusLabel(status: string): string {
       return 'Rejeitada'
     case 'CANCELLED':
       return 'Cancelada'
+    case 'COMPLETED':
+      return 'Finalizada'
     default:
       return status
   }
@@ -152,12 +171,17 @@ export function RequestDetailModal({
   requestId,
   onEdit,
   onDelete,
+  onFinalize,
+  onGenerateWorkOrder,
+  onPrint,
   inPage = false,
 }: RequestDetailModalProps) {
   const [loading, setLoading] = useState(true)
   const [request, setRequest] = useState<RequestDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [imageViewer, setImageViewer] = useState<{ url: string; name: string } | null>(null)
+  const [finalizing, setFinalizing] = useState(false)
+  const [generatingWO, setGeneratingWO] = useState(false)
 
   const shouldLoad = inPage ? !!requestId : isOpen && !!requestId
 
@@ -243,6 +267,58 @@ export function RequestDetailModal({
     }
   }
 
+  const handleFinalize = async () => {
+    if (!request) return
+
+    // Se tem OS vinculada não-finalizada, bloquear
+    if (request.generatedWorkOrder && request.generatedWorkOrder.status !== 'COMPLETE') {
+      alert('Não é possível finalizar a solicitação enquanto a OS vinculada estiver em aberto.')
+      return
+    }
+
+    if (!confirm('Deseja finalizar esta solicitação?')) return
+
+    setFinalizing(true)
+    try {
+      const res = await fetch(`/api/requests/${request.id}/finalize`, { method: 'POST' })
+      if (res.ok) {
+        if (onFinalize) onFinalize()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Erro ao finalizar solicitação')
+      }
+    } catch {
+      alert('Erro ao conectar ao servidor')
+    } finally {
+      setFinalizing(false)
+    }
+  }
+
+  const handleGenerateWorkOrder = async () => {
+    if (!request) return
+    if (!confirm('Deseja emitir uma Ordem de Servico a partir desta solicitacao?')) return
+
+    setGeneratingWO(true)
+    try {
+      const res = await fetch(`/api/requests/${request.id}/generate-work-order`, { method: 'POST' })
+      if (res.ok) {
+        if (onGenerateWorkOrder) onGenerateWorkOrder()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Erro ao emitir OS')
+      }
+    } catch {
+      alert('Erro ao conectar ao servidor')
+    } finally {
+      setGeneratingWO(false)
+    }
+  }
+
+  const handlePrint = () => {
+    if (!request || !onPrint) return
+    onPrint(request.id)
+  }
+
   const files = useMemo(
     () => request?.files ?? [],
     [request?.files]
@@ -283,8 +359,11 @@ export function RequestDetailModal({
   ) : request ? (
     <div className="flex-1 overflow-y-auto">
       <PanelActionButtons
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={request.status !== 'COMPLETED' ? handleEdit : undefined}
+        onPrint={handlePrint}
+        onGenerateWorkOrder={request.status === 'APPROVED' && !request.workOrderId && !request.generatedWorkOrder && !generatingWO ? handleGenerateWorkOrder : undefined}
+        onFinalize={request.status === 'APPROVED' && !finalizing ? handleFinalize : undefined}
+        onDelete={request.status !== 'COMPLETED' ? handleDelete : undefined}
       />
 
       <DetailSection title="Resumo da Solicitação" icon="description">
@@ -342,7 +421,19 @@ export function RequestDetailModal({
               <DetailField
                 label="OS Gerada"
                 className="sm:col-span-2"
-                value={`${request.generatedWorkOrder.title} (${getStatusLabel(request.generatedWorkOrder.status)})`}
+                value={
+                  <span>
+                    <span className="font-semibold">
+                      {request.generatedWorkOrder.externalId || request.generatedWorkOrder.internalId || request.generatedWorkOrder.id.slice(0, 8)}
+                    </span>
+                    {' - '}
+                    {request.generatedWorkOrder.title}
+                    {' '}
+                    <span className={`inline-block rounded-md border border-gray-200 px-2 py-0.5 text-[10px] font-bold uppercase ${getStatusColor(request.generatedWorkOrder.status)}`}>
+                      {getStatusLabel(request.generatedWorkOrder.status)}
+                    </span>
+                  </span>
+                }
               />
             )}
           </div>
@@ -417,6 +508,11 @@ export function RequestDetailModal({
       <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
         <div className="flex items-start justify-between border-b border-gray-200 bg-gray-50 px-6 py-5">
           <div className="min-w-0">
+            {request?.requestNumber && (
+              <span className="inline-block mb-1 rounded bg-accent-orange px-2.5 py-0.5 text-xs font-black text-white tracking-wide">
+                {request.requestNumber}
+              </span>
+            )}
             <h2 className="truncate text-lg font-black text-gray-900">{request?.title || 'Solicitação'}</h2>
           </div>
           <PanelCloseButton onClick={onClose} />
@@ -440,7 +536,7 @@ export function RequestDetailModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={request?.title || 'Solicitação'}
+      title={request?.requestNumber ? `${request.requestNumber} - ${request.title}` : (request?.title || 'Solicitação')}
       size="wide"
       noPadding
     >

@@ -7,7 +7,6 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate } from '@/lib/utils'
@@ -17,39 +16,26 @@ import { ExportButton } from '@/components/ui/ExportButton'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
 
-// Lazy load: modais so carregam quando necessario
-const RAFFormModal = dynamic(() => import('@/components/rafs/RAFFormModal').then(m => ({ default: m.RAFFormModal })), { ssr: false })
 const RAFViewModal = dynamic(() => import('@/components/rafs/RAFViewModal').then(m => ({ default: m.RAFViewModal })), { ssr: false })
 const RAFEditModal = dynamic(() => import('@/components/rafs/RAFEditModal').then(m => ({ default: m.RAFEditModal })), { ssr: false })
+
+interface RAFWorkOrder {
+  id: string
+  internalId?: string
+  osType?: string
+  maintenanceArea?: { id: string; name: string; code?: string }
+  asset?: { id: string; name: string; tag?: string }
+}
 
 interface RAF {
   id: string
   rafNumber: string
-  area: string
-  equipment: string
   occurrenceDate: string
   occurrenceTime: string
   panelOperator: string
-  stopExtension: boolean
-  failureBreakdown: boolean
-  productionLost: number | null
-  failureDescription: string
-  observation: string
-  immediateAction: string
-  fiveWhys: string[]
-  hypothesisTests: Array<{
-    item: number
-    description: string
-    possible: string
-    evidence: string
-  }>
   failureType: string
-  actionPlan: Array<{
-    what: string
-    who: string
-    when: string
-  }>
   createdAt: string
+  workOrder?: RAFWorkOrder
   createdBy?: {
     firstName: string
     lastName: string
@@ -63,17 +49,14 @@ export default function RAFsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
-  const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
-  const [filterArea] = useState('Contaminar')
-  const [enableAreaFilter, setEnableAreaFilter] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [rafToDelete, setRafToDelete] = useState<string | null>(null)
   const [selectedRAF, setSelectedRAF] = useState<RAF | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [rafToEdit, setRafToEdit] = useState<string | null>(null)
 
-  const showSidePanel = !!(!!selectedRAF || showEditModal || showModal)
+  const showSidePanel = !!(!!selectedRAF || showEditModal)
 
   const hasAccess = !!user && hasPermission(user, 'rafs', 'view')
 
@@ -106,7 +89,6 @@ export default function RAFsPage() {
       if (res.ok) {
         setShowEditModal(false)
         setRafToEdit(null)
-        setShowModal(false)
         setSelectedRAF(data.data)
       } else {
         alert(data.error || 'Erro ao carregar RAF')
@@ -119,7 +101,6 @@ export default function RAFsPage() {
 
   const handleEdit = (id: string) => {
     setSelectedRAF(null)
-    setShowModal(false)
     setRafToEdit(id)
     setShowEditModal(true)
   }
@@ -139,6 +120,7 @@ export default function RAFsPage() {
 
       if (res.ok) {
         loadRAFs()
+        if (selectedRAF?.id === rafToDelete) setSelectedRAF(null)
       } else {
         alert('Erro ao excluir RAF')
       }
@@ -152,16 +134,15 @@ export default function RAFsPage() {
   }
 
   const filteredRAFs = rafs.filter(raf => {
-    // Filtrar por área Contaminar (apenas se habilitado)
-    const matchesArea = !enableAreaFilter || raf.area.toLowerCase().includes(filterArea.toLowerCase())
-    
-    // Filtrar por termo de busca
-    const matchesSearch = debouncedSearchTerm === '' ||
-      raf.rafNumber.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      raf.equipment.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      raf.area.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    
-    return matchesArea && matchesSearch
+    if (debouncedSearchTerm === '') return true
+    const term = debouncedSearchTerm.toLowerCase()
+    return (
+      raf.rafNumber.toLowerCase().includes(term) ||
+      (raf.workOrder?.asset?.name || '').toLowerCase().includes(term) ||
+      (raf.workOrder?.asset?.tag || '').toLowerCase().includes(term) ||
+      (raf.workOrder?.maintenanceArea?.name || '').toLowerCase().includes(term) ||
+      raf.panelOperator.toLowerCase().includes(term)
+    )
   })
 
   if (authLoading || !hasAccess) {
@@ -172,7 +153,6 @@ export default function RAFsPage() {
     setSelectedRAF(null)
     setShowEditModal(false)
     setRafToEdit(null)
-    setShowModal(false)
   }
 
   const activePanel = showEditModal && rafToEdit ? (
@@ -181,13 +161,6 @@ export default function RAFsPage() {
       onClose={() => { setShowEditModal(false); setRafToEdit(null) }}
       rafId={rafToEdit}
       onSuccess={() => { setShowEditModal(false); setRafToEdit(null); loadRAFs() }}
-      inPage
-    />
-  ) : showModal ? (
-    <RAFFormModal
-      isOpen={true}
-      onClose={() => setShowModal(false)}
-      onSuccess={() => { setShowModal(false); loadRAFs() }}
       inPage
     />
   ) : selectedRAF ? (
@@ -212,9 +185,9 @@ export default function RAFsPage() {
     <div className="flex-1 flex items-center justify-center p-12 text-center">
       <div>
         <Icon name="description" className="text-6xl text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum RAF encontrado</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma RAF encontrada</h3>
         <p className="text-muted-foreground">
-          {searchTerm ? 'Tente ajustar sua busca' : 'Comece criando um novo RAF'}
+          {searchTerm ? 'Tente ajustar sua busca' : 'RAFs são geradas automaticamente ao criar uma OS Corretiva Imediata'}
         </p>
       </div>
     </div>
@@ -236,7 +209,7 @@ export default function RAFsPage() {
                       {raf.rafNumber}
                     </h3>
                     <p className="text-xs text-muted-foreground truncate">
-                      {raf.area}
+                      {raf.workOrder?.asset?.tag || '—'} | {raf.workOrder?.asset?.name || '—'}
                     </p>
                   </div>
                 </div>
@@ -249,15 +222,17 @@ export default function RAFsPage() {
                 </span>
               </div>
 
-              <p className="text-xs text-foreground line-clamp-2">
-                {raf.equipment}
-              </p>
-
               <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Icon name="calendar_today" className="text-sm" />
                   <span>{formatDate(raf.occurrenceDate)}</span>
                 </div>
+                {raf.workOrder?.internalId && (
+                  <div className="flex items-center gap-1">
+                    <Icon name="assignment" className="text-sm" />
+                    <span className="font-mono">{raf.workOrder.internalId}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-1 truncate">
                   <Icon name="person" className="text-sm" />
                   <span className="truncate">{raf.panelOperator}</span>
@@ -275,8 +250,10 @@ export default function RAFsPage() {
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">RAF</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Área</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Equipamento</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Area</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cod. Bem</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do Bem</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">N° OS</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Operador</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</th>
@@ -295,9 +272,19 @@ export default function RAFsPage() {
                     <span className="text-sm font-semibold text-foreground">{raf.rafNumber}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{raf.area}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {raf.workOrder?.maintenanceArea?.code
+                    ? `${raf.workOrder.maintenanceArea.code} - ${raf.workOrder.maintenanceArea.name}`
+                    : raf.workOrder?.maintenanceArea?.name || '—'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-mono">
+                  {raf.workOrder?.asset?.tag || '—'}
+                </td>
                 <td className="px-6 py-4 max-w-xs">
-                  <div className="text-sm text-foreground truncate">{raf.equipment}</div>
+                  <div className="text-sm text-foreground truncate">{raf.workOrder?.asset?.name || '—'}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-mono">
+                  {raf.workOrder?.internalId || '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(raf.occurrenceDate)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{raf.panelOperator}</td>
@@ -307,7 +294,7 @@ export default function RAFsPage() {
                       ? 'bg-danger-light text-foreground'
                       : 'bg-warning-light text-foreground'
                   }`}>
-                    {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
+                    {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatoria'}
                   </span>
                 </td>
               </tr>
@@ -322,8 +309,8 @@ export default function RAFsPage() {
     <PageContainer variant="full" className="overflow-hidden p-0">
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
-          title="Relatórios de Análise de Falha (RAF)"
-          description="Gerencie os relatórios de análise de falha do sistema"
+          title="Relatorios de Analise de Falha (RAF)"
+          description="RAFs sao geradas automaticamente ao criar uma OS Corretiva Imediata"
           className="mb-0"
           actions={
             <div className="flex items-center gap-2 flex-wrap">
@@ -331,22 +318,12 @@ export default function RAFsPage() {
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 transform text-base text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Buscar por número, equipamento ou área..."
+                  placeholder="Buscar RAF, bem, area..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-
-              <label className="flex items-center gap-2 px-3 py-2 text-sm bg-card rounded-[4px] cursor-pointer hover:bg-accent/5">
-                <input
-                  type="checkbox"
-                  checked={enableAreaFilter}
-                  onChange={(e) => setEnableAreaFilter(e.target.checked)}
-                  className="w-4 h-4 text-primary rounded"
-                />
-                <span className="text-sm font-medium whitespace-nowrap">Filtrar Área</span>
-              </label>
 
               <div className="hidden md:flex items-center bg-muted rounded-[4px] p-1">
                 <button
@@ -356,7 +333,7 @@ export default function RAFsPage() {
                       ? 'bg-background text-foreground ambient-shadow'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
-                  title="Visualização em Tabela"
+                  title="Visualizacao em Tabela"
                 >
                   <Icon name="table" className="text-base" />
                   <span className="hidden md:inline">Tabela</span>
@@ -368,7 +345,7 @@ export default function RAFsPage() {
                       ? 'bg-background text-foreground ambient-shadow'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
-                  title="Visualização em Cartões"
+                  title="Visualizacao em Cartoes"
                 >
                   <Icon name="grid_view" className="text-base" />
                   <span className="hidden md:inline">Grade</span>
@@ -376,13 +353,6 @@ export default function RAFsPage() {
               </div>
 
               <ExportButton data={filteredRAFs} entity="rafs" />
-              <Button
-                onClick={() => { setSelectedRAF(null); setShowEditModal(false); setRafToEdit(null); setShowModal(true) }}
-                className="flex-shrink-0 bg-accent-orange hover:bg-accent-orange/90 text-white font-bold shadow-md"
-              >
-                <Icon name="add" className="text-base" />
-                <span className="hidden sm:inline ml-1">Novo RAF</span>
-              </Button>
             </div>
           }
         />
@@ -404,8 +374,8 @@ export default function RAFsPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
-        title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir este RAF? Esta ação não pode ser desfeita."
+        title="Confirmar Exclusao"
+        message="Tem certeza que deseja excluir esta RAF? Esta acao nao pode ser desfeita."
       />
     </PageContainer>
   )

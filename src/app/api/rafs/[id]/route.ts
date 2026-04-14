@@ -18,7 +18,21 @@ export async function GET(
 
     const { data: raf, error } = await supabase
       .from('FailureAnalysisReport')
-      .select('*, createdBy:User!createdById(id, firstName, lastName, email)')
+      .select(`
+        *,
+        createdBy:User!createdById(id, firstName, lastName, email),
+        workOrder:WorkOrder!workOrderId(
+          id,
+          internalId,
+          title,
+          status,
+          osType,
+          type,
+          maintenanceArea:MaintenanceArea(id, name, code),
+          serviceType:ServiceType(id, code, name),
+          asset:Asset(id, name, tag)
+        )
+      `)
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -31,7 +45,6 @@ export async function GET(
 
     return NextResponse.json({ data: raf })
   } catch (error: any) {
-    // Supabase returns PGRST116 when .single() finds no rows
     if (error?.code === 'PGRST116') {
       return NextResponse.json({ error: 'RAF não encontrado' }, { status: 404 })
     }
@@ -58,30 +71,45 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
 
+    const updateData: Record<string, any> = {
+      updatedAt: new Date().toISOString()
+    }
+
+    // Campos opcionais - atualizar apenas os enviados
+    if (body.occurrenceDate !== undefined) updateData.occurrenceDate = new Date(body.occurrenceDate).toISOString()
+    if (body.occurrenceTime !== undefined) updateData.occurrenceTime = body.occurrenceTime
+    if (body.panelOperator !== undefined) updateData.panelOperator = body.panelOperator
+    if (body.stopExtension !== undefined) updateData.stopExtension = body.stopExtension
+    if (body.failureBreakdown !== undefined) updateData.failureBreakdown = body.failureBreakdown
+    if (body.productionLost !== undefined) updateData.productionLost = body.productionLost ? parseFloat(body.productionLost) : null
+    if (body.failureDescription !== undefined) updateData.failureDescription = body.failureDescription
+    if (body.observation !== undefined) updateData.observation = body.observation
+    if (body.immediateAction !== undefined) updateData.immediateAction = body.immediateAction
+    if (body.fiveWhys !== undefined) updateData.fiveWhys = body.fiveWhys
+    if (body.hypothesisTests !== undefined) updateData.hypothesisTests = body.hypothesisTests
+    if (body.failureType !== undefined) updateData.failureType = body.failureType
+    if (body.actionPlan !== undefined) updateData.actionPlan = body.actionPlan
+
     const { data: raf, error } = await supabase
       .from('FailureAnalysisReport')
-      .update({
-        rafNumber: body.rafNumber,
-        area: body.area,
-        equipment: body.equipment,
-        occurrenceDate: new Date(body.occurrenceDate).toISOString(),
-        occurrenceTime: body.occurrenceTime,
-        panelOperator: body.panelOperator,
-        stopExtension: body.stopExtension || false,
-        failureBreakdown: body.failureBreakdown || false,
-        productionLost: body.productionLost ? parseFloat(body.productionLost) : null,
-        failureDescription: body.failureDescription,
-        observation: body.observation,
-        immediateAction: body.immediateAction,
-        fiveWhys: body.fiveWhys || [],
-        hypothesisTests: body.hypothesisTests || [],
-        failureType: body.failureType || 'RANDOM',
-        actionPlan: body.actionPlan || [],
-        updatedAt: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .eq('companyId', session.companyId)
-      .select('*, createdBy:User!createdById(id, firstName, lastName, email)')
+      .select(`
+        *,
+        createdBy:User!createdById(id, firstName, lastName, email),
+        workOrder:WorkOrder!workOrderId(
+          id,
+          internalId,
+          title,
+          status,
+          osType,
+          type,
+          maintenanceArea:MaintenanceArea(id, name, code),
+          serviceType:ServiceType(id, code, name),
+          asset:Asset(id, name, tag)
+        )
+      `)
       .single()
 
     if (error) throw error

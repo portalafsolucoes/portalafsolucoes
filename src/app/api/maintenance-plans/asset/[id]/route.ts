@@ -48,7 +48,7 @@ export async function GET(
             .eq('taskId', task.id)
             .order('order'),
           supabase.from('AssetMaintenanceTaskResource')
-            .select('*, resource:Resource!resourceId(id, name, type, unit)')
+            .select('*, resource:Resource(id, name, type, unit), jobTitle:JobTitle(id, name), user:User(id, firstName, lastName, jobTitle)')
             .eq('taskId', task.id),
         ])
         task.steps = stepsRes.data || []

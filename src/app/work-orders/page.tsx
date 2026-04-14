@@ -24,6 +24,7 @@ const WorkOrderEditModal = dynamic(() => import('@/components/work-orders/WorkOr
 const WorkOrderExecuteModal = dynamic(() => import('@/components/work-orders/WorkOrderExecuteModal').then(m => ({ default: m.WorkOrderExecuteModal })), { ssr: false })
 const FinalizeWorkOrderModal = dynamic(() => import('@/components/work-orders/FinalizeWorkOrderModal').then(m => ({ default: m.FinalizeWorkOrderModal })), { ssr: false })
 const WorkOrderFormModal = dynamic(() => import('@/components/work-orders/WorkOrderFormModal').then(m => ({ default: m.WorkOrderFormModal })), { ssr: false })
+const WorkOrderPrintView = dynamic(() => import('@/components/work-orders/WorkOrderPrintView').then(m => ({ default: m.WorkOrderPrintView })), { ssr: false })
 
 interface WorkOrder {
   id: string
@@ -66,6 +67,8 @@ export default function WorkOrdersPage() {
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<WorkOrder | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showPrintModal, setShowPrintModal] = useState(false)
+  const [workOrderToPrint, setWorkOrderToPrint] = useState<WorkOrder | null>(null)
 
   useEffect(() => {
     if (!currentUser) return
@@ -109,6 +112,17 @@ export default function WorkOrdersPage() {
   const handleEdit = (workOrder: WorkOrder) => {
     setEditingWorkOrderId(workOrder.id)
     setShowEditModal(true)
+  }
+
+  const handlePrint = (workOrder: WorkOrder) => {
+    setWorkOrderToPrint(workOrder)
+    setShowPrintModal(true)
+  }
+
+  const handleFinalize = (workOrder: WorkOrder) => {
+    setSelectedWorkOrderId('')
+    setWorkOrderToFinalize(workOrder)
+    setShowFinalizeModal(true)
   }
 
   const openDeleteDialog = (workOrderId: string) => {
@@ -204,6 +218,8 @@ export default function WorkOrdersPage() {
       workOrderId={selectedWorkOrderId}
       onEdit={handleEdit}
       onDelete={openDeleteDialog}
+      onPrint={handlePrint}
+      onFinalize={handleFinalize}
       currentUserId={currentUser?.id}
       inPage
     />
@@ -434,6 +450,14 @@ export default function WorkOrdersPage() {
           />
         </div>
       </div>
+
+      {/* Modal de Impressão A4 */}
+      {showPrintModal && workOrderToPrint && (
+        <WorkOrderPrintView
+          workOrderId={workOrderToPrint.id}
+          onClose={() => { setShowPrintModal(false); setWorkOrderToPrint(null) }}
+        />
+      )}
 
       {/* Dialog de Confirmação de Exclusão */}
       <ConfirmDialog

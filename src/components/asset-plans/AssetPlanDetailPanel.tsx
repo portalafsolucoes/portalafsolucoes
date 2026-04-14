@@ -30,7 +30,20 @@ interface TaskDetail {
   executionTime: number | null
   order: number
   steps?: { stepId: string; order: number; step?: { id: string; name: string } }[]
-  resources?: { resourceId: string; resourceCount: number; quantity: number; unit: string; resource?: { id: string; name: string; type: string } }[]
+  resources?: {
+    id: string
+    resourceType?: string
+    resourceId: string | null
+    jobTitleId?: string | null
+    userId?: string | null
+    resourceCount: number
+    quantity: number
+    hours: number
+    unit: string
+    resource?: { id: string; name: string; type: string; unit?: string }
+    jobTitle?: { id: string; name: string }
+    user?: { id: string; firstName: string; lastName: string; jobTitle?: string }
+  }[]
 }
 
 interface AssetPlanDetailPanelProps {
@@ -195,15 +208,30 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
                     <div>
                       <span className={labelCls}>Recursos</span>
                       <div className="space-y-1 mt-1">
-                        {task.resources.map(r => (
-                          <div key={r.resourceId} className="flex items-center justify-between text-xs bg-muted rounded-[4px] px-2 py-1.5">
-                            <span className="text-foreground">{r.resource?.name || r.resourceId}</span>
-                            <span className="text-muted-foreground">
-                              {r.resourceCount} {r.unit}
-                              {(r.resource?.type === 'MAO_DE_OBRA' || r.resource?.type === 'LABOR') && r.quantity > 0 && ` / ${r.quantity}h`}
-                            </span>
-                          </div>
-                        ))}
+                        {task.resources.map((r, ri) => {
+                          const type = r.resourceType || r.resource?.type || 'MATERIAL'
+                          let name = ''
+                          let detail = ''
+
+                          if (type === 'SPECIALTY') {
+                            name = r.jobTitle?.name || 'Especialidade'
+                            detail = `${r.resourceCount || r.quantity || 1} pessoa(s)`
+                          } else if (type === 'LABOR') {
+                            name = r.user ? `${r.user.firstName} ${r.user.lastName}` : 'Mão de obra'
+                            detail = r.hours ? `${r.hours}h` : ''
+                          } else {
+                            name = r.resource?.name || 'Recurso'
+                            const unit = r.resource?.unit || r.unit || 'pç'
+                            detail = `${r.resourceCount || r.quantity || 1} ${unit === 'H' ? 'pç' : unit}`
+                          }
+
+                          return (
+                            <div key={r.id || ri} className="flex items-center justify-between text-xs bg-muted rounded-[4px] px-2 py-1.5">
+                              <span className="text-foreground">{name}</span>
+                              {detail && <span className="text-muted-foreground">{detail}</span>}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   )}
