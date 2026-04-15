@@ -231,7 +231,7 @@ function PeopleSummarySection({ users }: { users: ResourceUserSummary[] }) {
                 </thead>
                 <tbody className="bg-card divide-y divide-gray-200">
                   {filtered.map(user => (
-                    <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors">
+                    <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">
                         {user.firstName} {user.lastName}
                       </td>
