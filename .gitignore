@@ -53,6 +53,7 @@ test-results/
 # AI Tools
 # ========================================
 .claude/worktrees/
+.claude/settings.local.json
 .claude/skills/**/node_modules/
 .claude/skills/**/.temp-execution-*.js
 .claude/skills/**/__pycache__/
