@@ -67,7 +67,18 @@ export async function POST(
       realStopEnd,          // Data/hora real fim parada
       generateCorrectiveOS, // Boolean - se deve gerar OS corretiva
       correctiveData,       // Dados da OS corretiva (se generateCorrectiveOS=true)
+      actualMeterReading,   // Float - horímetro real informado na finalização
     } = body
+
+    // Validação de horímetro: obrigatório quando a OS é controlada por horímetro
+    if (wo.dueMeterReading != null) {
+      if (actualMeterReading == null || typeof actualMeterReading !== 'number' || actualMeterReading <= 0) {
+        return NextResponse.json(
+          { error: 'O horímetro atual é obrigatório para OSs controladas por horímetro' },
+          { status: 400 }
+        )
+      }
+    }
 
     // Calcular custos reais
     let laborCost = 0
@@ -172,6 +183,11 @@ export async function POST(
       updatedAt: new Date().toISOString(),
     }
 
+    // Salvar horímetro real na OS (se informado)
+    if (actualMeterReading != null) {
+      updateData.actualMeterReading = actualMeterReading
+    }
+
     // Salvar avisos de calendário no campo de notas (informativo)
     if (calendarWarnings.length > 0) {
       const existingNotes = updateData.executionNotes || ''
@@ -218,6 +234,57 @@ export async function POST(
         .from('AssetMaintenancePlan')
         .update({ lastMaintenanceDate: new Date().toISOString(), updatedAt: new Date().toISOString() })
         .eq('id', wo.assetMaintenancePlanId)
+    }
+
+    // =========================================================================
+    // HORÍMETRO — Atualizar ativo e recalcular OSs abertas do mesmo plano
+    // =========================================================================
+    if (actualMeterReading != null && wo.assetId) {
+      // Atualizar counterPosition do ativo com o horímetro informado
+      await supabase
+        .from('Asset')
+        .update({
+          counterPosition: actualMeterReading,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', wo.assetId)
+
+      // Recalcular dueMeterReading das OSs abertas do mesmo plano
+      if (wo.assetMaintenancePlanId) {
+        // Buscar o intervalo do plano de manutenção
+        const { data: plan } = await supabase
+          .from('AssetMaintenancePlan')
+          .select('maintenanceTime, timeUnit')
+          .eq('id', wo.assetMaintenancePlanId)
+          .single()
+
+        if (plan?.maintenanceTime) {
+          // Buscar todas as OSs abertas desse plano, ordenadas por dueMeterReading
+          const { data: openWos } = await supabase
+            .from('WorkOrder')
+            .select('id, dueMeterReading')
+            .eq('assetMaintenancePlanId', wo.assetMaintenancePlanId)
+            .not('status', 'in', '("COMPLETE","CANCELLED")')
+            .not('id', 'eq', id) // excluir a OS que acabou de ser finalizada
+            .not('dueMeterReading', 'is', null)
+            .order('dueMeterReading', { ascending: true })
+
+          if (openWos && openWos.length > 0) {
+            // Recalcular sequencialmente a partir do horímetro informado
+            let nextReading = actualMeterReading
+            for (const openWo of openWos) {
+              nextReading += plan.maintenanceTime
+              await supabase
+                .from('WorkOrder')
+                .update({
+                  dueMeterReading: nextReading,
+                  updatedAt: new Date().toISOString(),
+                })
+                .eq('id', openWo.id)
+            }
+          }
+        }
+      }
     }
 
     // Se solicitou gerar OS corretiva

@@ -4,6 +4,8 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, getPriorityFromGut } from '@/lib/workOrderUtils'
 import { copyPlanResourcesToWorkOrder, copyPlanTasksToWorkOrder } from '@/lib/woResourceCopy'
+import { getCalendarsForPlans } from '@/lib/calendarData'
+import { getAvailabilityInRange, estimateWorkingDaysForHours } from '@/lib/calendarUtils'
 
 // GET - Listar planos de manutenção emitidos
 export async function GET(request: NextRequest) {
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       description, startDate, endDate, unitId: unitIdBody,
-      trackingType, currentHorimeter,
+      trackingType, currentHorimeter, toleranceDays: bodyToleranceDays,
       // Filtros multi-seleção (arrays de IDs)
       costCenterIds, workCenterIds, serviceTypeIds, maintenanceAreaIds,
       // Filtros legados range (mantidos para compatibilidade)
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
 
     const unitId = getEffectiveUnitId(session, unitIdBody)
     const effectiveTrackingType = trackingType || 'TIME'
+    const toleranceDays = Number(bodyToleranceDays) || 0
 
     if (!description || !startDate || !endDate || !unitId) {
       return NextResponse.json({ error: 'description, startDate, endDate e unitId são obrigatórios' }, { status: 400 })
@@ -78,6 +81,7 @@ export async function POST(request: NextRequest) {
         isFinished: false,
         trackingType: effectiveTrackingType,
         currentHorimeter: effectiveTrackingType === 'HORIMETER' ? currentHorimeter : null,
+        toleranceDays,
         costCenterFrom, costCenterTo, workCenterFrom, workCenterTo,
         serviceTypeFrom, serviceTypeTo, areaFrom, areaTo, familyFrom, familyTo,
         userId: session.id,
@@ -122,7 +126,7 @@ export async function POST(request: NextRequest) {
     const workCenterSet = Array.isArray(workCenterIds) && workCenterIds.length > 0
       ? new Set(workCenterIds) : null
 
-    // Ativos sem dailyVariation (apenas para HORIMETER)
+    // Ativos pendentes (horímetro sem calendário)
     const pendingAssets: Array<{
       id: string
       assetMaintenancePlanId: string
@@ -131,7 +135,16 @@ export async function POST(request: NextRequest) {
       maintenanceName: string
       maintenanceTime: number
       timeUnit: string
+      reason?: string
     }> = []
+
+    // Buscar calendários em batch para planos por horímetro
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let calendarsMap: Map<string, { calendarId: string; calendarName: string; workDays: any }> = new Map()
+    if (effectiveTrackingType === 'HORIMETER' && assetPlans && assetPlans.length > 0) {
+      const planIds = assetPlans.map((ap: { id: string }) => ap.id)
+      calendarsMap = await getCalendarsForPlans(planIds)
+    }
 
     for (const ap of (assetPlans || [])) {
       // Verificar se o ativo pertence à unidade
@@ -145,8 +158,7 @@ export async function POST(request: NextRequest) {
       if (!ap.maintenanceTime || !ap.timeUnit) continue
 
       if (effectiveTrackingType === 'TIME') {
-        // Lógica por TEMPO: gerar múltiplas OSs para cada ciclo dentro do período
-        // Se lastMaintenanceDate vazio, usar startDate do plano como ponto de partida
+        // ========== LÓGICA POR TEMPO (sem mudança) ==========
         const baseDate = ap.lastMaintenanceDate || startDate
         let nextDate = calculateNextDateByTime(baseDate, ap.maintenanceTime, ap.timeUnit)
         let loopCount = 0
@@ -155,21 +167,19 @@ export async function POST(request: NextRequest) {
           if (nextDate >= start) {
             const woResult = await createWorkOrder(supabase, {
               ap, plan, unitId, companyId: session.companyId, plannedDate: nextDate,
+              toleranceDays,
             })
             if (woResult.success) generatedCount++
           }
-          // Avançar para o próximo ciclo
           nextDate = calculateNextDateByTime(nextDate.toISOString(), ap.maintenanceTime, ap.timeUnit)
           if (loopCount > 100) break
         }
       } else {
-        // Para HORÍMETRO, lastMaintenanceDate é obrigatório
-        if (!ap.lastMaintenanceDate) continue
-        // Lógica por HORÍMETRO: projetar data usando dailyVariation
-        const dailyVariation = ap.asset?.dailyVariation
+        // ========== LÓGICA POR HORÍMETRO (reescrita) ==========
 
-        if (!dailyVariation || dailyVariation <= 0) {
-          // Sem variação diária — incluir na lista para seleção manual
+        // Calendário é obrigatório para horímetro
+        const calData = calendarsMap.get(ap.id)
+        if (!calData?.workDays) {
           pendingAssets.push({
             id: ap.asset?.id || '',
             assetMaintenancePlanId: ap.id,
@@ -178,21 +188,61 @@ export async function POST(request: NextRequest) {
             maintenanceName: ap.name || 'Manutenção',
             maintenanceTime: ap.maintenanceTime,
             timeUnit: ap.timeUnit,
+            reason: 'Sem calendário vinculado no Plano do Bem',
           })
           continue
         }
 
-        // Projetar: lastMaintenanceDate + (maintenanceTime / dailyVariation) dias
-        const daysUntilNext = ap.maintenanceTime / dailyVariation
-        const lastDate = new Date(ap.lastMaintenanceDate)
-        const nextDate = new Date(lastDate)
-        nextDate.setDate(nextDate.getDate() + Math.round(daysUntilNext))
+        if (!ap.lastMaintenanceDate) continue
 
-        if (nextDate >= start && nextDate <= end) {
+        const workDays = calData.workDays
+        const maintenanceTimeHours = ap.maintenanceTime // periodicidade em horas
+
+        // Passo 1: Calcular horas operadas desde a última manutenção até o início do plano
+        const horasOperadas = getAvailabilityInRange(
+          workDays,
+          new Date(ap.lastMaintenanceDate),
+          start
+        ).totalHours
+
+        // Passo 2: Estimar horímetro na última manutenção
+        const horimeterNaUltimaManutenção = currentHorimeter - horasOperadas
+
+        // Passo 3: Projetar ciclos de manutenção
+        let proximoHorimetro = horimeterNaUltimaManutenção + maintenanceTimeHours
+        let loopSafety = 0
+
+        // Passo 4: Gerar OSs para ciclos já vencidos (atrasados)
+        while (proximoHorimetro <= currentHorimeter && loopSafety < 200) {
+          loopSafety++
           const woResult = await createWorkOrder(supabase, {
-            ap, plan, unitId, companyId: session.companyId, plannedDate: nextDate,
+            ap, plan, unitId, companyId: session.companyId,
+            plannedDate: start,
+            overrideDueMeterReading: proximoHorimetro,
+            overridePriority: 'CRITICAL',
+            isOverdue: true,
+            toleranceDays,
           })
           if (woResult.success) generatedCount++
+          proximoHorimetro += maintenanceTimeHours
+        }
+
+        // Passo 5: Gerar OSs futuras dentro do período
+        while (loopSafety < 200) {
+          loopSafety++
+          const horasRestantes = proximoHorimetro - currentHorimeter
+          const { endDate: projectedDate } = estimateWorkingDaysForHours(workDays, horasRestantes, start)
+
+          if (projectedDate > end) break
+
+          const woResult = await createWorkOrder(supabase, {
+            ap, plan, unitId, companyId: session.companyId,
+            plannedDate: projectedDate,
+            overrideDueMeterReading: proximoHorimetro,
+            toleranceDays,
+          })
+          if (woResult.success) generatedCount++
+          proximoHorimetro += maintenanceTimeHours
         }
       }
     }
@@ -235,20 +285,39 @@ async function createWorkOrder(db: any, params: {
   unitId: string
   companyId: string
   plannedDate: Date
+  overrideDueMeterReading?: number
+  overridePriority?: string
+  isOverdue?: boolean
+  toleranceDays?: number
 }): Promise<{ success: boolean }> {
-  const { ap, plan, unitId, companyId, plannedDate } = params
+  const {
+    ap, plan, unitId, companyId, plannedDate,
+    overrideDueMeterReading, overridePriority, isOverdue, toleranceDays,
+  } = params
   const externalId = await generateSequentialId()
 
-  // Auto-priorização por GUT do ativo
-  const priority = ap.asset
+  // Auto-priorização por GUT do ativo (pode ser sobrescrita)
+  const gutPriority = ap.asset
     ? getPriorityFromGut(ap.asset.gutGravity, ap.asset.gutUrgency, ap.asset.gutTendency)
     : 'LOW'
+  const priority = overridePriority || gutPriority
 
-  // Calcular vencimento conforme trackingType
+  // Descrição
+  const descSuffix = isOverdue ? ' (ATRASADA — manutenção vencida)' : ''
+  const description = `OS gerada pelo Plano #${plan.planNumber}${descSuffix}`
+
+  // Calcular vencimento
   let dueDate: string | null = null
-  let dueMeterReading: number | null = null
+  let dueMeterReading: number | null = overrideDueMeterReading ?? null
 
-  if (ap.trackingType === 'TIME' && ap.maintenanceTime && ap.timeUnit) {
+  if (overrideDueMeterReading != null) {
+    // Horímetro com dueMeterReading fornecido: dueDate = plannedDate + tolerância
+    const due = new Date(plannedDate)
+    if (toleranceDays && toleranceDays > 0) {
+      due.setDate(due.getDate() + toleranceDays)
+    }
+    dueDate = due.toISOString()
+  } else if (ap.trackingType === 'TIME' && ap.maintenanceTime && ap.timeUnit) {
     const due = new Date(plannedDate)
     switch (ap.timeUnit) {
       case 'Dia(s)': due.setDate(due.getDate() + ap.maintenanceTime); break
@@ -258,6 +327,7 @@ async function createWorkOrder(db: any, params: {
       default: due.setDate(due.getDate() + ap.maintenanceTime)
     }
     if (ap.toleranceDays) due.setDate(due.getDate() + ap.toleranceDays)
+    if (toleranceDays && toleranceDays > 0) due.setDate(due.getDate() + toleranceDays)
     dueDate = due.toISOString()
   } else if ((ap.trackingType === 'METER' || ap.trackingType === 'HORIMETER') && ap.asset?.hasCounter) {
     const currentPos = ap.asset.counterPosition || 0
@@ -273,7 +343,7 @@ async function createWorkOrder(db: any, params: {
       internalId: null,
       systemStatus: 'IN_SYSTEM',
       title: ap.name || `Manutenção Preventiva - ${ap.asset?.name}`,
-      description: `OS gerada pelo Plano #${plan.planNumber}`,
+      description,
       type: 'PREVENTIVE',
       status: 'PENDING',
       priority,

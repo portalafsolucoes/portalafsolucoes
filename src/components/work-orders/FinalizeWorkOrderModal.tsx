@@ -137,6 +137,10 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Horímetro
+  const [actualMeterReading, setActualMeterReading] = useState<string>('')
+  const isHorimeterBased = workOrder?.dueMeterReading != null
+
   // RAF pendente
   const [rafPending, setRafPending] = useState<{ rafNumber: string; pendingCount: number } | null>(null)
 
@@ -379,6 +383,15 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   }, [executionResources, checkCalendarAvailability])
 
   const handleFinalize = async () => {
+    // Validação de horímetro obrigatório
+    if (isHorimeterBased) {
+      const reading = parseFloat(actualMeterReading)
+      if (!actualMeterReading || isNaN(reading) || reading <= 0) {
+        setError('Informe o horimetro atual para finalizar esta OS.')
+        return
+      }
+    }
+
     setSaving(true)
     setError('')
     try {
@@ -429,6 +442,11 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           : undefined,
         executionNotes,
         generateCorrectiveOS: generateCorrective,
+      }
+
+      // Enviar horímetro real quando a OS é controlada por horímetro
+      if (isHorimeterBased && actualMeterReading) {
+        body.actualMeterReading = parseFloat(actualMeterReading)
       }
 
       // Calcular datas reais da primeira e última entrada de mão de obra
@@ -510,6 +528,42 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
             <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{workOrder.type}</span></div>
           </div>
         </div>
+
+        {/* Horímetro — Campo obrigatório para OSs controladas por horímetro */}
+        {isHorimeterBased && (
+          <div className="p-3 border border-blue-200 bg-blue-50 rounded-[4px] space-y-3">
+            <div className="flex items-center gap-2">
+              <Icon name="speed" className="text-base text-blue-600" />
+              <span className="text-sm font-semibold text-blue-800">Leitura do Horimetro</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Horimetro Previsto (h)</label>
+                <div className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-[4px] text-gray-600">
+                  {workOrder.dueMeterReading?.toLocaleString('pt-BR')} h
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                  Horimetro Atual (h) <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={actualMeterReading}
+                  onChange={e => setActualMeterReading(e.target.value)}
+                  placeholder="Informe o horimetro no momento da manutencao"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-[4px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-blue-600">
+              <Icon name="info" className="text-xs mr-1 inline" />
+              Ao finalizar, o horimetro do ativo sera atualizado e as proximas OSs deste plano serao recalculadas.
+            </p>
+          </div>
+        )}
 
         {/* Avisos de Calendário */}
         {calendarWarnings.length > 0 && (

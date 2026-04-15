@@ -161,7 +161,8 @@ export async function POST(request: NextRequest) {
       frequencyValue,
       estimatedDuration,
       serviceTypeId,
-      maintenanceAreaId
+      maintenanceAreaId,
+      toleranceDays
     } = body
     const now = new Date().toISOString()
 
@@ -290,6 +291,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Calcular dueDate com tolerância
+    let finalDueDate: string | null = dueDate ? new Date(dueDate).toISOString() : null
+    if (finalDueDate && toleranceDays && Number(toleranceDays) > 0) {
+      const d = new Date(finalDueDate)
+      d.setDate(d.getDate() + Number(toleranceDays))
+      finalDueDate = d.toISOString()
+    }
+
     // Criar WorkOrder principal
     const { data: workOrder, error: woError } = await supabase
       .from('WorkOrder')
@@ -300,7 +309,7 @@ export async function POST(request: NextRequest) {
         type: type || 'CORRECTIVE',
         priority: effectivePriority,
         status: 'PENDING',
-        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+        dueDate: finalDueDate,
         externalId: processedExternalId,
         internalId: null,
         systemStatus: 'IN_SYSTEM',
@@ -334,8 +343,10 @@ export async function POST(request: NextRequest) {
       const taskInserts = tasks.map((task: any, index: number) => ({
         id: generateId(),
         label: task.label,
-        notes: task.notes,
-        order: index,
+        notes: task.notes || null,
+        order: task.order ?? index,
+        executionTime: task.executionTime || null,
+        steps: task.steps || null,
         workOrderId: workOrder.id,
         createdAt: now,
         updatedAt: now

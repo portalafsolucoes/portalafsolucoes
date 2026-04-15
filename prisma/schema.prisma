@@ -1224,6 +1224,7 @@ model MaintenancePlanExecution {
   isFinished     Boolean  @default(false)
   trackingType   String   @default("TIME")
   currentHorimeter Float?
+  toleranceDays    Int      @default(0)
   costCenterFrom String?
   costCenterTo   String?
   workCenterFrom String?
@@ -1323,8 +1324,9 @@ model WorkOrder {
   priority     WorkOrderPriority @default(NONE)
   status       WorkOrderStatus   @default(PENDING)
   dueDate          DateTime?
-  dueMeterReading  Float?
-  completedOn      DateTime?
+  dueMeterReading    Float?
+  actualMeterReading Float?
+  completedOn        DateTime?
   estimatedDuration Int?
   actualDuration    Int?
   archived     Boolean           @default(false)
@@ -1850,8 +1852,8 @@ model FailureAnalysisReport {
   unitId String?
   unit   Location? @relation(fields: [unitId], references: [id])
 
-  workOrderId String  @unique
-  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  workOrderId String?  @unique
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([createdById])
