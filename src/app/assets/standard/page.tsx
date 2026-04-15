@@ -301,7 +301,7 @@ export default function StandardAssetsPage() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-card divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-gray-100">
                       {sortedItems.map(item => (
                         <tr
                           key={item.id}
@@ -310,7 +310,7 @@ export default function StandardAssetsPage() {
                             setEditingItem(null)
                             setSelectedItem(item)
                           }}
-                          className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${
+                          className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${
                             selectedItem?.id === item.id || editingItem?.id === item.id
                               ? 'bg-secondary'
                               : ''

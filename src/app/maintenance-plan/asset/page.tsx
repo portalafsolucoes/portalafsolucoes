@@ -14,6 +14,9 @@ import { useAuth } from '@/hooks/useAuth'
 const AssetPlanDetailPanel = dynamic(() => import('@/components/asset-plans/AssetPlanDetailPanel'), { ssr: false })
 const AssetPlanFormPanel = dynamic(() => import('@/components/asset-plans/AssetPlanFormPanel'), { ssr: false })
 
+type SortField = 'code' | 'assetName' | 'serviceType' | 'sequence' | 'name' | 'frequency' | 'trackingType' | 'isActive'
+type SortDirection = 'asc' | 'desc'
+
 export default function AssetMaintenancePlanPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
@@ -22,6 +25,8 @@ export default function AssetMaintenancePlanPage() {
   // --- dados da listagem ---
   const [assetPlans, setAssetPlans] = useState<any[]>([])
   const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState<SortField>('code')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // --- painel de detalhe ---
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null)
@@ -99,12 +104,57 @@ export default function AssetMaintenancePlanPage() {
 
   const canEdit = role && hasPermission(role as UserRole, 'maintenance-plan', 'create')
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
   const filteredAsset = assetPlans.filter(p =>
     !search || p.name?.toLowerCase().includes(search.toLowerCase()) ||
     p.asset?.name?.toLowerCase().includes(search.toLowerCase()) ||
     p.asset?.protheusCode?.toLowerCase().includes(search.toLowerCase()) ||
     p.asset?.tag?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const sortedAsset = [...filteredAsset].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'code':
+        return (a.asset?.protheusCode || '').localeCompare(b.asset?.protheusCode || '') * modifier
+      case 'assetName':
+        return (a.asset?.name || '').localeCompare(b.asset?.name || '') * modifier
+      case 'serviceType':
+        return (a.serviceType?.name || '').localeCompare(b.serviceType?.name || '') * modifier
+      case 'sequence':
+        return ((a.sequence || 0) - (b.sequence || 0)) * modifier
+      case 'name':
+        return (a.name || '').localeCompare(b.name || '') * modifier
+      case 'frequency':
+        return ((a.maintenanceTime || 0) - (b.maintenanceTime || 0)) * modifier
+      case 'trackingType':
+        return (a.trackingType || '').localeCompare(b.trackingType || '') * modifier
+      case 'isActive':
+        return ((a.isActive ? 1 : 0) - (b.isActive ? 1 : 0)) * modifier
+      default:
+        return 0
+    }
+  })
 
   if (authLoading || !user) {
     return (
@@ -155,23 +205,63 @@ export default function AssetMaintenancePlanPage() {
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="sticky top-0 bg-secondary z-10">
           <tr>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Código</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do Bem</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo Serviço</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Seq.</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome Manutenção</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Frequência</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo de Controle</th>
-            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativa?</th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('code')} className="flex items-center gap-1">
+                <span>Código</span>
+                {renderSortIcon('code')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('assetName')} className="flex items-center gap-1">
+                <span>Nome do Bem</span>
+                {renderSortIcon('assetName')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('serviceType')} className="flex items-center gap-1">
+                <span>Tipo Serviço</span>
+                {renderSortIcon('serviceType')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('sequence')} className="flex items-center gap-1">
+                <span>Seq.</span>
+                {renderSortIcon('sequence')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                <span>Nome Manutenção</span>
+                {renderSortIcon('name')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('frequency')} className="flex items-center gap-1">
+                <span>Frequência</span>
+                {renderSortIcon('frequency')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('trackingType')} className="flex items-center gap-1">
+                <span>Tipo de Controle</span>
+                {renderSortIcon('trackingType')}
+              </button>
+            </th>
+            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <button type="button" onClick={() => handleSort('isActive')} className="flex items-center gap-1">
+                <span>Ativa?</span>
+                {renderSortIcon('isActive')}
+              </button>
+            </th>
           </tr>
         </thead>
-        <tbody className="bg-card divide-y divide-gray-200">
-          {filteredAsset.length === 0 ? (
+        <tbody className="bg-card divide-y divide-gray-100">
+          {sortedAsset.length === 0 ? (
             <tr><td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">Nenhum plano de manutenção do bem cadastrado.</td></tr>
-          ) : filteredAsset.map(p => (
+          ) : sortedAsset.map(p => (
             <tr
               key={p.id}
-              className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedPlan?.id === p.id || editingId === p.id ? 'bg-secondary' : ''}`}
+              className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedPlan?.id === p.id || editingId === p.id ? 'bg-secondary' : ''}`}
               onClick={() => handleSelectPlan(p.id)}
             >
               <td className="px-6 py-3 text-sm font-mono">

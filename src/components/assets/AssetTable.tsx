@@ -138,7 +138,7 @@ export function AssetTable({
     return (
       <Icon
         name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
-        className="text-sm text-foreground"
+        className="text-sm text-accent-orange"
       />
     )
   }
@@ -263,7 +263,7 @@ export function AssetTable({
             </tr>
           </thead>
           
-          <tbody className="bg-card divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-gray-100">
             {sortedAssets.length === 0 ? (
               <tr>
                 <td colSpan={showUnit ? 9 : 8} className="px-6 py-12 text-center">

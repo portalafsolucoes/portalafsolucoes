@@ -45,6 +45,9 @@ interface WorkOrder {
   createdAt: string
 }
 
+type SortField = 'displayId' | 'planNumber' | 'title' | 'status' | 'priority' | 'protheusCode' | 'assetName' | 'dueDate' | 'createdAt'
+type SortDirection = 'asc' | 'desc'
+
 export default function WorkOrdersPage() {
   const router = useRouter()
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
@@ -69,6 +72,8 @@ export default function WorkOrdersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [workOrderToPrint, setWorkOrderToPrint] = useState<WorkOrder | null>(null)
+  const [sortField, setSortField] = useState<SortField>('displayId')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   useEffect(() => {
     if (!currentUser) return
@@ -172,10 +177,63 @@ export default function WorkOrdersPage() {
     setShowCreateModal(false)
   }
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
   const filteredWorkOrders = workOrders.filter(wo =>
     wo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     wo.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const sortedWorkOrders = [...filteredWorkOrders].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'displayId': {
+        const idA = a.externalId || a.internalId || a.customId || a.id.slice(0, 8)
+        const idB = b.externalId || b.internalId || b.customId || b.id.slice(0, 8)
+        return idA.localeCompare(idB) * modifier
+      }
+      case 'planNumber':
+        return ((a.maintenancePlanExec?.planNumber || 0) - (b.maintenancePlanExec?.planNumber || 0)) * modifier
+      case 'title':
+        return a.title.localeCompare(b.title) * modifier
+      case 'status':
+        return a.status.localeCompare(b.status) * modifier
+      case 'priority':
+        return a.priority.localeCompare(b.priority) * modifier
+      case 'protheusCode':
+        return (a.asset?.protheusCode || a.asset?.tag || '').localeCompare(b.asset?.protheusCode || b.asset?.tag || '') * modifier
+      case 'assetName':
+        return (a.asset?.name || '').localeCompare(b.asset?.name || '') * modifier
+      case 'dueDate': {
+        const dateA = a.dueDate || ''
+        const dateB = b.dueDate || ''
+        return dateA.localeCompare(dateB) * modifier
+      }
+      case 'createdAt':
+        return a.createdAt.localeCompare(b.createdAt) * modifier
+      default:
+        return 0
+    }
+  })
 
   const showSidePanel = !!(selectedWorkOrderId || showEditModal || showExecuteModal || showFinalizeModal || showCreateModal)
 
@@ -387,22 +445,67 @@ export default function WorkOrdersPage() {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="sticky top-0 bg-secondary z-10">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Plano</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cód. Bem</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativo</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Vencimento</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criado</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('displayId')} className="flex items-center gap-1">
+                              <span>ID</span>
+                              {renderSortIcon('displayId')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('planNumber')} className="flex items-center gap-1">
+                              <span>Plano</span>
+                              {renderSortIcon('planNumber')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('title')} className="flex items-center gap-1">
+                              <span>Título</span>
+                              {renderSortIcon('title')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('status')} className="flex items-center gap-1">
+                              <span>Status</span>
+                              {renderSortIcon('status')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('priority')} className="flex items-center gap-1">
+                              <span>Prioridade</span>
+                              {renderSortIcon('priority')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('protheusCode')} className="flex items-center gap-1">
+                              <span>Cód. Bem</span>
+                              {renderSortIcon('protheusCode')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('assetName')} className="flex items-center gap-1">
+                              <span>Ativo</span>
+                              {renderSortIcon('assetName')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('dueDate')} className="flex items-center gap-1">
+                              <span>Vencimento</span>
+                              {renderSortIcon('dueDate')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('createdAt')} className="flex items-center gap-1">
+                              <span>Criado</span>
+                              {renderSortIcon('createdAt')}
+                            </button>
+                          </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-card divide-y divide-gray-200">
-                        {filteredWorkOrders.map((wo) => {
+                      <tbody className="bg-card divide-y divide-gray-100">
+                        {sortedWorkOrders.map((wo) => {
                           const displayId = wo.externalId || wo.internalId || wo.customId || wo.id.slice(0, 8)
                           return (
-                            <tr key={wo.id} onClick={() => handleView(wo.id)} className="odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors">
+                            <tr key={wo.id} onClick={() => handleView(wo.id)} className="odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="text-sm font-semibold text-foreground">{displayId}</span>
                               </td>

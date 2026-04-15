@@ -337,7 +337,7 @@ export default function CriticalityPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-card divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-gray-100">
               {sortedAssets.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
@@ -352,7 +352,7 @@ export default function CriticalityPage() {
                   return (
                     <tr
                       key={asset.id}
-                      className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${isSelected ? 'bg-secondary' : ''}`}
+                      className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${isSelected ? 'bg-secondary' : ''}`}
                       onClick={() => handleSelectAsset(asset)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
