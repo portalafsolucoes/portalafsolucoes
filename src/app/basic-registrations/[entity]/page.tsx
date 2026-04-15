@@ -7,7 +7,6 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useAuth } from '@/hooks/useAuth'
-import { normalizeUserRole } from '@/lib/user-roles'
 import { usePermissions } from '@/hooks/usePermissions'
 import { GenericCrudTable, type ColumnConfig } from '@/components/basic-registrations/GenericCrudTable'
 import { GenericDetailPanel } from '@/components/basic-registrations/GenericDetailPanel'
@@ -92,45 +91,77 @@ const ROLE_LABELS: Record<string, string> = {
   VIEW_ONLY: 'Somente Consulta',
 }
 
+type PeopleSortField = 'name' | 'jobTitle' | 'role' | 'rate' | 'calendarName'
+type SortDir = 'asc' | 'desc'
+
 function PeopleSummarySection({ users }: { users: ResourceUserSummary[] }) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState<PeopleSortField | null>(null)
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [expanded, setExpanded] = useState(true)
 
   const enabledUsers = useMemo(() => {
     return users.filter(u => u.enabled !== false)
   }, [users])
 
-  const filtered = useMemo(() => {
-    if (!searchTerm) return enabledUsers
-    const s = searchTerm.toLowerCase()
-    return enabledUsers.filter(u => {
-      const fullName = `${u.firstName} ${u.lastName}`.toLowerCase()
-      const role = (ROLE_LABELS[u.role] || u.role || '').toLowerCase()
-      const job = (u.jobTitle || '').toLowerCase()
-      return fullName.includes(s) || role.includes(s) || job.includes(s)
-    })
-  }, [enabledUsers, searchTerm])
-
-  const groupedByRole = useMemo(() => {
-    const groups: Record<string, ResourceUserSummary[]> = {}
-    for (const user of filtered) {
-      const role = normalizeUserRole(user.role) || 'SEM_CARGO'
-      if (!groups[role]) groups[role] = []
-      groups[role].push(user)
+  const handleSort = (field: PeopleSortField) => {
+    if (sortField === field) {
+      if (sortDir === 'asc') {
+        setSortDir('desc')
+      } else {
+        setSortField(null)
+        setSortDir('asc')
+      }
+    } else {
+      setSortField(field)
+      setSortDir('asc')
     }
-    return groups
-  }, [filtered])
+  }
 
-  const roleOrder = ['TECHNICIAN', 'LIMITED_TECHNICIAN', 'REQUESTER', 'VIEW_ONLY', 'ADMIN', 'SUPER_ADMIN']
-  const sortedRoles = Object.keys(groupedByRole).sort((a, b) => {
-    const ia = roleOrder.indexOf(a)
-    const ib = roleOrder.indexOf(b)
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
-  })
+  const SortIcon = ({ field }: { field: PeopleSortField }) => {
+    if (sortField !== field) return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    return <Icon name={sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward'} className="text-sm text-accent-orange" />
+  }
 
-  const [expanded, setExpanded] = useState(true)
+  const filtered = useMemo(() => {
+    let list = enabledUsers
+    if (searchTerm) {
+      const s = searchTerm.toLowerCase()
+      list = list.filter(u => {
+        const fullName = `${u.firstName} ${u.lastName}`.toLowerCase()
+        const role = (ROLE_LABELS[u.role] || u.role || '').toLowerCase()
+        const job = (u.jobTitle || '').toLowerCase()
+        return fullName.includes(s) || role.includes(s) || job.includes(s)
+      })
+    }
+    if (sortField) {
+      list = [...list].sort((a, b) => {
+        let valA: string | number = ''
+        let valB: string | number = ''
+        if (sortField === 'name') {
+          valA = `${a.firstName} ${a.lastName}`
+          valB = `${b.firstName} ${b.lastName}`
+        } else if (sortField === 'role') {
+          valA = ROLE_LABELS[a.role] || a.role || ''
+          valB = ROLE_LABELS[b.role] || b.role || ''
+        } else if (sortField === 'rate') {
+          valA = Number(a.rate) || 0
+          valB = Number(b.rate) || 0
+        } else {
+          valA = String(a[sortField] ?? '')
+          valB = String(b[sortField] ?? '')
+        }
+        if (valA == null) return 1
+        if (valB == null) return -1
+        const cmp = typeof valA === 'number' ? valA - (valB as number) : String(valA).localeCompare(String(valB))
+        return sortDir === 'asc' ? cmp : -cmp
+      })
+    }
+    return list
+  }, [enabledUsers, searchTerm, sortField, sortDir])
 
   return (
-    <div className="rounded-[4px] bg-card overflow-hidden">
+    <div className="bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
@@ -154,72 +185,76 @@ function PeopleSummarySection({ users }: { users: ResourceUserSummary[] }) {
 
       {expanded && (
         <>
-          <div className="p-3 border-t border-border">
-            <div className="relative max-w-xs">
+          <div className="px-4 py-2.5 border-t border-border">
+            <div className="relative w-64">
               <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar por nome, cargo ou especialidade..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-sm rounded-[4px] bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="text-center py-6 text-sm text-muted-foreground">
+            <div className="text-center py-6 text-sm text-muted-foreground border-t border-border">
               {enabledUsers.length === 0
                 ? 'Nenhuma pessoa cadastrada. Acesse Pessoas/Equipes para cadastrar.'
                 : 'Nenhuma pessoa encontrada para a busca.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="sticky top-0 bg-secondary z-10">
                   <tr>
-                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Nome</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Cargo</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Especialidade</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Taxa/Hora (R$)</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-foreground">Calendario</th>
+                    {([
+                      { field: 'name' as PeopleSortField, label: 'Nome' },
+                      { field: 'jobTitle' as PeopleSortField, label: 'Cargo' },
+                      { field: 'role' as PeopleSortField, label: 'Especialidade' },
+                      { field: 'rate' as PeopleSortField, label: 'Taxa/Hora (R$)' },
+                      { field: 'calendarName' as PeopleSortField, label: 'Calendario' },
+                    ]).map(col => (
+                      <th
+                        key={col.field}
+                        className="px-6 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer"
+                        onClick={() => handleSort(col.field)}
+                      >
+                        <button type="button" className="flex items-center gap-1">
+                          {col.label}
+                          <SortIcon field={col.field} />
+                        </button>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
-                  {sortedRoles.map(role => (
-                    groupedByRole[role].map(user => (
-                      <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-secondary transition-colors">
-                        <td className="px-4 py-2.5 text-foreground font-medium">
-                          {user.firstName} {user.lastName}
-                        </td>
-                        <td className="px-4 py-2.5 text-muted-foreground">
-                          {user.jobTitle || '\u2014'}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                            {ROLE_LABELS[user.role] || user.role}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-muted-foreground">
-                          {user.rate ? `R$ ${Number(user.rate).toFixed(2)}` : '\u2014'}
-                        </td>
-                        <td className="px-4 py-2.5 text-muted-foreground">
-                          {user.calendarName || '\u2014'}
-                        </td>
-                      </tr>
-                    ))
+                <tbody className="bg-card divide-y divide-gray-200">
+                  {filtered.map(user => (
+                    <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">
+                        {user.firstName} {user.lastName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                        {user.jobTitle || '\u2014'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                          {ROLE_LABELS[user.role] || user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                        {user.rate ? `R$ ${Number(user.rate).toFixed(2)}` : '\u2014'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                        {user.calendarName || '\u2014'}
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-
-          <div className="px-4 py-2 border-t border-border bg-muted/30">
-            <p className="text-xs text-muted-foreground">
-              {enabledUsers.length} pessoa(s) ativa(s) — Para adicionar ou editar mao de obra, acesse{' '}
-              <Link href="/people-teams" className="text-primary hover:underline">Pessoas/Equipes</Link>.
-            </p>
-          </div>
         </>
       )}
     </div>
