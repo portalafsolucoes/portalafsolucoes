@@ -45,6 +45,10 @@ interface Request {
 
 type TabType = 'workorders' | 'requests'
 
+type WOSortField = 'internalId' | 'title' | 'priority' | 'status' | 'createdAt'
+type ReqSortField = 'title' | 'priority' | 'executionStatus' | 'createdAt'
+type SortDirection = 'asc' | 'desc'
+
 const PRIORITY_LABELS: Record<string, string> = {
   CRITICAL: 'Crítica',
   HIGH: 'Alta',
@@ -254,6 +258,10 @@ export default function MyTasksPage() {
   const [selectedItem, setSelectedItem] = useState<WorkOrder | Request | null>(null)
   const [selectedType, setSelectedType] = useState<'workorder' | 'request' | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
+  const [woSortField, setWoSortField] = useState<WOSortField>('createdAt')
+  const [woSortDirection, setWoSortDirection] = useState<SortDirection>('desc')
+  const [reqSortField, setReqSortField] = useState<ReqSortField>('createdAt')
+  const [reqSortDirection, setReqSortDirection] = useState<SortDirection>('desc')
 
   const showSidePanel = selectedItem !== null
 
@@ -314,26 +322,131 @@ export default function MyTasksPage() {
     setIsExecuting(false)
   }
 
+  const handleWoSort = (field: WOSortField) => {
+    if (woSortField === field) {
+      setWoSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setWoSortField(field)
+    setWoSortDirection('asc')
+  }
+
+  const renderWoSortIcon = (field: WOSortField) => {
+    if (woSortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={woSortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const handleReqSort = (field: ReqSortField) => {
+    if (reqSortField === field) {
+      setReqSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setReqSortField(field)
+    setReqSortDirection('asc')
+  }
+
+  const renderReqSortIcon = (field: ReqSortField) => {
+    if (reqSortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={reqSortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const PRIORITY_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, NONE: 4 }
+
+  const sortedWorkOrders = [...workOrders].sort((a, b) => {
+    const modifier = woSortDirection === 'asc' ? 1 : -1
+    switch (woSortField) {
+      case 'internalId':
+        return (a.internalId || '').localeCompare(b.internalId || '') * modifier
+      case 'title':
+        return a.title.localeCompare(b.title) * modifier
+      case 'priority':
+        return ((PRIORITY_ORDER[a.priority] ?? 5) - (PRIORITY_ORDER[b.priority] ?? 5)) * modifier
+      case 'status':
+        return a.status.localeCompare(b.status) * modifier
+      case 'createdAt':
+        return a.createdAt.localeCompare(b.createdAt) * modifier
+      default:
+        return 0
+    }
+  })
+
+  const sortedRequests = [...requests].sort((a, b) => {
+    const modifier = reqSortDirection === 'asc' ? 1 : -1
+    switch (reqSortField) {
+      case 'title':
+        return a.title.localeCompare(b.title) * modifier
+      case 'priority':
+        return ((PRIORITY_ORDER[a.priority] ?? 5) - (PRIORITY_ORDER[b.priority] ?? 5)) * modifier
+      case 'executionStatus': {
+        const getExecOrder = (r: Request) => r.executionCompletedAt ? 2 : r.executionStartedAt ? 1 : 0
+        return (getExecOrder(a) - getExecOrder(b)) * modifier
+      }
+      case 'createdAt':
+        return a.createdAt.localeCompare(b.createdAt) * modifier
+      default:
+        return 0
+    }
+  })
+
   const renderWorkOrdersTable = () => (
     <div className="h-full flex flex-col bg-card overflow-hidden">
       <div className="flex-1 overflow-auto min-h-0">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleWoSort('internalId')} className="flex items-center gap-1">
+                  <span>ID</span>
+                  {renderWoSortIcon('internalId')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleWoSort('title')} className="flex items-center gap-1">
+                  <span>Título</span>
+                  {renderWoSortIcon('title')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleWoSort('priority')} className="flex items-center gap-1">
+                  <span>Prioridade</span>
+                  {renderWoSortIcon('priority')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleWoSort('status')} className="flex items-center gap-1">
+                  <span>Status</span>
+                  {renderWoSortIcon('status')}
+                </button>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Fotos</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criada em</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleWoSort('createdAt')} className="flex items-center gap-1">
+                  <span>Criada em</span>
+                  {renderWoSortIcon('createdAt')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {workOrders.map((wo) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedWorkOrders.map((wo) => (
               <tr
                 key={wo.id}
                 onClick={() => handleSelectItem(wo, 'workorder')}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedItem?.id === wo.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedItem?.id === wo.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">
                   {wo.internalId || wo.id.slice(0, 8)}
@@ -390,19 +503,39 @@ export default function MyTasksPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status Execução</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleReqSort('title')} className="flex items-center gap-1">
+                  <span>Título</span>
+                  {renderReqSortIcon('title')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleReqSort('priority')} className="flex items-center gap-1">
+                  <span>Prioridade</span>
+                  {renderReqSortIcon('priority')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleReqSort('executionStatus')} className="flex items-center gap-1">
+                  <span>Status Execução</span>
+                  {renderReqSortIcon('executionStatus')}
+                </button>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Fotos</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criada em</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleReqSort('createdAt')} className="flex items-center gap-1">
+                  <span>Criada em</span>
+                  {renderReqSortIcon('createdAt')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {requests.map((req) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedRequests.map((req) => (
               <tr
                 key={req.id}
                 onClick={() => handleSelectItem(req, 'request')}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedItem?.id === req.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedItem?.id === req.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-foreground">{req.title}</div>

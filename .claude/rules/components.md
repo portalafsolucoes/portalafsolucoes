@@ -201,7 +201,7 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - Thead: `sticky top-0 bg-secondary z-10`
 - Th: `px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider`
 - Tbody: `bg-card divide-y divide-gray-200`
-- Tr: `odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors`
+- Tr: `odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors`
 - Td: `px-6 py-4 whitespace-nowrap text-sm text-foreground`
 - Sem footer de contagem; a tabela termina limpa
 - Colunas ordenaveis: icone `unfold_more` (inativo) ou `arrow_upward`/`arrow_downward` (ativo); icone ativo usa `text-accent-orange`

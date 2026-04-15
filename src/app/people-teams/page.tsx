@@ -219,7 +219,7 @@ export default function PeopleTeamsPage() {
     return (
       <Icon
         name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
-        className="text-sm text-foreground"
+        className="text-sm text-accent-orange"
       />
     )
   }
@@ -491,7 +491,7 @@ export default function PeopleTeamsPage() {
                                   <tr
                                     key={user.id}
                                     onClick={() => handleUserClick(user.id)}
-                                    className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-accent-orange-light cursor-pointer transition-colors group`}
+                                    className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-secondary cursor-pointer transition-colors group`}
                                     data-user-id={user.id}
                                   >
                                     <td className="px-6 py-4 whitespace-nowrap">
