@@ -62,6 +62,9 @@ const CANONICAL_TO_LEGACY_ROLES: Record<string, string> = {
   VIEW_ONLY: 'VIEW_ONLY',
 }
 
+type UserSortField = 'name' | 'role' | 'units' | 'status'
+type UserSortDirection = 'asc' | 'desc'
+
 // ─── User Detail Panel ────────────────────────────────────────────────────────
 
 interface UserDetailPanelProps {
@@ -447,6 +450,8 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
+  const [sortField, setSortField] = useState<UserSortField>('name')
+  const [sortDirection, setSortDirection] = useState<UserSortDirection>('asc')
 
   // Split-panel state
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
@@ -530,6 +535,43 @@ export default function AdminUsersPage() {
       user.email.toLowerCase().includes(search) ||
       (user.jobTitle || '').toLowerCase().includes(search)
     )
+  })
+
+  const handleSort = (field: UserSortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: UserSortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'name':
+        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`) * modifier
+      case 'role':
+        return a.role.localeCompare(b.role) * modifier
+      case 'units':
+        return (a.units.length - b.units.length) * modifier
+      case 'status':
+        return ((a.enabled ? 1 : 0) - (b.enabled ? 1 : 0)) * modifier
+      default:
+        return 0
+    }
   })
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -769,14 +811,34 @@ export default function AdminUsersPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuário</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Papel</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidades</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                  <span>Usuário</span>
+                  {renderSortIcon('name')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1">
+                  <span>Papel</span>
+                  {renderSortIcon('role')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('units')} className="flex items-center gap-1">
+                  <span>Unidades</span>
+                  {renderSortIcon('units')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('status')} className="flex items-center gap-1">
+                  <span>Status</span>
+                  {renderSortIcon('status')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {filteredUsers.length === 0 ? (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedUsers.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-3">
@@ -791,11 +853,11 @@ export default function AdminUsersPage() {
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((user) => (
+              sortedUsers.map((user) => (
                 <tr
                   key={user.id}
                   onClick={() => handleSelectUser(user)}
-                  className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
+                  className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-secondary' : ''}`}
                 >
                   <td className="px-6 py-4 text-sm text-foreground">
                     <div className="flex items-center gap-3">

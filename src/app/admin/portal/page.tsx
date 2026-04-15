@@ -46,6 +46,9 @@ interface ModuleConfig {
   enabled: boolean
 }
 
+type CompanySortField = 'name' | 'contact' | 'userCount' | 'moduleCount' | 'createdAt'
+type CompanySortDirection = 'asc' | 'desc'
+
 // ─── Company Detail Panel ───────────────────────────────────────────────────
 
 interface CompanyDetailPanelProps {
@@ -364,6 +367,10 @@ export default function AdminPortalPage() {
   const [stats, setStats] = useState<PortalStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [statsLoading, setStatsLoading] = useState(true)
+
+  // Sort state
+  const [sortField, setSortField] = useState<CompanySortField>('name')
+  const [sortDirection, setSortDirection] = useState<CompanySortDirection>('asc')
 
   // Split-panel state
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
@@ -741,6 +748,45 @@ export default function AdminPortalPage() {
     }
   }
 
+  const handleSort = (field: CompanySortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: CompanySortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const sortedCompanies = [...companies].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'name':
+        return a.name.localeCompare(b.name) * modifier
+      case 'contact':
+        return (a.email || '').localeCompare(b.email || '') * modifier
+      case 'userCount':
+        return (a.userCount - b.userCount) * modifier
+      case 'moduleCount':
+        return (a.moduleCount - b.moduleCount) * modifier
+      case 'createdAt':
+        return a.createdAt.localeCompare(b.createdAt) * modifier
+      default:
+        return 0
+    }
+  })
+
   if (authLoading) return null
 
   const statCards = stats ? [
@@ -835,28 +881,43 @@ export default function AdminPortalPage() {
               <thead className="sticky top-0 bg-secondary z-10">
                 <tr>
                   <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Empresa
+                    <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                      <span>Empresa</span>
+                      {renderSortIcon('name')}
+                    </button>
                   </th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Contato
+                    <button type="button" onClick={() => handleSort('contact')} className="flex items-center gap-1">
+                      <span>Contato</span>
+                      {renderSortIcon('contact')}
+                    </button>
                   </th>
                   <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Usuários
+                    <button type="button" onClick={() => handleSort('userCount')} className="flex items-center gap-1 mx-auto">
+                      <span>Usuários</span>
+                      {renderSortIcon('userCount')}
+                    </button>
                   </th>
                   <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Módulos
+                    <button type="button" onClick={() => handleSort('moduleCount')} className="flex items-center gap-1 mx-auto">
+                      <span>Módulos</span>
+                      {renderSortIcon('moduleCount')}
+                    </button>
                   </th>
                   <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Criada em
+                    <button type="button" onClick={() => handleSort('createdAt')} className="flex items-center gap-1 mx-auto">
+                      <span>Criada em</span>
+                      {renderSortIcon('createdAt')}
+                    </button>
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-card divide-y divide-gray-200">
-                {companies.map((company) => (
+              <tbody className="bg-card divide-y divide-gray-100">
+                {sortedCompanies.map((company) => (
                   <tr
                     key={company.id}
                     onClick={() => handleSelectCompany(company)}
-                    className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
+                    className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedCompany?.id === company.id ? 'bg-secondary' : ''}`}
                   >
                     <td className="px-6 py-4 text-sm text-foreground">
                       <div className="flex items-center gap-3">

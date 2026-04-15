@@ -188,7 +188,7 @@ function PeopleSummarySection({ users }: { users: ResourceUserSummary[] }) {
                 <tbody className="divide-y divide-border">
                   {sortedRoles.map(role => (
                     groupedByRole[role].map(user => (
-                      <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light transition-colors">
+                      <tr key={user.id} className="odd:bg-gray-50 even:bg-white hover:bg-secondary transition-colors">
                         <td className="px-4 py-2.5 text-foreground font-medium">
                           {user.firstName} {user.lastName}
                         </td>

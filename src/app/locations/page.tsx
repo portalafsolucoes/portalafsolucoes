@@ -24,6 +24,8 @@ const LocationFormPanel = dynamic(
 )
 
 type ViewMode = 'table' | 'grid'
+type SortField = 'name' | 'address' | 'assets' | 'orders'
+type SortDirection = 'asc' | 'desc'
 
 interface Location {
   id: string
@@ -287,6 +289,46 @@ interface TableViewProps {
 }
 
 function TableView({ locations, selectedId, onSelect }: TableViewProps) {
+  const [sortField, setSortField] = useState<SortField>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const sortedLocations = [...locations].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'name':
+        return modifier * (a.name || '').localeCompare(b.name || '')
+      case 'address':
+        return modifier * (a.address || '').localeCompare(b.address || '')
+      case 'assets':
+        return modifier * ((a._count?.assets ?? 0) - (b._count?.assets ?? 0))
+      case 'orders':
+        return modifier * ((a._count?.workOrders ?? 0) - (b._count?.workOrders ?? 0))
+      default:
+        return 0
+    }
+  })
+
   if (locations.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-12">
@@ -304,25 +346,37 @@ function TableView({ locations, selectedId, onSelect }: TableViewProps) {
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Nome
+                <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                  <span>Nome</span>
+                  {renderSortIcon('name')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Endereço
+                <button type="button" onClick={() => handleSort('address')} className="flex items-center gap-1">
+                  <span>Endereço</span>
+                  {renderSortIcon('address')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Ativos
+                <button type="button" onClick={() => handleSort('assets')} className="flex items-center gap-1">
+                  <span>Ativos</span>
+                  {renderSortIcon('assets')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Ordens
+                <button type="button" onClick={() => handleSort('orders')} className="flex items-center gap-1">
+                  <span>Ordens</span>
+                  {renderSortIcon('orders')}
+                </button>
               </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {locations.map(location => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedLocations.map(location => (
               <tr
                 key={location.id}
                 onClick={() => onSelect(location)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${
                   selectedId === location.id ? 'bg-secondary' : ''
                 }`}
               >

@@ -258,7 +258,7 @@ export default function ViewRAFPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Evidência</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {raf.hypothesisTests.map((test, index) => (
                     <tr key={index}>
                       <td className="px-4 py-3 text-sm text-foreground">{test.item}</td>
@@ -286,7 +286,7 @@ export default function ViewRAFPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Quando</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {raf.actionPlan.map((action, index) => (
                     <tr key={index}>
                       <td className="px-4 py-3 text-sm text-foreground">{action.what}</td>

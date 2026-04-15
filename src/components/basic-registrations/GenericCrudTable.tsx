@@ -78,7 +78,7 @@ export function GenericCrudTable({
     return (
       <Icon
         name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
-        className="text-sm text-foreground"
+        className="text-sm text-accent-orange"
       />
     )
   }
@@ -117,7 +117,7 @@ export function GenericCrudTable({
             </tr>
           </thead>
 
-          <tbody className="bg-card divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-gray-100">
             {sortedItems.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-6 py-12 text-center">

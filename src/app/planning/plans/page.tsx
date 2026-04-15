@@ -38,6 +38,9 @@ interface Plan {
   updatedAt?: string
 }
 
+type SortField = 'planNumber' | 'description' | 'startDate' | 'endDate' | 'status' | 'isFinished'
+type SortDirection = 'asc' | 'desc'
+
 export default function PlansPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
@@ -52,6 +55,8 @@ export default function PlansPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const [sortField, setSortField] = useState<SortField>('planNumber')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -119,6 +124,27 @@ export default function PlansPage() {
     setDeleting(false)
   }
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
   const filteredPlans = plans.filter(p => {
     if (!search) return true
     const s = search.toLowerCase()
@@ -127,6 +153,26 @@ export default function PlansPage() {
       (p.description && p.description.toLowerCase().includes(s)) ||
       (p.status && p.status.toLowerCase().includes(s))
     )
+  })
+
+  const sortedPlans = [...filteredPlans].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'planNumber':
+        return ((a.planNumber || 0) - (b.planNumber || 0)) * modifier
+      case 'description':
+        return (a.description || '').localeCompare(b.description || '') * modifier
+      case 'startDate':
+        return (a.startDate || '').localeCompare(b.startDate || '') * modifier
+      case 'endDate':
+        return (a.endDate || '').localeCompare(b.endDate || '') * modifier
+      case 'status':
+        return (a.status || '').localeCompare(b.status || '') * modifier
+      case 'isFinished':
+        return ((a.isFinished ? 1 : 0) - (b.isFinished ? 1 : 0)) * modifier
+      default:
+        return 0
+    }
   })
 
   const showSidePanel = !!(selectedPlan !== null || isCreating)
@@ -172,16 +218,46 @@ export default function PlansPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Plano</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Início</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data Fim</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Terminado?</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('planNumber')} className="flex items-center gap-1">
+                  <span>Plano</span>
+                  {renderSortIcon('planNumber')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('description')} className="flex items-center gap-1">
+                  <span>Descrição</span>
+                  {renderSortIcon('description')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('startDate')} className="flex items-center gap-1">
+                  <span>Data Início</span>
+                  {renderSortIcon('startDate')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('endDate')} className="flex items-center gap-1">
+                  <span>Data Fim</span>
+                  {renderSortIcon('endDate')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('status')} className="flex items-center gap-1">
+                  <span>Status</span>
+                  {renderSortIcon('status')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('isFinished')} className="flex items-center gap-1">
+                  <span>Terminado?</span>
+                  {renderSortIcon('isFinished')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {filteredPlans.length === 0 ? (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedPlans.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-3">
@@ -191,11 +267,11 @@ export default function PlansPage() {
                   </div>
                 </td>
               </tr>
-            ) : filteredPlans.map(p => (
+            ) : sortedPlans.map(p => (
               <tr
                 key={p.id}
                 onClick={() => handleSelectPlan(p)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedPlan?.id === p.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedPlan?.id === p.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{p.planNumber}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{p.description}</td>

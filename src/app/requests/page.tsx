@@ -45,6 +45,8 @@ interface Request {
 }
 
 type ViewMode = 'table' | 'grid'
+type SortField = 'requestNumber' | 'title' | 'assetCode' | 'assetName' | 'status' | 'createdBy' | 'team' | 'dueDate'
+type SortDirection = 'asc' | 'desc'
 
 export default function RequestsPage() {
   const { canCreate: canCreateReq } = usePermissions()
@@ -54,6 +56,8 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>('table')
+  const [sortField, setSortField] = useState<SortField>('requestNumber')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -147,10 +151,58 @@ export default function RequestsPage() {
     }
   }
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
   const filteredRequests = requests.filter(req =>
     req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const sortedRequests = [...filteredRequests].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'requestNumber':
+        return (a.requestNumber || '').localeCompare(b.requestNumber || '') * modifier
+      case 'title':
+        return a.title.localeCompare(b.title) * modifier
+      case 'assetCode':
+        return (a.asset?.protheusCode || '').localeCompare(b.asset?.protheusCode || '') * modifier
+      case 'assetName':
+        return (a.asset?.name || '').localeCompare(b.asset?.name || '') * modifier
+      case 'status':
+        return a.status.localeCompare(b.status) * modifier
+      case 'createdBy': {
+        const nameA = a.createdBy ? `${a.createdBy.firstName} ${a.createdBy.lastName}` : ''
+        const nameB = b.createdBy ? `${b.createdBy.firstName} ${b.createdBy.lastName}` : ''
+        return nameA.localeCompare(nameB) * modifier
+      }
+      case 'team':
+        return (a.team?.name || '').localeCompare(b.team?.name || '') * modifier
+      case 'dueDate':
+        return ((a.dueDate || '') > (b.dueDate || '') ? 1 : -1) * modifier
+      default:
+        return 0
+    }
+  })
 
   const activePanel = isCreating ? (
     <RequestFormModal
@@ -255,40 +307,64 @@ export default function RequestsPage() {
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Nº da SS
+                <button type="button" onClick={() => handleSort('requestNumber')} className="flex items-center gap-1">
+                  <span>Nº da SS</span>
+                  {renderSortIcon('requestNumber')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Solicitação
+                <button type="button" onClick={() => handleSort('title')} className="flex items-center gap-1">
+                  <span>Solicitação</span>
+                  {renderSortIcon('title')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Código do Bem
+                <button type="button" onClick={() => handleSort('assetCode')} className="flex items-center gap-1">
+                  <span>Código do Bem</span>
+                  {renderSortIcon('assetCode')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Nome do Bem
+                <button type="button" onClick={() => handleSort('assetName')} className="flex items-center gap-1">
+                  <span>Nome do Bem</span>
+                  {renderSortIcon('assetName')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status / Prioridade
+                <button type="button" onClick={() => handleSort('status')} className="flex items-center gap-1">
+                  <span>Status / Prioridade</span>
+                  {renderSortIcon('status')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Solicitante
+                <button type="button" onClick={() => handleSort('createdBy')} className="flex items-center gap-1">
+                  <span>Solicitante</span>
+                  {renderSortIcon('createdBy')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Equipe
+                <button type="button" onClick={() => handleSort('team')} className="flex items-center gap-1">
+                  <span>Equipe</span>
+                  {renderSortIcon('team')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Data
+                <button type="button" onClick={() => handleSort('dueDate')} className="flex items-center gap-1">
+                  <span>Data</span>
+                  {renderSortIcon('dueDate')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Anexos
               </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {filteredRequests.map((request) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedRequests.map((request) => (
               <tr
                 key={request.id}
                 onClick={() => handleRowClick(request)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${
                   selectedRequest?.id === request.id ? 'bg-secondary' : ''
                 }`}
               >

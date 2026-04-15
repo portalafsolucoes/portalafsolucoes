@@ -41,6 +41,9 @@ interface Schedule {
   updatedAt?: string
 }
 
+type SortField = 'scheduleNumber' | 'description' | 'scheduleDate' | 'period' | 'createdBy' | 'status'
+type SortDirection = 'asc' | 'desc'
+
 type PageMode = 'list' | 'workspace'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -99,6 +102,8 @@ export default function SchedulesPage() {
   const [reprogramLoading, setReprogramLoading] = useState(false)
 
   const [feedback, setFeedback] = useState<FeedbackBanner | null>(null)
+  const [sortField, setSortField] = useState<SortField>('scheduleDate')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // Auto-dismiss feedback
   useEffect(() => {
@@ -376,6 +381,27 @@ export default function SchedulesPage() {
   // List Mode
   // ==========================================
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
   const filteredSchedules = schedules.filter(s => {
     if (!search) return true
     const q = search.toLowerCase()
@@ -384,6 +410,29 @@ export default function SchedulesPage() {
       (s.description && s.description.toLowerCase().includes(q)) ||
       (s.status && s.status.toLowerCase().includes(q))
     )
+  })
+
+  const sortedSchedules = [...filteredSchedules].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'scheduleNumber':
+        return ((a.scheduleNumber || 0) - (b.scheduleNumber || 0)) * modifier
+      case 'description':
+        return (a.description || '').localeCompare(b.description || '') * modifier
+      case 'scheduleDate':
+        return (a.scheduleDate || '').localeCompare(b.scheduleDate || '') * modifier
+      case 'period':
+        return (a.startDate || '').localeCompare(b.startDate || '') * modifier
+      case 'createdBy': {
+        const nameA = a.createdBy ? `${a.createdBy.firstName || ''} ${a.createdBy.lastName || ''}`.trim() : ''
+        const nameB = b.createdBy ? `${b.createdBy.firstName || ''} ${b.createdBy.lastName || ''}`.trim() : ''
+        return nameA.localeCompare(nameB) * modifier
+      }
+      case 'status':
+        return (a.status || '').localeCompare(b.status || '') * modifier
+      default:
+        return 0
+    }
   })
 
   const showSidePanel = !!(selectedSchedule !== null || isCreating)
@@ -419,16 +468,46 @@ export default function SchedulesPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prog.</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">Data</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Período</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden xl:table-cell">Usuário</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('scheduleNumber')} className="flex items-center gap-1">
+                  <span>Prog.</span>
+                  {renderSortIcon('scheduleNumber')}
+                </button>
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('description')} className="flex items-center gap-1">
+                  <span>Descrição</span>
+                  {renderSortIcon('description')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">
+                <button type="button" onClick={() => handleSort('scheduleDate')} className="flex items-center gap-1">
+                  <span>Data</span>
+                  {renderSortIcon('scheduleDate')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
+                <button type="button" onClick={() => handleSort('period')} className="flex items-center gap-1">
+                  <span>Período</span>
+                  {renderSortIcon('period')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden xl:table-cell">
+                <button type="button" onClick={() => handleSort('createdBy')} className="flex items-center gap-1">
+                  <span>Usuário</span>
+                  {renderSortIcon('createdBy')}
+                </button>
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('status')} className="flex items-center gap-1">
+                  <span>Status</span>
+                  {renderSortIcon('status')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {filteredSchedules.length === 0 ? (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedSchedules.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-3">
@@ -438,11 +517,11 @@ export default function SchedulesPage() {
                   </div>
                 </td>
               </tr>
-            ) : filteredSchedules.map(s => (
+            ) : sortedSchedules.map(s => (
               <tr
                 key={s.id}
                 onClick={() => handleSelectSchedule(s)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedSchedule?.id === s.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedSchedule?.id === s.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">#{s.scheduleNumber}</td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium max-w-[200px] truncate">{s.description}</td>

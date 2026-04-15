@@ -35,6 +35,8 @@ interface Request {
 }
 
 type TabType = 'pending' | 'approved' | 'rejected'
+type SortField = 'title' | 'priority' | 'createdBy' | 'team' | 'createdAt' | 'type' | 'technician' | 'approvedBy' | 'approvedAt' | 'rejectedBy'
+type SortDirection = 'asc' | 'desc'
 
 export default function RequestApprovalsPage() {
   const router = useRouter()
@@ -43,6 +45,8 @@ export default function RequestApprovalsPage() {
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
+  const [sortField, setSortField] = useState<SortField>('createdAt')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const showSidePanel = selectedRequest !== null
 
@@ -91,6 +95,70 @@ export default function RequestApprovalsPage() {
     loadRequests()
   }
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const sortedRequests = [...requests].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'title':
+        return modifier * (a.title || '').localeCompare(b.title || '')
+      case 'priority':
+        return modifier * (a.priority || '').localeCompare(b.priority || '')
+      case 'createdBy': {
+        const aName = `${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || ''}`.trim()
+        const bName = `${b.createdBy?.firstName || ''} ${b.createdBy?.lastName || ''}`.trim()
+        return modifier * aName.localeCompare(bName)
+      }
+      case 'team':
+        return modifier * (a.team?.name || '').localeCompare(b.team?.name || '')
+      case 'createdAt':
+        return modifier * (a.createdAt || '').localeCompare(b.createdAt || '')
+      case 'type': {
+        const aType = a.convertToWorkOrder ? 'OS' : 'SS'
+        const bType = b.convertToWorkOrder ? 'OS' : 'SS'
+        return modifier * aType.localeCompare(bType)
+      }
+      case 'technician': {
+        const aTech = `${a.assignedTo?.firstName || ''} ${a.assignedTo?.lastName || ''}`.trim()
+        const bTech = `${b.assignedTo?.firstName || ''} ${b.assignedTo?.lastName || ''}`.trim()
+        return modifier * aTech.localeCompare(bTech)
+      }
+      case 'approvedBy': {
+        const aApprover = `${a.approvedBy?.firstName || ''} ${a.approvedBy?.lastName || ''}`.trim()
+        const bApprover = `${b.approvedBy?.firstName || ''} ${b.approvedBy?.lastName || ''}`.trim()
+        return modifier * aApprover.localeCompare(bApprover)
+      }
+      case 'approvedAt':
+        return modifier * (a.approvedAt || '').localeCompare(b.approvedAt || '')
+      case 'rejectedBy': {
+        const aRej = `${a.approvedBy?.firstName || ''} ${a.approvedBy?.lastName || ''}`.trim()
+        const bRej = `${b.approvedBy?.firstName || ''} ${b.approvedBy?.lastName || ''}`.trim()
+        return modifier * aRej.localeCompare(bRej)
+      }
+      default:
+        return 0
+    }
+  })
+
   const getPriorityBadge = (priority: string) => {
     const colors = {
       CRITICAL: 'bg-primary-graphite',
@@ -108,19 +176,44 @@ export default function RequestApprovalsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridade</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Solicitante</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Equipe</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criado em</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('title')} className="flex items-center gap-1">
+                  <span>Título</span>
+                  {renderSortIcon('title')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('priority')} className="flex items-center gap-1">
+                  <span>Prioridade</span>
+                  {renderSortIcon('priority')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('createdBy')} className="flex items-center gap-1">
+                  <span>Solicitante</span>
+                  {renderSortIcon('createdBy')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('team')} className="flex items-center gap-1">
+                  <span>Equipe</span>
+                  {renderSortIcon('team')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('createdAt')} className="flex items-center gap-1">
+                  <span>Criado em</span>
+                  {renderSortIcon('createdAt')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {requests.map((request) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedRequests.map((request) => (
               <tr
                 key={request.id}
                 onClick={() => handleSelectRequest(request)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>
@@ -163,20 +256,45 @@ export default function RequestApprovalsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Técnico</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('title')} className="flex items-center gap-1">
+                  <span>Título</span>
+                  {renderSortIcon('title')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('type')} className="flex items-center gap-1">
+                  <span>Tipo</span>
+                  {renderSortIcon('type')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('technician')} className="flex items-center gap-1">
+                  <span>Técnico</span>
+                  {renderSortIcon('technician')}
+                </button>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status Execução</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Aprovado por</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Aprovado em</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('approvedBy')} className="flex items-center gap-1">
+                  <span>Aprovado por</span>
+                  {renderSortIcon('approvedBy')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('approvedAt')} className="flex items-center gap-1">
+                  <span>Aprovado em</span>
+                  {renderSortIcon('approvedAt')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {requests.map((request) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedRequests.map((request) => (
               <tr
                 key={request.id}
                 onClick={() => handleSelectRequest(request)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>
@@ -236,18 +354,33 @@ export default function RequestApprovalsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Título</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Solicitante</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Rejeitado por</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('title')} className="flex items-center gap-1">
+                  <span>Título</span>
+                  {renderSortIcon('title')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('createdBy')} className="flex items-center gap-1">
+                  <span>Solicitante</span>
+                  {renderSortIcon('createdBy')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('rejectedBy')} className="flex items-center gap-1">
+                  <span>Rejeitado por</span>
+                  {renderSortIcon('rejectedBy')}
+                </button>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Motivo</th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {requests.map((request) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedRequests.map((request) => (
               <tr
                 key={request.id}
                 onClick={() => handleSelectRequest(request)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedRequest?.id === request.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-foreground">{request.title}</div>

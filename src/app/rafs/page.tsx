@@ -42,6 +42,9 @@ interface RAF {
   }
 }
 
+type SortField = 'number' | 'area' | 'assetCode' | 'assetName' | 'workOrderNumber' | 'occurrenceDate' | 'panelOperator' | 'type'
+type SortDirection = 'asc' | 'desc'
+
 export default function RAFsPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
@@ -55,6 +58,8 @@ export default function RAFsPage() {
   const [selectedRAF, setSelectedRAF] = useState<RAF | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [rafToEdit, setRafToEdit] = useState<string | null>(null)
+  const [sortField, setSortField] = useState<SortField>('occurrenceDate')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const showSidePanel = !!(!!selectedRAF || showEditModal)
 
@@ -143,6 +148,54 @@ export default function RAFsPage() {
       (raf.workOrder?.maintenanceArea?.name || '').toLowerCase().includes(term) ||
       raf.panelOperator.toLowerCase().includes(term)
     )
+  })
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const sortedRAFs = [...filteredRAFs].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'number':
+        return modifier * (a.rafNumber || '').localeCompare(b.rafNumber || '')
+      case 'area': {
+        const aArea = a.workOrder?.maintenanceArea?.name || ''
+        const bArea = b.workOrder?.maintenanceArea?.name || ''
+        return modifier * aArea.localeCompare(bArea)
+      }
+      case 'assetCode':
+        return modifier * (a.workOrder?.asset?.tag || '').localeCompare(b.workOrder?.asset?.tag || '')
+      case 'assetName':
+        return modifier * (a.workOrder?.asset?.name || '').localeCompare(b.workOrder?.asset?.name || '')
+      case 'workOrderNumber':
+        return modifier * (a.workOrder?.internalId || '').localeCompare(b.workOrder?.internalId || '')
+      case 'occurrenceDate':
+        return modifier * (a.occurrenceDate || '').localeCompare(b.occurrenceDate || '')
+      case 'panelOperator':
+        return modifier * (a.panelOperator || '').localeCompare(b.panelOperator || '')
+      case 'type':
+        return modifier * (a.failureType || '').localeCompare(b.failureType || '')
+      default:
+        return 0
+    }
   })
 
   if (authLoading || !hasAccess) {
@@ -249,22 +302,62 @@ export default function RAFsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">RAF</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Area</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cod. Bem</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do Bem</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">N° OS</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Operador</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('number')} className="flex items-center gap-1">
+                  <span>RAF</span>
+                  {renderSortIcon('number')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('area')} className="flex items-center gap-1">
+                  <span>Area</span>
+                  {renderSortIcon('area')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('assetCode')} className="flex items-center gap-1">
+                  <span>Cod. Bem</span>
+                  {renderSortIcon('assetCode')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('assetName')} className="flex items-center gap-1">
+                  <span>Nome do Bem</span>
+                  {renderSortIcon('assetName')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('workOrderNumber')} className="flex items-center gap-1">
+                  <span>N° OS</span>
+                  {renderSortIcon('workOrderNumber')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('occurrenceDate')} className="flex items-center gap-1">
+                  <span>Data</span>
+                  {renderSortIcon('occurrenceDate')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('panelOperator')} className="flex items-center gap-1">
+                  <span>Operador</span>
+                  {renderSortIcon('panelOperator')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('type')} className="flex items-center gap-1">
+                  <span>Tipo</span>
+                  {renderSortIcon('type')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {filteredRAFs.map((raf) => (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedRAFs.map((raf) => (
               <tr
                 key={raf.id}
                 onClick={() => handleView(raf.id)}
-                className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedRAF?.id === raf.id ? 'bg-secondary' : ''}`}
+                className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedRAF?.id === raf.id ? 'bg-secondary' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">

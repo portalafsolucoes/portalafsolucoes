@@ -21,6 +21,9 @@ interface Unit {
   createdAt: string
 }
 
+type UnitSortField = 'name' | 'address' | 'memberCount' | 'assetCount' | 'createdAt'
+type UnitSortDirection = 'asc' | 'desc'
+
 // ─── Unit Detail Panel ────────────────────────────────────────────────────────
 
 interface UnitDetailPanelProps {
@@ -206,6 +209,8 @@ export default function AdminUnitsPage() {
   const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState<UnitSortField>('name')
+  const [sortDirection, setSortDirection] = useState<UnitSortDirection>('asc')
 
   // Split-panel state
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
@@ -350,6 +355,45 @@ export default function AdminUnitsPage() {
     )
   })
 
+  const handleSort = (field: UnitSortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: UnitSortField) => {
+    if (sortField !== field) {
+      return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
+    }
+    return (
+      <Icon
+        name={sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+        className="text-sm text-accent-orange"
+      />
+    )
+  }
+
+  const sortedUnits = [...filteredUnits].sort((a, b) => {
+    const modifier = sortDirection === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'name':
+        return a.name.localeCompare(b.name) * modifier
+      case 'address':
+        return (a.address || '').localeCompare(b.address || '') * modifier
+      case 'memberCount':
+        return (a.memberCount - b.memberCount) * modifier
+      case 'assetCount':
+        return (a.assetCount - b.assetCount) * modifier
+      case 'createdAt':
+        return a.createdAt.localeCompare(b.createdAt) * modifier
+      default:
+        return 0
+    }
+  })
+
   const showEditForm = isCreating || (selectedUnit !== null && isEditing)
   const showDetailPanel = selectedUnit !== null && !isEditing && !isCreating
 
@@ -386,15 +430,40 @@ export default function AdminUnitsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Unidade</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Endereço</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Membros</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ativos</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Criada em</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1">
+                  <span>Unidade</span>
+                  {renderSortIcon('name')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('address')} className="flex items-center gap-1">
+                  <span>Endereço</span>
+                  {renderSortIcon('address')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('memberCount')} className="flex items-center gap-1">
+                  <span>Membros</span>
+                  {renderSortIcon('memberCount')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('assetCount')} className="flex items-center gap-1">
+                  <span>Ativos</span>
+                  {renderSortIcon('assetCount')}
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <button type="button" onClick={() => handleSort('createdAt')} className="flex items-center gap-1">
+                  <span>Criada em</span>
+                  {renderSortIcon('createdAt')}
+                </button>
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-gray-200">
-            {filteredUnits.length === 0 ? (
+          <tbody className="bg-card divide-y divide-gray-100">
+            {sortedUnits.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-3">
@@ -409,11 +478,11 @@ export default function AdminUnitsPage() {
                 </td>
               </tr>
             ) : (
-              filteredUnits.map((unit) => (
+              sortedUnits.map((unit) => (
                 <tr
                   key={unit.id}
                   onClick={() => handleSelectUnit(unit)}
-                  className={`odd:bg-gray-50 even:bg-white hover:bg-accent-orange-light cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
+                  className={`odd:bg-gray-50 even:bg-white hover:bg-secondary cursor-pointer transition-colors ${selectedUnit?.id === unit.id ? 'bg-secondary' : ''}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     <div className="flex items-center gap-3">
