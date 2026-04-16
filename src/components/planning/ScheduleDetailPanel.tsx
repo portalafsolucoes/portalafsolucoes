@@ -51,6 +51,7 @@ interface ScheduleDetailPanelProps {
   schedule: Schedule
   onClose: () => void
   onEdit: () => void
+  onEditMetadata: () => void
   onDelete: () => void
   onConfirm: (id: string) => void
   onReprogram: (id: string) => void
@@ -100,7 +101,7 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
 }
 
 export function ScheduleDetailPanel({
-  schedule, onClose, onEdit, onDelete, onConfirm, onReprogram, canEdit,
+  schedule, onClose, onEdit, onEditMetadata, onDelete, onConfirm, onReprogram, canEdit,
 }: ScheduleDetailPanelProps) {
   const [items, setItems] = useState<ScheduleItem[]>([])
   const [loadingItems, setLoadingItems] = useState(false)
@@ -170,9 +171,16 @@ export function ScheduleDetailPanel({
               </div>
             )}
 
-            {/* Reprogram button */}
+            {/* Edit metadata + Reprogram buttons (only for CONFIRMED) */}
             {isConfirmed && (
               <div className="px-4 pb-4 space-y-2">
+                <Button
+                  onClick={onEditMetadata}
+                  className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white hover:bg-gray-800 min-h-[44px]"
+                >
+                  <Icon name="edit" className="text-base" />
+                  Editar
+                </Button>
                 <Button
                   onClick={() => onReprogram(schedule.id)}
                   variant="outline"

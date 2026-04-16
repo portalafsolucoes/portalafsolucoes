@@ -278,6 +278,20 @@ export async function POST(request: NextRequest) {
       validCategoryId = category?.id
     }
 
+    // Fallback: se nao veio maintenanceAreaId mas veio serviceTypeId, herdar do ServiceType
+    // Garante que toda OS criada com um tipo de servico definido tenha area preenchida,
+    // evitando divergencia entre OS e dados usados nos filtros do planejamento.
+    let effectiveMaintenanceAreaId: string | null = maintenanceAreaId || null
+    if (!effectiveMaintenanceAreaId && serviceTypeId) {
+      const { data: st } = await supabase
+        .from('ServiceType')
+        .select('maintenanceAreaId')
+        .eq('id', serviceTypeId)
+        .eq('companyId', session.companyId)
+        .single()
+      if (st?.maintenanceAreaId) effectiveMaintenanceAreaId = st.maintenanceAreaId
+    }
+
     // Auto-priorização por GUT se tiver ativo vinculado e prioridade não informada
     let effectivePriority = priority || 'NONE'
     if ((!priority || priority === 'NONE') && validAssetId) {
@@ -322,7 +336,7 @@ export async function POST(request: NextRequest) {
         assignedToId: validAssignedToId || null,
         osType: osType || null,
         serviceTypeId: serviceTypeId || null,
-        maintenanceAreaId: maintenanceAreaId || null,
+        maintenanceAreaId: effectiveMaintenanceAreaId,
         maintenanceFrequency: maintenanceFrequency || null,
         frequencyValue: frequencyValue ? parseInt(frequencyValue) : null,
         nextExecutionDate: nextExecutionDate ? nextExecutionDate.toISOString() : null,

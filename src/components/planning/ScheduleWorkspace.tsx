@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { ScheduleCalendar } from './ScheduleCalendar'
 import { ScheduleReportsPanel } from './ScheduleReportsPanel'
+import { WorkOrdersBatchPrintView } from '@/components/work-orders/WorkOrdersBatchPrintView'
 import { formatDate } from '@/lib/utils'
 import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 
@@ -32,8 +33,46 @@ interface WorkOrderItem {
   dueDate?: string
   plannedStartDate?: string
   estimatedDuration?: number
-  asset?: { id: string; name: string; tag?: string }
-  serviceType?: { id: string; name: string }
+  asset?: { id: string; name: string; tag?: string; workCenterId?: string | null }
+  serviceType?: { id: string; name: string; maintenanceTypeId?: string | null }
+  maintenancePlanExecId?: string | null
+  maintenanceAreaId?: string | null
+  maintenancePlanExec?: { id: string; planNumber?: number } | null
+  maintenanceArea?: { id: string; name: string } | null
+  inOtherSchedule?: {
+    scheduleId: string
+    scheduleNumber?: number
+    scheduleStatus: string
+    scheduledDate: string
+    isOverdue: boolean
+  }
+}
+
+interface ReferenceOption {
+  id: string
+  label: string
+}
+
+interface Q1Filters {
+  maintenancePlanExecIds: string[]
+  serviceTypeIds: string[]
+  maintenanceTypeIds: string[]
+  maintenanceAreaIds: string[]
+  workCenterIds: string[]
+  startDate: string
+  endDate: string
+  showAllOpen: boolean
+}
+
+const EMPTY_Q1_FILTERS: Q1Filters = {
+  maintenancePlanExecIds: [],
+  serviceTypeIds: [],
+  maintenanceTypeIds: [],
+  maintenanceAreaIds: [],
+  workCenterIds: [],
+  startDate: '',
+  endDate: '',
+  showAllOpen: false,
 }
 
 interface ScheduledItem {
@@ -89,6 +128,17 @@ const RESOURCE_TYPE_ICONS: Record<string, string> = {
   TOOL: 'construction',
 }
 
+// Formata "Mes de YYYY" a partir de uma data ISO, com a primeira letra maiuscula.
+// Usa construcao local (new Date(y, m-1, 1)) para evitar deslocamento de timezone.
+function formatMonthYear(dateStr: string): string {
+  const iso = dateStr.split('T')[0]
+  const [y, m] = iso.split('-').map(Number)
+  if (!y || !m) return ''
+  const date = new Date(y, m - 1, 1)
+  const label = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
 // ==========================================
 // Component
 // ==========================================
@@ -102,6 +152,7 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
   const [scheduledItems, setScheduledItems] = useState<ScheduledItem[]>([])
   const [resourceSummary, setResourceSummary] = useState<ResourceSummary | null>(null)
   const [resourceDetails, setResourceDetails] = useState<ResourceDetail[]>([])
+  const [jobTitleCapacity, setJobTitleCapacity] = useState<Record<string, { id: string; name: string; userCount: number }>>({})
   const [selectedAvailableIds, setSelectedAvailableIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -109,14 +160,129 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
   const [reportsExpanded, setReportsExpanded] = useState(false)
   const [q4DetailView, setQ4DetailView] = useState(false)
   const [searchQ1, setSearchQ1] = useState('')
+  const [q1FiltersOpen, setQ1FiltersOpen] = useState(false)
+  const [q1Filters, setQ1Filters] = useState<Q1Filters>(EMPTY_Q1_FILTERS)
+  const [q1PlanOptions, setQ1PlanOptions] = useState<ReferenceOption[]>([])
+  const [q1ServiceTypeOptions, setQ1ServiceTypeOptions] = useState<ReferenceOption[]>([])
+  const [q1MaintenanceTypeOptions, setQ1MaintenanceTypeOptions] = useState<ReferenceOption[]>([])
+  const [q1MaintenanceAreaOptions, setQ1MaintenanceAreaOptions] = useState<ReferenceOption[]>([])
+  const [q1WorkCenterOptions, setQ1WorkCenterOptions] = useState<ReferenceOption[]>([])
+  const q1FiltersRef = useRef<Q1Filters>(EMPTY_Q1_FILTERS)
+  useEffect(() => { q1FiltersRef.current = q1Filters }, [q1Filters])
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('available')
   const [selectedScheduledWOId, setSelectedScheduledWOId] = useState<string | null>(null)
   const [selectedScheduledIds, setSelectedScheduledIds] = useState<Set<string>>(new Set())
+  const [batchPrintIds, setBatchPrintIds] = useState<string[] | null>(null)
 
   // ==========================================
   // Data Loading
   // ==========================================
+
+  // Monta query string de filtros do Q1. Regras:
+  // - Se `showAllOpen` estiver marcado, envia `includeAllOpen=true` e omite
+  //   startDate/endDate (API ignora periodo).
+  // - Caso contrario, usa as datas do filtro Q1 ou, na ausencia delas, o
+  //   periodo da programacao atual.
+  // - Um grupo multi-select so e enviado quando o usuario NAO marcou todas
+  //   as opcoes (semantica "todos marcados = sem filtro"). Tambem omite
+  //   quando o grupo esta vazio.
+  const buildAvailableWOQuery = useCallback(
+    (schedData: ScheduleData | null, filters: Q1Filters) => {
+      const params = new URLSearchParams({ scheduleId })
+
+      if (filters.showAllOpen) {
+        params.set('includeAllOpen', 'true')
+      } else {
+        const effectiveStart = filters.startDate || schedData?.startDate || ''
+        const effectiveEnd = filters.endDate || schedData?.endDate || ''
+        if (effectiveStart) params.set('startDate', effectiveStart)
+        if (effectiveEnd) params.set('endDate', effectiveEnd)
+      }
+
+      const appendIfPartial = (key: string, values: string[], totalOptions: number) => {
+        if (values.length === 0) return
+        if (totalOptions > 0 && values.length >= totalOptions) return
+        for (const id of values) params.append(key, id)
+      }
+
+      appendIfPartial('maintenancePlanExecId', filters.maintenancePlanExecIds, q1PlanOptions.length)
+      appendIfPartial('serviceTypeId', filters.serviceTypeIds, q1ServiceTypeOptions.length)
+      appendIfPartial('maintenanceTypeId', filters.maintenanceTypeIds, q1MaintenanceTypeOptions.length)
+      appendIfPartial('maintenanceAreaId', filters.maintenanceAreaIds, q1MaintenanceAreaOptions.length)
+      appendIfPartial('workCenterId', filters.workCenterIds, q1WorkCenterOptions.length)
+
+      return params
+    },
+    [
+      scheduleId,
+      q1PlanOptions.length,
+      q1ServiceTypeOptions.length,
+      q1MaintenanceTypeOptions.length,
+      q1MaintenanceAreaOptions.length,
+      q1WorkCenterOptions.length,
+    ]
+  )
+
+  const loadAvailableWOs = useCallback(
+    async (schedData: ScheduleData | null, filters: Q1Filters) => {
+      const params = buildAvailableWOQuery(schedData, filters)
+      try {
+        const res = await fetch(`/api/planning/schedules/available-work-orders?${params}`)
+        const json = await res.json()
+        setAvailableWOs(json.data || [])
+      } catch (err) {
+        console.error('Error loading available work orders:', err)
+      }
+    },
+    [buildAvailableWOQuery]
+  )
+
+  const loadQ1References = useCallback(async () => {
+    try {
+      const [plansRes, serviceTypesRes, maintenanceTypesRes, maintenanceAreasRes, workCentersRes] = await Promise.all([
+        fetch('/api/planning/plans'),
+        fetch('/api/basic-registrations/service-types'),
+        fetch('/api/basic-registrations/maintenance-types'),
+        fetch('/api/basic-registrations/maintenance-areas'),
+        fetch('/api/basic-registrations/work-centers'),
+      ])
+
+      const [plansJson, serviceTypesJson, maintenanceTypesJson, maintenanceAreasJson, workCentersJson] = await Promise.all([
+        plansRes.json(),
+        serviceTypesRes.json(),
+        maintenanceTypesRes.json(),
+        maintenanceAreasRes.json(),
+        workCentersRes.json(),
+      ])
+
+      setQ1PlanOptions(
+        (plansJson.data || []).map((p: { id: string; planNumber?: number; description?: string }) => ({
+          id: p.id,
+          label: p.planNumber
+            ? `Plano #${p.planNumber}${p.description ? ` — ${p.description}` : ''}`
+            : p.description || p.id,
+        }))
+      )
+      setQ1ServiceTypeOptions(
+        (serviceTypesJson.data || []).map((s: { id: string; name: string; code?: string }) => ({
+          id: s.id,
+          label: s.code ? `${s.code} — ${s.name}` : s.name,
+        }))
+      )
+      setQ1MaintenanceTypeOptions(
+        (maintenanceTypesJson.data || []).map((m: { id: string; name: string }) => ({ id: m.id, label: m.name }))
+      )
+      setQ1MaintenanceAreaOptions(
+        (maintenanceAreasJson.data || []).map((m: { id: string; name: string }) => ({ id: m.id, label: m.name }))
+      )
+      setQ1WorkCenterOptions(
+        (workCentersJson.data || []).map((w: { id: string; name: string }) => ({ id: w.id, label: w.name }))
+      )
+    } catch (err) {
+      console.error('Error loading Q1 reference data:', err)
+    }
+  }, [])
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -133,28 +299,38 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
       setSchedule(schedData)
       setScheduledItems(itemsJson.data || [])
 
-      const params = new URLSearchParams({ scheduleId })
-      if (schedData.startDate) params.set('startDate', schedData.startDate)
-      if (schedData.endDate) params.set('endDate', schedData.endDate)
-
-      const [availRes, resRes] = await Promise.all([
-        fetch(`/api/planning/schedules/available-work-orders?${params}`),
+      const [, resRes] = await Promise.all([
+        loadAvailableWOs(schedData, q1FiltersRef.current),
         fetch(`/api/planning/schedules/${scheduleId}/resources`),
       ])
 
-      const availJson = await availRes.json()
       const resJson = await resRes.json()
-
-      setAvailableWOs(availJson.data || [])
       setResourceSummary(resJson.data?.summary || null)
       setResourceDetails(resJson.data?.resources || [])
+      setJobTitleCapacity(resJson.data?.jobTitleCapacity || {})
     } catch (err) {
       console.error('Error loading workspace data:', err)
     }
     setLoading(false)
-  }, [scheduleId])
+  }, [scheduleId, loadAvailableWOs])
 
   useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { loadQ1References() }, [loadQ1References])
+
+  // Recarrega apenas a lista de OSs disponiveis quando os filtros do Q1 mudam.
+  // Usa debounce leve para evitar requisicao em cada digitacao de data.
+  const initialFiltersEffectRef = useRef(true)
+  useEffect(() => {
+    if (!schedule) return
+    if (initialFiltersEffectRef.current) {
+      initialFiltersEffectRef.current = false
+      return
+    }
+    const handle = setTimeout(() => {
+      loadAvailableWOs(schedule, q1Filters)
+    }, 250)
+    return () => clearTimeout(handle)
+  }, [q1Filters, schedule, loadAvailableWOs])
 
   // ==========================================
   // Q1: OSs Disponíveis
@@ -176,6 +352,33 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
     }
     return filtered
   }, [availableWOs, scheduledItems, searchQ1])
+
+  const q1ActiveFilterCount = useMemo(() => {
+    return (
+      q1Filters.maintenancePlanExecIds.length +
+      q1Filters.serviceTypeIds.length +
+      q1Filters.maintenanceTypeIds.length +
+      q1Filters.maintenanceAreaIds.length +
+      q1Filters.workCenterIds.length +
+      (q1Filters.startDate ? 1 : 0) +
+      (q1Filters.endDate ? 1 : 0) +
+      (q1Filters.showAllOpen ? 1 : 0)
+    )
+  }, [q1Filters])
+
+  const toggleQ1FilterId = (key: keyof Q1Filters, id: string) => {
+    setQ1Filters(prev => {
+      const current = prev[key]
+      if (!Array.isArray(current)) return prev
+      const exists = current.includes(id)
+      return {
+        ...prev,
+        [key]: exists ? current.filter(v => v !== id) : [...current, id],
+      }
+    })
+  }
+
+  const clearQ1Filters = () => setQ1Filters(EMPTY_Q1_FILTERS)
 
   const toggleAvailableSelection = (woId: string) => {
     setSelectedAvailableIds(prev => {
@@ -304,6 +507,19 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
     [scheduledItems]
   )
 
+  // Rotulo de Mes/Ano exibido no cabecalho do Q2 Calendario.
+  // Quando ha data selecionada, usa o mes/ano dessa data; caso contrario deriva do periodo da programacao.
+  // Se o periodo cruzar meses diferentes, mostra ambos separados por "—".
+  const calendarPeriodLabel = useMemo(() => {
+    if (selectedCalendarDate) return formatMonthYear(selectedCalendarDate)
+    if (!schedule?.startDate || !schedule?.endDate) return ''
+    const startLabel = formatMonthYear(schedule.startDate)
+    const endLabel = formatMonthYear(schedule.endDate)
+    if (!startLabel || !endLabel) return startLabel || endLabel
+    if (startLabel === endLabel) return startLabel
+    return `${startLabel} — ${endLabel}`
+  }, [selectedCalendarDate, schedule])
+
   // ==========================================
   // Q4: Resources grouped by WO
   // ==========================================
@@ -324,17 +540,36 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
     return Array.from(map.values())
   }, [resourceDetails, scheduledItems])
 
-  // Resources for selected WO (Q4 filtered view)
-  const selectedWOResources = useMemo(() => {
-    if (!selectedScheduledWOId) return null
-    return resourceDetails.filter(r => r.workOrderId === selectedScheduledWOId)
-  }, [resourceDetails, selectedScheduledWOId])
+  // Determina quais OSs estão "em foco" para a Q4. Precedência:
+  //   1) Clique unico em card da Q3 (selectedScheduledWOId)
+  //   2) Checkboxes multi-selecao da Q3 (selectedScheduledIds)
+  //   3) Data selecionada no calendario (selectedCalendarDate)
+  //   4) Sem filtro (mostra todas) -> retorna null
+  const activeWorkOrderIds = useMemo<Set<string> | null>(() => {
+    if (selectedScheduledWOId) return new Set([selectedScheduledWOId])
+    if (selectedScheduledIds.size > 0) return new Set(selectedScheduledIds)
+    if (selectedCalendarDate) {
+      const dateStr = selectedCalendarDate.split('T')[0]
+      const ids = scheduledItems
+        .filter(item => item.scheduledDate.split('T')[0] === dateStr)
+        .map(item => item.workOrder.id)
+      return new Set(ids)
+    }
+    return null
+  }, [selectedScheduledWOId, selectedScheduledIds, selectedCalendarDate, scheduledItems])
 
-  const selectedWOResourceSummary = useMemo(() => {
-    if (!selectedWOResources) return null
+  // Recursos filtrados para o escopo ativo (null = todos)
+  const filteredResourceDetails = useMemo(() => {
+    if (!activeWorkOrderIds) return resourceDetails
+    return resourceDetails.filter(r => activeWorkOrderIds.has(r.workOrderId))
+  }, [resourceDetails, activeWorkOrderIds])
+
+  // Sumario recalculado a partir dos recursos filtrados
+  const filteredResourceSummary = useMemo<ResourceSummary | null>(() => {
+    if (!activeWorkOrderIds) return resourceSummary
     let totalHours = 0, totalCost = 0
     const byType: Record<string, { totalHours: number; totalQuantity: number; totalCost: number; items: ResourceDetail[] }> = {}
-    for (const r of selectedWOResources) {
+    for (const r of filteredResourceDetails) {
       const h = r.hours || 0
       const q = r.quantity || 0
       totalHours += h
@@ -348,8 +583,14 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
       byType[r.resourceType].totalCost += cost
       byType[r.resourceType].items.push(r)
     }
-    return { totalHours, totalCost, totalItems: selectedWOResources.length, scheduledWorkOrders: 1, byType }
-  }, [selectedWOResources])
+    return {
+      totalHours,
+      totalCost,
+      totalItems: filteredResourceDetails.length,
+      scheduledWorkOrders: activeWorkOrderIds.size,
+      byType,
+    }
+  }, [activeWorkOrderIds, resourceSummary, filteredResourceDetails])
 
   const isEditable = schedule?.status === 'DRAFT' || schedule?.status === 'REPROGRAMMING'
 
@@ -383,6 +624,103 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
   // Quadrant content (reusable across layouts)
   // ==========================================
 
+  const renderQ1MultiSelect = (
+    label: string,
+    key: keyof Q1Filters,
+    options: ReferenceOption[]
+  ) => {
+    const selected = q1Filters[key] as string[]
+    return (
+      <div className="flex flex-col gap-1 min-w-0">
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide flex items-center justify-between gap-1">
+          <span className="truncate">{label}</span>
+          {selected.length > 0 && (
+            <span className="text-[9px] font-medium text-blue-600 normal-case tracking-normal">
+              {selected.length}
+            </span>
+          )}
+        </label>
+        <div className="max-h-28 overflow-auto border border-gray-200 rounded-[4px] bg-white px-1 py-1 space-y-0.5">
+          {options.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground px-1 py-0.5">Sem opções</p>
+          ) : (
+            options.map(opt => (
+              <label
+                key={opt.id}
+                className="flex items-center gap-1.5 px-1 py-0.5 text-[11px] text-gray-700 hover:bg-gray-50 rounded cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(opt.id)}
+                  onChange={() => toggleQ1FilterId(key, opt.id)}
+                  className="h-3 w-3 rounded border-gray-300 accent-blue-600 flex-shrink-0"
+                />
+                <span className="truncate">{opt.label}</span>
+              </label>
+            ))
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const q1FiltersPanel = q1FiltersOpen ? (
+    <div className="border-b border-gray-200 bg-white px-3 py-2 flex-shrink-0">
+      <label className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-blue-50 border border-blue-200 rounded-[4px] cursor-pointer hover:bg-blue-100 transition-colors">
+        <input
+          type="checkbox"
+          checked={q1Filters.showAllOpen}
+          onChange={e => setQ1Filters(prev => ({ ...prev, showAllOpen: e.target.checked }))}
+          className="h-3.5 w-3.5 rounded border-gray-300 accent-blue-600 flex-shrink-0"
+        />
+        <span className="text-[11px] font-medium text-blue-900">
+          Mostrar todas as OSs abertas
+        </span>
+        <span className="text-[10px] text-blue-700">
+          (ignora o período da programação)
+        </span>
+      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+        {renderQ1MultiSelect('Plano de Manutenção', 'maintenancePlanExecIds', q1PlanOptions)}
+        {renderQ1MultiSelect('Tipo de Serviço', 'serviceTypeIds', q1ServiceTypeOptions)}
+        {renderQ1MultiSelect('Tipo de Manutenção', 'maintenanceTypeIds', q1MaintenanceTypeOptions)}
+        {renderQ1MultiSelect('Área de Manutenção', 'maintenanceAreaIds', q1MaintenanceAreaOptions)}
+        {renderQ1MultiSelect('Centro de Trabalho', 'workCenterIds', q1WorkCenterOptions)}
+        <div className={`flex flex-col gap-1 min-w-0 ${q1Filters.showAllOpen ? 'opacity-50' : ''}`}>
+          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Período</label>
+          <div className="flex items-center gap-1">
+            <input
+              type="date"
+              value={q1Filters.startDate}
+              disabled={q1Filters.showAllOpen}
+              onChange={e => setQ1Filters(prev => ({ ...prev, startDate: e.target.value }))}
+              className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-gray-200 rounded-[4px] focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-gray-50"
+            />
+            <span className="text-[10px] text-muted-foreground">até</span>
+            <input
+              type="date"
+              value={q1Filters.endDate}
+              disabled={q1Filters.showAllOpen}
+              onChange={e => setQ1Filters(prev => ({ ...prev, endDate: e.target.value }))}
+              className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-gray-200 rounded-[4px] focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-gray-50"
+            />
+          </div>
+        </div>
+      </div>
+      {q1ActiveFilterCount > 0 && (
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={clearQ1Filters}
+            className="text-[10px] text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            <Icon name="filter_alt_off" className="text-sm" />
+            Limpar filtros
+          </button>
+        </div>
+      )}
+    </div>
+  ) : null
+
   const q1Content = (
     <div className="flex flex-col overflow-hidden h-full">
       <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 gap-2">
@@ -403,7 +741,21 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
               className="w-full pl-7 pr-2 py-1.5 text-xs border border-gray-300 rounded-[4px] focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
-          {isEditable && filteredAvailableWOs.length > 0 && (
+          <button
+            onClick={() => setQ1FiltersOpen(v => !v)}
+            className={`flex items-center gap-1 px-2 py-1.5 text-[11px] rounded-[4px] border whitespace-nowrap transition-colors ${
+              q1FiltersOpen || q1ActiveFilterCount > 0
+                ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}
+            title="Filtros"
+          >
+            <Icon name="filter_list" className="text-sm" />
+            {q1ActiveFilterCount > 0 && (
+              <span className="text-[10px] font-bold">{q1ActiveFilterCount}</span>
+            )}
+          </button>
+          {filteredAvailableWOs.length > 0 && (
             <>
               <button
                 onClick={toggleSelectAll}
@@ -412,20 +764,36 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
                 {selectedAvailableIds.size === filteredAvailableWOs.length ? 'Limpar' : 'Todas'}
               </button>
               {selectedAvailableIds.size > 0 && (
-                <Button
-                  onClick={addSelectedToSchedule}
-                  size="sm"
-                  disabled={saving}
-                  className="text-xs h-8 px-3 min-h-[44px] sm:min-h-0 sm:h-7 sm:px-2"
-                >
-                  <Icon name="arrow_forward" className="text-sm" />
-                  <span className="ml-1">{selectedAvailableIds.size}</span>
-                </Button>
+                <>
+                  <Button
+                    onClick={() => setBatchPrintIds(Array.from(selectedAvailableIds))}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7 px-2 min-h-[44px] sm:min-h-0 sm:h-7"
+                    title="Imprimir OSs selecionadas"
+                  >
+                    <Icon name="print" className="text-sm" />
+                    <span className="ml-1">{selectedAvailableIds.size}</span>
+                  </Button>
+                  {isEditable && (
+                    <Button
+                      onClick={addSelectedToSchedule}
+                      size="sm"
+                      disabled={saving}
+                      className="text-xs h-8 px-3 min-h-[44px] sm:min-h-0 sm:h-7 sm:px-2"
+                      title="Adicionar à programação"
+                    >
+                      <Icon name="arrow_forward" className="text-sm" />
+                      <span className="ml-1">{selectedAvailableIds.size}</span>
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}
         </div>
       </div>
+      {q1FiltersPanel}
       <div className="flex-1 overflow-auto p-1.5 space-y-1">
         {filteredAvailableWOs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
@@ -436,26 +804,29 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
           filteredAvailableWOs.map(wo => (
             <div
               key={wo.id}
-              onClick={() => isEditable && toggleAvailableSelection(wo.id)}
+              onClick={() => toggleAvailableSelection(wo.id)}
               className={`border rounded-[4px] p-2.5 sm:p-2 cursor-pointer transition-colors border-l-4 min-h-[44px] ${
                 WO_PRIORITY_COLORS[wo.priority] || 'border-l-gray-300'
               } ${
                 selectedAvailableIds.has(wo.id)
                   ? 'bg-blue-50 border-blue-300'
-                  : 'bg-white border-gray-200 hover:bg-gray-50'
+                  : wo.inOtherSchedule?.isOverdue
+                    ? 'bg-red-50 border-red-200 hover:bg-red-100'
+                    : wo.inOtherSchedule
+                      ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
               }`}
             >
               <div className="flex items-center gap-2">
-                {isEditable && (
-                  <input
-                    type="checkbox"
-                    checked={selectedAvailableIds.has(wo.id)}
-                    onChange={() => toggleAvailableSelection(wo.id)}
-                    className="h-4 w-4 sm:h-3.5 sm:w-3.5 rounded border-gray-300 accent-blue-600 flex-shrink-0"
-                  />
-                )}
+                <input
+                  type="checkbox"
+                  checked={selectedAvailableIds.has(wo.id)}
+                  onChange={e => { e.stopPropagation(); toggleAvailableSelection(wo.id) }}
+                  onClick={e => e.stopPropagation()}
+                  className="h-4 w-4 sm:h-3.5 sm:w-3.5 rounded border-gray-300 accent-blue-600 flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] font-bold text-gray-600 truncate">
                       {wo.internalId || wo.externalId || '—'}
                     </span>
@@ -469,6 +840,42 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
                       {wo.asset.tag ? `${wo.asset.tag} — ` : ''}{wo.asset.name}
                     </p>
                   )}
+                  {wo.inOtherSchedule && (() => {
+                    const ref = wo.inOtherSchedule
+                    const progLabel = ref.scheduleNumber ? ` — Prog. #${ref.scheduleNumber}` : ''
+                    const dateLabel = formatDate(ref.scheduledDate)
+                    let badgeClass = ''
+                    let icon = 'event'
+                    let label = ''
+                    let title = ''
+                    if (ref.isOverdue) {
+                      badgeClass = 'bg-red-100 text-red-700 border-red-200'
+                      icon = 'schedule'
+                      label = `Atrasada${progLabel}`
+                      title = `Originada da Programação #${ref.scheduleNumber ?? '?'} em ${dateLabel}`
+                    } else if (ref.scheduleStatus === 'DRAFT' || ref.scheduleStatus === 'REPROGRAMMING') {
+                      badgeClass = 'bg-blue-100 text-blue-700 border-blue-200'
+                      icon = 'edit_calendar'
+                      label = `Em rascunho${progLabel}`
+                      title = `Em rascunho na Programação #${ref.scheduleNumber ?? '?'} para ${dateLabel}`
+                    } else {
+                      badgeClass = 'bg-amber-100 text-amber-700 border-amber-200'
+                      icon = 'event'
+                      label = `Já programada${progLabel}`
+                      title = `Já programada na Programação #${ref.scheduleNumber ?? '?'} para ${dateLabel}`
+                    }
+                    return (
+                      <div className="mt-1 flex items-center gap-1">
+                        <span
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${badgeClass}`}
+                          title={title}
+                        >
+                          <Icon name={icon} className="text-[11px]" />
+                          {label}
+                        </span>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
@@ -485,6 +892,11 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
           <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
             <Icon name="calendar_month" className="text-base" />
             Calendário
+            {calendarPeriodLabel && (
+              <span className="text-[10px] font-medium text-gray-500 normal-case tracking-normal ml-1">
+                — {calendarPeriodLabel}
+              </span>
+            )}
           </h3>
           {selectedCalendarDate && (
             <button
@@ -496,18 +908,26 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
           )}
         </div>
       )}
-      {!isWide && selectedCalendarDate && (
-        <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border-b border-blue-200 flex-shrink-0">
-          <span className="text-xs text-blue-700 font-medium">
-            <Icon name="today" className="text-sm mr-1 align-middle" />
-            {formatDate(selectedCalendarDate)}
+      {!isWide && (
+        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 flex-shrink-0 bg-gray-50">
+          <span className="text-xs font-medium text-gray-700 flex items-center gap-1">
+            <Icon name="calendar_month" className="text-sm align-middle" />
+            {calendarPeriodLabel}
           </span>
-          <button
-            onClick={() => setSelectedCalendarDate(null)}
-            className="text-[10px] text-blue-600 hover:text-blue-800"
-          >
-            Limpar
-          </button>
+          {selectedCalendarDate && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-blue-700 font-medium">
+                <Icon name="today" className="text-xs mr-1 align-middle" />
+                {formatDate(selectedCalendarDate)}
+              </span>
+              <button
+                onClick={() => setSelectedCalendarDate(null)}
+                className="text-[10px] text-blue-600 hover:text-blue-800"
+              >
+                Limpar
+              </button>
+            </div>
+          )}
         </div>
       )}
       <div className="flex-1 overflow-hidden">
@@ -596,7 +1016,7 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
               Ver todas
             </button>
           )}
-          {isEditable && filteredScheduledItems.length > 0 && (
+          {filteredScheduledItems.length > 0 && (
             <>
               <button
                 onClick={toggleSelectAllScheduled}
@@ -605,16 +1025,29 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
                 {selectedScheduledIds.size === filteredScheduledItems.length ? 'Limpar' : 'Todas'}
               </button>
               {selectedScheduledIds.size > 0 && (
-                <Button
-                  onClick={removeSelectedScheduledItems}
-                  size="sm"
-                  disabled={saving}
-                  variant="outline"
-                  className="text-xs h-7 px-2 text-red-600 border-red-300 hover:bg-red-50 min-h-[44px] sm:min-h-0 sm:h-7"
-                >
-                  <Icon name="delete" className="text-sm" />
-                  <span className="ml-1">{selectedScheduledIds.size}</span>
-                </Button>
+                <>
+                  <Button
+                    onClick={() => setBatchPrintIds(Array.from(selectedScheduledIds))}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7 px-2 min-h-[44px] sm:min-h-0 sm:h-7"
+                    title="Imprimir OSs selecionadas"
+                  >
+                    <Icon name="print" className="text-sm" />
+                    <span className="ml-1">{selectedScheduledIds.size}</span>
+                  </Button>
+                  {isEditable && (
+                    <Button
+                      onClick={removeSelectedScheduledItems}
+                      size="sm"
+                      disabled={saving}
+                      variant="outline"
+                      className="text-xs h-7 px-2 text-red-600 border-red-300 hover:bg-red-50 min-h-[44px] sm:min-h-0 sm:h-7"
+                    >
+                      <Icon name="delete" className="text-sm" />
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}
@@ -647,15 +1080,13 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
               >
                 <div className="flex items-center justify-between mb-0.5">
                   <div className="flex items-center gap-2">
-                    {isEditable && (
-                      <input
-                        type="checkbox"
-                        checked={selectedScheduledIds.has(wo.id)}
-                        onChange={e => { e.stopPropagation(); toggleScheduledSelection(wo.id) }}
-                        onClick={e => e.stopPropagation()}
-                        className="h-4 w-4 sm:h-3.5 sm:w-3.5 rounded border-gray-300 accent-blue-600 flex-shrink-0"
-                      />
-                    )}
+                    <input
+                      type="checkbox"
+                      checked={selectedScheduledIds.has(wo.id)}
+                      onChange={e => { e.stopPropagation(); toggleScheduledSelection(wo.id) }}
+                      onClick={e => e.stopPropagation()}
+                      className="h-4 w-4 sm:h-3.5 sm:w-3.5 rounded border-gray-300 accent-blue-600 flex-shrink-0"
+                    />
                     <span className="text-[11px] font-bold text-gray-600">
                       {wo.internalId || wo.externalId || '—'}
                     </span>
@@ -701,19 +1132,31 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
     </div>
   )
 
-  // Determine which resource data to show in Q4
-  const activeResourceSummary = selectedScheduledWOId ? selectedWOResourceSummary : resourceSummary
-  const activeResourceDetails = selectedScheduledWOId
-    ? selectedWOResources || []
-    : resourceDetails
-  const activeResourcesByWO = selectedScheduledWOId
-    ? resourcesByWO.filter(g => g.woId === selectedScheduledWOId)
+  // Dados ativos da Q4 ja vem do estado filtrado unificado acima.
+  const activeResourceSummary = filteredResourceSummary
+  const activeResourceDetails = filteredResourceDetails
+  const activeResourcesByWO = activeWorkOrderIds
+    ? resourcesByWO.filter(g => activeWorkOrderIds.has(g.woId))
     : resourcesByWO
 
-  const selectedWOLabel = selectedScheduledWOId
-    ? scheduledItems.find(i => i.workOrder.id === selectedScheduledWOId)?.workOrder.internalId ||
-      scheduledItems.find(i => i.workOrder.id === selectedScheduledWOId)?.workOrder.externalId || null
-    : null
+  // Rotulo que descreve o escopo atual da Q4 (OS unica / multi / data / todas)
+  const activeResourceScopeLabel = (() => {
+    if (selectedScheduledWOId) {
+      const item = scheduledItems.find(i => i.workOrder.id === selectedScheduledWOId)
+      const label = item?.workOrder.internalId || item?.workOrder.externalId
+      return label ? `OS ${label}` : null
+    }
+    if (selectedScheduledIds.size > 0) {
+      const n = selectedScheduledIds.size
+      return `${n} OS${n > 1 ? 's' : ''} selecionada${n > 1 ? 's' : ''}`
+    }
+    if (selectedCalendarDate) {
+      return formatDate(selectedCalendarDate)
+    }
+    return null
+  })()
+
+  const hasActiveResourceFilter = !!(selectedScheduledWOId || selectedScheduledIds.size > 0 || selectedCalendarDate)
 
   const q4Content = (
     <div className="flex flex-col overflow-hidden h-full">
@@ -722,16 +1165,20 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
           <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
             <Icon name="inventory_2" className="text-base" />
             Recursos
-            {selectedWOLabel && (
+            {activeResourceScopeLabel && (
               <span className="text-[10px] font-medium text-blue-600 normal-case tracking-normal ml-1">
-                — OS {selectedWOLabel}
+                — {activeResourceScopeLabel}
               </span>
             )}
           </h3>
           <div className="flex items-center gap-2">
-            {selectedScheduledWOId && (
+            {hasActiveResourceFilter && (
               <button
-                onClick={() => setSelectedScheduledWOId(null)}
+                onClick={() => {
+                  setSelectedScheduledWOId(null)
+                  setSelectedScheduledIds(new Set())
+                  setSelectedCalendarDate(null)
+                }}
                 className="text-[10px] text-blue-600 hover:text-blue-800"
               >
                 Ver todos
@@ -750,12 +1197,16 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
       {!isWide && (
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2">
-            {selectedWOLabel && (
-              <span className="text-[10px] text-blue-600 font-medium">OS {selectedWOLabel}</span>
+            {activeResourceScopeLabel && (
+              <span className="text-[10px] text-blue-600 font-medium">{activeResourceScopeLabel}</span>
             )}
-            {selectedScheduledWOId && (
+            {hasActiveResourceFilter && (
               <button
-                onClick={() => setSelectedScheduledWOId(null)}
+                onClick={() => {
+                  setSelectedScheduledWOId(null)
+                  setSelectedScheduledIds(new Set())
+                  setSelectedCalendarDate(null)
+                }}
                 className="text-[10px] text-blue-600 hover:text-blue-800"
               >
                 Ver todos
@@ -813,7 +1264,7 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
             {!selectedScheduledWOId && (
               <div className="border-t border-gray-200 pt-2 space-y-1 text-[11px] text-gray-600">
                 <div className="flex justify-between">
-                  <span>OSs programadas</span>
+                  <span>OSs {hasActiveResourceFilter ? 'no escopo' : 'programadas'}</span>
                   <span className="font-medium">{activeResourceSummary.scheduledWorkOrders}</span>
                 </div>
                 <div className="flex justify-between">
@@ -1029,10 +1480,21 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
             endDate={schedule.endDate}
             scheduledItems={scheduledItems}
             resources={resourceDetails}
+            jobTitleCapacity={jobTitleCapacity}
+            selectedDate={selectedCalendarDate}
             onClose={() => setReportsExpanded(false)}
             inline={isWide}
           />
         </div>
+      )}
+
+      {/* ========== Batch Print ========== */}
+      {batchPrintIds && batchPrintIds.length > 0 && (
+        <WorkOrdersBatchPrintView
+          workOrderIds={batchPrintIds}
+          scheduledDate={selectedCalendarDate}
+          onClose={() => setBatchPrintIds(null)}
+        />
       )}
     </div>
   )

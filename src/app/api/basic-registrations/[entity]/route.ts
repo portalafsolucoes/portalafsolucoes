@@ -4,6 +4,23 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { parseWorkDays, getWeeklyHours } from '@/lib/calendarUtils'
 
+// Entidades em que a coluna "Codigo Protheus" foi removida da UI e passou a ser
+// espelhada a partir do campo "code" (preserva integracao TOTVS e constraint unica).
+// Mudanca documentada em docs/DEPRECATIONS.md.
+const PROTHEUS_CODE_MIRROR_ENTITIES = new Set([
+  'maintenance-areas',
+  'service-types',
+  'cost-centers',
+  'generic-tasks',
+])
+
+function mirrorProtheusCodeFromCode(entity: string, body: Record<string, unknown>) {
+  if (!PROTHEUS_CODE_MIRROR_ENTITIES.has(entity)) return
+  const code = body.code
+  if (code === undefined || code === null || code === '') return
+  body.protheusCode = String(code)
+}
+
 // Mapeamento de entidades para tabelas Supabase e configurações
 const ENTITY_CONFIG: Record<string, {
   table: string
@@ -92,7 +109,7 @@ const ENTITY_CONFIG: Record<string, {
     scope: 'company',
     requiredFields: ['code', 'name', 'maintenanceTypeId', 'maintenanceAreaId'],
     orderBy: 'code',
-    selectQuery: '*, maintenanceType:MaintenanceType!maintenanceTypeId(id, name), maintenanceArea:MaintenanceArea!maintenanceAreaId(id, name)',
+    selectQuery: '*, maintenanceType:MaintenanceType!maintenanceTypeId(id, name, characteristic), maintenanceArea:MaintenanceArea!maintenanceAreaId(id, name)',
   },
   'generic-tasks': {
     table: 'GenericTask',
@@ -248,6 +265,9 @@ export async function POST(
     for (const key of Object.keys(body)) {
       if (body[key] === '') body[key] = null
     }
+
+    // Espelhar protheusCode <- code para entidades cuja coluna foi removida da UI
+    mirrorProtheusCodeFromCode(entity, body)
 
     // Definir updatedAt (Prisma @updatedAt não gera default no banco)
     body.updatedAt = new Date().toISOString()

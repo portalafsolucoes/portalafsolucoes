@@ -27,7 +27,7 @@ import type {
   MaintenanceTypeOption,
 } from '@/types/catalog'
 
-type EntityRecord = Record<string, unknown> & { id?: string }
+type EntityRecord = { id?: string }
 
 interface ResourceUserSummary extends EntityRecord {
   id: string
@@ -374,12 +374,10 @@ export default function BasicRegistrationEntityPage() {
       fields: [
         { key: 'code', label: 'Codigo', type: 'text', placeholder: 'Ex: MEC, ELE, INS' },
         { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Mecanica' },
-        { key: 'protheusCode', label: 'Codigo Protheus', type: 'text', placeholder: 'Ex: MEC' },
       ],
       columns: [
         { key: 'code', label: 'Codigo' },
         { key: 'name', label: 'Nome' },
-        { key: 'protheusCode', label: 'Cod. Protheus' },
       ],
     },
     {
@@ -394,12 +392,10 @@ export default function BasicRegistrationEntityPage() {
           options: maintenanceAreas.map((ma) => ({ value: ma.id, label: ma.name }))
         },
         { key: 'isLubrication', label: 'Lubrificacao?', type: 'checkbox' },
-        { key: 'protheusCode', label: 'Codigo Protheus', type: 'text', placeholder: 'Ex: MECPRV' },
       ],
       columns: [
         { key: 'code', label: 'Codigo' },
         { key: 'name', label: 'Nome' },
-        { key: 'protheusCode', label: 'Cod. Protheus' },
       ],
     },
     {
@@ -416,12 +412,10 @@ export default function BasicRegistrationEntityPage() {
       fields: [
         { key: 'code', label: 'Codigo', type: 'text', required: true, placeholder: 'Ex: 3002' },
         { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: Manutencao Industrial' },
-        { key: 'protheusCode', label: 'Codigo Protheus', type: 'text', placeholder: 'Ex: 3002' },
       ],
       columns: [
         { key: 'code', label: 'Codigo' },
         { key: 'name', label: 'Nome' },
-        { key: 'protheusCode', label: 'Cod. Protheus' },
       ],
     },
     {
@@ -536,12 +530,10 @@ export default function BasicRegistrationEntityPage() {
         { key: 'code', label: 'Codigo', type: 'number', required: true },
         { key: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Ex: LUBRIFICAR' },
         { key: 'characteristic', label: 'Caracteristica', type: 'text', placeholder: 'Ex: Todos' },
-        { key: 'protheusCode', label: 'Codigo Protheus', type: 'text' },
       ],
       columns: [
         { key: 'code', label: 'Codigo' },
         { key: 'name', label: 'Nome' },
-        { key: 'protheusCode', label: 'Cod. Protheus' },
       ],
     },
     {
@@ -560,7 +552,8 @@ export default function BasicRegistrationEntityPage() {
         { key: 'optionType', label: 'Tipo', render: (value: string, row: EntityRecord) => {
           const labels: Record<string, string> = { NONE: 'Nenhuma', RESPONSE: 'Resposta', OPTION: 'Opcao' }
           const label = labels[value] || value
-          const optCount = Array.isArray(row.options) ? row.options.length : 0
+          const opts = (row as Record<string, unknown>).options
+          const optCount = Array.isArray(opts) ? opts.length : 0
           return value === 'OPTION' && optCount > 0 ? `${label} (${optCount})` : label
         }},
         { key: 'protheusCode', label: 'Cod. Protheus' },
@@ -689,8 +682,8 @@ export default function BasicRegistrationEntityPage() {
     const s = search.toLowerCase()
     return items.filter(item =>
       currentTab.columns.some(col => {
-        const val = item[col.key]
-        return val && String(val).toLowerCase().includes(s)
+        const val = (item as Record<string, unknown>)[col.key]
+        return val != null && String(val).toLowerCase().includes(s)
       })
     )
   }, [items, search, currentTab])

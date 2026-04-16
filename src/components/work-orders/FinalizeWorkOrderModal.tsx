@@ -4,12 +4,23 @@ import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { getDisplayId } from '@/lib/workOrderUtils'
+
+export interface FinalizeResult {
+  generateCorrective: boolean
+  sourceWorkOrder?: {
+    id: string
+    displayId: string
+    assetId?: string | null
+    locationId?: string | null
+  }
+}
 
 interface FinalizeModalProps {
   isOpen: boolean
   onClose: () => void
   workOrder: any
-  onFinalized: () => void
+  onFinalized: (result?: FinalizeResult) => void
   inPage?: boolean
 }
 
@@ -29,6 +40,7 @@ interface PlannedResource {
 
 interface ExecutionResourceLabor {
   type: 'LABOR' | 'SPECIALTY'
+  resourceId?: string
   resourceName: string
   plannedResourceId?: string
   startDate: string
@@ -40,11 +52,19 @@ interface ExecutionResourceLabor {
 
 interface ExecutionResourceMaterial {
   type: 'MATERIAL' | 'TOOL'
+  resourceId?: string
   resourceName: string
   plannedResourceId?: string
   quantity: number
   unit: string
   observation: string
+}
+
+interface AvailableResource {
+  id: string
+  name: string
+  type: ResourceCategory
+  unit?: string | null
 }
 
 type ExecutionResource = ExecutionResourceLabor | ExecutionResourceMaterial
@@ -132,8 +152,6 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   const [executionResources, setExecutionResources] = useState<ExecutionResource[]>([])
   const [executionNotes, setExecutionNotes] = useState('')
   const [generateCorrective, setGenerateCorrective] = useState(false)
-  const [correctiveTitle, setCorrectiveTitle] = useState('')
-  const [correctiveType, setCorrectiveType] = useState('CORRECTIVE_PLANNED')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -156,6 +174,13 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   // Etapas de execução
   const [executionSteps, setExecutionSteps] = useState<ExecutionStep[]>([])
   const [loadingSteps, setLoadingSteps] = useState(false)
+
+  // Recursos cadastrados (fonte: /api/basic-registrations/resources)
+  const [availableResources, setAvailableResources] = useState<AvailableResource[]>([])
+
+  // Fontes de Mão de Obra: pessoas (LABOR) e cargos (SPECIALTY)
+  const [availableUsers, setAvailableUsers] = useState<{ id: string; name: string; jobTitle?: string | null }[]>([])
+  const [availableJobTitles, setAvailableJobTitles] = useState<{ id: string; name: string }[]>([])
 
   // Verificar se há RAF com PA pendente para OS corretiva imediata
   useEffect(() => {
@@ -183,6 +208,55 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
       loadPlanTasksAndResources(workOrder.assetMaintenancePlanId)
     }
   }, [isOpen, workOrder])
+
+  // Carrega recursos cadastrados (Material/Ferramenta) + pessoas (LABOR) + cargos (SPECIALTY)
+  useEffect(() => {
+    if (!isOpen) return
+
+    // Material & Ferramenta
+    type ResourceApiItem = { id: string; name: string; type: string; unit?: string | null }
+    fetch('/api/basic-registrations/resources')
+      .then(r => r.ok ? r.json() : { data: [] })
+      .then(({ data }: { data?: ResourceApiItem[] }) => {
+        const list: AvailableResource[] = (data || []).map((r) => ({
+          id: r.id,
+          name: r.name,
+          type: r.type as ResourceCategory,
+          unit: r.unit ?? null,
+        }))
+        setAvailableResources(list)
+      })
+      .catch(() => setAvailableResources([]))
+
+    // Pessoas (fonte para LABOR)
+    type UserApiItem = { id: string; firstName: string; lastName: string; jobTitle?: string | null }
+    fetch('/api/users?enabled=true&brief=resource')
+      .then(r => r.ok ? r.json() : { data: [] })
+      .then((json: UserApiItem[] | { data?: UserApiItem[] }) => {
+        const arr: UserApiItem[] = Array.isArray(json) ? json : (json.data || [])
+        const list = arr.map((u) => ({
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          jobTitle: u.jobTitle ?? null,
+        }))
+        setAvailableUsers(list)
+      })
+      .catch(() => setAvailableUsers([]))
+
+    // Cargos (fonte para SPECIALTY)
+    type JobTitleApiItem = { id: string; name: string }
+    fetch('/api/basic-registrations/job-titles')
+      .then(r => r.ok ? r.json() : { data: [] })
+      .then((json: JobTitleApiItem[] | { data?: JobTitleApiItem[] }) => {
+        const arr: JobTitleApiItem[] = Array.isArray(json) ? json : (json.data || [])
+        const list = arr.map((jt) => ({
+          id: jt.id,
+          name: jt.name,
+        }))
+        setAvailableJobTitles(list)
+      })
+      .catch(() => setAvailableJobTitles([]))
+  }, [isOpen])
 
   const loadPlanTasksAndResources = async (planId: string) => {
     setLoadingPlan(true)
@@ -253,6 +327,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
       if (isLaborType(pr.resourceType)) {
         return {
           type: pr.resourceType as 'LABOR' | 'SPECIALTY',
+          resourceId: pr.resourceId || undefined,
           resourceName: pr.resourceName,
           plannedResourceId: pr.id,
           startDate: '',
@@ -264,6 +339,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
       } else {
         return {
           type: pr.resourceType as 'MATERIAL' | 'TOOL',
+          resourceId: pr.resourceId || undefined,
           resourceName: pr.resourceName,
           plannedResourceId: pr.id,
           quantity: pr.quantity,
@@ -276,9 +352,9 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   }
 
   // Adicionar recurso realizado
-  const addLaborResource = () => {
+  const addLaborResource = (laborType: 'LABOR' | 'SPECIALTY' = 'LABOR') => {
     setExecutionResources(prev => [...prev, {
-      type: 'LABOR',
+      type: laborType,
       resourceName: '',
       startDate: '',
       startTime: '',
@@ -306,6 +382,35 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
     setExecutionResources(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  // Selecionar recurso cadastrado: preenche id, nome e (para materiais) unidade
+  const selectResource = (index: number, resourceId: string) => {
+    const picked = availableResources.find(r => r.id === resourceId)
+    setExecutionResources(prev => {
+      const updated = [...prev]
+      const current = updated[index]
+      if (!picked) {
+        updated[index] = { ...current, resourceId: undefined, resourceName: '' } as ExecutionResource
+        return updated
+      }
+      if (isLaborType(current.type)) {
+        updated[index] = {
+          ...current,
+          resourceId: picked.id,
+          resourceName: picked.name,
+        } as ExecutionResourceLabor
+      } else {
+        const mr = current as ExecutionResourceMaterial
+        updated[index] = {
+          ...mr,
+          resourceId: picked.id,
+          resourceName: picked.name,
+          unit: picked.unit || mr.unit || 'un',
+        } as ExecutionResourceMaterial
+      }
       return updated
     })
   }
@@ -403,6 +508,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
             const lr = r as ExecutionResourceLabor
             return {
               memberName: lr.resourceName,
+              resourceName: lr.resourceName,
               quantity: 1,
               hours: 0,
               startDate: lr.startDate,
@@ -410,20 +516,24 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
               endDate: lr.endDate,
               endTime: lr.endTime,
               observation: lr.observation,
-              resourceId: r.plannedResourceId || undefined,
+              resourceId: lr.resourceId || undefined,
+              plannedResourceId: lr.plannedResourceId || undefined,
             }
           } else {
             const mr = r as ExecutionResourceMaterial
             return {
               memberName: mr.resourceName,
+              resourceName: mr.resourceName,
               quantity: mr.quantity,
               hours: 0,
+              unit: mr.unit,
               startDate: '',
               startTime: '',
               endDate: '',
               endTime: '',
               observation: mr.observation,
-              resourceId: r.plannedResourceId || undefined,
+              resourceId: mr.resourceId || undefined,
+              plannedResourceId: mr.plannedResourceId || undefined,
             }
           }
         })
@@ -463,13 +573,9 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         }
       }
 
-      if (generateCorrective) {
-        body.correctiveData = {
-          title: correctiveTitle || `OS Corretiva - ${workOrder.title}`,
-          osType: correctiveType,
-          priority: 'MEDIUM',
-        }
-      }
+      // Nota: a criação da OS corretiva não é feita pela API finalize.
+      // Quando generateCorrective=true, a UI redireciona o usuário para o formulário
+      // de "Nova Ordem de Serviço" com a descrição pré-preenchida referenciando esta OS.
 
       const res = await fetch(`/api/work-orders/${workOrder.id}/finalize`, {
         method: 'POST',
@@ -484,7 +590,15 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         return
       }
 
-      onFinalized()
+      onFinalized({
+        generateCorrective,
+        sourceWorkOrder: {
+          id: workOrder.id,
+          displayId: getDisplayId(workOrder),
+          assetId: workOrder.assetId ?? workOrder.asset?.id ?? null,
+          locationId: workOrder.locationId ?? workOrder.asset?.locationId ?? null,
+        },
+      })
       onClose()
     } catch {
       setError('Erro de conexao')
@@ -522,7 +636,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         {/* Info da OS */}
         <div className="p-3 bg-muted rounded-[4px] text-sm">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div><span className="text-muted-foreground">OS:</span> <span className="font-medium">{workOrder.internalId || workOrder.id.slice(0, 8)}</span></div>
+            <div><span className="text-muted-foreground">OS:</span> <span className="font-medium">{getDisplayId(workOrder)}</span></div>
             <div><span className="text-muted-foreground">Ativo:</span> <span className="font-medium">{workOrder.asset?.name || '-'}</span></div>
             <div><span className="text-muted-foreground">Status:</span> <span className="font-medium">{workOrder.status}</span></div>
             <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium">{workOrder.type}</span></div>
@@ -734,8 +848,11 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
               Insumos Realizados
             </h3>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={addLaborResource}>
+              <Button size="sm" variant="outline" onClick={() => addLaborResource('LABOR')}>
                 <Icon name="person_add" className="text-sm mr-1" /> Mao de Obra
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => addLaborResource('SPECIALTY')}>
+                <Icon name="engineering" className="text-sm mr-1" /> Especialidade
               </Button>
               <Button size="sm" variant="outline" onClick={addMaterialResource}>
                 <Icon name="add" className="text-sm mr-1" /> Material/Ferramenta
@@ -777,14 +894,40 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                             </button>
                           </div>
                           <div>
-                            <label className="block text-xs text-muted-foreground mb-1">Nome</label>
-                            <input
-                              type="text"
-                              value={lr.resourceName}
-                              onChange={e => updateResource(idx, 'resourceName', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-                              placeholder="Nome do integrante"
-                            />
+                            <label className="block text-xs text-muted-foreground mb-1">Recurso</label>
+                            {lr.type === 'SPECIALTY' ? (
+                              <select
+                                value={lr.resourceId || ''}
+                                onChange={e => {
+                                  const picked = availableJobTitles.find(jt => jt.id === e.target.value)
+                                  updateResource(idx, 'resourceId', picked?.id || undefined)
+                                  updateResource(idx, 'resourceName', picked?.name || '')
+                                }}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                              >
+                                <option value="">Selecione...</option>
+                                {availableJobTitles.map(jt => (
+                                  <option key={jt.id} value={jt.id}>{jt.name}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <select
+                                value={lr.resourceId || ''}
+                                onChange={e => {
+                                  const picked = availableUsers.find(u => u.id === e.target.value)
+                                  updateResource(idx, 'resourceId', picked?.id || undefined)
+                                  updateResource(idx, 'resourceName', picked?.name || '')
+                                }}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                              >
+                                <option value="">Selecione...</option>
+                                {availableUsers.map(u => (
+                                  <option key={u.id} value={u.id}>
+                                    {u.name}{u.jobTitle ? ` (${u.jobTitle})` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
@@ -844,14 +987,21 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
-                              <label className="block text-xs text-muted-foreground mb-1">Nome</label>
-                              <input
-                                type="text"
-                                value={mr.resourceName}
-                                onChange={e => updateResource(idx, 'resourceName', e.target.value)}
+                              <label className="block text-xs text-muted-foreground mb-1">Recurso</label>
+                              <select
+                                value={mr.resourceId || ''}
+                                onChange={e => selectResource(idx, e.target.value)}
                                 className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card focus:outline-none focus:ring-2 focus:ring-ring"
-                                placeholder="Nome do recurso"
-                              />
+                              >
+                                <option value="">Selecione...</option>
+                                {availableResources
+                                  .filter(r => r.type === 'MATERIAL' || r.type === 'TOOL')
+                                  .map(r => (
+                                    <option key={r.id} value={r.id}>
+                                      {r.name} ({getResourceTypeLabel(r.type)})
+                                    </option>
+                                  ))}
+                              </select>
                             </div>
                             <div>
                               <label className="block text-xs text-muted-foreground mb-1">Quantidade</label>
@@ -901,28 +1051,36 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         </div>
 
         {/* Emitir OS corretiva */}
-        <div className="p-3 border border-gray-200 rounded-[4px] space-y-3">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={generateCorrective} onChange={e => setGenerateCorrective(e.target.checked)} className="rounded border-border" />
-            <span className="text-sm font-medium">Emitir OS Corretiva?</span>
-          </label>
-          {generateCorrective && (
-            <div className="space-y-3 pl-6">
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">Titulo da OS Corretiva</label>
-                <input type="text" value={correctiveTitle} onChange={e => setCorrectiveTitle(e.target.value)}
-                  placeholder="Ex: Substituicao de rolamento" className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card" />
-              </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
-                <select value={correctiveType} onChange={e => setCorrectiveType(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 bg-card">
-                  <option value="CORRECTIVE_PLANNED">Corretiva Programada</option>
-                  <option value="CORRECTIVE_IMMEDIATE">Corretiva Imediata</option>
-                </select>
-              </div>
+        <div className="p-3 border border-gray-200 rounded-[4px]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Emitir OS Corretiva?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Ao selecionar &quot;Sim&quot;, apos finalizar esta OS voce sera direcionado ao formulario de Nova OS
+                com a observacao pre-preenchida referenciando esta ordem.
+              </p>
             </div>
-          )}
+            <div className="flex items-center bg-muted rounded-[4px] p-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setGenerateCorrective(false)}
+                className={`px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                  !generateCorrective ? 'bg-background text-foreground ambient-shadow' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Nao
+              </button>
+              <button
+                type="button"
+                onClick={() => setGenerateCorrective(true)}
+                className={`px-3 py-1.5 rounded-[4px] text-sm font-medium transition-all ${
+                  generateCorrective ? 'bg-background text-foreground ambient-shadow' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Sim
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Botões */}

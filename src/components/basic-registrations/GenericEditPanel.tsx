@@ -143,13 +143,19 @@ function renderFields(
   editingItem: EditableItem | null,
   allFields: FieldConfig[]
 ) {
+  // Helper: normaliza FormValue para string segura em inputs HTML
+  const asString = (v: FormValue | undefined): string => {
+    if (v === undefined || v === null || v === false) return ''
+    return String(v)
+  }
+
   return fields.filter(f => {
     if (f.readOnly && !editingItem) return false
     if (f.visibleWhen) {
       const depValue = formData[f.visibleWhen.field]
       const expected = f.visibleWhen.value
       if (Array.isArray(expected)) {
-        if (!expected.includes(depValue)) return false
+        if (!(expected as FormValue[]).includes(depValue)) return false
       } else {
         if (depValue !== expected) return false
       }
@@ -162,21 +168,21 @@ function renderFields(
       </label>
       {field.type === 'combobox' ? (
         <ComboboxField
-          value={formData[field.key] || ''}
+          value={asString(formData[field.key])}
           onChange={(val) => setFormData({ ...formData, [field.key]: val })}
           options={field.options || []}
           placeholder={field.placeholder || 'Selecione ou digite...'}
         />
       ) : field.type === 'select' ? (
         <select
-          value={formData[field.key] || ''}
+          value={asString(formData[field.key])}
           onChange={e => {
             const newVal = e.target.value
             const updated = { ...formData, [field.key]: newVal }
             allFields.forEach(f => {
               if (f.visibleWhen?.field === field.key) {
                 const expected = f.visibleWhen.value
-                const visible = Array.isArray(expected) ? expected.includes(newVal) : newVal === expected
+                const visible = Array.isArray(expected) ? (expected as FormValue[]).includes(newVal) : newVal === expected
                 if (!visible) updated[f.key] = ''
               }
             })
@@ -192,7 +198,7 @@ function renderFields(
         </select>
       ) : field.type === 'textarea' ? (
         <textarea
-          value={formData[field.key] || ''}
+          value={asString(formData[field.key])}
           onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
           placeholder={field.placeholder}
           rows={3}
@@ -213,7 +219,7 @@ function renderFields(
       ) : (
         <input
           type={field.type}
-          value={formData[field.key] ?? ''}
+          value={asString(formData[field.key])}
           onChange={e => setFormData({
             ...formData,
             [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value

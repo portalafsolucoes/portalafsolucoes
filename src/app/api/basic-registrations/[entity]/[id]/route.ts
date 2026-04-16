@@ -3,6 +3,25 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 
+// Entidades em que a coluna "Codigo Protheus" foi removida da UI e passou a ser
+// espelhada a partir do campo "code". Mantem integracao TOTVS e constraint unica.
+const PROTHEUS_CODE_MIRROR_ENTITIES = new Set([
+  'maintenance-areas',
+  'service-types',
+  'cost-centers',
+  'generic-tasks',
+])
+
+function mirrorProtheusCodeFromCode(entity: string, body: Record<string, unknown>) {
+  if (!PROTHEUS_CODE_MIRROR_ENTITIES.has(entity)) return
+  // Em PUT, so espelhar quando o `code` foi enviado no payload. Atualizacoes
+  // parciais que nao tocam `code` nao devem sobrescrever o protheusCode existente.
+  if (!Object.prototype.hasOwnProperty.call(body, 'code')) return
+  const code = body.code
+  if (code === undefined || code === null || code === '') return
+  body.protheusCode = String(code)
+}
+
 const TABLE_MAP: Record<string, string> = {
   calendars: 'Calendar',
   areas: 'Area',
@@ -101,6 +120,9 @@ export async function PUT(
     for (const key of Object.keys(body)) {
       if (body[key] === '') body[key] = null
     }
+
+    // Espelhar protheusCode <- code para entidades cuja coluna foi removida da UI
+    mirrorProtheusCodeFromCode(entity, body)
 
     // Atualizar updatedAt
     body.updatedAt = new Date().toISOString()

@@ -3,10 +3,12 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 
-// POST - Reprogramar uma programação confirmada
-// CONFIRMED → REPROGRAMMING (reverte OSs para PENDING se ainda RELEASED)
+// POST - Abrir programação confirmada para edição
+// CONFIRMED → REPROGRAMMING
+// - Modo padrão (preserveOSStatus=false): reverte OSs RELEASED para PENDING
+// - Modo preservado (preserveOSStatus=true): mantém status das OSs e dos itens
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -17,6 +19,15 @@ export async function POST(
     if (permError) return NextResponse.json({ error: permError }, { status: 403 })
 
     const { id } = await params
+
+    // Ler body opcional para flag de preservação de status
+    let preserveOSStatus = false
+    try {
+      const body = await request.json()
+      preserveOSStatus = body?.preserveOSStatus === true
+    } catch {
+      // Body vazio é aceito (modo padrão)
+    }
 
     // Buscar programação
     const { data: schedule, error: schedError } = await supabase
@@ -47,26 +58,28 @@ export async function POST(
 
     const woIds = (items || []).map(i => i.workOrderId)
 
-    // Reverter OSs que ainda estão RELEASED para PENDING
-    // OSs que já avançaram (IN_PROGRESS, COMPLETE) não são revertidas
     let revertedCount = 0
-    if (woIds.length > 0) {
-      const { data: reverted, error: revertError } = await supabase
-        .from('WorkOrder')
-        .update({ status: 'PENDING', updatedAt: new Date().toISOString() })
-        .in('id', woIds)
-        .eq('status', 'RELEASED')
-        .select('id')
+    if (!preserveOSStatus) {
+      // Reverter OSs que ainda estão RELEASED para PENDING
+      // OSs que já avançaram (IN_PROGRESS, COMPLETE) não são revertidas
+      if (woIds.length > 0) {
+        const { data: reverted, error: revertError } = await supabase
+          .from('WorkOrder')
+          .update({ status: 'PENDING', updatedAt: new Date().toISOString() })
+          .in('id', woIds)
+          .eq('status', 'RELEASED')
+          .select('id')
 
-      if (revertError) throw revertError
-      revertedCount = reverted?.length || 0
+        if (revertError) throw revertError
+        revertedCount = reverted?.length || 0
+      }
+
+      // Reverter status dos itens para PENDING
+      await supabase
+        .from('WorkOrderScheduleItem')
+        .update({ status: 'PENDING' })
+        .eq('scheduleId', id)
     }
-
-    // Reverter status dos itens para PENDING
-    await supabase
-      .from('WorkOrderScheduleItem')
-      .update({ status: 'PENDING' })
-      .eq('scheduleId', id)
 
     // Atualizar status da programação para REPROGRAMMING
     const { data: updated, error: updateError } = await supabase
@@ -78,11 +91,16 @@ export async function POST(
 
     if (updateError) throw updateError
 
+    const message = preserveOSStatus
+      ? `Programação aberta para edição. ${woIds.length} OS(s) mantêm o status atual.`
+      : `Programação em reprogramação. ${revertedCount} OS(s) revertida(s) para pendente.`
+
     return NextResponse.json({
       data: updated,
-      message: `Programação em reprogramação. ${revertedCount} OS(s) revertida(s) para pendente.`,
+      message,
       revertedCount,
       totalItems: woIds.length,
+      preserved: preserveOSStatus,
     })
   } catch (error) {
     console.error('Error reprogramming schedule:', error)

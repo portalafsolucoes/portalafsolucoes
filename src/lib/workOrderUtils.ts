@@ -56,8 +56,8 @@ export function isValidExternalId(externalId: string): boolean {
 /**
  * Retorna o ID de exibição da OS (externalId se existir, senão internalId legado)
  */
-export function getDisplayId(workOrder: { externalId?: string | null, internalId?: string | null, id: string }): string {
-  return workOrder.externalId || workOrder.internalId || workOrder.id.slice(0, 8)
+export function getDisplayId(workOrder: { externalId?: string | null, internalId?: string | null, customId?: string | null, id: string }): string {
+  return workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
 }
 
 /**

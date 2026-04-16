@@ -236,6 +236,29 @@ Regras complementares:
 - Gera OS preventivas em lote por periodo e filtros
 - Programacao agenda OS em um periodo e confirma datas planejadas
 
+#### 10.1 Programacao (Workspace)
+- Quadrante Q1 (`OSs Disponiveis`) possui barra de filtros colapsavel com:
+  - Plano de Manutencao (multi), Tipo de Servico (multi), Tipo de Manutencao (multi), Area de Manutencao (multi), Centro de Trabalho (multi), Periodo (data inicio / data fim)
+  - `Tipo de Manutencao` e derivado indiretamente via `WorkOrder.serviceType.maintenanceTypeId`; `Centro de Trabalho` via `WorkOrder.asset.workCenterId`
+  - O filtro de `Periodo` afeta apenas a disponibilizacao do Q1 (nao altera metadados da programacao nem os quadrantes Q2/Q3/Q4)
+  - Sem datas no filtro, o periodo efetivo e o da programacao em edicao
+- Regra de OS atrasada:
+  - OS em programacao `CONFIRMED`/`PARTIALLY_EXECUTED` cuja `scheduledDate < hoje` e que ainda nao foi executada aparece em Q1 com badge "Atrasada — Prog. #N"
+  - Ao adicionar uma OS atrasada em uma nova programacao `DRAFT`, o item antigo e marcado como `MOVED` (preserva historico) e o status da programacao antiga e recomputado
+  - Ao remover uma OS ainda em `DRAFT` (ou excluir o rascunho inteiro), o item antigo marcado como `MOVED` e revertido para `PENDING` e o status da programacao antiga e recomputado
+- Estados da programacao (`WorkOrderSchedule.status`):
+  - `DRAFT` rascunho editavel
+  - `REPROGRAMMING` programacao confirmada reaberta para edicao
+  - `CONFIRMED` confirmada e em execucao
+  - `PARTIALLY_EXECUTED` parte dos itens foi executada ou movida, ainda restam itens ativos
+  - `COMPLETED` todos os itens foram executados ou movidos
+- Estados dos itens (`WorkOrderScheduleItem.status`):
+  - `PENDING` em rascunho
+  - `RELEASED` liberado pela confirmacao
+  - `EXECUTED` OS finalizada (setado automaticamente ao finalizar a OS)
+  - `MOVED` OS foi reprogramada em outra programacao (preserva historico)
+- Recomputo automatico: toda finalizacao de OS marca os itens ativos correspondentes como `EXECUTED` e recomputa o status da(s) programacao(oes) afetada(s); o mesmo ocorre apos movimentacao ou reversao de itens
+
 ### 11. Cadastros Basicos
 Cadastros auxiliares do sistema:
 - Tipos de Manutencao

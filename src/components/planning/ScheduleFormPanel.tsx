@@ -6,17 +6,34 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 
-interface ScheduleFormPanelProps {
-  onClose: () => void
-  onSaved: (newScheduleId?: string) => void
-  inPage?: boolean
+interface ScheduleEditableFields {
+  id: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  status?: string
 }
 
-export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: ScheduleFormPanelProps) {
+interface ScheduleFormPanelProps {
+  onClose: () => void
+  onSaved: (newScheduleId?: string, warning?: string) => void
+  inPage?: boolean
+  schedule?: ScheduleEditableFields | null
+}
+
+function toDateInputValue(iso?: string): string {
+  if (!iso) return ''
+  return iso.split('T')[0]
+}
+
+export function ScheduleFormPanel({ onClose, onSaved, inPage = false, schedule }: ScheduleFormPanelProps) {
+  const isEditMode = !!schedule?.id
+  const isConfirmedEdit = isEditMode && schedule?.status === 'CONFIRMED'
+
   const [formData, setFormData] = useState<Record<string, string>>({
-    description: '',
-    startDate: '',
-    endDate: '',
+    description: schedule?.description || '',
+    startDate: toDateInputValue(schedule?.startDate),
+    endDate: toDateInputValue(schedule?.endDate),
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -26,8 +43,12 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
     setSaving(true)
     setError('')
     try {
-      const res = await fetch('/api/planning/schedules', {
-        method: 'POST',
+      const url = isEditMode
+        ? `/api/planning/schedules/${schedule!.id}`
+        : '/api/planning/schedules'
+      const method = isEditMode ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
@@ -37,7 +58,7 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
         setSaving(false)
         return
       }
-      onSaved(data.data?.id)
+      onSaved(data.data?.id, data.warning)
     } catch {
       setError('Erro de conexão')
     }
@@ -48,6 +69,12 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
     <>
       {error && (
         <div className="p-3 bg-danger/10 text-danger rounded-[4px] text-sm">{error}</div>
+      )}
+      {isConfirmedEdit && (
+        <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-[4px] text-xs">
+          <Icon name="info" className="text-sm mr-1 align-middle" />
+          Programação confirmada: a edição abaixo altera apenas os dados da programação. As OSs já programadas não serão modificadas.
+        </div>
       )}
       <ModalSection title="Programação">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -100,7 +127,7 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
       </Button>
       <Button type="submit" disabled={saving} className="flex-1">
         <Icon name="save" className="text-base mr-2" />
-        {saving ? 'Processando...' : 'Salvar'}
+        {saving ? 'Processando...' : (isEditMode ? 'Salvar Alterações' : 'Salvar')}
       </Button>
     </div>
   )
@@ -109,7 +136,7 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
     return (
       <div className="h-full flex flex-col bg-card border-l border-border">
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">Nova Programação de OSs</h2>
+          <h2 className="text-xl font-bold text-foreground">{isEditMode ? 'Editar Programação' : 'Nova Programação de OSs'}</h2>
           <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
             <Icon name="close" className="text-xl text-muted-foreground" />
           </button>
@@ -125,7 +152,7 @@ export function ScheduleFormPanel({ onClose, onSaved, inPage = false }: Schedule
   }
 
   return (
-    <Modal isOpen onClose={onClose} title="Nova Programação de OSs" size="wide">
+    <Modal isOpen onClose={onClose} title={isEditMode ? 'Editar Programação' : 'Nova Programação de OSs'} size="wide">
       <form onSubmit={handleSubmit}>
         <div className="p-4 space-y-3">
           {formContent}

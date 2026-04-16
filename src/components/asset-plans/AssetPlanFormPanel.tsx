@@ -63,6 +63,7 @@ interface PlanTaskResponse {
 }
 
 interface AssetPlanResponse {
+  id?: string
   assetId?: string | null
   serviceTypeId?: string | null
   maintenanceAreaId?: string | null

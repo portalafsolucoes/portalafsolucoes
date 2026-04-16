@@ -31,14 +31,24 @@ interface ResourceDetail {
   user?: { id: string; firstName: string; lastName: string; hourlyRate?: number } | null
 }
 
+interface JobTitleCapacity {
+  id: string
+  name: string
+  userCount: number
+}
+
 interface ScheduleReportsPanelProps {
   startDate: string
   endDate: string
   scheduledItems: ScheduledItem[]
   resources: ResourceDetail[]
+  jobTitleCapacity?: Record<string, JobTitleCapacity>
+  selectedDate?: string | null
   onClose: () => void
   inline?: boolean
 }
+
+const HOURS_PER_USER_PER_DAY = 8
 
 // ==========================================
 // Helpers
@@ -80,9 +90,30 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
 // ==========================================
 
 export function ScheduleReportsPanel({
-  startDate, endDate, scheduledItems, resources, onClose, inline,
+  startDate, endDate, scheduledItems, resources, jobTitleCapacity, selectedDate, onClose, inline,
 }: ScheduleReportsPanelProps) {
   const dateRange = useMemo(() => generateDateRange(startDate, endDate), [startDate, endDate])
+
+  // Data selecionada para filtrar cards e secoes (null = programacao inteira)
+  const selectedDateKey = selectedDate ? toDateKey(selectedDate) : null
+
+  // OSs dentro do filtro de data (quando selectedDate existe, apenas OSs daquele dia)
+  const filteredScheduledItems = useMemo(() => {
+    if (!selectedDateKey) return scheduledItems
+    return scheduledItems.filter(it => toDateKey(it.scheduledDate) === selectedDateKey)
+  }, [scheduledItems, selectedDateKey])
+
+  // Conjunto de workOrderIds relevantes (para filtrar recursos quando ha data selecionada)
+  const filteredWoIds = useMemo(() => {
+    if (!selectedDateKey) return null
+    return new Set(filteredScheduledItems.map(it => it.workOrder.id))
+  }, [filteredScheduledItems, selectedDateKey])
+
+  // Recursos dentro do filtro de data
+  const filteredResources = useMemo(() => {
+    if (!filteredWoIds) return resources
+    return resources.filter(r => filteredWoIds.has(r.workOrderId))
+  }, [resources, filteredWoIds])
 
   // OSs por dia
   const itemsByDate = useMemo(() => {
@@ -146,7 +177,7 @@ export function ScheduleReportsPanel({
   }, [dateRange, itemsByDate, resourcesByWO])
 
   // ==========================================
-  // 2. Alocação de MO: horas por pessoa por dia
+  // 2. Alocação de MO: horas por pessoa por dia (filtrado pela data selecionada)
   // ==========================================
   const laborAllocation = useMemo(() => {
     // Mapa: userId -> { name, hourlyRate, days: { date -> hours } }
@@ -157,7 +188,7 @@ export function ScheduleReportsPanel({
       totalHours: number
     }>()
 
-    for (const item of scheduledItems) {
+    for (const item of filteredScheduledItems) {
       const dateKey = toDateKey(item.scheduledDate)
       const woResources = resourcesByWO.get(item.workOrder.id) || []
 
@@ -183,10 +214,10 @@ export function ScheduleReportsPanel({
     return Array.from(people.entries())
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => b.totalHours - a.totalHours)
-  }, [scheduledItems, resourcesByWO])
+  }, [filteredScheduledItems, resourcesByWO])
 
   // ==========================================
-  // 3. Requisitos de material/ferramenta
+  // 3. Requisitos de material/ferramenta (filtrado pela data selecionada)
   // ==========================================
   const materialRequirements = useMemo(() => {
     const map = new Map<string, {
@@ -197,7 +228,7 @@ export function ScheduleReportsPanel({
       unitCost: number
     }>()
 
-    for (const r of resources) {
+    for (const r of filteredResources) {
       if (r.resourceType !== 'MATERIAL' && r.resourceType !== 'TOOL') continue
       if (!r.resource) continue
 
@@ -217,25 +248,77 @@ export function ScheduleReportsPanel({
     }
 
     return Array.from(map.values()).sort((a, b) => b.totalCost - a.totalCost)
-  }, [resources])
+  }, [filteredResources])
 
   // ==========================================
-  // 4. Totais gerais
+  // 4. Cards de topo (filtrados pela data selecionada quando houver)
   // ==========================================
-  const totals = useMemo(() => {
-    const totalHours = dailyBreakdown.reduce((s, d) => s + d.hours, 0)
-    const totalCost = dailyBreakdown.reduce((s, d) => s + d.cost, 0)
-    const workingDays = dailyBreakdown.filter(d => !d.isWeekend && d.woCount > 0).length
-    const totalWOs = scheduledItems.length
-    const laborHours = resources
-      .filter(r => r.resourceType === 'LABOR')
-      .reduce((s, r) => s + (r.hours || 0), 0)
-    const specialtyHours = resources
-      .filter(r => r.resourceType === 'SPECIALTY')
-      .reduce((s, r) => s + (r.hours || 0), 0)
+  const cardTotals = useMemo(() => {
+    // Horas programadas = LABOR + SPECIALTY dentro do escopo filtrado
+    let scheduledHours = 0
+    // Custo total = LABOR (horas * hourlyRate) + MATERIAL/TOOL (qty * unitCost)
+    let totalCost = 0
 
-    return { totalHours, totalCost, workingDays, totalWOs, laborHours, specialtyHours }
-  }, [dailyBreakdown, scheduledItems, resources])
+    // Capacidade por cargo: soma das quantidades requisitadas em especialidades
+    // ("preciso de N profissionais do cargo X"). Multiplica pelo numero de dias do escopo.
+    const specialtyRequirement = new Map<string, { jobTitleId: string; jobTitleName: string; professionalsRequired: number }>()
+
+    for (const r of filteredResources) {
+      const h = r.hours || 0
+      const q = r.quantity || 0
+
+      if (r.resourceType === 'LABOR') {
+        scheduledHours += h
+        if (r.user?.hourlyRate) totalCost += h * r.user.hourlyRate
+      } else if (r.resourceType === 'SPECIALTY') {
+        scheduledHours += h
+        if (r.jobTitle) {
+          const key = r.jobTitle.id
+          const existing = specialtyRequirement.get(key)
+          if (!existing) {
+            specialtyRequirement.set(key, {
+              jobTitleId: r.jobTitle.id,
+              jobTitleName: r.jobTitle.name,
+              professionalsRequired: q,
+            })
+          } else {
+            // Mantem o maior requisito por OS (cada OS pede N profissionais)
+            existing.professionalsRequired = Math.max(existing.professionalsRequired, q)
+          }
+        }
+      } else if ((r.resourceType === 'MATERIAL' || r.resourceType === 'TOOL') && r.resource?.unitCost) {
+        totalCost += q * r.resource.unitCost
+      }
+    }
+
+    // Horas disponiveis: baseado nas especialidades requeridas dentro do escopo filtrado
+    // Para cada cargo requerido, a capacidade e o numero de usuarios ativos daquele cargo × 8h × dias uteis
+    const scopeDates = selectedDateKey
+      ? [selectedDateKey]
+      : dateRange.filter(ds => {
+          const d = parseLocalDate(ds)
+          return d.getDay() !== 0 && d.getDay() !== 6
+        })
+    const scopeDaysCount = Math.max(scopeDates.length, 1)
+
+    let availableHours = 0
+    const availableDetails: Array<{ jobTitleId: string; jobTitleName: string; userCount: number; hours: number }> = []
+
+    for (const req of specialtyRequirement.values()) {
+      const cap = jobTitleCapacity?.[req.jobTitleId]
+      const userCount = cap?.userCount ?? 0
+      const hours = userCount * HOURS_PER_USER_PER_DAY * scopeDaysCount
+      availableHours += hours
+      availableDetails.push({
+        jobTitleId: req.jobTitleId,
+        jobTitleName: req.jobTitleName,
+        userCount,
+        hours,
+      })
+    }
+
+    return { scheduledHours, availableHours, totalCost, availableDetails }
+  }, [filteredResources, jobTitleCapacity, selectedDateKey, dateRange])
 
   // Maior valor de horas num dia (para barra relativa)
   const maxDayHours = Math.max(...dailyBreakdown.map(d => d.hours), 1)
@@ -247,6 +330,12 @@ export function ScheduleReportsPanel({
         <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
           <Icon name="analytics" className="text-base" />
           Relatório da Programação
+          {selectedDateKey && (
+            <span className="ml-1 text-[10px] font-medium text-blue-600 normal-case tracking-normal flex items-center gap-1">
+              <Icon name="today" className="text-xs" />
+              {formatDate(selectedDateKey)}
+            </span>
+          )}
         </h3>
         <button
           onClick={onClose}
@@ -262,21 +351,42 @@ export function ScheduleReportsPanel({
 
           {/* Col 1: Resumo de Horas + Breakdown Diário */}
           <div className="p-3 sm:p-4">
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+            {/* Summary cards (filtrados por data quando ha selecao no calendario) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
               <div className="border border-gray-200 rounded-[4px] p-2.5 bg-white text-center">
-                <p className="text-[10px] font-bold text-gray-500 uppercase">Horas MO</p>
-                <p className="text-lg font-bold text-gray-900">{totals.laborHours.toFixed(1)}h</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase">Horas Programadas</p>
+                <p className="text-lg font-bold text-gray-900">{cardTotals.scheduledHours.toFixed(1)}h</p>
+                {selectedDateKey && (
+                  <p className="text-[9px] text-gray-400 mt-0.5">em {formatDate(selectedDateKey)}</p>
+                )}
               </div>
-              <div className="border border-gray-200 rounded-[4px] p-2.5 bg-white text-center">
-                <p className="text-[10px] font-bold text-gray-500 uppercase">Horas Espec.</p>
-                <p className="text-lg font-bold text-gray-900">{totals.specialtyHours.toFixed(1)}h</p>
+              <div
+                className="border border-gray-200 rounded-[4px] p-2.5 bg-white text-center"
+                title={cardTotals.availableDetails.length > 0
+                  ? cardTotals.availableDetails.map(d => `${d.jobTitleName}: ${d.userCount} prof. × 8h = ${d.hours}h`).join('\n')
+                  : 'Sem especialidades requeridas'}
+              >
+                <p className="text-[10px] font-bold text-gray-500 uppercase">Horas Disponíveis</p>
+                <p className={`text-lg font-bold ${
+                  cardTotals.availableHours > 0 && cardTotals.scheduledHours > cardTotals.availableHours
+                    ? 'text-red-600' : 'text-gray-900'
+                }`}>
+                  {cardTotals.availableHours.toFixed(1)}h
+                </p>
+                {cardTotals.availableDetails.length > 0 && (
+                  <p className="text-[9px] text-gray-400 mt-0.5">
+                    {cardTotals.availableDetails.reduce((s, d) => s + d.userCount, 0)} prof. cadastrado(s)
+                  </p>
+                )}
               </div>
               <div className="border border-gray-200 rounded-[4px] p-2.5 bg-white text-center">
                 <p className="text-[10px] font-bold text-gray-500 uppercase">Custo Total</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {totals.totalCost > 0 ? `R$ ${totals.totalCost.toFixed(0)}` : '—'}
+                  {cardTotals.totalCost > 0 ? `R$ ${cardTotals.totalCost.toFixed(0)}` : '—'}
                 </p>
+                {selectedDateKey && (
+                  <p className="text-[9px] text-gray-400 mt-0.5">em {formatDate(selectedDateKey)}</p>
+                )}
               </div>
             </div>
 
@@ -315,8 +425,13 @@ export function ScheduleReportsPanel({
 
           {/* Col 2: Alocação de Mão de Obra */}
           <div className="p-3 sm:p-4">
-            <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">
+            <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               Alocação de Mão de Obra
+              {selectedDateKey && (
+                <span className="text-[10px] text-blue-600 normal-case tracking-normal font-medium">
+                  · {formatDate(selectedDateKey)}
+                </span>
+              )}
             </h4>
 
             {laborAllocation.length === 0 ? (
@@ -384,8 +499,13 @@ export function ScheduleReportsPanel({
 
           {/* Col 3: Requisitos de Materiais e Ferramentas */}
           <div className="p-3 sm:p-4">
-            <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">
+            <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               Materiais e Ferramentas
+              {selectedDateKey && (
+                <span className="text-[10px] text-blue-600 normal-case tracking-normal font-medium">
+                  · {formatDate(selectedDateKey)}
+                </span>
+              )}
             </h4>
 
             {materialRequirements.length === 0 ? (
@@ -434,7 +554,7 @@ export function ScheduleReportsPanel({
 
             {/* Specialties summary */}
             {(() => {
-              const specialties = resources.filter(r => r.resourceType === 'SPECIALTY' && r.jobTitle)
+              const specialties = filteredResources.filter(r => r.resourceType === 'SPECIALTY' && r.jobTitle)
               if (specialties.length === 0) return null
 
               const specMap = new Map<string, { name: string; totalHours: number; totalQty: number }>()

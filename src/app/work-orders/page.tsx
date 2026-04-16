@@ -28,16 +28,16 @@ const WorkOrderPrintView = dynamic(() => import('@/components/work-orders/WorkOr
 
 interface WorkOrder {
   id: string
-  customId?: string
-  externalId?: string
-  internalId?: string
+  customId?: string | null
+  externalId?: string | null
+  internalId?: string | null
   systemStatus: string
   title: string
-  description?: string
+  description?: string | null
   priority: string
   status: string
-  dueDate?: string
-  dueMeterReading?: number
+  dueDate?: string | null
+  dueMeterReading?: number | null
   asset?: { name: string; tag?: string; protheusCode?: string }
   location?: { name: string }
   maintenancePlanExec?: { planNumber: number; trackingType?: string }
@@ -47,6 +47,26 @@ interface WorkOrder {
 
 type SortField = 'displayId' | 'planNumber' | 'title' | 'status' | 'priority' | 'protheusCode' | 'assetName' | 'dueDate' | 'createdAt'
 type SortDirection = 'asc' | 'desc'
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendente',
+  RELEASED: 'Programada',
+  IN_PROGRESS: 'Em Progresso',
+  ON_HOLD: 'Em Espera',
+  COMPLETE: 'Completa',
+  REPROGRAMMED: 'Reprogramada',
+}
+
+const PRIORITY_LABELS: Record<string, string> = {
+  NONE: 'Nenhuma',
+  LOW: 'Baixa',
+  MEDIUM: 'Média',
+  HIGH: 'Alta',
+  CRITICAL: 'Crítica',
+}
+
+const translateStatus = (value: string) => STATUS_LABELS[value] ?? value
+const translatePriority = (value: string) => PRIORITY_LABELS[value] ?? value
 
 export default function WorkOrdersPage() {
   const router = useRouter()
@@ -70,6 +90,7 @@ export default function WorkOrdersPage() {
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<WorkOrder | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createInitialValues, setCreateInitialValues] = useState<import('@/components/work-orders/WorkOrderFormModal').WorkOrderFormInitialValues | undefined>(undefined)
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [workOrderToPrint, setWorkOrderToPrint] = useState<WorkOrder | null>(null)
   const [sortField, setSortField] = useState<SortField>('displayId')
@@ -114,19 +135,19 @@ export default function WorkOrdersPage() {
     setSelectedWorkOrderId(workOrderId)
   }
 
-  const handleEdit = (workOrder: WorkOrder) => {
+  const handleEdit = (workOrder: { id: string }) => {
     setEditingWorkOrderId(workOrder.id)
     setShowEditModal(true)
   }
 
-  const handlePrint = (workOrder: WorkOrder) => {
-    setWorkOrderToPrint(workOrder)
+  const handlePrint = (workOrder: { id: string }) => {
+    setWorkOrderToPrint(workOrder as WorkOrder)
     setShowPrintModal(true)
   }
 
-  const handleFinalize = (workOrder: WorkOrder) => {
+  const handleFinalize = (workOrder: { id: string }) => {
     setSelectedWorkOrderId('')
-    setWorkOrderToFinalize(workOrder)
+    setWorkOrderToFinalize(workOrder as unknown as WorkOrder)
     setShowFinalizeModal(true)
   }
 
@@ -198,10 +219,14 @@ export default function WorkOrdersPage() {
     )
   }
 
-  const filteredWorkOrders = workOrders.filter(wo =>
-    wo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    wo.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredWorkOrders = workOrders.filter(wo => {
+    // Ocultar OSs Completas por padrão; só aparecem quando o usuário escolhe "Completa" no filtro de Status
+    if (!statusFilter && wo.status === 'COMPLETE') return false
+    return (
+      wo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      wo.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })
 
   const sortedWorkOrders = [...filteredWorkOrders].sort((a, b) => {
     const modifier = sortDirection === 'asc' ? 1 : -1
@@ -241,8 +266,9 @@ export default function WorkOrdersPage() {
   const activePanel = showCreateModal ? (
     <WorkOrderFormModal
       isOpen
-      onClose={() => setShowCreateModal(false)}
-      onSuccess={() => { loadWorkOrders(); setShowCreateModal(false) }}
+      onClose={() => { setShowCreateModal(false); setCreateInitialValues(undefined) }}
+      onSuccess={() => { loadWorkOrders(); setShowCreateModal(false); setCreateInitialValues(undefined) }}
+      initialValues={createInitialValues}
       inPage
     />
   ) : showFinalizeModal && workOrderToFinalize ? (
@@ -250,7 +276,21 @@ export default function WorkOrdersPage() {
       isOpen
       onClose={() => { setShowFinalizeModal(false); setWorkOrderToFinalize(null) }}
       workOrder={workOrderToFinalize}
-      onFinalized={() => { loadWorkOrders(); setShowFinalizeModal(false); setWorkOrderToFinalize(null) }}
+      onFinalized={(result) => {
+        loadWorkOrders()
+        setShowFinalizeModal(false)
+        setWorkOrderToFinalize(null)
+        if (result?.generateCorrective && result.sourceWorkOrder) {
+          const src = result.sourceWorkOrder
+          setCreateInitialValues({
+            description: `Originada da OS nº ${src.displayId}`,
+            type: 'CORRECTIVE',
+            assetId: src.assetId || undefined,
+            locationId: src.locationId || undefined,
+          })
+          setShowCreateModal(true)
+        }
+      }}
       inPage
     />
   ) : showExecuteModal && workOrderToExecute ? (
@@ -342,7 +382,7 @@ export default function WorkOrdersPage() {
               >
                 <option value="">Status</option>
                 <option value="PENDING">Pendente</option>
-                <option value="RELEASED">Liberada</option>
+                <option value="RELEASED">Programada</option>
                 <option value="IN_PROGRESS">Em Progresso</option>
                 <option value="ON_HOLD">Em Espera</option>
                 <option value="COMPLETE">Completa</option>
@@ -406,10 +446,10 @@ export default function WorkOrdersPage() {
                           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
                             <h3 className="text-base md:text-lg font-bold text-foreground">{displayId}</h3>
                             <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
-                              {wo.status}
+                              {translateStatus(wo.status)}
                             </span>
                             <span className={`px-2 py-0.5 md:px-2.5 md:py-1 text-[10px] md:text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
-                              {wo.priority}
+                              {translatePriority(wo.priority)}
                             </span>
                           </div>
                           <p className="text-foreground font-semibold mb-2 text-sm md:text-base">{wo.title}</p>
@@ -517,12 +557,12 @@ export default function WorkOrdersPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
-                                  {wo.status}
+                                  {translateStatus(wo.status)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
-                                  {wo.priority}
+                                  {translatePriority(wo.priority)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-foreground">

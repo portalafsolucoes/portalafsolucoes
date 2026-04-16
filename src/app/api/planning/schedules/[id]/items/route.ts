@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import {
+  moveOverdueItemToNewSchedule,
+  revertMovedItemForWorkOrder,
+} from '@/lib/scheduleStatus'
 
 // GET - Listar itens da programação com dados completos das OSs
 export async function GET(
@@ -50,6 +54,9 @@ export async function GET(
 }
 
 // PUT - Atualizar itens da programação (adicionar/remover OSs, alterar datas)
+// Ao adicionar uma OS atrasada vinda de outra programação CONFIRMED/PARTIALLY_EXECUTED,
+// marca o item antigo como MOVED (preserva histórico) e recomputa o status da antiga.
+// Ao remover uma OS que havia sido movida, reverte o item antigo para PENDING.
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -88,7 +95,31 @@ export async function PUT(
       )
     }
 
-    // Remover itens existentes
+    // Carregar snapshot atual dos itens para detectar mudancas de data e remocoes
+    const { data: existingItems } = await supabase
+      .from('WorkOrderScheduleItem')
+      .select('workOrderId, scheduledDate')
+      .eq('scheduleId', id)
+
+    const existingByWO = new Map<string, string>()
+    for (const it of existingItems || []) {
+      existingByWO.set(it.workOrderId, String(it.scheduledDate).split('T')[0])
+    }
+
+    // Conjuntos para detectar adicionadas vs removidas
+    const incomingWoIds = new Set<string>(
+      (items as { workOrderId: string }[]).map(it => it.workOrderId)
+    )
+    const removedWoIds: string[] = []
+    for (const woId of existingByWO.keys()) {
+      if (!incomingWoIds.has(woId)) removedWoIds.push(woId)
+    }
+    const addedWoIds: string[] = []
+    for (const woId of incomingWoIds) {
+      if (!existingByWO.has(woId)) addedWoIds.push(woId)
+    }
+
+    // Remover itens existentes e reinserir (mantendo comportamento atual)
     const { error: deleteError } = await supabase
       .from('WorkOrderScheduleItem')
       .delete()
@@ -117,6 +148,72 @@ export async function PUT(
       if (insertError) throw insertError
     }
 
+    // Regra de OS atrasada reprogramada (status REPROGRAMMED + rescheduledDate):
+    // Para cada item cuja scheduledDate mudou em relacao ao snapshot, se a OS estiver
+    // atrasada (dueDate < hoje e status nao final), preencher rescheduledDate e marcar
+    // como REPROGRAMMED.
+    const todayStr = new Date().toISOString().split('T')[0]
+    const reprogrammedPayload: { workOrderId: string; newDateISO: string }[] = []
+
+    for (const raw of items as { workOrderId: string; scheduledDate: string }[]) {
+      const newDateStr = raw.scheduledDate.split('T')[0]
+      const previousDateStr = existingByWO.get(raw.workOrderId)
+      // Considera reprogramacao quando a data mudou ou quando a OS esta sendo adicionada pela primeira vez na programacao
+      const dateChanged = !previousDateStr || previousDateStr !== newDateStr
+      if (dateChanged) {
+        reprogrammedPayload.push({
+          workOrderId: raw.workOrderId,
+          newDateISO: `${newDateStr}T12:00:00.000Z`,
+        })
+      }
+    }
+
+    if (reprogrammedPayload.length > 0) {
+      const candidateIds = reprogrammedPayload.map(p => p.workOrderId)
+      const { data: candidates } = await supabase
+        .from('WorkOrder')
+        .select('id, dueDate, status')
+        .in('id', candidateIds)
+
+      const overdueWOs = new Map<string, string>()
+      for (const wo of candidates || []) {
+        if (!wo.dueDate) continue
+        const dueStr = String(wo.dueDate).split('T')[0]
+        const isOverdue = dueStr < todayStr
+        const isFinal = wo.status === 'COMPLETE'
+        if (isOverdue && !isFinal) {
+          overdueWOs.set(wo.id, dueStr)
+        }
+      }
+
+      for (const p of reprogrammedPayload) {
+        if (!overdueWOs.has(p.workOrderId)) continue
+        await supabase
+          .from('WorkOrder')
+          .update({
+            status: 'REPROGRAMMED',
+            rescheduledDate: p.newDateISO,
+            updatedAt: new Date().toISOString(),
+          })
+          .eq('id', p.workOrderId)
+      }
+    }
+
+    // Mover para MOVED os itens de programacoes CONFIRMED/PARTIALLY_EXECUTED
+    // quando a OS atrasada foi adicionada aqui pela primeira vez.
+    const movedFromSchedules = new Set<string>()
+    for (const woId of addedWoIds) {
+      const movedFromId = await moveOverdueItemToNewSchedule(woId, id)
+      if (movedFromId) movedFromSchedules.add(movedFromId)
+    }
+
+    // Reverter movimento quando OS foi retirada desta programacao (ainda DRAFT)
+    const revertedSchedules = new Set<string>()
+    for (const woId of removedWoIds) {
+      const revertedFromId = await revertMovedItemForWorkOrder(woId)
+      if (revertedFromId) revertedSchedules.add(revertedFromId)
+    }
+
     // Atualizar timestamp da programação
     await supabase
       .from('WorkOrderSchedule')
@@ -126,6 +223,8 @@ export async function PUT(
     return NextResponse.json({
       message: `${items.length} item(ns) atualizado(s)`,
       itemCount: items.length,
+      movedFromScheduleCount: movedFromSchedules.size,
+      revertedFromScheduleCount: revertedSchedules.size,
     })
   } catch (error) {
     console.error('Error updating schedule items:', error)

@@ -94,12 +94,19 @@ export async function POST(
       // Verificar conflitos de mão de obra: mesmo usuário em OSs diferentes na mesma data
       const laborByUserDate = new Map<string, Array<{ workOrderId: string; hours: number }>>()
 
+      // Helper para normalizar relacionamento que o Supabase pode retornar como array
+      const pickOne = <T>(value: T | T[] | null | undefined): T | null => {
+        if (!value) return null
+        return Array.isArray(value) ? (value[0] ?? null) : value
+      }
+
       for (const r of (resources || [])) {
-        if (r.resourceType === 'LABOR' && r.user) {
+        const rUser = pickOne(r.user) as { id: string; firstName: string; lastName: string } | null
+        if (r.resourceType === 'LABOR' && rUser) {
           const item = items.find(i => i.workOrderId === r.workOrderId)
           if (!item) continue
           const dateKey = new Date(item.scheduledDate).toISOString().split('T')[0]
-          const key = `${r.user.id}_${dateKey}`
+          const key = `${rUser.id}_${dateKey}`
 
           if (!laborByUserDate.has(key)) {
             laborByUserDate.set(key, [])
@@ -117,9 +124,11 @@ export async function POST(
         if (totalHours > 8 || allocations.length > 1) {
           const userId = key.split('_')[0]
           const date = key.split('_')[1]
-          const user = (resources || []).find(
-            r => r.resourceType === 'LABOR' && r.user?.id === userId
-          )?.user
+          const userResource = (resources || []).find(r => {
+            const u = pickOne(r.user) as { id: string } | null
+            return r.resourceType === 'LABOR' && u?.id === userId
+          })
+          const user = pickOne(userResource?.user) as { id: string; firstName: string; lastName: string } | null
           const userName = user ? `${user.firstName} ${user.lastName}` : 'Técnico'
 
           for (const alloc of allocations) {
@@ -158,6 +167,7 @@ export async function POST(
     }
 
     // Confirmar: atualizar status das OSs para RELEASED
+    // OSs em REPROGRAMMED permanecem nesse status para preservar o rastro de reprogramacao
     const { error: updateWoError } = await supabase
       .from('WorkOrder')
       .update({ status: 'RELEASED', updatedAt: new Date().toISOString() })

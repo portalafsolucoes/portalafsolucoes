@@ -29,6 +29,7 @@ enum WorkOrderStatus {
   IN_PROGRESS
   ON_HOLD
   COMPLETE
+  REPROGRAMMED
 }
 
 enum WorkOrderPriority {
@@ -1324,6 +1325,7 @@ model WorkOrder {
   priority     WorkOrderPriority @default(NONE)
   status       WorkOrderStatus   @default(PENDING)
   dueDate          DateTime?
+  rescheduledDate  DateTime?
   dueMeterReading    Float?
   actualMeterReading Float?
   completedOn        DateTime?

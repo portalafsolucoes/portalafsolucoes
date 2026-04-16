@@ -36,7 +36,6 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
     startDate: '',
     endDate: '',
     trackingType: 'TIME' as 'TIME' | 'HORIMETER',
-    currentHorimeter: '' as string | number,
     toleranceDays: '' as string | number,
   })
   const [filters, setFilters] = useState({
@@ -44,6 +43,12 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
     workCenterIds: [] as string[],
     serviceTypeIds: [] as string[],
     maintenanceAreaIds: [] as string[],
+  })
+  const [filterSearch, setFilterSearch] = useState({
+    costCenterIds: '',
+    workCenterIds: '',
+    serviceTypeIds: '',
+    maintenanceAreaIds: '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -86,15 +91,22 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
     })
   }
 
+  const toggleAllVisible = (key: keyof typeof filters, visibleIds: string[]) => {
+    setFilters(prev => {
+      const current = prev[key]
+      const allSelected = visibleIds.every(id => current.includes(id))
+      const next = allSelected
+        ? current.filter(v => !visibleIds.includes(v))
+        : Array.from(new Set([...current, ...visibleIds]))
+      return { ...prev, [key]: next }
+    })
+  }
+
   const handleRequestOpen = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (!formData.description || !formData.startDate || !formData.endDate) {
       setError('Preencha todos os campos obrigatórios.')
-      return
-    }
-    if (formData.trackingType === 'HORIMETER' && (!formData.currentHorimeter || Number(formData.currentHorimeter) <= 0)) {
-      setError('Informe o horímetro atual para planos por horímetro.')
       return
     }
     setShowConfirm(true)
@@ -110,7 +122,6 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          currentHorimeter: formData.currentHorimeter ? Number(formData.currentHorimeter) : undefined,
           toleranceDays: formData.toleranceDays ? Number(formData.toleranceDays) : 0,
           ...filters,
         }),
@@ -148,43 +159,94 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
     options: FilterOption[],
     selected: string[],
     filterKey: keyof typeof filters,
-  ) => (
-    <div>
-      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-        {label}
-      </label>
-      {options.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic">Nenhum cadastrado</p>
-      ) : (
-        <div className="border border-input rounded-[4px] max-h-36 overflow-y-auto">
-          {options.map(opt => {
-            const isSelected = selected.includes(opt.id)
-            return (
-              <label
-                key={opt.id}
-                className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-accent-orange/10' : ''}`}
+  ) => {
+    const search = filterSearch[filterKey].trim().toLowerCase()
+    const filteredOptions = search
+      ? options.filter(opt => {
+          const text = (opt.code ? `${opt.code} ${opt.name}` : opt.name).toLowerCase()
+          return text.includes(search)
+        })
+      : options
+    const visibleIds = filteredOptions.map(o => o.id)
+    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selected.includes(id))
+
+    return (
+      <div>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+          {label}
+        </label>
+        {options.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">Nenhum cadastrado</p>
+        ) : (
+          <div className="border border-input rounded-[4px]">
+            <div className="flex items-center gap-1 border-b border-gray-200 bg-gray-50 px-2 py-1">
+              <Icon name="search" className="text-base text-muted-foreground" />
+              <input
+                type="text"
+                value={filterSearch[filterKey]}
+                onChange={e => setFilterSearch(prev => ({ ...prev, [filterKey]: e.target.value }))}
+                placeholder="Buscar..."
+                className="flex-1 bg-transparent text-sm px-1 py-0.5 focus:outline-none"
+              />
+              {filterSearch[filterKey] && (
+                <button
+                  type="button"
+                  onClick={() => setFilterSearch(prev => ({ ...prev, [filterKey]: '' }))}
+                  className="p-0.5 rounded hover:bg-gray-200 text-muted-foreground"
+                  aria-label="Limpar busca"
+                >
+                  <Icon name="close" className="text-sm" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center justify-between px-3 py-1 text-[11px] bg-white border-b border-gray-100">
+              <button
+                type="button"
+                onClick={() => toggleAllVisible(filterKey, visibleIds)}
+                disabled={visibleIds.length === 0}
+                className="text-accent-orange font-medium hover:underline disabled:text-muted-foreground disabled:hover:no-underline disabled:cursor-not-allowed"
               >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleFilter(filterKey, opt.id)}
-                  className="rounded border-gray-300 text-accent-orange focus:ring-accent-orange"
-                />
-                <span className="truncate">
-                  {opt.code ? `${opt.code} - ${opt.name}` : opt.name}
-                </span>
-              </label>
-            )
-          })}
-        </div>
-      )}
-      {selected.length > 0 && (
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          {selected.length} selecionado{selected.length > 1 ? 's' : ''}
-        </p>
-      )}
-    </div>
-  )
+                {allVisibleSelected ? 'Desmarcar todos' : 'Selecionar todos'}
+              </button>
+              <span className="text-muted-foreground">
+                {filteredOptions.length} {filteredOptions.length === 1 ? 'item' : 'itens'}
+              </span>
+            </div>
+            <div className="max-h-36 overflow-y-auto">
+              {filteredOptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic px-3 py-2">Nenhum resultado</p>
+              ) : (
+                filteredOptions.map(opt => {
+                  const isSelected = selected.includes(opt.id)
+                  return (
+                    <label
+                      key={opt.id}
+                      className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-accent-orange/10' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleFilter(filterKey, opt.id)}
+                        className="rounded border-gray-300 text-accent-orange focus:ring-accent-orange"
+                      />
+                      <span className="truncate">
+                        {opt.code ? `${opt.code} - ${opt.name}` : opt.name}
+                      </span>
+                    </label>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        )}
+        {selected.length > 0 && (
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {selected.length} selecionado{selected.length > 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+    )
+  }
 
   const formContent = (
     <>
@@ -247,22 +309,6 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
               <option value="HORIMETER">Horímetro</option>
             </select>
           </div>
-          {formData.trackingType === 'HORIMETER' && (
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Horímetro Atual <span className="text-danger">*</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.currentHorimeter}
-                onChange={e => setFormData({ ...formData, currentHorimeter: e.target.value })}
-                placeholder="Ex: 5000"
-                className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          )}
           <div>
             <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Data Início <span className="text-danger">*</span>
@@ -321,7 +367,7 @@ export function PlanFormPanel({ onClose, onSaved, inPage = false }: PlanFormPane
       <div className="p-3 bg-muted rounded-[4px] text-xs text-muted-foreground">
         {formData.trackingType === 'TIME'
           ? 'Ao abrir o plano, o sistema emitirá automaticamente Ordens de Serviço para os ativos com manutenção prevista por tempo dentro do período e filtros selecionados.'
-          : 'Ao abrir o plano, o sistema emitirá OSs para os ativos com manutenção prevista por horímetro, usando o calendário vinculado ao Plano do Bem para projetar as datas. Ativos sem calendário vinculado não terão OSs geradas.'}
+          : 'Ao abrir o plano, o sistema emitirá OSs para os ativos com manutenção prevista por horímetro. O horímetro atual de cada equipamento (Posição do Contador) e o calendário vinculado ao Plano do Bem são usados para projetar as datas. Ativos sem calendário vinculado não terão OSs geradas.'}
       </div>
     </>
   )

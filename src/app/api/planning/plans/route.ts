@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       description, startDate, endDate, unitId: unitIdBody,
-      trackingType, currentHorimeter, toleranceDays: bodyToleranceDays,
+      trackingType, toleranceDays: bodyToleranceDays,
       // Filtros multi-seleção (arrays de IDs)
       costCenterIds, workCenterIds, serviceTypeIds, maintenanceAreaIds,
       // Filtros legados range (mantidos para compatibilidade)
@@ -65,10 +65,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'description, startDate, endDate e unitId são obrigatórios' }, { status: 400 })
     }
 
-    if (effectiveTrackingType === 'HORIMETER' && (!currentHorimeter || currentHorimeter <= 0)) {
-      return NextResponse.json({ error: 'Horímetro atual é obrigatório para planos por horímetro' }, { status: 400 })
-    }
-
     // Criar o plano
     const { data: plan, error: planError } = await supabase
       .from('MaintenancePlanExecution')
@@ -80,7 +76,7 @@ export async function POST(request: NextRequest) {
         status: 'OPEN',
         isFinished: false,
         trackingType: effectiveTrackingType,
-        currentHorimeter: effectiveTrackingType === 'HORIMETER' ? currentHorimeter : null,
+        currentHorimeter: null,
         toleranceDays,
         costCenterFrom, costCenterTo, workCenterFrom, workCenterTo,
         serviceTypeFrom, serviceTypeTo, areaFrom, areaTo, familyFrom, familyTo,
@@ -175,7 +171,7 @@ export async function POST(request: NextRequest) {
           if (loopCount > 100) break
         }
       } else {
-        // ========== LÓGICA POR HORÍMETRO (reescrita) ==========
+        // ========== LÓGICA POR HORÍMETRO (por equipamento) ==========
 
         // Calendário é obrigatório para horímetro
         const calData = calendarsMap.get(ap.id)
@@ -195,6 +191,22 @@ export async function POST(request: NextRequest) {
 
         if (!ap.lastMaintenanceDate) continue
 
+        // Horímetro atual do equipamento (Asset.counterPosition)
+        const assetHorimeter = ap.asset?.counterPosition
+        if (assetHorimeter == null || assetHorimeter <= 0) {
+          pendingAssets.push({
+            id: ap.asset?.id || '',
+            assetMaintenancePlanId: ap.id,
+            assetName: ap.asset?.name || 'Ativo sem nome',
+            assetTag: ap.asset?.tag || '—',
+            maintenanceName: ap.name || 'Manutenção',
+            maintenanceTime: ap.maintenanceTime,
+            timeUnit: ap.timeUnit,
+            reason: 'Sem horímetro atual cadastrado no ativo (Posição do Contador)',
+          })
+          continue
+        }
+
         const workDays = calData.workDays
         const maintenanceTimeHours = ap.maintenanceTime // periodicidade em horas
 
@@ -206,14 +218,14 @@ export async function POST(request: NextRequest) {
         ).totalHours
 
         // Passo 2: Estimar horímetro na última manutenção
-        const horimeterNaUltimaManutenção = currentHorimeter - horasOperadas
+        const horimeterNaUltimaManutenção = assetHorimeter - horasOperadas
 
         // Passo 3: Projetar ciclos de manutenção
         let proximoHorimetro = horimeterNaUltimaManutenção + maintenanceTimeHours
         let loopSafety = 0
 
         // Passo 4: Gerar OSs para ciclos já vencidos (atrasados)
-        while (proximoHorimetro <= currentHorimeter && loopSafety < 200) {
+        while (proximoHorimetro <= assetHorimeter && loopSafety < 200) {
           loopSafety++
           const woResult = await createWorkOrder(supabase, {
             ap, plan, unitId, companyId: session.companyId,
@@ -230,7 +242,7 @@ export async function POST(request: NextRequest) {
         // Passo 5: Gerar OSs futuras dentro do período
         while (loopSafety < 200) {
           loopSafety++
-          const horasRestantes = proximoHorimetro - currentHorimeter
+          const horasRestantes = proximoHorimetro - assetHorimeter
           const { endDate: projectedDate } = estimateWorkingDaysForHours(workDays, horasRestantes, start)
 
           if (projectedDate > end) break

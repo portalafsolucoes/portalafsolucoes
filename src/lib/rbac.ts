@@ -100,7 +100,7 @@ export function hasPermission(
   resource: Resource,
   action: Action
 ): boolean {
-  const permissions = PERMISSIONS[role]
+  const permissions = (PERMISSIONS as Record<string, Record<Resource, readonly Action[]> | undefined>)[role]
   if (!permissions) return false
   
   const resourcePermissions = permissions[resource] as readonly Action[]

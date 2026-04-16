@@ -24,7 +24,10 @@ interface StandardAssetCharacteristic {
   value: string | null
   unit: string | null
   characteristic?: {
+    id: string
+    name: string
     unit?: string | null
+    infoType?: string
   } | null
 }
 

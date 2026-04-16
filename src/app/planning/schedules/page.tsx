@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ScheduleConfirmDialog } from '@/components/planning/ScheduleConfirmDialog'
+import { ScheduleReprogramChoiceDialog } from '@/components/planning/ScheduleReprogramChoiceDialog'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useAuth } from '@/hooks/useAuth'
@@ -50,12 +51,16 @@ const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Rascunho',
   CONFIRMED: 'Confirmada',
   REPROGRAMMING: 'Reprogramação',
+  PARTIALLY_EXECUTED: 'Parcialmente Executada',
+  COMPLETED: 'Concluída',
 }
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: 'bg-muted text-muted-foreground',
   CONFIRMED: 'bg-success-light text-success-light-foreground',
   REPROGRAMMING: 'bg-amber-100 text-amber-700',
+  PARTIALLY_EXECUTED: 'bg-blue-100 text-blue-700',
+  COMPLETED: 'bg-emerald-100 text-emerald-800',
 }
 
 interface ResourceWarning {
@@ -81,6 +86,7 @@ export default function SchedulesPage() {
   const [search, setSearch] = useState('')
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [isEditingMetadata, setIsEditingMetadata] = useState(false)
 
   // Modo da página: lista ou workspace
   const [mode, setMode] = useState<PageMode>('list')
@@ -139,17 +145,20 @@ export default function SchedulesPage() {
 
   const handleSelectSchedule = (schedule: Schedule) => {
     setIsCreating(false)
+    setIsEditingMetadata(false)
     setSelectedSchedule(schedule)
   }
 
   const handleClosePanel = () => {
     setSelectedSchedule(null)
     setIsCreating(false)
+    setIsEditingMetadata(false)
   }
 
   const handleCreate = () => {
     setSelectedSchedule(null)
     setIsCreating(true)
+    setIsEditingMetadata(false)
   }
 
   const handleSaved = (newScheduleId?: string) => {
@@ -163,11 +172,38 @@ export default function SchedulesPage() {
   }
 
   const handleEdit = () => {
-    // Abrir workspace para a programação selecionada
+    // Abrir workspace para a programação selecionada (DRAFT/REPROGRAMMING)
     if (selectedSchedule) {
       setWorkspaceScheduleId(selectedSchedule.id)
       setSelectedSchedule(null)
       setMode('workspace')
+    }
+  }
+
+  const handleEditMetadata = () => {
+    // Abrir formulário de edição de metadados (aplicável a CONFIRMED)
+    setIsEditingMetadata(true)
+  }
+
+  const handleMetadataSaved = async (_id?: string, warning?: string) => {
+    setIsEditingMetadata(false)
+    setFeedback({
+      type: warning ? 'error' : 'success',
+      message: warning || 'Programação atualizada',
+    })
+    // Recarregar lista e reabrir detalhe com dados atualizados
+    const currentId = selectedSchedule?.id
+    try {
+      const res = await fetch('/api/planning/schedules')
+      const data = await res.json()
+      const list: Schedule[] = data.data || []
+      setSchedules(list)
+      if (currentId) {
+        const refreshed = list.find(s => s.id === currentId)
+        if (refreshed) setSelectedSchedule(refreshed)
+      }
+    } catch {
+      // silencioso; a listagem já estará desatualizada
     }
   }
 
@@ -277,22 +313,26 @@ export default function SchedulesPage() {
     setConfirmDialogOpen(false)
   }
 
-  // ---- Reprogram flow ----
+  // ---- Reprogram flow (2 opções: reset ou preserve) ----
   const handleReprogramClick = (id: string) => {
     setReprogramDialogId(id)
     setReprogramDialogOpen(true)
   }
 
-  const handleReprogramConfirm = async () => {
+  const handleReprogramChoose = async (mode: 'reset' | 'preserve') => {
     if (!reprogramDialogId) return
     setReprogramLoading(true)
 
     try {
-      const res = await fetch(`/api/planning/schedules/${reprogramDialogId}/reprogram`, { method: 'POST' })
+      const res = await fetch(`/api/planning/schedules/${reprogramDialogId}/reprogram`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preserveOSStatus: mode === 'preserve' }),
+      })
       const data = await res.json()
 
       if (res.ok) {
-        setFeedback({ type: 'success', message: data.message || 'Programação em reprogramação' })
+        setFeedback({ type: 'success', message: data.message || 'Programação aberta para edição' })
         setSelectedSchedule(null)
         setWorkspaceScheduleId(reprogramDialogId)
         setMode('workspace')
@@ -435,7 +475,7 @@ export default function SchedulesPage() {
     }
   })
 
-  const showSidePanel = !!(selectedSchedule !== null || isCreating)
+  const showSidePanel = !!(selectedSchedule !== null || isCreating || isEditingMetadata)
 
   const activePanel = isCreating ? (
     <ScheduleFormPanel
@@ -443,11 +483,25 @@ export default function SchedulesPage() {
       onSaved={handleSaved}
       inPage
     />
+  ) : isEditingMetadata && selectedSchedule ? (
+    <ScheduleFormPanel
+      onClose={() => setIsEditingMetadata(false)}
+      onSaved={handleMetadataSaved}
+      inPage
+      schedule={{
+        id: selectedSchedule.id,
+        description: selectedSchedule.description,
+        startDate: selectedSchedule.startDate,
+        endDate: selectedSchedule.endDate,
+        status: selectedSchedule.status,
+      }}
+    />
   ) : selectedSchedule ? (
     <ScheduleDetailPanel
       schedule={selectedSchedule}
       onClose={handleClosePanel}
       onEdit={handleEdit}
+      onEditMetadata={handleEditMetadata}
       onDelete={handleDeleteClick}
       onConfirm={handleConfirm}
       onReprogram={handleReprogramClick}
@@ -632,15 +686,12 @@ export default function SchedulesPage() {
         variant="confirm"
       />
 
-      {/* Reprogram confirmation dialog */}
-      <ScheduleConfirmDialog
+      {/* Reprogram choice dialog (reset vs preserve) */}
+      <ScheduleReprogramChoiceDialog
         isOpen={reprogramDialogOpen}
         onClose={() => setReprogramDialogOpen(false)}
-        onConfirm={handleReprogramConfirm}
-        title="Reprogramar"
-        message="As OSs liberadas serão revertidas para pendente e a programação voltará ao modo de edição."
+        onChoose={handleReprogramChoose}
         loading={reprogramLoading}
-        variant="reprogram"
       />
     </PageContainer>
   )

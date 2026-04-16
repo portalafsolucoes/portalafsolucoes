@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { recomputeScheduleStatus } from '@/lib/scheduleStatus'
 
 export async function POST(
   request: NextRequest,
@@ -81,6 +82,28 @@ export async function POST(
       .single()
 
     if (updateError) throw updateError
+
+    // Marcar item(ns) de programacao como EXECUTED e recomputar status da(s) programacao(oes)
+    const { data: activeScheduleItems } = await supabase
+      .from('WorkOrderScheduleItem')
+      .select('id, scheduleId')
+      .eq('workOrderId', id)
+      .in('status', ['PENDING', 'RELEASED'])
+
+    if (activeScheduleItems && activeScheduleItems.length > 0) {
+      await supabase
+        .from('WorkOrderScheduleItem')
+        .update({ status: 'EXECUTED' })
+        .in('id', activeScheduleItems.map(it => it.id))
+
+      const affectedScheduleIds = new Set<string>()
+      for (const it of activeScheduleItems) {
+        if (it.scheduleId) affectedScheduleIds.add(it.scheduleId)
+      }
+      for (const schedId of affectedScheduleIds) {
+        await recomputeScheduleStatus(schedId)
+      }
+    }
 
     // Buscar equipes atribuídas
     const { data: teamLinks } = await supabase

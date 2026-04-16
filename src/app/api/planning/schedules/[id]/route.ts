@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { revertMovedItemForWorkOrder } from '@/lib/scheduleStatus'
 
 // GET - Detalhe da programação com itens e OSs
 export async function GET(
@@ -55,7 +56,9 @@ export async function GET(
   }
 }
 
-// PUT - Atualizar programação (apenas DRAFT ou REPROGRAMMING)
+// PUT - Atualizar programação
+// - DRAFT e REPROGRAMMING: edicao ampla (metadados + itens via endpoint de items)
+// - CONFIRMED: edicao somente de metadados (descricao e periodo) sem tocar OSs programadas
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -71,7 +74,7 @@ export async function PUT(
     const body = await request.json()
     const { description, startDate, endDate } = body
 
-    // Verificar se a programação existe e está editável
+    // Verificar se a programação existe
     const { data: existing, error: fetchError } = await supabase
       .from('WorkOrderSchedule')
       .select('id, status')
@@ -83,9 +86,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Programação não encontrada' }, { status: 404 })
     }
 
-    if (existing.status !== 'DRAFT' && existing.status !== 'REPROGRAMMING') {
+    const allowedStatuses = ['DRAFT', 'REPROGRAMMING', 'CONFIRMED']
+    if (!allowedStatuses.includes(existing.status)) {
       return NextResponse.json(
-        { error: 'Apenas programações em rascunho ou reprogramação podem ser editadas' },
+        { error: 'Esta programação não pode ser editada no status atual' },
         { status: 409 }
       )
     }
@@ -95,6 +99,8 @@ export async function PUT(
     if (startDate !== undefined) updateData.startDate = new Date(startDate).toISOString()
     if (endDate !== undefined) updateData.endDate = new Date(endDate).toISOString()
 
+    // Em CONFIRMED, garantir que apenas metadados sejam alterados.
+    // Os itens (OSs programadas) permanecem intactos.
     const { data: updated, error: updateError } = await supabase
       .from('WorkOrderSchedule')
       .update(updateData)
@@ -104,7 +110,26 @@ export async function PUT(
 
     if (updateError) throw updateError
 
-    return NextResponse.json({ data: updated, message: 'Programação atualizada' })
+    // Aviso opcional: se houver itens fora do novo periodo em CONFIRMED, retornar alerta
+    let outOfRangeCount: number | undefined
+    if (existing.status === 'CONFIRMED' && (startDate !== undefined || endDate !== undefined)) {
+      const newStart = updateData.startDate ?? null
+      const newEnd = updateData.endDate ?? null
+      if (newStart && newEnd) {
+        const { data: outItems } = await supabase
+          .from('WorkOrderScheduleItem')
+          .select('id', { count: 'exact' })
+          .eq('scheduleId', id)
+          .or(`scheduledDate.lt.${newStart as string},scheduledDate.gt.${newEnd as string}`)
+        outOfRangeCount = (outItems || []).length
+      }
+    }
+
+    return NextResponse.json({
+      data: updated,
+      message: 'Programação atualizada',
+      ...(outOfRangeCount ? { warning: `${outOfRangeCount} OS(s) programada(s) estão fora do novo período` } : {}),
+    })
   } catch (error) {
     console.error('Error updating schedule:', error)
     return NextResponse.json({ error: 'Erro ao atualizar programação' }, { status: 500 })
@@ -144,6 +169,21 @@ export async function DELETE(
       )
     }
 
+    // Antes da exclusao em cascata, reverter para PENDING qualquer item MOVED
+    // em programacoes CONFIRMED/PARTIALLY_EXECUTED/COMPLETED originado de OSs
+    // que estavam nesta programacao DRAFT. Preserva o fluxo de OS atrasada que
+    // voltou a estar disponivel quando o rascunho e descartado.
+    const { data: draftItems } = await supabase
+      .from('WorkOrderScheduleItem')
+      .select('workOrderId')
+      .eq('scheduleId', id)
+
+    const revertedSchedules = new Set<string>()
+    for (const item of draftItems || []) {
+      const revertedFromId = await revertMovedItemForWorkOrder(item.workOrderId)
+      if (revertedFromId) revertedSchedules.add(revertedFromId)
+    }
+
     // Itens são deletados em cascata (onDelete: Cascade no schema)
     const { error: deleteError } = await supabase
       .from('WorkOrderSchedule')
@@ -152,7 +192,10 @@ export async function DELETE(
 
     if (deleteError) throw deleteError
 
-    return NextResponse.json({ message: 'Programação excluída' })
+    return NextResponse.json({
+      message: 'Programação excluída',
+      revertedFromScheduleCount: revertedSchedules.size,
+    })
   } catch (error) {
     console.error('Error deleting schedule:', error)
     return NextResponse.json({ error: 'Erro ao excluir programação' }, { status: 500 })

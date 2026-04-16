@@ -23,56 +23,56 @@ import type {
 interface Asset {
   id?: string
   name: string
-  description?: string
-  locationId?: string
+  description?: string | null
+  locationId?: string | null
   parentAssetId?: string | null
   image?: string | null
   location?: { id: string; name: string }
   files?: { id: string; name: string; url: string }[]
-  gutGravity?: number
-  gutUrgency?: number
-  gutTendency?: number
-  protheusCode?: string
-  tag?: string
-  barCode?: string
-  fixedAssetCode?: string
-  assetPlate?: string
-  familyId?: string
-  familyModelId?: string
-  assetCategoryType?: string
-  assetPriority?: string
-  ownershipType?: string
+  gutGravity?: number | null
+  gutUrgency?: number | null
+  gutTendency?: number | null
+  protheusCode?: string | null
+  tag?: string | null
+  barCode?: string | null
+  fixedAssetCode?: string | null
+  assetPlate?: string | null
+  familyId?: string | null
+  familyModelId?: string | null
+  assetCategoryType?: string | null
+  assetPriority?: string | null
+  ownershipType?: string | null
   unitId?: string | null
   areaId?: string | null
-  workCenterId?: string
-  costCenterId?: string
-  positionId?: string
-  warehouse?: string
-  shiftCode?: string
-  manufacturer?: string
-  modelName?: string
-  serialNumber?: string
-  hasStructure?: boolean
-  hasCounter?: boolean
-  counterType?: string
-  counterPosition?: number
-  counterLimit?: number
-  dailyVariation?: number
-  purchaseValue?: number
-  acquisitionCost?: number
-  hourlyCost?: number
-  purchaseDate?: string
-  installationDate?: string
-  supplierCode?: string
-  supplierStore?: string
-  warrantyPeriod?: number
-  warrantyUnit?: string
-  warrantyDate?: string
-  maintenanceStatus?: string
-  deactivationDate?: string
-  deactivationReason?: string
-  lifeValue?: number
-  lifeUnit?: string
+  workCenterId?: string | null
+  costCenterId?: string | null
+  positionId?: string | null
+  warehouse?: string | null
+  shiftCode?: string | null
+  manufacturer?: string | null
+  modelName?: string | null
+  serialNumber?: string | null
+  hasStructure?: boolean | null
+  hasCounter?: boolean | null
+  counterType?: string | null
+  counterPosition?: number | null
+  counterLimit?: number | null
+  dailyVariation?: number | null
+  purchaseValue?: number | null
+  acquisitionCost?: number | null
+  hourlyCost?: number | null
+  purchaseDate?: string | null
+  installationDate?: string | null
+  supplierCode?: string | null
+  supplierStore?: string | null
+  warrantyPeriod?: number | null
+  warrantyUnit?: string | null
+  warrantyDate?: string | null
+  maintenanceStatus?: string | null
+  deactivationDate?: string | null
+  deactivationReason?: string | null
+  lifeValue?: number | null
+  lifeUnit?: string | null
 }
 
 interface AssetEditPanelProps {

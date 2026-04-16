@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
+import { useAuth } from '@/hooks/useAuth'
 
 /* ------------------------------------------------------------------ */
 /*  Tipos                                                              */
@@ -30,11 +32,21 @@ interface TaskRow {
   steps: TaskStep[]
 }
 
+export interface WorkOrderFormInitialValues {
+  description?: string
+  type?: string
+  osType?: string
+  priority?: string
+  assetId?: string
+  locationId?: string
+}
+
 interface WorkOrderFormModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
   inPage?: boolean
+  initialValues?: WorkOrderFormInitialValues
 }
 
 /* ------------------------------------------------------------------ */
@@ -60,17 +72,18 @@ export function WorkOrderFormModal({
   isOpen,
   onClose,
   onSuccess,
-  inPage = false
+  inPage = false,
+  initialValues,
 }: WorkOrderFormModalProps) {
+  const { unitId } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [assets, setAssets] = useState<AssetItem[]>([])
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
   const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
   const [teamMembers, setTeamMembers] = useState<{ user: { id: string; firstName: string; lastName: string } }[]>([])
   const [woResources, setWoResources] = useState<TaskResourceItem[]>([])
   const [maintenanceAreas, setMaintenanceAreas] = useState<{ id: string; name: string; code?: string }[]>([])
-  const [serviceTypes, setServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string }[]>([])
-  const [allServiceTypes, setAllServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string }[]>([])
+  const [serviceTypes, setServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string; maintenanceType?: { id: string; name: string; characteristic?: string | null } | null }[]>([])
+  const [allServiceTypes, setAllServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string; maintenanceType?: { id: string; name: string; characteristic?: string | null } | null }[]>([])
   const [genericSteps, setGenericSteps] = useState<GenericStepItem[]>([])
 
   // Auto-fill externalId
@@ -82,13 +95,24 @@ export function WorkOrderFormModal({
   const [stepDropdownOpen, setStepDropdownOpen] = useState<Record<string, boolean>>({})
   const stepDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-  // Asset autocomplete
+  // Asset autocomplete (padrão RequestFormModal)
   const [assetCodeSearch, setAssetCodeSearch] = useState('')
   const [assetNameSearch, setAssetNameSearch] = useState('')
-  const [assetCodeDropdownOpen, setAssetCodeDropdownOpen] = useState(false)
-  const [assetNameDropdownOpen, setAssetNameDropdownOpen] = useState(false)
-  const assetCodeRef = useRef<HTMLDivElement>(null)
-  const assetNameRef = useRef<HTMLDivElement>(null)
+  const [assetOptions, setAssetOptions] = useState<AssetItem[]>([])
+  const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null)
+  const [showAssetDropdown, setShowAssetDropdown] = useState(false)
+  const [activeSearchField, setActiveSearchField] = useState<'code' | 'name' | null>(null)
+  const [loadingAssets, setLoadingAssets] = useState(false)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const assetDropdownRef = useRef<HTMLDivElement>(null)
+  const assetCodeInputRef = useRef<HTMLInputElement>(null)
+  const assetNameInputRef = useRef<HTMLInputElement>(null)
+  const assetSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Planos de manutenção do bem encontrados
+  const [availablePlans, setAvailablePlans] = useState<{ id: string; name: string | null; sequence: number; serviceType?: { code: string; name: string } | null }[]>([])
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('')
+  const [loadingPlans, setLoadingPlans] = useState(false)
 
   const [formData, setFormData] = useState({
     description: '',
@@ -101,9 +125,6 @@ export function WorkOrderFormModal({
     assignedTeamIds: [] as string[],
     assignedToId: '',
     externalId: '',
-    maintenanceFrequency: '',
-    frequencyValue: '1',
-    estimatedDuration: '',
     maintenanceAreaId: '',
     serviceTypeId: '',
     toleranceDays: ''
@@ -114,7 +135,53 @@ export function WorkOrderFormModal({
       loadData()
       resetForm()
     }
+    // loadData/resetForm are stable within a single open cycle; intentional
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
+
+  // Auto-preenche locationId quando unitId carrega
+  useEffect(() => {
+    if (unitId && !formData.assetId) {
+      setFormData(prev => ({ ...prev, locationId: unitId }))
+    }
+    // Intentionally reacting only to unitId; formData.assetId presence is a snapshot check
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitId])
+
+  // Aplica initialValues (ex.: vindos da finalização de OS para abrir uma corretiva)
+  useEffect(() => {
+    if (!isOpen || !initialValues) return
+    setFormData(prev => ({
+      ...prev,
+      description: initialValues.description ?? prev.description,
+      type: initialValues.type ?? prev.type,
+      osType: initialValues.osType ?? prev.osType,
+      priority: initialValues.priority ?? prev.priority,
+      assetId: initialValues.assetId ?? prev.assetId,
+      locationId: initialValues.locationId ?? prev.locationId,
+    }))
+  }, [isOpen, initialValues])
+
+  // Quando o assetId vier de initialValues, busca o ativo na API para preencher autocomplete
+  useEffect(() => {
+    if (!isOpen || !initialValues?.assetId) return
+    const fetchAsset = async () => {
+      try {
+        const res = await fetch(`/api/assets?summary=true&limit=500`)
+        const data = await res.json()
+        const allAssets: AssetItem[] = data.data || []
+        const a = allAssets.find(x => x.id === initialValues.assetId)
+        if (a) {
+          setSelectedAsset(a)
+          setAssetCodeSearch(a.protheusCode || a.tag || '')
+          setAssetNameSearch(a.name)
+        }
+      } catch (error) {
+        console.error('Error fetching asset for initialValues:', error)
+      }
+    }
+    fetchAsset()
+  }, [isOpen, initialValues?.assetId])
 
   const resetForm = () => {
     setFormData({
@@ -124,13 +191,10 @@ export function WorkOrderFormModal({
       priority: 'NONE',
       dueDate: '',
       assetId: '',
-      locationId: '',
+      locationId: unitId || '',
       assignedTeamIds: [],
       assignedToId: '',
       externalId: '',
-      maintenanceFrequency: '',
-      frequencyValue: '1',
-      estimatedDuration: '',
       maintenanceAreaId: '',
       serviceTypeId: '',
       toleranceDays: ''
@@ -142,13 +206,17 @@ export function WorkOrderFormModal({
     setStepDropdownOpen({})
     setAssetCodeSearch('')
     setAssetNameSearch('')
+    setSelectedAsset(null)
+    setAssetOptions([])
+    setShowAssetDropdown(false)
     setNextExternalId('')
+    setAvailablePlans([])
+    setSelectedPlanId('')
   }
 
   const loadData = async () => {
     try {
-      const [assetsRes, locationsRes, teamsRes, areasRes, stRes, stepsRes, nextIdRes] = await Promise.all([
-        fetch('/api/assets?summary=true'),
+      const [locationsRes, teamsRes, areasRes, stRes, stepsRes, nextIdRes] = await Promise.all([
         fetch('/api/locations'),
         fetch('/api/teams'),
         fetch('/api/basic-registrations/maintenance-areas'),
@@ -157,8 +225,7 @@ export function WorkOrderFormModal({
         fetch('/api/work-orders/next-id'),
       ])
 
-      const [assetsData, locationsData, teamsData, areasData, stData, stepsData, nextIdData] = await Promise.all([
-        assetsRes.json(),
+      const [locationsData, teamsData, areasData, stData, stepsData, nextIdData] = await Promise.all([
         locationsRes.json(),
         teamsRes.json(),
         areasRes.json(),
@@ -167,7 +234,6 @@ export function WorkOrderFormModal({
         nextIdRes.json(),
       ])
 
-      setAssets(assetsData.data || [])
       setLocations(locationsData.data || [])
       setTeams(teamsData.data || [])
       setMaintenanceAreas(areasData.data || [])
@@ -194,53 +260,77 @@ export function WorkOrderFormModal({
     }
   }
 
-  /* ---- Asset autocomplete ---- */
+  /* ---- Asset autocomplete (padrão RequestFormModal) ---- */
+
+  const updateDropdownPosition = useCallback((field: 'code' | 'name') => {
+    const inputRef = field === 'code' ? assetCodeInputRef : assetNameInputRef
+    if (inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect()
+      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+    }
+  }, [])
+
+  const searchAssets = useCallback(async (term: string, field: 'code' | 'name') => {
+    if (term.length < 2) {
+      setAssetOptions([])
+      setShowAssetDropdown(false)
+      return
+    }
+    setLoadingAssets(true)
+    try {
+      const res = await fetch(`/api/assets?summary=true&limit=15&search=${encodeURIComponent(term)}`)
+      const data = await res.json()
+      const results: AssetItem[] = data.data || []
+      setAssetOptions(results.slice(0, 10))
+      if (results.length > 0) {
+        setActiveSearchField(field)
+        updateDropdownPosition(field)
+        setShowAssetDropdown(true)
+      } else {
+        setShowAssetDropdown(false)
+      }
+    } catch (error) {
+      console.error('Error searching assets:', error)
+    } finally {
+      setLoadingAssets(false)
+    }
+  }, [updateDropdownPosition])
+
+  const handleAssetSearchChange = (value: string, field: 'code' | 'name') => {
+    if (field === 'code') {
+      setAssetCodeSearch(value)
+    } else {
+      setAssetNameSearch(value)
+    }
+    if (selectedAsset) {
+      setSelectedAsset(null)
+      setFormData(prev => ({ ...prev, assetId: '', locationId: unitId || '' }))
+      if (field === 'code') setAssetNameSearch('')
+      else setAssetCodeSearch('')
+    }
+    if (assetSearchTimerRef.current) clearTimeout(assetSearchTimerRef.current)
+    assetSearchTimerRef.current = setTimeout(() => searchAssets(value, field), 300)
+  }
 
   const handleAssetSelect = (asset: AssetItem) => {
+    setSelectedAsset(asset)
+    setAssetCodeSearch(asset.protheusCode || asset.tag || '')
+    setAssetNameSearch(asset.name)
     setFormData(prev => ({
       ...prev,
       assetId: asset.id,
-      locationId: asset.locationId || prev.locationId
+      locationId: asset.locationId || prev.locationId,
     }))
-    setAssetCodeSearch(asset.protheusCode || asset.tag || '')
-    setAssetNameSearch(asset.name)
-    setAssetCodeDropdownOpen(false)
-    setAssetNameDropdownOpen(false)
+    setShowAssetDropdown(false)
   }
 
   const clearAsset = () => {
-    setFormData(prev => ({ ...prev, assetId: '' }))
+    setSelectedAsset(null)
     setAssetCodeSearch('')
     setAssetNameSearch('')
+    setFormData(prev => ({ ...prev, assetId: '', locationId: unitId || '' }))
+    setAssetOptions([])
   }
-
-  const filteredAssetsByCode = assetCodeSearch.trim()
-    ? assets.filter(a => {
-        const q = assetCodeSearch.toLowerCase()
-        return (a.protheusCode?.toLowerCase().includes(q)) || (a.tag?.toLowerCase().includes(q))
-      })
-    : assets.filter(a => a.protheusCode || a.tag)
-
-  const filteredAssetsByName = assetNameSearch.trim()
-    ? assets.filter(a => a.name.toLowerCase().includes(assetNameSearch.toLowerCase()))
-    : assets
-
-  /* ---- Asset hierarchy ---- */
-
-  const getAssetHierarchy = (assetId: string): string[] => {
-    const chain: string[] = []
-    const assetMap = new Map(assets.map(a => [a.id, a]))
-    let current = assetMap.get(assetId)
-    const visited = new Set<string>()
-    while (current && !visited.has(current.id)) {
-      visited.add(current.id)
-      chain.unshift(current.name)
-      current = current.parentAssetId ? assetMap.get(current.parentAssetId) : undefined
-    }
-    return chain
-  }
-
-  const selectedAssetHierarchy = formData.assetId ? getAssetHierarchy(formData.assetId) : []
 
   /* ---- Tasks & steps ---- */
 
@@ -295,24 +385,176 @@ export function WorkOrderFormModal({
   /* ---- Service types filter ---- */
 
   useEffect(() => {
+    let filtered = allServiceTypes
+
+    // Filtrar por área de manutenção
     if (formData.maintenanceAreaId) {
-      setServiceTypes(allServiceTypes.filter(st => st.maintenanceAreaId === formData.maintenanceAreaId))
-    } else {
-      setServiceTypes(allServiceTypes)
+      filtered = filtered.filter(st => st.maintenanceAreaId === formData.maintenanceAreaId)
     }
-  }, [formData.maintenanceAreaId, allServiceTypes])
+
+    // Filtrar por característica (Preventiva/Corretiva) conforme o tipo de OS
+    if (formData.type === 'PREVENTIVE' || formData.type === 'PREDICTIVE') {
+      filtered = filtered.filter(st => st.maintenanceType?.characteristic !== 'Corretiva')
+    } else if (formData.type === 'CORRECTIVE') {
+      filtered = filtered.filter(st => st.maintenanceType?.characteristic === 'Corretiva')
+    }
+
+    setServiceTypes(filtered)
+
+    // Limpar serviceTypeId se o selecionado não está mais na lista filtrada
+    if (formData.serviceTypeId && !filtered.some(st => st.id === formData.serviceTypeId)) {
+      setFormData(prev => ({ ...prev, serviceTypeId: '' }))
+    }
+    // formData.serviceTypeId is a snapshot-check dependency, intentional
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.maintenanceAreaId, formData.type, allServiceTypes])
+
+  /* ---- Search matching AssetMaintenancePlans when classification is filled ---- */
+
+  useEffect(() => {
+    // Limpar planos quando campos de classificação mudam
+    setAvailablePlans([])
+    setSelectedPlanId('')
+
+    // Só busca planos para OS preventiva/preditiva com ativo e tipo de serviço selecionados
+    if (
+      (formData.type !== 'PREVENTIVE' && formData.type !== 'PREDICTIVE') ||
+      !formData.assetId ||
+      !formData.serviceTypeId
+    ) return
+
+    const fetchPlans = async () => {
+      setLoadingPlans(true)
+      try {
+        const res = await fetch(`/api/maintenance-plans/asset?assetId=${formData.assetId}`)
+        const data = await res.json()
+        type PlanApiItem = {
+          id: string
+          name: string
+          sequence?: number | null
+          serviceTypeId?: string | null
+          serviceType?: { id: string; name: string; code: string } | null
+          isActive?: boolean
+        }
+        const plans: PlanApiItem[] = (data.data || []).filter(
+          (p: PlanApiItem) => p.serviceTypeId === formData.serviceTypeId && p.isActive !== false
+        )
+        setAvailablePlans(plans.map((p) => ({
+          id: p.id,
+          name: p.name,
+          sequence: p.sequence ?? 0,
+          serviceType: p.serviceType ? { code: p.serviceType.code, name: p.serviceType.name } : null,
+        })))
+      } catch (error) {
+        console.error('Error fetching asset maintenance plans:', error)
+      } finally {
+        setLoadingPlans(false)
+      }
+    }
+
+    fetchPlans()
+  }, [formData.type, formData.assetId, formData.serviceTypeId])
+
+  /* ---- Pre-fill from selected plan ---- */
+
+  const applyPlanData = useCallback(async (planId: string) => {
+    if (!planId) return
+    try {
+      const tasksRes = await fetch(`/api/maintenance-plans/asset/${planId}/tasks`)
+      const tasksData = await tasksRes.json()
+      const planTasks = tasksData.data || []
+
+      if (planTasks.length === 0) return
+
+      // Pré-preencher tarefas e etapas
+      type PlanTaskStepApi = {
+        stepId: string
+        order?: number | null
+        step?: { optionType?: string | null } | null
+      }
+      type PlanTaskResourceApi = {
+        resourceType?: string | null
+        resourceId?: string | null
+        jobTitleId?: string | null
+        userId?: string | null
+        quantity?: number | null
+        resourceCount?: number | null
+        hours?: number | null
+        unit?: string | null
+      }
+      type PlanTaskApi = {
+        description?: string | null
+        executionTime?: number | null
+        steps?: PlanTaskStepApi[]
+        resources?: PlanTaskResourceApi[]
+      }
+      const prefilled: TaskRow[] = (planTasks as PlanTaskApi[]).map((pt) => ({
+        key: crypto.randomUUID(),
+        description: pt.description || '',
+        executionTime: pt.executionTime ?? '',
+        steps: (pt.steps || [])
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map((s) => ({
+            stepId: s.stepId,
+            order: s.order ?? 0,
+            optionType: s.step?.optionType || 'NONE',
+          })),
+      }))
+
+      setTasks(prefilled.length > 0 ? prefilled : [emptyTask()])
+
+      // Pré-preencher recursos agregados de todas as tarefas
+      const allResources: TaskResourceItem[] = []
+      for (const pt of planTasks as PlanTaskApi[]) {
+        for (const r of (pt.resources || [])) {
+          allResources.push({
+            resourceType: (r.resourceType || 'MATERIAL') as TaskResourceItem['resourceType'],
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            quantity: r.quantity ?? r.resourceCount ?? null,
+            hours: r.hours ?? null,
+            unit: r.unit || null,
+          })
+        }
+      }
+
+      setWoResources(allResources.length > 0 ? allResources : [])
+    } catch (error) {
+      console.error('Error fetching plan tasks:', error)
+    }
+  }, [])
+
+  const handlePlanSelect = useCallback((planId: string) => {
+    setSelectedPlanId(planId)
+    if (planId) {
+      applyPlanData(planId)
+    } else {
+      // Limpar pré-preenchimento se desmarcou o plano
+      setTasks([emptyTask()])
+      setWoResources([])
+    }
+  }, [applyPlanData])
 
   /* ---- Click outside to close dropdowns ---- */
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (assetCodeRef.current && !assetCodeRef.current.contains(e.target as Node)) {
-        setAssetCodeDropdownOpen(false)
-      }
-      if (assetNameRef.current && !assetNameRef.current.contains(e.target as Node)) {
-        setAssetNameDropdownOpen(false)
-      }
-      // Close step dropdowns
+      const target = e.target as Node
+      // Asset dropdown
+      if (assetDropdownRef.current?.contains(target)) return
+      if (assetCodeInputRef.current?.contains(target)) return
+      if (assetNameInputRef.current?.contains(target)) return
+      setShowAssetDropdown(false)
+      setActiveSearchField(null)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Close step dropdowns on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
       for (const key of Object.keys(stepDropdownOpen)) {
         const ref = stepDropdownRefs.current[key]
         if (ref && !ref.contains(e.target as Node)) {
@@ -347,7 +589,6 @@ export function WorkOrderFormModal({
         body: JSON.stringify({
           ...formData,
           title,
-          estimatedDuration: formData.estimatedDuration ? Number(formData.estimatedDuration) : null,
           resources: woResources.map(r => ({
             resourceType: r.resourceType,
             resourceId: r.resourceId || null,
@@ -417,111 +658,146 @@ export function WorkOrderFormModal({
 
           {/* ============ 2. ATIVO E LOCALIZAÇÃO ============ */}
           <ModalSection title="Ativo e Localizacao">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {/* Código do Bem - autocomplete */}
-              <div ref={assetCodeRef} className="relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Código do Bem - autocomplete via API */}
+              <div>
                 <label className={labelCls}>Codigo do Bem</label>
                 <div className="relative">
+                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
                   <input
+                    ref={assetCodeInputRef}
                     type="text"
                     value={assetCodeSearch}
-                    onChange={(e) => {
-                      setAssetCodeSearch(e.target.value)
-                      setAssetCodeDropdownOpen(true)
-                      if (!e.target.value) clearAsset()
+                    onChange={(e) => handleAssetSearchChange(e.target.value, 'code')}
+                    onFocus={() => {
+                      if (assetOptions.length > 0 && !selectedAsset) {
+                        setActiveSearchField('code')
+                        updateDropdownPosition('code')
+                        setShowAssetDropdown(true)
+                      }
                     }}
-                    onFocus={() => setAssetCodeDropdownOpen(true)}
-                    placeholder="Buscar por codigo..."
-                    className={inputCls}
+                    placeholder="Digite o codigo..."
+                    className={`w-full pl-10 pr-10 py-2 text-sm border rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring ${
+                      selectedAsset ? 'border-green-300 bg-green-50' : 'border-input'
+                    }`}
+                    readOnly={!!selectedAsset}
                   />
-                  {formData.assetId && (
+                  {selectedAsset && (
                     <button type="button" onClick={clearAsset}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      <Icon name="close" className="text-sm" />
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <Icon name="close" className="text-base" />
                     </button>
                   )}
+                  {loadingAssets && activeSearchField === 'code' && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-on-surface-variant" />
+                    </div>
+                  )}
                 </div>
-                {assetCodeDropdownOpen && filteredAssetsByCode.length > 0 && (
-                  <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-input rounded-[4px] shadow-lg">
-                    {filteredAssetsByCode.slice(0, 50).map(asset => (
-                      <button key={asset.id} type="button"
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors"
-                        onClick={() => handleAssetSelect(asset)}>
-                        <span className="font-medium">{asset.protheusCode || asset.tag || '—'}</span>
-                        <span className="text-muted-foreground ml-2">— {asset.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {/* Nome do Bem - autocomplete */}
-              <div ref={assetNameRef} className="relative">
+              {/* Nome do Bem - autocomplete via API */}
+              <div>
                 <label className={labelCls}>Nome do Bem</label>
                 <div className="relative">
+                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
                   <input
+                    ref={assetNameInputRef}
                     type="text"
                     value={assetNameSearch}
-                    onChange={(e) => {
-                      setAssetNameSearch(e.target.value)
-                      setAssetNameDropdownOpen(true)
-                      if (!e.target.value) clearAsset()
+                    onChange={(e) => handleAssetSearchChange(e.target.value, 'name')}
+                    onFocus={() => {
+                      if (assetOptions.length > 0 && !selectedAsset) {
+                        setActiveSearchField('name')
+                        updateDropdownPosition('name')
+                        setShowAssetDropdown(true)
+                      }
                     }}
-                    onFocus={() => setAssetNameDropdownOpen(true)}
-                    placeholder="Buscar por nome..."
-                    className={inputCls}
+                    placeholder="Digite o nome do bem..."
+                    className={`w-full pl-10 pr-10 py-2 text-sm border rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring ${
+                      selectedAsset ? 'border-green-300 bg-green-50' : 'border-input'
+                    }`}
+                    readOnly={!!selectedAsset}
                   />
-                  {formData.assetId && (
-                    <button type="button" onClick={clearAsset}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      <Icon name="close" className="text-sm" />
-                    </button>
+                  {loadingAssets && activeSearchField === 'name' && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-on-surface-variant" />
+                    </div>
                   )}
                 </div>
-                {assetNameDropdownOpen && filteredAssetsByName.length > 0 && (
-                  <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-input rounded-[4px] shadow-lg">
-                    {filteredAssetsByName.slice(0, 50).map(asset => (
-                      <button key={asset.id} type="button"
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors"
-                        onClick={() => handleAssetSelect(asset)}>
-                        <span className="font-medium">{asset.name}</span>
-                        {(asset.protheusCode || asset.tag) && (
-                          <span className="text-muted-foreground ml-2">({asset.protheusCode || asset.tag})</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {/* Localização */}
+              {/* Localização (automática pela unidade ativa) */}
               <div>
                 <label className={labelCls}>Localizacao</label>
-                <select
-                  value={formData.locationId}
-                  onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                  className={selectCls}
-                >
-                  <option value="">Selecione uma localizacao</option>
-                  {locations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {location.name}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  readOnly
+                  value={locations.find(l => l.id === formData.locationId)?.name || ''}
+                  placeholder="Automatica pela unidade ativa"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-[4px] bg-muted text-muted-foreground cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Definida automaticamente pela unidade ativa
+                </p>
               </div>
             </div>
-            {selectedAssetHierarchy.length > 1 && (
-              <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-[4px] px-3 py-2">
-                <Icon name="account_tree" className="text-sm text-gray-400 mr-1" />
-                {selectedAssetHierarchy.map((name, i) => (
-                  <span key={i} className="flex items-center gap-1">
-                    {i > 0 && <Icon name="chevron_right" className="text-sm text-gray-400" />}
-                    <span className={i === selectedAssetHierarchy.length - 1 ? 'font-semibold text-gray-700' : ''}>
-                      {name}
-                    </span>
-                  </span>
+
+            {/* Dropdown de resultados via portal */}
+            {showAssetDropdown && !selectedAsset && dropdownPos && typeof document !== 'undefined' && createPortal(
+              <div
+                ref={assetDropdownRef}
+                className="fixed bg-white border border-gray-200 rounded-[4px] shadow-lg max-h-60 overflow-auto"
+                style={{
+                  top: dropdownPos.top,
+                  left: dropdownPos.left,
+                  width: dropdownPos.width,
+                  zIndex: 9999,
+                }}
+              >
+                {assetOptions.map(asset => (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    onClick={() => handleAssetSelect(asset)}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon name="precision_manufacturing" className="text-base text-gray-400" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{asset.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {asset.protheusCode && <span>Codigo: {asset.protheusCode}</span>}
+                          {asset.protheusCode && asset.tag && <span> | </span>}
+                          {asset.tag && <span>TAG: {asset.tag}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
                 ))}
+              </div>,
+              document.body
+            )}
+
+            {/* Dados do bem selecionado */}
+            {selectedAsset && (
+              <div className="mt-3 bg-gray-50 border border-gray-200 rounded-[4px] p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Codigo</span>
+                    <span className="text-[13px] font-medium text-gray-900">{selectedAsset.protheusCode || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Nome do Bem</span>
+                    <span className="text-[13px] font-medium text-gray-900">{selectedAsset.name}</span>
+                  </div>
+                  {selectedAsset.tag && (
+                    <div>
+                      <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">TAG</span>
+                      <span className="text-[13px] font-medium text-gray-900">{selectedAsset.tag}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </ModalSection>
@@ -641,40 +917,51 @@ export function WorkOrderFormModal({
             </div>
           </ModalSection>
 
-          {/* Periodicidade (condicional) */}
-          {formData.type === 'PREVENTIVE' && (
-            <ModalSection title="Periodicidade">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div>
-                  <label className={labelCls}>Frequencia</label>
-                  <select
-                    value={formData.maintenanceFrequency}
-                    onChange={(e) => setFormData({ ...formData, maintenanceFrequency: e.target.value })}
-                    className={selectCls}
-                  >
-                    <option value="">Selecione a frequencia</option>
-                    <option value="DAILY">Diaria</option>
-                    <option value="WEEKLY">Semanal</option>
-                    <option value="BIWEEKLY">Quinzenal</option>
-                    <option value="MONTHLY">Mensal</option>
-                    <option value="QUARTERLY">Trimestral</option>
-                    <option value="SEMI_ANNUAL">Semestral</option>
-                    <option value="ANNUAL">Anual</option>
-                    <option value="CUSTOM">Personalizada</option>
-                  </select>
+          {/* Seleção de plano de manutenção (preventiva/preditiva) */}
+          {(formData.type === 'PREVENTIVE' || formData.type === 'PREDICTIVE') &&
+            formData.assetId && formData.serviceTypeId && (
+            <ModalSection title="Plano de Manutencao do Bem">
+              {loadingPlans ? (
+                <div className="flex items-center gap-2 py-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-on-surface-variant" />
+                  <span className="text-sm text-muted-foreground">Buscando planos cadastrados...</span>
                 </div>
-                <div>
-                  <label className={labelCls}>A cada (numero de periodos)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.frequencyValue}
-                    onChange={(e) => setFormData({ ...formData, frequencyValue: e.target.value })}
-                    placeholder="Ex: 2 (para a cada 2 semanas)"
-                    className={inputCls}
-                  />
+              ) : availablePlans.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {availablePlans.length === 1
+                      ? 'Foi encontrado 1 plano de manutencao cadastrado para este bem e tipo de servico.'
+                      : `Foram encontrados ${availablePlans.length} planos de manutencao cadastrados para este bem e tipo de servico.`
+                    }
+                  </p>
+                  <div>
+                    <label className={labelCls}>Selecione o plano para pre-preencher a OS</label>
+                    <select
+                      value={selectedPlanId}
+                      onChange={(e) => handlePlanSelect(e.target.value)}
+                      className={selectCls}
+                    >
+                      <option value="">Nenhum (preencher manualmente)</option>
+                      {availablePlans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.name || `Plano #${plan.sequence}`}
+                          {plan.serviceType ? ` — ${plan.serviceType.code} - ${plan.serviceType.name}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {selectedPlanId && (
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <Icon name="check_circle" className="text-sm" />
+                      Tarefas, etapas e recursos foram pre-preenchidos a partir do plano selecionado.
+                    </p>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">
+                  Nenhum plano de manutencao cadastrado para este bem e tipo de servico. Preencha manualmente.
+                </p>
+              )}
             </ModalSection>
           )}
 
@@ -816,20 +1103,6 @@ export function WorkOrderFormModal({
 
           {/* ============ 5. RECURSOS ============ */}
           <ModalSection title="Recursos">
-            <div className="mb-3">
-              <label className={labelCls}>Tempo de Execucao (min)</label>
-              <input
-                type="number"
-                min={1}
-                value={formData.estimatedDuration}
-                onChange={(e) => setFormData({ ...formData, estimatedDuration: e.target.value })}
-                placeholder="Ex: 30"
-                className="w-full sm:w-40 px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Tempo que cada recurso de pessoa/ferramenta levara para executar a OS
-              </p>
-            </div>
             <ResourceSelector
               resources={woResources}
               onChange={setWoResources}

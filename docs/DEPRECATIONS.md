@@ -97,3 +97,15 @@ Antes de remover, verificar que nenhum import ou referencia depende do item.
 - **Substituto**: Componente `<AdaptiveSplitPanel list={...} panel={...} showPanel={...} onClosePanel={...} />` de `@/components/layout/AdaptiveSplitPanel`
 - **Data**: 2026-04-11
 - **Condição para remoção**: Todas as 17 páginas de listagem já migradas (concluído em 2026-04-11)
+
+---
+
+## Sessao de limpeza de cadastros basicos — 2026-04-15
+
+### Coluna "Codigo Protheus" removida da UI em 4 cadastros
+- **Arquivos**: `src/app/basic-registrations/[entity]/page.tsx` (tabs `maintenance-areas`, `service-types`, `cost-centers`, `generic-tasks`), `src/app/api/basic-registrations/[entity]/route.ts`, `src/app/api/basic-registrations/[entity]/[id]/route.ts`
+- **Motivo**: Duplicidade visual entre `Codigo` e `Codigo Protheus`, que na pratica recebiam o mesmo valor. Remocao simplifica a tela sem afetar a integracao TOTVS.
+- **Substituto**: Campo `protheusCode` continua no banco (mantem a `@@unique(companyId, protheusCode)` e o sync em `src/app/api/integration/totvs/sync/route.ts`). O valor passou a ser espelhado automaticamente a partir de `code` em POST e em PUT quando `code` for enviado no payload, via helper `mirrorProtheusCodeFromCode`.
+- **Data**: 2026-04-15
+- **Condicao para remocao desta entrada**: Apos validar que nenhum consumidor externo (relatorios, exports) ainda diferencia `code` de `protheusCode` nessas 4 entidades.
+- **Nota operacional (MaintenanceArea)**: `code` e opcional. Se houver registros historicos com `code` nulo e `protheusCode` preenchido, recomenda-se backfill `UPDATE "MaintenanceArea" SET code = "protheusCode" WHERE code IS NULL AND "protheusCode" IS NOT NULL;` antes de editar esses registros pela UI, para evitar colisoes no `@@unique(companyId, code)` ao salvar.

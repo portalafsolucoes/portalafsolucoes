@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
           nextExecutionDate: adjustedNextDate.toISOString(),
           parentPreventiveMaintenanceId: wo.id,
           assetMaintenancePlanId: wo.assetMaintenancePlanId || null,
+          maintenanceAreaId: wo.maintenanceAreaId || null,
         }
 
         const { data: newWorkOrder, error: createError } = await supabase

@@ -33,6 +33,7 @@ export function getStatusColor(status: string): string {
     IN_PROGRESS: 'bg-warning-light text-warning-light-foreground',
     ON_HOLD: 'bg-[hsl(0,0%,93%)] text-[hsl(0,0%,35%)]',
     COMPLETE: 'bg-success-light text-success-light-foreground',
+    REPROGRAMMED: 'bg-amber-100 text-amber-700',
     // WorkOrder status (legado - compatibilidade)
     OPEN: 'bg-info-light text-info-light-foreground',
     // Request status

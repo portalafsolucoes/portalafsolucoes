@@ -93,6 +93,7 @@ interface WorkOrderDetail {
   title: string
   description?: string | null
   type?: string | null
+  osType?: string | null
   status: string
   priority: string
   systemStatus?: string | null
@@ -102,6 +103,7 @@ interface WorkOrderDetail {
   estimatedDuration?: number | null
   createdAt?: string | null
   dueDate?: string | null
+  rescheduledDate?: string | null
   completedOn?: string | null
   actualDuration?: number | null
   executionNotes?: string | null
@@ -121,6 +123,9 @@ interface WorkOrderDetail {
   assetMaintenancePlanId?: string | null
   assetMaintenancePlan?: { id: string; name?: string | null; sequence: number } | null
   maintenancePlanExec?: { id: string; planNumber: number } | null
+  maintenanceArea?: { id: string; name: string; code?: string | null } | null
+  serviceType?: { id: string; name: string; code: string } | null
+  raf?: { id: string; rafNumber: string } | null
 }
 
 interface WorkOrderDetailModalProps {
@@ -198,6 +203,7 @@ function getStatusLabel(status: string): string {
     case 'IN_PROGRESS': return 'Em Progresso'
     case 'ON_HOLD': return 'Em Espera'
     case 'COMPLETE': return 'Concluida'
+    case 'REPROGRAMMED': return 'Reprogramada'
     default: return status
   }
 }
@@ -486,6 +492,12 @@ export function WorkOrderDetailModal({
             )}
             {workOrder.dueDate && (
               <DetailField label="Vencimento" value={formatDate(workOrder.dueDate)} />
+            )}
+            {workOrder.rescheduledDate && (
+              <DetailField
+                label="Data Reprogramada"
+                value={<span className="text-amber-700 font-semibold">{formatDate(workOrder.rescheduledDate)}</span>}
+              />
             )}
             {workOrder.estimatedDuration != null && workOrder.estimatedDuration > 0 && (
               <DetailField label="Tempo de Execucao" value={`${workOrder.estimatedDuration} min`} />
