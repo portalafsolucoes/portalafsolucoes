@@ -39,6 +39,7 @@ export interface WorkOrderFormInitialValues {
   priority?: string
   assetId?: string
   locationId?: string
+  dueDate?: string
 }
 
 interface WorkOrderFormModalProps {
@@ -47,6 +48,7 @@ interface WorkOrderFormModalProps {
   onSuccess: () => void
   inPage?: boolean
   initialValues?: WorkOrderFormInitialValues
+  sourceRequestId?: string | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -74,6 +76,7 @@ export function WorkOrderFormModal({
   onSuccess,
   inPage = false,
   initialValues,
+  sourceRequestId,
 }: WorkOrderFormModalProps) {
   const { unitId } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -159,6 +162,7 @@ export function WorkOrderFormModal({
       priority: initialValues.priority ?? prev.priority,
       assetId: initialValues.assetId ?? prev.assetId,
       locationId: initialValues.locationId ?? prev.locationId,
+      dueDate: initialValues.dueDate ?? prev.dueDate,
     }))
   }, [isOpen, initialValues])
 
@@ -589,6 +593,7 @@ export function WorkOrderFormModal({
         body: JSON.stringify({
           ...formData,
           title,
+          sourceRequestId: sourceRequestId || undefined,
           resources: woResources.map(r => ({
             resourceType: r.resourceType,
             resourceId: r.resourceId || null,

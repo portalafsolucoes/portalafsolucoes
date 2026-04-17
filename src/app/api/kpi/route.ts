@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     let woQuery = supabase
       .from('WorkOrder')
-      .select('id, type, status, createdAt, completedOn, actualDuration, laborCost, partsCost, thirdPartyCost, toolsCost, assetId, osType, realMaintenanceStart, realMaintenanceEnd, realStopStart, realStopEnd')
+      .select('id, type, status, createdAt, completedOn, actualDuration, laborCost, partsCost, thirdPartyCost, toolsCost, assetId, osType, realMaintenanceStart, realMaintenanceEnd, realStopStart, realStopEnd, rescheduleCount')
       .eq('companyId', session.companyId)
       .gte('createdAt', (startDate ? new Date(startDate) : defaultStart).toISOString())
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     // MTBF: Tempo Médio Entre Falhas (horas)
     // Soma de horas de funcionamento / número de falhas
     let totalUptime = 0
-    let failureCount = completedCorrectives.length
+    const failureCount = completedCorrectives.length
     for (const wo of completedCorrectives) {
       if (wo.realStopStart && wo.realMaintenanceStart) {
         const stop = new Date(wo.realStopStart).getTime()
@@ -101,6 +101,13 @@ export async function GET(request: NextRequest) {
     // Assumir equipe com 40h/semana disponível
     const backlogWeeks = Math.round(pendingHours / 40 * 10) / 10
 
+    // Taxa de Reprogramação: % de OSs que ja foram reprogramadas pelo menos uma vez
+    // (rescheduleCount > 0 indica OS que ja esteve atrasada e foi adiada via Programacao)
+    const reprogrammedWos = wos.filter(w => (w.rescheduleCount || 0) > 0)
+    const reschedulingRate = totalWos > 0
+      ? Math.round((reprogrammedWos.length / totalWos) * 1000) / 10
+      : 0
+
     // ===== CUSTO E QUALIDADE =====
 
     // Custo total de manutenção
@@ -139,6 +146,7 @@ export async function GET(request: NextRequest) {
         },
         process: {
           pmc: { value: pmc, unit: '%', label: 'PMC - Cumprimento do Plano', description: 'Meta: acima de 90%' },
+          reschedulingRate: { value: reschedulingRate, unit: '%', label: 'Taxa de Reprogramacao', description: `${reprogrammedWos.length} de ${totalWos} OSs reprogramadas. Meta: abaixo de 10%` },
           correctivePercent: { value: correctivePercent, unit: '%', label: 'Corretivas', description: `${correctives.length} de ${totalWos} OSs` },
           preventivePercent: { value: preventivePercent, unit: '%', label: 'Preventivas', description: `${preventives.length} de ${totalWos} OSs` },
           backlog: { value: backlogWeeks, unit: 'sem', label: 'Backlog', description: `${pending.length} OSs pendentes` },

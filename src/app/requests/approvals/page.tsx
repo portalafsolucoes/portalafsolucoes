@@ -62,6 +62,7 @@ export default function RequestApprovalsPage() {
     loadRequests()
     // Close panel when switching tabs
     setSelectedRequest(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user])
 
   const loadRequests = async () => {

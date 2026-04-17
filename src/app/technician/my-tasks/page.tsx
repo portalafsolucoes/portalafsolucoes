@@ -218,6 +218,7 @@ function TaskDetailPanel({
               {item.beforePhotoUrl && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Antes</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.beforePhotoUrl}
                     alt="Antes"
@@ -228,6 +229,7 @@ function TaskDetailPanel({
               {item.afterPhotoUrl && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Depois</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.afterPhotoUrl}
                     alt="Depois"
@@ -267,6 +269,7 @@ export default function MyTasksPage() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
   const loadData = async () => {

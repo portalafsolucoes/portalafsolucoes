@@ -72,14 +72,15 @@ const DAY_LABELS: Record<string, string> = {
 /**
  * Parse seguro do campo workDays (pode ser string JSON ou objeto).
  */
-export function parseWorkDays(raw: any): WorkDays | null {
+export function parseWorkDays(raw: unknown): WorkDays | null {
   if (!raw) return null
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-    if (parsed && Array.isArray(parsed.weekDays)) {
+    if (parsed && typeof parsed === 'object' && Array.isArray((parsed as { weekDays?: unknown }).weekDays)) {
+      const obj = parsed as { weekDays: WorkDays['weekDays']; holidays?: unknown }
       return {
-        weekDays: parsed.weekDays,
-        holidays: Array.isArray(parsed.holidays) ? parsed.holidays : [],
+        weekDays: obj.weekDays,
+        holidays: Array.isArray(obj.holidays) ? obj.holidays : [],
       }
     }
     return null

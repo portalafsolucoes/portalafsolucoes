@@ -65,18 +65,28 @@ export async function POST(request: NextRequest) {
     const nextSequence = (existing && existing.length > 0) ? existing[0].sequence + 1 : 1
 
     // Se é manutenção padrão, buscar dados do plano padrão para pré-preencher
-    let standardData: any = null
+    type StandardData = {
+      name?: string | null
+      sequence?: number | null
+      maintenanceTime?: number | null
+      timeUnit?: string | null
+      period?: number | null
+      toleranceDays?: number | null
+      calendarId?: string | null
+      trackingType?: string | null
+    }
+    let standardData: StandardData | null = null
     if (isStandard && standardPlanId) {
       const { data: stdPlan } = await supabase
         .from('StandardMaintenancePlan')
         .select('*')
         .eq('id', standardPlanId)
         .single()
-      standardData = stdPlan
+      standardData = stdPlan as StandardData | null
     }
 
     const now = new Date().toISOString()
-    const insertData: any = {
+    const insertData: Record<string, unknown> = {
       id: generateId(),
       sequence: nextSequence,
       name: name || standardData?.name || null,
@@ -145,7 +155,7 @@ export async function POST(request: NextRequest) {
               .eq('taskId', stdTask.id)
             if (stdSteps && stdSteps.length > 0) {
               await supabase.from('AssetMaintenanceTaskStep').insert(
-                stdSteps.map((s: any) => ({ id: generateId(), taskId: newTask.id, stepId: s.stepId, order: s.order }))
+                stdSteps.map((s: { stepId: string; order: number }) => ({ id: generateId(), taskId: newTask.id, stepId: s.stepId, order: s.order }))
               )
             }
 
@@ -156,7 +166,13 @@ export async function POST(request: NextRequest) {
               .eq('taskId', stdTask.id)
             if (stdRes && stdRes.length > 0) {
               await supabase.from('AssetMaintenanceTaskResource').insert(
-                stdRes.map((r: any) => ({
+                stdRes.map((r: {
+                  resourceId: string
+                  resourceCount: number
+                  quantity: number
+                  unit: string
+                  generatesReserve: boolean
+                }) => ({
                   id: generateId(), taskId: newTask.id, resourceId: r.resourceId, resourceCount: r.resourceCount,
                   quantity: r.quantity, unit: r.unit, generatesReserve: r.generatesReserve,
                 }))

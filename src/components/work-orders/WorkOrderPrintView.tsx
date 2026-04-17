@@ -215,6 +215,7 @@ export function WorkOrderPrintView({ workOrderId, onClose }: WorkOrderPrintViewP
             <div className="flex-shrink-0 w-[45mm]">
               {companyLogo ? (
                 <div className="bg-gray-600 rounded px-3 py-2 inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={companyLogo}
                     alt={companyName}

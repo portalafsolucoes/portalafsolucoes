@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input'
 export default function NewTeamPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<Array<{ id: string; firstName?: string; lastName?: string; email?: string }>>([])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   
   const [formData, setFormData] = useState({
@@ -64,7 +64,7 @@ export default function NewTeamPage() {
         const data = await res.json()
         alert(data.error || 'Erro ao criar equipe')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)

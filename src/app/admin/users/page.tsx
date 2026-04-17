@@ -131,6 +131,7 @@ function UserDetailPanel({
         {/* Avatar + basic info */}
         <div className="p-4 border-b border-border flex items-center gap-4">
           {user.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={user.image} alt="" className="w-14 h-14 rounded-full object-cover flex-shrink-0" />
           ) : (
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -862,6 +863,7 @@ export default function AdminUsersPage() {
                   <td className="px-6 py-4 text-sm text-foreground">
                     <div className="flex items-center gap-3">
                       {user.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

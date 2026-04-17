@@ -1,7 +1,5 @@
 // Descrições completas das 443 variáveis GEP (Moagem 2 tem 105, não 106)
 
-import { GEP_VARIABLES } from './variables';
-
 const VARIABLE_DESCRIPTIONS: Record<string, { name: string; unit: string; description: string; isRunningIndicator?: boolean }> = {
   // MOAGEM 1 (Z01) - 106 variáveis
   'Z01_VAR_001': { name: 'Status Moinho', unit: '', description: 'Sinaliza funcionamento motor principal do moinho (1=Ligado, 0=Desligado)', isRunningIndicator: true },

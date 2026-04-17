@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
 
 skipScreenshotSuiteUnlessAuthorized(test, 'tests/gep-debug-test.spec.ts')

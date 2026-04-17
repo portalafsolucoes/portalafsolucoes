@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
-import { getRoleColor, getRoleDisplayName, getRoleIcon } from '@/lib/user-roles'
+import { getRoleDisplayName, getRoleIcon } from '@/lib/user-roles'
 
 export function UserMenu() {
   const { user } = useAuth()

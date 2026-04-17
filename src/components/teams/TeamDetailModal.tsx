@@ -21,6 +21,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
     if (isOpen && teamId) {
       fetchTeam()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, teamId])
 
   const fetchTeam = async () => {
@@ -151,6 +152,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
                   className="flex items-center gap-3 p-3 bg-card rounded-[4px]"
                 >
                   {membership.user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={membership.user.image}
                       alt={`${membership.user.firstName} ${membership.user.lastName}`}

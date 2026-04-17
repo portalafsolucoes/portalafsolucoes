@@ -54,7 +54,14 @@ interface RAF {
     maintenanceArea?: { id: string; name: string; code?: string }
     serviceType?: { id: string; code: string; name: string }
     asset?: { id: string; name: string; tag?: string }
-  }
+  } | null
+  request?: {
+    id: string
+    requestNumber?: string | null
+    title?: string | null
+    status?: string | null
+    asset?: { id: string; name: string; tag?: string } | null
+  } | null
 }
 
 interface RAFViewModalProps {
@@ -84,6 +91,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
   if (!raf) return null
 
   const wo = raf.workOrder
+  const ss = raf.request
 
   // ── inPage (desktop split-panel) ──────────────────────────────────────────
   if (inPage) {
@@ -194,6 +202,42 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                         <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tipo de Servico</p>
                         <p className="text-sm text-foreground">{wo.serviceType.code} - {wo.serviceType.name}</p>
                       </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* SS Vinculada (RAF gerada direto de uma SS) */}
+              {!wo && ss && (
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">SS Vinculada</h3>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {ss.requestNumber && (
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">N° SS</p>
+                        <p className="text-sm font-mono text-foreground">
+                          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800 mr-2">SS</span>
+                          {ss.requestNumber}
+                        </p>
+                      </div>
+                    )}
+                    {ss.title && (
+                      <div className="col-span-2">
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Titulo da SS</p>
+                        <p className="text-sm text-foreground">{ss.title}</p>
+                      </div>
+                    )}
+                    {ss.asset && (
+                      <>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Codigo do Bem</p>
+                          <p className="text-sm font-mono text-foreground">{ss.asset.tag || '—'}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Nome do Bem</p>
+                          <p className="text-sm text-foreground">{ss.asset.name}</p>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -413,6 +457,17 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                 {wo.internalId && <div><span className="text-gray-500">OS:</span> <span className="font-mono">{wo.internalId}</span></div>}
                 {wo.asset?.tag && <div><span className="text-gray-500">Bem:</span> <span className="font-mono">{wo.asset.tag}</span> — {wo.asset.name}</div>}
                 {wo.maintenanceArea && <div><span className="text-gray-500">Area:</span> {wo.maintenanceArea.code || ''} {wo.maintenanceArea.name}</div>}
+              </div>
+            </div>
+          )}
+
+          {!wo && ss && (
+            <div className="bg-amber-50 border border-amber-200 rounded-[4px] p-3">
+              <h3 className="text-xs font-bold text-amber-800 uppercase mb-2">SS Vinculada</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {ss.requestNumber && <div><span className="text-gray-500">SS:</span> <span className="font-mono">{ss.requestNumber}</span></div>}
+                {ss.asset?.tag && <div><span className="text-gray-500">Bem:</span> <span className="font-mono">{ss.asset.tag}</span> — {ss.asset.name}</div>}
+                {ss.title && <div className="col-span-2"><span className="text-gray-500">Titulo:</span> {ss.title}</div>}
               </div>
             </div>
           )}

@@ -178,6 +178,7 @@ export function FileUpload({
                 <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
               </div>
               {file.type.startsWith('image/') && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={file.url}
                   alt={file.name}

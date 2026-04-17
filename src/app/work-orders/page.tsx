@@ -37,6 +37,8 @@ interface WorkOrder {
   priority: string
   status: string
   dueDate?: string | null
+  rescheduledDate?: string | null
+  rescheduleCount?: number | null
   dueMeterReading?: number | null
   asset?: { name: string; tag?: string; protheusCode?: string }
   location?: { name: string }
@@ -74,7 +76,7 @@ export default function WorkOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [systemStatusFilter, setSystemStatusFilter] = useState('')
+  const [systemStatusFilter, _setSystemStatusFilter] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table')
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string>('')
   const [showEditModal, setShowEditModal] = useState(false)
@@ -534,6 +536,9 @@ export default function WorkOrdersPage() {
                             </button>
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <span>Atraso Original</span>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             <button type="button" onClick={() => handleSort('createdAt')} className="flex items-center gap-1">
                               <span>Criado</span>
                               {renderSortIcon('createdAt')}
@@ -556,9 +561,20 @@ export default function WorkOrdersPage() {
                                 <div className="text-sm font-medium text-foreground max-w-xs truncate">{wo.title}</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
-                                  {translateStatus(wo.status)}
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(wo.status)}`}>
+                                    {translateStatus(wo.status)}
+                                  </span>
+                                  {(wo.rescheduleCount ?? 0) > 0 && (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200"
+                                      title={`Reprogramada ${wo.rescheduleCount}x`}
+                                    >
+                                      <Icon name="event_repeat" className="text-[12px]" />
+                                      {wo.rescheduleCount}x
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(wo.priority)}`}>
@@ -574,9 +590,20 @@ export default function WorkOrdersPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 {wo.dueMeterReading
                                   ? `${wo.dueMeterReading.toLocaleString('pt-BR')} h`
-                                  : wo.dueDate
-                                    ? formatDate(wo.dueDate)
-                                    : '-'}
+                                  : wo.rescheduledDate
+                                    ? formatDate(wo.rescheduledDate)
+                                    : wo.dueDate
+                                      ? formatDate(wo.dueDate)
+                                      : '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                {wo.rescheduledDate && wo.dueDate ? (
+                                  <span className="text-amber-700 font-medium" title="Data de vencimento original (antes da primeira reprogramacao)">
+                                    {formatDate(wo.dueDate)}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 {formatDate(wo.createdAt)}

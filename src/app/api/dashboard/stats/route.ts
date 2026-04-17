@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
     const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
 
     // Helper para aplicar filtro de unidade
-    const withUnit = (q: any) => effectiveUnitId ? q.eq('unitId', effectiveUnitId) : q
+    // Recebe e devolve o builder do Supabase mantendo o tipo concreto via cast por unknown
+    const withUnit = <T>(q: T): T => effectiveUnitId
+      ? ((q as unknown as { eq: (col: string, val: string) => unknown }).eq('unitId', effectiveUnitId) as unknown as T)
+      : q
 
     // Serializar em 3 batches para evitar rate limit do Supabase
     const [woTotal, woOpen, woInProgress] = await Promise.all([

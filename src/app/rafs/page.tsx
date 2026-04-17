@@ -27,6 +27,13 @@ interface RAFWorkOrder {
   asset?: { id: string; name: string; tag?: string }
 }
 
+interface RAFRequest {
+  id: string
+  requestNumber?: string | null
+  title?: string | null
+  asset?: { id: string; name: string; tag?: string } | null
+}
+
 interface RAF {
   id: string
   rafNumber: string
@@ -35,7 +42,8 @@ interface RAF {
   panelOperator: string
   failureType: string
   createdAt: string
-  workOrder?: RAFWorkOrder
+  workOrder?: RAFWorkOrder | null
+  request?: RAFRequest | null
   createdBy?: {
     firstName: string
     lastName: string
@@ -138,14 +146,34 @@ export default function RAFsPage() {
     }
   }
 
+  // Helpers que aceitam tanto RAF de OS quanto RAF de SS
+  const getRafAssetName = (raf: RAF) =>
+    raf.workOrder?.asset?.name || raf.request?.asset?.name || ''
+  const getRafAssetTag = (raf: RAF) =>
+    raf.workOrder?.asset?.tag || raf.request?.asset?.tag || ''
+  const getRafAreaLabel = (raf: RAF) => {
+    if (raf.workOrder?.maintenanceArea?.code) {
+      return `${raf.workOrder.maintenanceArea.code} - ${raf.workOrder.maintenanceArea.name}`
+    }
+    return raf.workOrder?.maintenanceArea?.name || ''
+  }
+  const getRafOriginNumber = (raf: RAF) =>
+    raf.workOrder?.internalId || raf.request?.requestNumber || ''
+  const getRafOriginType = (raf: RAF): 'OS' | 'SS' | null => {
+    if (raf.workOrder?.internalId) return 'OS'
+    if (raf.request?.requestNumber || raf.request?.id) return 'SS'
+    return null
+  }
+
   const filteredRAFs = rafs.filter(raf => {
     if (debouncedSearchTerm === '') return true
     const term = debouncedSearchTerm.toLowerCase()
     return (
       raf.rafNumber.toLowerCase().includes(term) ||
-      (raf.workOrder?.asset?.name || '').toLowerCase().includes(term) ||
-      (raf.workOrder?.asset?.tag || '').toLowerCase().includes(term) ||
-      (raf.workOrder?.maintenanceArea?.name || '').toLowerCase().includes(term) ||
+      getRafAssetName(raf).toLowerCase().includes(term) ||
+      getRafAssetTag(raf).toLowerCase().includes(term) ||
+      getRafAreaLabel(raf).toLowerCase().includes(term) ||
+      getRafOriginNumber(raf).toLowerCase().includes(term) ||
       raf.panelOperator.toLowerCase().includes(term)
     )
   })
@@ -176,17 +204,14 @@ export default function RAFsPage() {
     switch (sortField) {
       case 'number':
         return modifier * (a.rafNumber || '').localeCompare(b.rafNumber || '')
-      case 'area': {
-        const aArea = a.workOrder?.maintenanceArea?.name || ''
-        const bArea = b.workOrder?.maintenanceArea?.name || ''
-        return modifier * aArea.localeCompare(bArea)
-      }
+      case 'area':
+        return modifier * getRafAreaLabel(a).localeCompare(getRafAreaLabel(b))
       case 'assetCode':
-        return modifier * (a.workOrder?.asset?.tag || '').localeCompare(b.workOrder?.asset?.tag || '')
+        return modifier * getRafAssetTag(a).localeCompare(getRafAssetTag(b))
       case 'assetName':
-        return modifier * (a.workOrder?.asset?.name || '').localeCompare(b.workOrder?.asset?.name || '')
+        return modifier * getRafAssetName(a).localeCompare(getRafAssetName(b))
       case 'workOrderNumber':
-        return modifier * (a.workOrder?.internalId || '').localeCompare(b.workOrder?.internalId || '')
+        return modifier * getRafOriginNumber(a).localeCompare(getRafOriginNumber(b))
       case 'occurrenceDate':
         return modifier * (a.occurrenceDate || '').localeCompare(b.occurrenceDate || '')
       case 'panelOperator':
@@ -240,7 +265,7 @@ export default function RAFsPage() {
         <Icon name="description" className="text-6xl text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma RAF encontrada</h3>
         <p className="text-muted-foreground">
-          {searchTerm ? 'Tente ajustar sua busca' : 'RAFs são geradas automaticamente ao criar uma OS Corretiva Imediata'}
+          {searchTerm ? 'Tente ajustar sua busca' : 'RAFs podem ser geradas automaticamente em OS corretivas imediatas ou abertas diretamente a partir de uma SS aprovada'}
         </p>
       </div>
     </div>
@@ -262,7 +287,7 @@ export default function RAFsPage() {
                       {raf.rafNumber}
                     </h3>
                     <p className="text-xs text-muted-foreground truncate">
-                      {raf.workOrder?.asset?.tag || '—'} | {raf.workOrder?.asset?.name || '—'}
+                      {getRafAssetTag(raf) || '—'} | {getRafAssetName(raf) || '—'}
                     </p>
                   </div>
                 </div>
@@ -280,10 +305,13 @@ export default function RAFsPage() {
                   <Icon name="calendar_today" className="text-sm" />
                   <span>{formatDate(raf.occurrenceDate)}</span>
                 </div>
-                {raf.workOrder?.internalId && (
+                {getRafOriginNumber(raf) && (
                   <div className="flex items-center gap-1">
-                    <Icon name="assignment" className="text-sm" />
-                    <span className="font-mono">{raf.workOrder.internalId}</span>
+                    <Icon name={getRafOriginType(raf) === 'SS' ? 'support' : 'assignment'} className="text-sm" />
+                    <span className="font-mono">
+                      {getRafOriginType(raf) === 'SS' ? 'SS ' : ''}
+                      {getRafOriginNumber(raf)}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center gap-1 truncate">
@@ -328,7 +356,7 @@ export default function RAFsPage() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <button type="button" onClick={() => handleSort('workOrderNumber')} className="flex items-center gap-1">
-                  <span>N° OS</span>
+                  <span>Origem</span>
                   {renderSortIcon('workOrderNumber')}
                 </button>
               </th>
@@ -366,18 +394,23 @@ export default function RAFsPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                  {raf.workOrder?.maintenanceArea?.code
-                    ? `${raf.workOrder.maintenanceArea.code} - ${raf.workOrder.maintenanceArea.name}`
-                    : raf.workOrder?.maintenanceArea?.name || '—'}
+                  {getRafAreaLabel(raf) || '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-mono">
-                  {raf.workOrder?.asset?.tag || '—'}
+                  {getRafAssetTag(raf) || '—'}
                 </td>
                 <td className="px-6 py-4 max-w-xs">
-                  <div className="text-sm text-foreground truncate">{raf.workOrder?.asset?.name || '—'}</div>
+                  <div className="text-sm text-foreground truncate">{getRafAssetName(raf) || '—'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-mono">
-                  {raf.workOrder?.internalId || '—'}
+                  {getRafOriginNumber(raf) ? (
+                    <span className="inline-flex items-center gap-1">
+                      {getRafOriginType(raf) === 'SS' && (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800">SS</span>
+                      )}
+                      {getRafOriginNumber(raf)}
+                    </span>
+                  ) : '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(raf.occurrenceDate)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{raf.panelOperator}</td>
@@ -403,7 +436,7 @@ export default function RAFsPage() {
       <div className="border-b border-border px-4 py-3 md:px-6 flex-shrink-0">
         <PageHeader
           title="Relatorios de Analise de Falha (RAF)"
-          description="RAFs sao geradas automaticamente ao criar uma OS Corretiva Imediata"
+          description="Geradas em OS corretivas imediatas ou diretamente a partir de uma SS aprovada"
           className="mb-0"
           actions={
             <div className="flex items-center gap-2 flex-wrap">

@@ -171,8 +171,17 @@ export function WorkOrderEditModal({
       }
 
       if (resRes.ok) {
-        const resData = await resRes.json() as { data?: any[] }
-        const mapped: TaskResourceItem[] = (resData.data || []).map((r: any) => ({
+        interface WoResourceRow {
+          resourceType: string
+          resource?: { id: string } | null
+          jobTitle?: { id: string } | null
+          user?: { id: string } | null
+          quantity: number
+          hours: number
+          unit: string
+        }
+        const resData = await resRes.json() as { data?: WoResourceRow[] }
+        const mapped: TaskResourceItem[] = (resData.data || []).map((r: WoResourceRow) => ({
           resourceType: r.resourceType as TaskResourceItem['resourceType'],
           resourceId: r.resource?.id || null,
           jobTitleId: r.jobTitle?.id || null,

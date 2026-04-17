@@ -32,8 +32,8 @@ interface AssetFormPanelProps {
 
 export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAsset }: AssetFormPanelProps) {
   const [loading, setLoading] = useState(false)
-  const [locations, setLocations] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
+  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
+  const [users, setUsers] = useState<Array<{ id: string; firstName?: string; lastName?: string }>>([])
   
   const [formData, setFormData] = useState<Asset>({
     name: '',
@@ -151,7 +151,7 @@ export function AssetFormPanel({ isOpen, onClose, onSuccess, parentAsset, editAs
         const data = await res.json()
         alert(data.error || 'Erro ao salvar ativo')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)

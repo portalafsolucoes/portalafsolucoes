@@ -53,8 +53,35 @@ globs: src/app/api/**,src/actions/**
 - Nao mover regra de seguranca apenas para o cliente ao migrar um fluxo para server action
 - Reutilizar a logica central de permissao e normalizacao de papel em vez de reimplementar regras dentro de cada action
 
+## Reprogramacao de OS
+- A rota `PUT /api/planning/schedules/[id]/items` e o ponto unico que registra reprogramacao oficial: quando a `scheduledDate` de um item muda e a OS associada esta atrasada (`dueDate < hoje` e status nao final), o servidor deve atualizar a OS para `status = REPROGRAMMED`, preencher `rescheduledDate`, incrementar `rescheduleCount` e inserir uma entry em `WorkOrderRescheduleHistory` com `previousDate`, `newDate`, `previousStatus`, `wasOverdue = true`, `userId` da sessao
+- A `previousDate` da entry e a ultima data efetiva conhecida da OS (`rescheduledDate` anterior se ja existia, senao a `dueDate` original)
+- A `dueDate` original da OS NAO deve ser alterada por reprogramacao; ela continua sendo a referencia de prazo planejado para fins de KPI e auditoria visual
+- A API de listagem de OS (`GET /api/work-orders` com `summary=true`) deve expor `rescheduleCount` e `rescheduledDate` para alimentar o badge `Reprogramada Nx` e a coluna `Atraso Original`
+- A API de detalhe (`GET /api/work-orders/[id]`) deve incluir a colecao `rescheduleHistory` com `previousDate`, `newDate`, `wasOverdue`, `createdAt` e dados do usuario que reprogramou
+- O endpoint `GET /api/kpi` deve expor `process.reschedulingRate` calculado como `% de OSs com rescheduleCount > 0` sobre o total no periodo; este KPI e independente do `pmc` (que continua medindo cumprimento puro do plano)
+
+## RAF (Relatorio de Analise de Falha)
+- `Aprovacoes` continua exclusivo de `SUPER_ADMIN` e `ADMIN`
+- `RAF` deixou de ser exclusivo dos perfis aprovadores: `SUPER_ADMIN` e `ADMIN` mantem acesso completo (`view`, `create`, `edit`, `delete`); `TECHNICIAN` e `LIMITED_TECHNICIAN` passaram a ter `view`, `create` e `edit` (sem `delete`); `REQUESTER` e `VIEW_ONLY` continuam sem acesso
+- `checkApiPermission(session, 'rafs', ...)` e a fonte unica desta matriz; nao reimplementar a regra dentro de cada handler
+- `FailureAnalysisReport` aceita dois vinculos de origem mutuamente exclusivos: `workOrderId` (RAF gerada a partir de uma OS) ou `requestId` (RAF gerada diretamente a partir de uma SS); pelo menos um dos dois deve estar preenchido para sustentar o rastreio de origem
+- `area` e `equipment` sao campos de apoio do formulario e podem ser opcionais quando a RAF nasce de uma SS, ja que herdam contexto do ativo da solicitacao
+- `GET /api/requests/[id]` deve retornar `failureAnalysisReport: { id, rafNumber } | null` para que a UI consiga sinalizar o vinculo SS<->RAF e desabilitar o botao de gerar RAF quando ja existir uma
+- `GET /api/rafs` (lista) e `GET /api/rafs/[id]` (detalhe) devem retornar tambem `request: { id, requestNumber, title, asset, ... } | null`, alem da OS, para que a tela de RAF tolere casos sem `workOrder`
+
+## Geracao de RAF a partir de SS
+- A rota `POST /api/requests/[id]/generate-raf` e o ponto unico que cria uma RAF vinculada diretamente a uma SS sem precisar de OS intermediaria
+- A rota deve validar `checkApiPermission(session, 'rafs', 'POST')`, retornar `404` quando a SS nao existir no escopo da empresa, `400` quando o status da SS nao for `APPROVED` e `409` quando ja existir RAF vinculada (`FailureAnalysisReport.requestId = ss.id`)
+- O body e opcional: sem body, a rota cria um rascunho rapido herdando `failureDescription` da SS, `occurrenceDate` do `createdAt` da SS, `panelOperator` do nome da sessao e `failureType = RANDOM`; com body, aceita os mesmos campos do `RAFFormModal` (incluindo `fiveWhys`, `hypothesisTests`, `actionPlan`, `failureType`, `stopExtension`, `failureBreakdown`, `productionLost`, `observation`, `immediateAction`)
+- `rafNumber` e gerado pelo helper `generateRafNumber(assetId, maintenanceAreaId, companyId)` usando o ativo da SS quando disponivel; `maintenanceAreaId` e `null` neste fluxo (a SS nao carrega area de manutencao)
+- O insert deve preencher `requestId = ss.id` e `workOrderId = null`, alem de `companyId`, `unitId` e `createdById` derivados da sessao
+- A resposta de sucesso retorna `{ data: { id, rafNumber, requestId } }` com status `201`
+- A SS continua com status `APPROVED` apos a geracao da RAF; nao existe transicao automatica para `COMPLETED` por consequencia da RAF, e nao se grava `rafId` no registro da SS (o vinculo vive em `FailureAnalysisReport.requestId`)
+- A UI so deve oferecer o botao `Abrir RAF` no painel de detalhe da SS quando `request.status === 'APPROVED'` e `request.failureAnalysisReport == null`
+
 ## Casos Especificos do Produto
-- `Aprovacoes` e `RAF` sao exclusivos de `SUPER_ADMIN` e `ADMIN`
+- `Aprovacoes` e exclusivo de `SUPER_ADMIN` e `ADMIN`
 - `Configuracoes` do portal sao exclusivas de `SUPER_ADMIN`
 - `TECHNICIAN` e `LIMITED_TECHNICIAN` nao devem cair no `Dashboard`; o destino inicial e `Ordens de Servico`
 - A troca de unidade so pode ser oferecida a `SUPER_ADMIN` e `ADMIN`, e somente quando houver mais de uma unidade acessivel

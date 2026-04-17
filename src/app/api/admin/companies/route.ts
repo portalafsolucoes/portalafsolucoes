@@ -38,7 +38,7 @@ export async function GET() {
 
   // Para cada empresa, buscar contagem de usuários e módulos habilitados
   const enriched = await Promise.all(
-    (companies || []).map(async (company: any) => {
+    (companies || []).map(async (company: { id: string }) => {
       const [usersResult, modulesResult] = await Promise.all([
         supabase
           .from('User')
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
   // Habilitar módulos selecionados (ou todos se não especificado)
   const { data: allModules } = await supabase.from('Module').select('id, slug')
   const modulesToEnable = enabledModuleSlugs
-    ? (allModules || []).filter((m: any) => enabledModuleSlugs.includes(m.slug))
+    ? (allModules || []).filter((m: { id: string; slug: string }) => enabledModuleSlugs.includes(m.slug))
     : allModules || []
 
   for (const mod of modulesToEnable) {

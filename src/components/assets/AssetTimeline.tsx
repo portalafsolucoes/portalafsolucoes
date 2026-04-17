@@ -88,6 +88,7 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
     if (assetId) {
       fetchHistory()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assetId, offset, filterType])
 
   const getConfig = (eventType: string) => {
@@ -232,7 +233,7 @@ export default function AssetTimeline({ assetId, assetName }: AssetTimelineProps
                   <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-surface-high" />
 
                   <div className="space-y-4">
-                    {dateEvents.map((event, index) => {
+                    {dateEvents.map((event, _index) => {
                       const config = getConfig(event.eventType)
                       const iconName = config.icon
 

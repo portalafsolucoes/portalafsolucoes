@@ -44,6 +44,7 @@ export function ApproveRequestModal({
     if (isOpen && request?.team?.id) {
       loadTeamMembers()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, request])
 
   const loadTeamMembers = async () => {

@@ -74,7 +74,15 @@ export async function PUT(
 
     // Inserir novos
     if (resources.length > 0) {
-      const toInsert = resources.map((r: any) => ({
+      const toInsert = resources.map((r: {
+        resourceType: string
+        resourceId?: string | null
+        jobTitleId?: string | null
+        userId?: string | null
+        quantity?: number | null
+        hours?: number | null
+        unit?: string | null
+      }) => ({
         id: generateId(),
         workOrderId,
         resourceType: r.resourceType,

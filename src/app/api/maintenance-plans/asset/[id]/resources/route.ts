@@ -54,9 +54,31 @@ export async function GET(
     if (resError) throw resError
 
     // Deduplica recursos e formata
-    const resourceMap = new Map<string, any>()
-    for (const tr of (taskResources || [])) {
-      const resource = tr.resource as any
+    const resourceMap = new Map<string, {
+      resourceId: string
+      resourceName: string
+      resourceType: string
+      unit: string
+      unitCost: number
+      calendarId: string | null
+      calendarName: string | null
+      totalCount: number
+      totalQuantity: number
+    }>()
+    for (const tr of (taskResources || []) as unknown as Array<{
+      resourceId: string
+      resourceCount: number | null
+      quantity: number | null
+      resource: {
+        name: string
+        type: string
+        unit: string
+        unitCost: number
+        calendarId: string | null
+        calendar?: { name?: string } | null
+      } | null
+    }>) {
+      const resource = tr.resource
       if (!resource) continue
       if (!resourceMap.has(tr.resourceId)) {
         resourceMap.set(tr.resourceId, {
@@ -71,7 +93,7 @@ export async function GET(
           totalQuantity: tr.quantity || 0,
         })
       } else {
-        const existing = resourceMap.get(tr.resourceId)
+        const existing = resourceMap.get(tr.resourceId)!
         existing.totalCount += (tr.resourceCount || 1)
         existing.totalQuantity += (tr.quantity || 0)
       }

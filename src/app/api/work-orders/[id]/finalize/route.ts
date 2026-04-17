@@ -43,10 +43,10 @@ export async function POST(
         .single()
 
       if (raf) {
-        const actionPlan = (raf.actionPlan as any[]) || []
+        const actionPlan = (raf.actionPlan as Array<{ status?: string }>) || []
         if (actionPlan.length > 0) {
           const pendingItems = actionPlan.filter(
-            (item: any) => item.status !== 'COMPLETED'
+            (item) => item.status !== 'COMPLETED'
           )
           if (pendingItems.length > 0) {
             return NextResponse.json({
@@ -97,13 +97,19 @@ export async function POST(
     // VALIDAÇÃO DE CALENDÁRIO — Verificar disponibilidade dos recursos
     // =========================================================================
     const calendarWarnings: string[] = []
-    const calendarDetails: any[] = []
+    const calendarDetails: Array<{
+      resource: string
+      calendar: string
+      registeredHours: number
+      effectiveHours: number
+      efficiency: string
+    }> = []
 
     if (executionResources && Array.isArray(executionResources)) {
       // Coletar resourceIds válidos
       const resourceIds = executionResources
-        .map((r: any) => r.resourceId)
-        .filter((id: string) => !!id)
+        .map((r: { resourceId?: string }) => r.resourceId)
+        .filter((id: string | undefined): id is string => !!id)
 
       if (resourceIds.length > 0) {
         const resourceCalendars = await getCalendarsForResources(resourceIds)
@@ -171,7 +177,7 @@ export async function POST(
     }
 
     // Atualizar a OS com dados de finalização
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       status: 'COMPLETE',
       completedOn: new Date().toISOString(),
       completedById: session.id,
@@ -191,7 +197,7 @@ export async function POST(
 
     // Salvar avisos de calendário no campo de notas (informativo)
     if (calendarWarnings.length > 0) {
-      const existingNotes = updateData.executionNotes || ''
+      const existingNotes = (updateData.executionNotes as string | null | undefined) || ''
       const calendarNote = `\n\n⚠️ Avisos de calendário:\n${calendarWarnings.map(w => `• ${w}`).join('\n')}`
       updateData.executionNotes = existingNotes + calendarNote
     }

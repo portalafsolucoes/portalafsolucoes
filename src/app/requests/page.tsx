@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import type { WorkOrderFormInitialValues } from '@/components/work-orders/WorkOrderFormModal'
+import type { RAFFormInitialValues } from '@/components/rafs/RAFFormModal'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -24,6 +26,14 @@ const RequestFormModal = dynamic(
 )
 const RequestPrintView = dynamic(
   () => import('@/components/requests/RequestPrintView').then(m => ({ default: m.RequestPrintView })),
+  { ssr: false }
+)
+const WorkOrderFormModal = dynamic(
+  () => import('@/components/work-orders/WorkOrderFormModal').then(m => ({ default: m.WorkOrderFormModal })),
+  { ssr: false }
+)
+const RAFFormModal = dynamic(
+  () => import('@/components/rafs/RAFFormModal').then(m => ({ default: m.RAFFormModal })),
   { ssr: false }
 )
 
@@ -62,13 +72,21 @@ export default function RequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [creatingWOFromRequest, setCreatingWOFromRequest] = useState<{
+    initialValues: WorkOrderFormInitialValues
+    sourceRequestId: string
+  } | null>(null)
+  const [creatingRafFromRequest, setCreatingRafFromRequest] = useState<{
+    sourceRequestId: string
+    initialValues: RAFFormInitialValues
+  } | null>(null)
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [printRequestId, setPrintRequestId] = useState<string | null>(null)
 
-  const showSidePanel = !!(selectedRequest !== null || isCreating)
+  const showSidePanel = !!(selectedRequest !== null || isCreating || creatingWOFromRequest || creatingRafFromRequest)
 
   useEffect(() => {
     loadRequests()
@@ -108,12 +126,26 @@ export default function RequestsPage() {
     setSelectedRequest(null)
     setIsEditing(false)
     setIsCreating(false)
+    setCreatingWOFromRequest(null)
+    setCreatingRafFromRequest(null)
   }
 
   const handleSuccess = () => {
     loadRequests()
     setIsCreating(false)
     setIsEditing(false)
+  }
+
+  const handleWorkOrderCreated = () => {
+    loadRequests()
+    setCreatingWOFromRequest(null)
+    setSelectedRequest(null)
+  }
+
+  const handleRafCreated = () => {
+    loadRequests()
+    setCreatingRafFromRequest(null)
+    setSelectedRequest(null)
   }
 
   const openDeleteDialog = (request: Request) => {
@@ -204,7 +236,25 @@ export default function RequestsPage() {
     }
   })
 
-  const activePanel = isCreating ? (
+  const activePanel = creatingRafFromRequest ? (
+    <RAFFormModal
+      isOpen={true}
+      onClose={() => setCreatingRafFromRequest(null)}
+      onSuccess={handleRafCreated}
+      sourceRequestId={creatingRafFromRequest.sourceRequestId}
+      initialValues={creatingRafFromRequest.initialValues}
+      inPage
+    />
+  ) : creatingWOFromRequest ? (
+    <WorkOrderFormModal
+      isOpen={true}
+      onClose={() => setCreatingWOFromRequest(null)}
+      onSuccess={handleWorkOrderCreated}
+      initialValues={creatingWOFromRequest.initialValues}
+      sourceRequestId={creatingWOFromRequest.sourceRequestId}
+      inPage
+    />
+  ) : isCreating ? (
     <RequestFormModal
       isOpen={true}
       onClose={handleClosePanel}
@@ -233,9 +283,28 @@ export default function RequestsPage() {
         loadRequests()
         handleClosePanel()
       }}
-      onGenerateWorkOrder={() => {
-        loadRequests()
-        handleClosePanel()
+      onGenerateWorkOrder={(payload) => {
+        setCreatingWOFromRequest({
+          sourceRequestId: payload.requestId,
+          initialValues: {
+            description: payload.description,
+            priority: payload.priority,
+            type: 'CORRECTIVE',
+            assetId: payload.assetId || undefined,
+            dueDate: payload.dueDate ? payload.dueDate.slice(0, 10) : undefined,
+          },
+        })
+      }}
+      onGenerateRaf={(payload) => {
+        setCreatingRafFromRequest({
+          sourceRequestId: payload.requestId,
+          initialValues: {
+            failureDescription: payload.failureDescription ?? null,
+            occurrenceDate: payload.occurrenceDate ?? null,
+            area: payload.area ?? null,
+            equipment: payload.equipment ?? null,
+          },
+        })
       }}
       onPrint={(requestId) => setPrintRequestId(requestId)}
       inPage

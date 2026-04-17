@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const sector = searchParams.get('sector');
     const enabled = searchParams.get('enabled');
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       companyId: session.companyId,
     };
 

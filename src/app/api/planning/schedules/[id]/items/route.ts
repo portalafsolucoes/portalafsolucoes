@@ -172,30 +172,71 @@ export async function PUT(
       const candidateIds = reprogrammedPayload.map(p => p.workOrderId)
       const { data: candidates } = await supabase
         .from('WorkOrder')
-        .select('id, dueDate, status')
+        .select('id, dueDate, status, rescheduledDate, rescheduleCount')
         .in('id', candidateIds)
 
-      const overdueWOs = new Map<string, string>()
+      const overdueWOs = new Map<string, { dueStr: string; status: string; rescheduledDate: string | null; count: number }>()
       for (const wo of candidates || []) {
         if (!wo.dueDate) continue
         const dueStr = String(wo.dueDate).split('T')[0]
         const isOverdue = dueStr < todayStr
         const isFinal = wo.status === 'COMPLETE'
         if (isOverdue && !isFinal) {
-          overdueWOs.set(wo.id, dueStr)
+          overdueWOs.set(wo.id, {
+            dueStr,
+            status: wo.status,
+            rescheduledDate: wo.rescheduledDate || null,
+            count: wo.rescheduleCount || 0,
+          })
         }
       }
 
+      const nowIso = new Date().toISOString()
+      const historyInserts: Array<{
+        id: string
+        workOrderId: string
+        previousDate: string | null
+        newDate: string
+        previousStatus: string | null
+        wasOverdue: boolean
+        userId: string | null
+        createdAt: string
+      }> = []
+
       for (const p of reprogrammedPayload) {
-        if (!overdueWOs.has(p.workOrderId)) continue
+        const ctx = overdueWOs.get(p.workOrderId)
+        if (!ctx) continue
+
+        // Atualiza WO: status REPROGRAMMED, rescheduledDate nova, contador +1
         await supabase
           .from('WorkOrder')
           .update({
             status: 'REPROGRAMMED',
             rescheduledDate: p.newDateISO,
-            updatedAt: new Date().toISOString(),
+            rescheduleCount: ctx.count + 1,
+            updatedAt: nowIso,
           })
           .eq('id', p.workOrderId)
+
+        // Entry de auditoria: previousDate = ultima data efetiva (rescheduledDate ou dueDate original)
+        const previousDateIso = ctx.rescheduledDate
+          ? new Date(ctx.rescheduledDate).toISOString()
+          : `${ctx.dueStr}T12:00:00.000Z`
+
+        historyInserts.push({
+          id: generateId(),
+          workOrderId: p.workOrderId,
+          previousDate: previousDateIso,
+          newDate: p.newDateISO,
+          previousStatus: ctx.status,
+          wasOverdue: true,
+          userId: session.id,
+          createdAt: nowIso,
+        })
+      }
+
+      if (historyInserts.length > 0) {
+        await supabase.from('WorkOrderRescheduleHistory').insert(historyInserts)
       }
     }
 

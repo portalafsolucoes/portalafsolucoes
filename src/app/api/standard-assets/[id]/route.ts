@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (error) throw error
 
     return NextResponse.json({ data })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const body = await request.json()
 
-    const updates: Record<string, any> = {}
+    const updates: Record<string, unknown> = {}
     const allowedFields = [
       'name', 'costCenterCode', 'costCenterName', 'shiftCode',
       'workCenterCode', 'workCenterName', 'supplierCode', 'supplierStore',
@@ -73,8 +73,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       await supabase.from('StandardAssetCharacteristic').delete().eq('standardAssetId', id)
       // Inserir novas
       const charRecords = body.characteristics
-        .filter((c: any) => c.characteristicId && c.value)
-        .map((c: any) => {
+        .filter((c: { characteristicId?: string; value?: string; unit?: string | null }) => c.characteristicId && c.value)
+        .map((c: { characteristicId: string; value: string; unit?: string | null }) => {
           const now = new Date().toISOString()
           return {
             id: generateId(),
@@ -92,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     return NextResponse.json({ data })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
@@ -115,7 +115,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (error) throw error
 
     return NextResponse.json({ message: 'Bem Padrão excluído com sucesso' })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
-import { FileUpload } from '@/components/ui/FileUpload'
 import { Icon } from '@/components/ui/Icon'
 
 import AssetTimeline from '@/components/assets/AssetTimelineEnhanced'
@@ -70,6 +69,7 @@ export default function AssetDetailPage() {
     if (id) {
       loadAsset()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const loadAsset = async () => {
@@ -118,7 +118,7 @@ export default function AssetDetailPage() {
       } else {
         alert('Erro ao salvar ativo')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setSaving(false)
@@ -138,7 +138,7 @@ export default function AssetDetailPage() {
       } else {
         alert('Erro ao deletar ativo')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     }
   }
@@ -379,6 +379,7 @@ export default function AssetDetailPage() {
                     {files.map((file, index) => (
                       <div key={index} className="rounded-[4px] p-3">
                         {file.mimeType?.startsWith('image/') || file.type?.startsWith('image/') ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={file.url}
                             alt={file.name}

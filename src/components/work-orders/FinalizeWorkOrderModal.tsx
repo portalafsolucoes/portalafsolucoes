@@ -165,7 +165,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
   // Calendário
   const [calendarWarnings, setCalendarWarnings] = useState<CalendarWarning[]>([])
   const [calendarDetails, setCalendarDetails] = useState<CalendarDetail[]>([])
-  const [checkingCalendar, setCheckingCalendar] = useState(false)
+  const [_checkingCalendar, setCheckingCalendar] = useState(false)
 
   // Recursos previstos do plano
   const [plannedResources, setPlannedResources] = useState<PlannedResource[]>([])
@@ -610,8 +610,8 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
 
   const laborRealized = executionResources.filter(r => isLaborType(r.type))
   const materialRealized = executionResources.filter(r => !isLaborType(r.type))
-  const plannedLabor = plannedResources.filter(r => isLaborType(r.resourceType))
-  const plannedMaterial = plannedResources.filter(r => !isLaborType(r.resourceType))
+  const _plannedLabor = plannedResources.filter(r => isLaborType(r.resourceType))
+  const _plannedMaterial = plannedResources.filter(r => !isLaborType(r.resourceType))
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Finalizar OS: ${workOrder.title}`} size="wide" inPage={inPage}>

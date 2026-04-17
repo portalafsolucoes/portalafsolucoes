@@ -192,29 +192,36 @@ export async function GET(
     }
 
     // Achatar relações para exibição na tabela
-    let result = data || []
+    let result: Array<Record<string, unknown>> = (data || []) as unknown as Array<Record<string, unknown>>
     if (entity === 'work-centers') {
-      result = result.map((item: any) => ({
-        ...item,
-        calendarName: item.calendar?.name || '—',
-      }))
+      result = result.map((item) => {
+        const it = item as Record<string, unknown> & { calendar?: { name?: string } }
+        return {
+          ...it,
+          calendarName: it.calendar?.name || '—',
+        }
+      })
     }
     if (entity === 'asset-families') {
-      result = result.map((item: any) => ({
-        ...item,
-        modelNames: item.modelMappings?.map((m: any) => m.model?.name).filter(Boolean).join(', ') || '—',
-      }))
+      result = result.map((item) => {
+        const it = item as Record<string, unknown> & { modelMappings?: Array<{ model?: { name?: string } }> }
+        return {
+          ...it,
+          modelNames: it.modelMappings?.map((m: { model?: { name?: string } }) => m.model?.name).filter(Boolean).join(', ') || '—',
+        }
+      })
     }
     if (entity === 'resources') {
-      result = result.map((item: any) => {
-        const workDays = item.calendar?.workDays ? parseWorkDays(item.calendar.workDays) : null
+      result = result.map((item) => {
+        const it = item as Record<string, unknown> & { calendar?: { name?: string; workDays?: unknown }; user?: { firstName?: string; lastName?: string } }
+        const workDays = it.calendar?.workDays ? parseWorkDays(it.calendar.workDays) : null
         const weeklyHrs = workDays ? getWeeklyHours(workDays) : null
         return {
-          ...item,
-          userName: item.user ? `${item.user.firstName} ${item.user.lastName}` : '—',
-          calendarName: item.calendar?.name || '—',
+          ...it,
+          userName: it.user ? `${it.user.firstName} ${it.user.lastName}` : '—',
+          calendarName: it.calendar?.name || '—',
           weeklyHours: weeklyHrs ? Math.round(weeklyHrs * 10) / 10 : null,
-          calendar: item.calendar ? { name: item.calendar.name } : null, // remover workDays do response
+          calendar: it.calendar ? { name: it.calendar.name } : null, // remover workDays do response
         }
       })
     }

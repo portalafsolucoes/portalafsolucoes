@@ -109,8 +109,9 @@ export function AssetDetailModal({ isOpen, onClose, asset, onEdit, onDelete, wor
             <div className="p-4 md:p-6 border-b border-border">
               <h3 className="text-sm font-semibold text-foreground mb-2">Imagem Principal</h3>
               <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
-                <img 
-                  src={asset.image} 
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={asset.image}
                   alt={asset.name}
                   className="w-full h-full object-cover"
                 />

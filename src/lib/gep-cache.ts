@@ -2,7 +2,7 @@
 // Cache expira após 5 minutos para garantir dados atualizados
 
 interface CacheEntry {
-  data: any;
+  data: unknown;
   timestamp: number;
 }
 
@@ -10,14 +10,14 @@ class GEPCache {
   private cache: Map<string, CacheEntry> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-  set(key: string, data: any): void {
+  set(key: string, data: unknown): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now()
     });
   }
 
-  get(key: string): any | null {
+  get(key: string): unknown | null {
     const entry = this.cache.get(key);
     
     if (!entry) {

@@ -29,6 +29,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
   const [saving, setSaving] = useState(false)
   const [rafNumber, setRafNumber] = useState('')
   const [woInfo, setWoInfo] = useState<{ id: string; internalId?: string; asset?: { name: string; tag?: string }; maintenanceArea?: { name: string; code?: string } } | null>(null)
+  const [ssInfo, setSsInfo] = useState<{ id: string; requestNumber?: string | null; title?: string | null; asset?: { name: string; tag?: string } | null } | null>(null)
   const [formData, setFormData] = useState({
     occurrenceDate: '',
     occurrenceTime: '',
@@ -70,6 +71,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
         setRafNumber(raf.rafNumber)
         setWoInfo(raf.workOrder || null)
+        setSsInfo(raf.request || null)
         setFormData({
           occurrenceDate: formattedDate,
           occurrenceTime: raf.occurrenceTime,
@@ -88,7 +90,8 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
         }
 
         if (raf.hypothesisTests && raf.hypothesisTests.length > 0) {
-          setHypothesisTests(raf.hypothesisTests.map((h: any) => ({
+          type HypothesisTestRow = { description?: string; possible?: string; evidence?: string }
+          setHypothesisTests((raf.hypothesisTests as HypothesisTestRow[]).map((h) => ({
             description: h.description || '',
             possible: h.possible || '',
             evidence: h.evidence || ''
@@ -96,7 +99,8 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
         }
 
         if (raf.actionPlan && raf.actionPlan.length > 0) {
-          setActionPlan(raf.actionPlan.map((a: any, i: number) => ({
+          type ActionPlanRow = Partial<ActionPlanItem>
+          setActionPlan((raf.actionPlan as ActionPlanRow[]).map((a, i) => ({
             item: a.item || i + 1,
             subject: a.subject || '',
             deadline: a.deadline || '',
@@ -157,7 +161,7 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
 
   const updateActionPlan = (index: number, field: keyof ActionPlanItem, value: string) => {
     const updated = [...actionPlan]
-    ;(updated[index] as any)[field] = value
+    updated[index] = { ...updated[index], [field]: value }
     setActionPlan(updated)
   }
 
@@ -213,6 +217,38 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Area de Manutencao</label>
                       <p className="text-sm text-foreground">{woInfo.maintenanceArea.code ? `${woInfo.maintenanceArea.code} - ${woInfo.maintenanceArea.name}` : woInfo.maintenanceArea.name}</p>
+                    </div>
+                  )}
+                </div>
+              </ModalSection>
+            )}
+
+            {/* Info da SS vinculada (read-only) - quando RAF veio direto de uma SS */}
+            {!woInfo && ssInfo && (
+              <ModalSection title="SS Vinculada">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {ssInfo.requestNumber && (
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">N° SS</label>
+                      <p className="text-sm font-mono text-foreground">{ssInfo.requestNumber}</p>
+                    </div>
+                  )}
+                  {ssInfo.asset && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Codigo do Bem</label>
+                        <p className="text-sm font-mono text-foreground">{ssInfo.asset.tag || '—'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nome do Bem</label>
+                        <p className="text-sm text-foreground">{ssInfo.asset.name}</p>
+                      </div>
+                    </>
+                  )}
+                  {ssInfo.title && (
+                    <div className="col-span-2 md:col-span-3">
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Titulo da SS</label>
+                      <p className="text-sm text-foreground">{ssInfo.title}</p>
                     </div>
                   )}
                 </div>

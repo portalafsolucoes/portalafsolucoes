@@ -18,7 +18,7 @@ export async function getCalendarForResource(resourceId: string): Promise<{ cale
 
   if (error || !data) return { calendarId: null, calendarName: null, workDays: null }
 
-  const calendar = data.calendar as any
+  const calendar = data.calendar as unknown as { id: string; name: string; workDays?: unknown } | null
   if (!calendar) return { calendarId: null, calendarName: null, workDays: null }
 
   return {
@@ -44,7 +44,7 @@ export async function getCalendarsForResources(resourceIds: string[]): Promise<M
   if (error || !data) return result
 
   for (const resource of data) {
-    const calendar = resource.calendar as any
+    const calendar = resource.calendar as unknown as { id: string; name: string; workDays?: unknown } | null
     if (calendar && resource.calendarId) {
       result.set(resource.id, {
         calendarId: resource.calendarId,
@@ -90,7 +90,7 @@ export async function getCalendarsForPlans(planIds: string[]): Promise<Map<strin
   if (error || !data) return result
 
   for (const plan of data) {
-    const calendar = plan.calendar as any
+    const calendar = plan.calendar as unknown as { id: string; name: string; workDays?: unknown } | null
     if (calendar && plan.calendarId) {
       result.set(plan.id, {
         calendarId: plan.calendarId,

@@ -111,9 +111,9 @@ export async function POST(
       .select('B')
       .eq('A', id)
 
-    let assignedTeams: any[] = []
+    let assignedTeams: Array<Record<string, unknown>> = []
     if (teamLinks && teamLinks.length > 0) {
-      const teamIds = teamLinks.map((t: any) => t.B)
+      const teamIds = teamLinks.map((t: { B: string }) => t.B)
       const { data: teams } = await supabase
         .from('Team')
         .select('*')

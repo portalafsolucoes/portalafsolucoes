@@ -34,10 +34,10 @@ function KpiCard({ label, value, unit, description, highlight }: {
 
 export default function KpiPage() {
   const router = useRouter()
-  const { user, isLoading: authLoading, unitId: authUnitId } = useAuth()
+  const { user, isLoading: authLoading, unitId: _authUnitId } = useAuth()
   const isAdmin = canSwitchUnits(user)
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
-  const [units, setUnits] = useState<any[]>([])
+  const [units, setUnits] = useState<Array<{ id: string; name: string }>>([])
   const [selectedUnit, setSelectedUnit] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -54,6 +54,7 @@ export default function KpiPage() {
 
   useEffect(() => {
     if (!authLoading && user) loadKpis()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUnit, startDate, endDate, authLoading, user])
 
   const loadUnits = async () => {

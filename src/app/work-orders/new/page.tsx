@@ -11,10 +11,10 @@ import { Input } from '@/components/ui/Input'
 export default function NewWorkOrderPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [assets, setAssets] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
-  const [teams, setTeams] = useState<any[]>([])
+  const [assets, setAssets] = useState<Array<{ id: string; name: string }>>([])
+  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
+  const [users, setUsers] = useState<Array<{ id: string; firstName?: string; lastName?: string }>>([])
+  const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -77,7 +77,7 @@ export default function NewWorkOrderPage() {
       } else {
         alert('Erro ao criar ordem de serviço')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)

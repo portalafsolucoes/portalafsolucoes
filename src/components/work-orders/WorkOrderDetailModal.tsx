@@ -88,6 +88,17 @@ interface WOTask {
   steps?: TaskStep[] | string | null
 }
 
+interface RescheduleHistoryEntry {
+  id: string
+  previousDate?: string | null
+  newDate: string
+  previousStatus?: string | null
+  wasOverdue: boolean
+  reason?: string | null
+  createdAt: string
+  user?: { id: string; firstName: string; lastName: string } | null
+}
+
 interface WorkOrderDetail {
   id: string
   title: string
@@ -104,6 +115,8 @@ interface WorkOrderDetail {
   createdAt?: string | null
   dueDate?: string | null
   rescheduledDate?: string | null
+  rescheduleCount?: number | null
+  rescheduleHistory?: RescheduleHistoryEntry[]
   completedOn?: string | null
   actualDuration?: number | null
   executionNotes?: string | null
@@ -472,6 +485,15 @@ export function WorkOrderDetailModal({
                 {workOrder.osType === 'CORRECTIVE_IMMEDIATE' ? 'Corretiva Imediata' : workOrder.osType === 'CORRECTIVE_PLANNED' ? 'Corretiva Planejada' : workOrder.osType === 'PREVENTIVE_MANUAL' ? 'Preventiva Manual' : workOrder.osType}
               </span>
             )}
+            {(workOrder.rescheduleCount ?? 0) > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-amber-200 bg-amber-50 text-amber-800 shadow-sm"
+                title="Numero de vezes que esta OS foi reprogramada estando atrasada"
+              >
+                <Icon name="event_repeat" className="text-base" />
+                Reprogramada {workOrder.rescheduleCount}x
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3 px-1">
@@ -702,6 +724,47 @@ export function WorkOrderDetailModal({
         </DetailSection>
       )}
 
+      {/* Historico de Reprogramacao - SOMENTE quando houve pelo menos uma reprogramacao */}
+      {workOrder.rescheduleHistory && workOrder.rescheduleHistory.length > 0 && (
+        <DetailSection title={`Historico de Reprogramacao (${workOrder.rescheduleHistory.length})`} icon="event_repeat">
+          <div className="space-y-2 px-1">
+            {[...workOrder.rescheduleHistory]
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .map((entry) => (
+                <div
+                  key={entry.id}
+                  className="rounded-md border border-amber-200 bg-amber-50/40 px-4 py-3 shadow-sm"
+                >
+                  <div className="flex items-center gap-2 flex-wrap text-[13px] font-medium text-gray-900">
+                    {entry.previousDate && (
+                      <span className="line-through text-gray-500">{formatDate(entry.previousDate)}</span>
+                    )}
+                    <Icon name="arrow_forward" className="text-base text-amber-700" />
+                    <span className="font-semibold text-amber-800">{formatDate(entry.newDate)}</span>
+                    {entry.wasOverdue && (
+                      <span className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        Estava atrasada
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center gap-3 text-[11px] text-gray-500">
+                    <span>{formatDateTime(entry.createdAt)}</span>
+                    {entry.user && (
+                      <span className="flex items-center gap-1">
+                        <Icon name="person" className="text-sm" />
+                        {entry.user.firstName} {entry.user.lastName}
+                      </span>
+                    )}
+                  </div>
+                  {entry.reason && (
+                    <p className="mt-2 text-[12px] text-gray-700">{entry.reason}</p>
+                  )}
+                </div>
+              ))}
+          </div>
+        </DetailSection>
+      )}
+
       {/* 7. Solicitação de Serviço - SOMENTE quando sourceRequest existir */}
       {hasSourceRequest && (
         <DetailSection title="Solicitacao de Servico (SS)" icon="description">
@@ -738,6 +801,7 @@ export function WorkOrderDetailModal({
                 onClick={() => setImageViewer({ url: file.url, name: file.name })}
                 className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={file.url}
                   alt={file.name}
@@ -814,6 +878,7 @@ export function WorkOrderDetailModal({
                       onClick={() => setImageViewer({ url: workOrder.beforePhotoUrl as string, name: 'Foto Antes' })}
                       className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={workOrder.beforePhotoUrl}
                         alt="Foto Antes"
@@ -830,6 +895,7 @@ export function WorkOrderDetailModal({
                       onClick={() => setImageViewer({ url: workOrder.afterPhotoUrl as string, name: 'Foto Depois' })}
                       className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={workOrder.afterPhotoUrl}
                         alt="Foto Depois"
@@ -855,6 +921,7 @@ export function WorkOrderDetailModal({
                       onClick={() => setImageViewer({ url: file.url, name: file.name })}
                       className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={file.url}
                         alt={file.name}

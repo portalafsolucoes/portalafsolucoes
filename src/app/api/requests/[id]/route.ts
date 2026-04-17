@@ -53,7 +53,21 @@ export async function GET(
       generatedWorkOrder = wo
     }
 
-    return NextResponse.json({ data: { ...maintenanceRequest, generatedWorkOrder } })
+    // Buscar RAF vinculada (FailureAnalysisReport.requestId aponta para esta SS)
+    const { data: failureAnalysisReport } = await supabase
+      .from('FailureAnalysisReport')
+      .select('id, rafNumber')
+      .eq('requestId', maintenanceRequest.id)
+      .eq('companyId', session.companyId)
+      .maybeSingle()
+
+    return NextResponse.json({
+      data: {
+        ...maintenanceRequest,
+        generatedWorkOrder,
+        failureAnalysisReport: failureAnalysisReport ?? null,
+      },
+    })
   } catch (error) {
     console.error('Get request error:', error)
     return NextResponse.json(
@@ -135,7 +149,8 @@ export async function PUT(
     // Deletar arquivos antigos e inserir novos
     if (files.length > 0) {
       await supabase.from('File').delete().eq('requestId', id)
-      const fileInserts = files.map((file: any) => ({
+      type RequestFileRow = { name: string; url: string; type?: string | null; size?: number | null }
+      const fileInserts = (files as RequestFileRow[]).map((file) => ({
         id: generateId(),
         name: file.name,
         url: file.url,

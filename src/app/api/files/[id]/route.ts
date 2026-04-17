@@ -29,15 +29,16 @@ export async function DELETE(
     }
 
     // Verificar que o arquivo pertence a empresa do usuario via entidade pai
+    const fileRecord = file as { assetId?: string; workOrderId?: string; requestId?: string; url: string }
     let ownershipVerified = false
-    if ((file as any).assetId) {
-      const { data: parentAsset } = await supabase.from('Asset').select('id').eq('id', (file as any).assetId).eq('companyId', session.companyId).single()
+    if (fileRecord.assetId) {
+      const { data: parentAsset } = await supabase.from('Asset').select('id').eq('id', fileRecord.assetId).eq('companyId', session.companyId).single()
       ownershipVerified = !!parentAsset
-    } else if ((file as any).workOrderId) {
-      const { data: parentWo } = await supabase.from('WorkOrder').select('id').eq('id', (file as any).workOrderId).eq('companyId', session.companyId).single()
+    } else if (fileRecord.workOrderId) {
+      const { data: parentWo } = await supabase.from('WorkOrder').select('id').eq('id', fileRecord.workOrderId).eq('companyId', session.companyId).single()
       ownershipVerified = !!parentWo
-    } else if ((file as any).requestId) {
-      const { data: parentReq } = await supabase.from('Request').select('id').eq('id', (file as any).requestId).eq('companyId', session.companyId).single()
+    } else if (fileRecord.requestId) {
+      const { data: parentReq } = await supabase.from('Request').select('id').eq('id', fileRecord.requestId).eq('companyId', session.companyId).single()
       ownershipVerified = !!parentReq
     }
     if (!ownershipVerified) {

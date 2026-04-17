@@ -50,7 +50,7 @@ export function WorkOrderExecuteModal({
   const afterPhotoRef = useRef<HTMLInputElement>(null)
   const attachmentsRef = useRef<HTMLInputElement>(null)
 
-  const registerNow = (type: 'start' | 'end') => {
+  const _registerNow = (type: 'start' | 'end') => {
     const now = new Date().toISOString().slice(0, 16)
     if (type === 'start') {
       setStartTime(now)
@@ -188,8 +188,8 @@ export function WorkOrderExecuteModal({
 
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.message || 'Erro ao finalizar ordem de serviço')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao finalizar ordem de serviço')
     } finally {
       setIsSubmitting(false)
     }
@@ -214,6 +214,7 @@ export function WorkOrderExecuteModal({
       setEndTime('')
       setError('')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workOrder, isOpen])
 
   const loadWorkOrderDetails = async () => {
@@ -241,7 +242,7 @@ export function WorkOrderExecuteModal({
             type: 'image/jpeg'
           })
         }
-        
+
         if (details.afterPhotoUrl) {
           setAfterPhoto({
             id: 'existing-after',
@@ -264,10 +265,10 @@ export function WorkOrderExecuteModal({
         // Filtrar files que NÃO são da sourceRequest
         if (details.files && details.files.length > 0) {
           const sourceRequestFileIds = details.sourceRequest?.files?.map((f: any) => f.id) || []
-          const executionFiles = details.files.filter((file: any) => 
+          const executionFiles = details.files.filter((file: any) =>
             !sourceRequestFileIds.includes(file.id)
           )
-          
+
           if (executionFiles.length > 0) {
             const existingAttachments = executionFiles.map((file: any) => ({
               id: file.id,
@@ -410,6 +411,7 @@ export function WorkOrderExecuteModal({
                       </button>
                     ) : (
                       <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={beforePhoto.preview} alt="Antes" className="w-full h-32 md:h-24 object-cover rounded border-2 border-green-300" />
                         <button type="button" onClick={() => setBeforePhoto(null)} className="absolute top-1 right-1 p-1.5 md:p-1 bg-danger-light0 text-white rounded-full hover:bg-danger">
                           <Icon name="delete" className="text-base md:text-sm" />
@@ -439,6 +441,7 @@ export function WorkOrderExecuteModal({
                       </button>
                     ) : (
                       <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={afterPhoto.preview} alt="Depois" className="w-full h-32 md:h-24 object-cover rounded border-2 border-green-300" />
                         <button type="button" onClick={() => setAfterPhoto(null)} className="absolute top-1 right-1 p-1.5 md:p-1 bg-danger-light0 text-white rounded-full hover:bg-danger">
                           <Icon name="delete" className="text-base md:text-sm" />
@@ -468,6 +471,7 @@ export function WorkOrderExecuteModal({
                     {attachments.map((att) => (
                       <div key={att.id} className="flex items-center gap-2 p-2 md:p-1.5 bg-card rounded border border-purple-200">
                         {att.preview || (att.url && att.type?.startsWith('image/')) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img src={att.preview || att.url} alt={att.name} className="w-12 h-12 md:w-10 md:h-10 object-cover rounded cursor-pointer" onClick={() => att.url && window.open(att.url, '_blank')} />
                         ) : (
                           <div className="w-12 h-12 md:w-10 md:h-10 bg-purple-100 rounded flex items-center justify-center">
@@ -588,8 +592,9 @@ export function WorkOrderExecuteModal({
                     <div className="grid grid-cols-3 gap-2">
                       {workOrderDetails.sourceRequest.files.filter((f: any) => f.type?.startsWith('image/')).map((file: any) => (
                         <div key={file.id} className="relative group">
-                          <img 
-                            src={file.url} 
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={file.url}
                             alt={file.name}
                             className="w-full h-32 object-cover rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all"
                             onClick={() => setImageViewer({url: file.url, name: file.name})}
@@ -670,9 +675,10 @@ export function WorkOrderExecuteModal({
                       {workOrderDetails.beforePhotoUrl && (
                         <div>
                           <label className="block text-xs font-semibold text-foreground mb-1 text-center">ANTES</label>
-                          <img 
-                            src={workOrderDetails.beforePhotoUrl} 
-                            alt="Foto Antes" 
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={workOrderDetails.beforePhotoUrl}
+                            alt="Foto Antes"
                             className="w-full h-48 object-contain rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
                             onClick={() => setImageViewer({url: workOrderDetails.beforePhotoUrl, name: 'Foto ANTES'})}
                           />
@@ -681,9 +687,10 @@ export function WorkOrderExecuteModal({
                       {workOrderDetails.afterPhotoUrl && (
                         <div>
                           <label className="block text-xs font-semibold text-foreground mb-1 text-center">DEPOIS</label>
-                          <img 
-                            src={workOrderDetails.afterPhotoUrl} 
-                            alt="Foto Depois" 
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={workOrderDetails.afterPhotoUrl}
+                            alt="Foto Depois"
                             className="w-full h-48 object-contain rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
                             onClick={() => setImageViewer({url: workOrderDetails.afterPhotoUrl, name: 'Foto DEPOIS'})}
                           />
@@ -696,7 +703,7 @@ export function WorkOrderExecuteModal({
                 {/* Anexos Adicionais da Execução */}
                 {workOrderDetails.files && workOrderDetails.files.length > 0 && (() => {
                   const sourceRequestFileIds = workOrderDetails.sourceRequest?.files?.map((f: any) => f.id) || []
-                  const executionFiles = workOrderDetails.files.filter((file: any) => 
+                  const executionFiles = workOrderDetails.files.filter((file: any) =>
                     !sourceRequestFileIds.includes(file.id)
                   )
                   return executionFiles.length > 0 && (
@@ -706,9 +713,10 @@ export function WorkOrderExecuteModal({
                         {executionFiles.map((file: any) => (
                           <div key={file.id} className="flex items-center gap-2 p-2 bg-card rounded-[4px] hover:border-blue-400 transition-all">
                             {file.type?.startsWith('image/') ? (
-                              <img 
-                                src={file.url} 
-                                alt={file.name} 
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={file.url}
+                                alt={file.name}
                                 className="w-12 h-12 object-cover rounded cursor-pointer"
                                 onClick={() => setImageViewer({url: file.url, name: file.name})}
                               />

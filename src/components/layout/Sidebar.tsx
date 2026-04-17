@@ -16,6 +16,8 @@ import { getDefaultCmmsPath } from '@/lib/user-roles'
 type SidebarSubItem = {
   name: string
   href: string
+  module?: string
+  badge?: number
 }
 
 type SidebarMenuItem = {
@@ -74,21 +76,44 @@ export function Sidebar() {
       { name: 'Programação de OSs', href: '/planning/schedules' },
     ]},
     { name: 'Ordens de Serviço (OS)', href: '/work-orders', icon: 'construction', module: 'work-orders' },
-    { name: 'Solicitações (SS)', href: '/requests', icon: 'assignment', module: 'requests' },
-    { name: 'Aprovações', href: '/requests/approvals', icon: 'check_circle', module: 'approvals', badge: pendingCount },
+    { name: 'Solicitações de Serviço', href: '/requests', icon: 'assignment', module: 'requests', subItems: [
+      { name: 'Lista de SS', href: '/requests', module: 'requests' },
+      { name: 'Aprovações', href: '/requests/approvals', module: 'approvals', badge: pendingCount },
+    ]},
     { name: 'RAF', href: '/rafs', icon: 'description', module: 'rafs' },
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
     { name: 'Configurações', href: '/admin/portal', icon: 'settings', module: 'settings' },
   ]
 
-  const navigation = allMenus.filter(menu => {
-    if (!userRole) return false
-    const permissionSubject = user ?? userRole
-    // Filtrar por módulos habilitados para a empresa
-    if (!isModuleEnabled(menu.module)) return false
-    return hasPermission(permissionSubject, menu.module, 'view')
-  })
+  const navigation = allMenus
+    .map(menu => {
+      if (!userRole) return null
+      const permissionSubject = user ?? userRole
+
+      if (menu.subItems && menu.subItems.length > 0) {
+        // Item-pai: filtra cada subItem pelo seu próprio módulo (fallback no módulo do pai)
+        const visibleSubs = menu.subItems.filter(sub => {
+          const moduleSlug = sub.module ?? menu.module
+          if (!isModuleEnabled(moduleSlug)) return false
+          return hasPermission(permissionSubject, moduleSlug, 'view')
+        })
+        if (visibleSubs.length === 0) return null
+        // Soma os badges dos subItems visíveis para exibir no item-pai
+        const totalBadge = visibleSubs.reduce((acc, s) => acc + (s.badge ?? 0), 0)
+        return {
+          ...menu,
+          subItems: visibleSubs,
+          badge: totalBadge > 0 ? totalBadge : menu.badge,
+        }
+      }
+
+      // Item simples: gating tradicional pelo módulo do item
+      if (!isModuleEnabled(menu.module)) return null
+      if (!hasPermission(permissionSubject, menu.module, 'view')) return null
+      return menu
+    })
+    .filter((m): m is SidebarMenuItem => m !== null)
 
   const manuallyCollapsed = useRef<Set<string>>(new Set())
 
@@ -282,7 +307,7 @@ export function Sidebar() {
                         toggleExpanded(item.name)
                       }
                     }}
-                    className={`w-full group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-medium rounded-[4px] rounded-l-none transition-all duration-200 border-l-4 ${
+                    className={`w-full group flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-medium rounded-[4px] rounded-l-none transition-all duration-200 relative border-l-4 ${
                       isActive
                         ? 'bg-sidebar-accent text-white border-accent-orange shadow-sm'
                         : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white border-transparent'
@@ -295,8 +320,18 @@ export function Sidebar() {
                     {!isCollapsed && (
                       <>
                         <span className="flex-1 text-left">{item.name}</span>
+                        {item.badge && item.badge > 0 && (
+                          <span className="mr-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-white bg-accent-orange rounded shadow-sm">
+                            {item.badge}
+                          </span>
+                        )}
                         <Icon name="expand_more" className={`text-lg transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                       </>
+                    )}
+                    {isCollapsed && item.badge && item.badge > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-black text-white bg-accent-orange rounded-full shadow-sm">
+                        {item.badge}
+                      </span>
                     )}
                   </button>
 
@@ -309,13 +344,18 @@ export function Sidebar() {
                             key={sub.href}
                             href={sub.href}
                             onClick={() => setMobileMenuOpen(false)}
-                            className={`block px-3 py-2.5 text-xs font-medium rounded-[4px] transition-all duration-200 ${
+                            className={`flex items-center justify-between gap-2 px-3 py-2.5 text-xs font-medium rounded-[4px] transition-all duration-200 ${
                               isSubActive
                                 ? 'text-white font-bold'
                                 : 'text-sidebar-foreground hover:text-white'
                             }`}
                           >
-                            {sub.name}
+                            <span className="truncate">{sub.name}</span>
+                            {sub.badge !== undefined && sub.badge > 0 && (
+                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-white bg-accent-orange rounded shadow-sm flex-shrink-0">
+                                {sub.badge}
+                              </span>
+                            )}
                           </Link>
                         )
                       })}

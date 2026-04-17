@@ -103,8 +103,9 @@ A sidebar deve ser filtrada por perfil e tambem pelos modulos habilitados da emp
 
 Regras complementares:
 - `TECHNICIAN` e `LIMITED_TECHNICIAN` nao devem ver `Dashboard`; a entrada no CMMS deve levar direto para `Ordens de Servico`
+- `Solicitacoes (SS)` e `Aprovacoes` sao exibidos como sub-itens de um agrupador `Solicitacoes de Servico` na sidebar; o agrupador apenas expande e nao navega por conta propria
 - `Aprovacoes` deve aparecer apenas para `SUPER_ADMIN` e `ADMIN`
-- `RAF` deve aparecer apenas para `SUPER_ADMIN` e `ADMIN`
+- `RAF` deve aparecer para `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN` e `LIMITED_TECHNICIAN`; `TECHNICIAN` e `LIMITED_TECHNICIAN` podem ver, criar e editar RAFs mas nao excluir
 - `Configuracoes` deve aparecer apenas para `SUPER_ADMIN`
 - Mesmo quando a UI exibe um item, a API deve validar perfil, empresa e unidade ativa
 
@@ -189,15 +190,21 @@ Regras complementares:
 - Criacao, edicao, execucao, detalhe e exclusao conforme permissao
 - Numero interno automatico no formato `MAN-XXXXXX`
 - Pode existir numero externo do ERP/TOTVS
-- Status principais: `Pendente`, `Liberada`, `Em Andamento`, `Parada`, `Concluida`
+- Status principais: `Pendente`, `Liberada`, `Em Andamento`, `Parada`, `Concluida`, `Reprogramada`
 - Execucao registra checklist, anotacoes, fotos antes/depois, tempos, custos, recursos e feedback
+- Reprogramacao de OS atrasada via Programacao registra historico granular em `WorkOrderRescheduleHistory` (data anterior, nova data, status anterior, flag `wasOverdue`, motivo opcional, usuario, timestamp) e incrementa o contador `WorkOrder.rescheduleCount`
+- A `dueDate` original e preservada como referencia do prazo planejado; a `rescheduledDate` reflete apenas a ultima nova data
+- A listagem de OS exibe a coluna `Atraso Original` (mostra a `dueDate` original quando houve reprogramacao) e um badge `Reprogramada Nx` ao lado do status, sinalizando OSs que ja foram adiadas mesmo que estejam atualmente dentro do prazo
+- O painel de detalhe da OS exibe a secao `Historico de Reprogramacao` com a lista cronologica das reprogramacoes registradas, sempre que `rescheduleCount > 0`
 
 ### 5. Solicitacoes de Servico (SS)
 - Qualquer usuario logado pode abrir solicitacao
 - Status iniciais: `Pendente`
 - `SUPER_ADMIN` e `ADMIN` podem aprovar ou rejeitar
 - Rejeicao exige motivo
-- Aprovacao pode gerar OS automaticamente
+- Aprovacao pode gerar OS atraves de um formulario guiado (`WorkOrderFormModal` em modo `inPage` no painel direito de `/requests`) pre-preenchido com `description`, `assetId`, `priority`, `dueDate` e `sourceRequestId` da SS; nao existe mais geracao "1-clique" silenciosa
+- O painel de detalhe da SS deve exibir todos os campos do cadastro (incluindo `Bem`/ativo) e tambem os dados de execucao quando a OS vinculada ja foi finalizada (datas de inicio/fim, anotacoes, fotos antes/depois)
+- A SS pode gerar uma RAF diretamente, sem precisar passar por OS, atraves do botao `Abrir RAF` no painel de detalhe; o botao so fica disponivel quando a SS esta `APPROVED` e ainda nao possui RAF vinculada
 - O menu deve exibir badge de pendencias para perfis autorizados
 
 ### 6. Gestao de Ativos
@@ -299,8 +306,12 @@ Interacao:
 
 ### 13. RAF
 - Modulo de analise de falha com `5 Porques`, testes de hipotese e plano de acao
-- Acesso apenas para `SUPER_ADMIN` e `ADMIN`
+- Acesso para `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN` e `LIMITED_TECHNICIAN`; somente `SUPER_ADMIN` e `ADMIN` podem excluir RAFs
 - Numero do RAF deve ser unico
+- A RAF pode nascer a partir de uma OS (vinculo via `workOrderId`) ou diretamente a partir de uma SS aprovada (vinculo via `requestId`); os dois caminhos sao mutuamente exclusivos por registro
+- Quando a RAF e gerada via SS, o sistema usa a rota `POST /api/requests/[id]/generate-raf`; a SS continua com status `APPROVED` apos a geracao e o vinculo SS<->RAF e exibido no painel de detalhe da SS e na propria tela de RAFs
+- O numero da RAF e gerado automaticamente; quando a origem e a SS, `area` e `equipment` podem permanecer em branco no formulario porque sao herdados implicitamente do contexto do ativo da SS
+- A listagem de RAFs deve tolerar registros sem OS, exibindo a coluna `Origem` com badge `OS` ou `SS` conforme o vinculo, e usar o ativo da SS como fallback nos campos derivados quando a OS nao existir
 - Criacao e edicao pela tela devem persistir com sucesso no contexto da empresa ativa, sem falhar por campos tecnicos de auditoria
 
 ### 14. KPI
@@ -314,12 +325,15 @@ Indicadores principais:
 - MTTR
 - Disponibilidade
 - PMC
+- Taxa de Reprogramacao
 - Custo por ativo
 - Reducao de custo
 
 Regras:
 - Filtro por periodo
 - Valores monetarios formatados em `R$`
+- `Taxa de Reprogramacao` mede o percentual de OSs que foram reprogramadas pelo menos uma vez (`rescheduleCount > 0`) sobre o total de OSs no periodo; meta de referencia abaixo de 10%
+- `Taxa de Reprogramacao` e independente do PMC: o PMC continua medindo cumprimento do plano sem penalizar reprogramacao, e a Taxa de Reprogramacao expoe separadamente a frequencia de adiamentos
 
 ### 15. Painel Administrativo
 - Exclusivo do `SUPER_ADMIN`
@@ -377,10 +391,10 @@ Regras:
 - `Location` e hierarquica; localizacoes raiz representam unidades e os demais locais ficam abaixo delas
 - `Asset` e hierarquico, pode ter subativos, anexos, pecas, OS relacionadas, solicitacoes relacionadas, contador, criticidade GUT e imagem
 - `Team` agrupa tecnicos para atribuicao de ativos e ordens de servico
-- `Request` nasce como solicitacao, comeca em `Pendente`, pode ser aprovada ou rejeitada e, quando aprovada, pode gerar uma `WorkOrder`
+- `Request` nasce como solicitacao, comeca em `Pendente`, pode ser aprovada ou rejeitada e, quando aprovada, pode gerar uma `WorkOrder` ou uma `FailureAnalysisReport` (RAF) diretamente
 - `WorkOrder` recebe numero interno `MAN-XXXXXX`, pode guardar numero externo do ERP/TOTVS e suporta checklist, tempos, custos, recursos, anexos e fotos antes/depois
 - `MaintenancePlan` pode ser padrao por familia de ativos ou especifico por ativo; planos ativos geram OS automaticamente quando vencidos
-- `RAF` e um registro de analise de falha com numero unico e plano de acao
+- `RAF` (`FailureAnalysisReport`) e um registro de analise de falha com numero unico e plano de acao; pode estar vinculada a uma `WorkOrder` (`workOrderId`) ou diretamente a uma `Request` (`requestId`), sendo os dois vinculos mutuamente exclusivos por registro
 - `Notification` precisa suportar badge de pendencias e historico de leitura
 - Uploads de arquivos e imagens devem ser armazenados via Cloudinary e associados a OS, solicitacoes, ativos e execucao
 - Campos de integracao com TOTVS/Protheus tendem a usar prefixo `protheusCode`

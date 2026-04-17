@@ -119,6 +119,7 @@ export default function GEPPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const filteredVariables = selectedSector === 'ALL' ? ALL_VARIABLES_LIST : ALL_VARIABLES_LIST.filter(v => v.sector === selectedSector);
@@ -199,6 +200,7 @@ export default function GEPPage() {
       const sectorVars = filteredVariables.slice(0, 5).map(v => v.key);
       setSelectedVariables(sectorVars);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSector, isInitialLoad]);
 
   const loadData = async () => {
@@ -260,9 +262,9 @@ export default function GEPPage() {
   const hasZeroHour = gepData.some(d => d.time === '00:00');
   if (!hasZeroHour && gepData.length === 23) {
     // Adicionar 00:00 com valores nulos
-    const zeroHourRow: any = { 
-      time: '00:00', 
-      date: new Date(new Date(selectedDate).getTime() + 86400000).toISOString().split('T')[0] 
+    const zeroHourRow: any = {
+      time: '00:00',
+      date: new Date(new Date(selectedDate).getTime() + 86400000).toISOString().split('T')[0]
     };
     // Copiar todas as variáveis com valor 0
     Object.keys(gepData[0] || {}).forEach(key => {
@@ -326,7 +328,7 @@ export default function GEPPage() {
   // - Turno D: 19h, 20h, 21h, 22h, 23h, 00h (do dia seguinte)
   
   const groupedByDateAndShift: Array<{ date: string; shift: 'A' | 'B' | 'C' | 'D'; data: any[]; error?: string }> = [];
-  
+
   // Organizar por turno
   const shiftA: any[] = [];
   const shiftB: any[] = [];
@@ -719,10 +721,10 @@ export default function GEPPage() {
                           </TableHead>
                           {selectedVariables.map(varKey => {
                             const varInfo = getVariableInfo(varKey, selectedSector);
-                            const isTotalizer = isTotalizerVariable(varKey) || isTotalizerVariable(varInfo.name);
+                            const _isTotalizer = isTotalizerVariable(varKey) || isTotalizerVariable(varInfo.name);
                             return (
-                              <TableHead 
-                                key={varKey} 
+                              <TableHead
+                                key={varKey}
                                 className="px-4 py-3 text-right font-medium text-muted-foreground cursor-pointer hover:bg-muted"
                                 onClick={() => alternarOrdenacao(varKey)}
                               >
@@ -798,7 +800,7 @@ export default function GEPPage() {
         ) : (
           // Visualização por Turnos - dados separados por turno
           <div className="space-y-4">
-            {groupedByDateAndShift.map((group, groupIdx) => {
+            {groupedByDateAndShift.map((group, _groupIdx) => {
               const { date, shift, data: shiftData, error } = group;
               const dateFormatted = new Date(date).toLocaleDateString('pt-BR');
               const ordenacaoAtual = ordenacaoTurno[shift] || { campo: 'time', direcao: 'asc' };

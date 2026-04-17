@@ -54,7 +54,13 @@ export async function POST(req: NextRequest) {
 
     // Processar linhas do arquivo
     const lines = fileContent.split('\n').filter((line: string) => line.trim());
-    const readings: any[] = [];
+    const readings: Array<{
+      id: string
+      variableId: string
+      timestamp: string
+      value: number
+      companyId: string
+    }> = [];
 
     for (const line of lines) {
       const values = line.split(';');

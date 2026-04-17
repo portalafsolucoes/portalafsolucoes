@@ -41,6 +41,7 @@ export default function EditPersonPage() {
       fetchLocations()
       fetchJobTitles()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const fetchUser = async () => {

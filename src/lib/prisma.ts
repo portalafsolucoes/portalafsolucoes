@@ -8,7 +8,7 @@ import { supabase } from './supabase'
 // Isso permite que o código existente continue funcionando
 // enquanto migramos gradualmente para Supabase
 
-export const prisma = supabase as any
+export const prisma = supabase as unknown as typeof supabase & Record<string, unknown>
 
 // Aviso para desenvolvedores
 console.warn(

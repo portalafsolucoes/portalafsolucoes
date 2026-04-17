@@ -43,6 +43,7 @@ export default function StandardMaintenancePlanPage() {
     if (!hasPermission(role as UserRole, 'maintenance-plan', 'view')) {
       router.push('/dashboard')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, role])
 
   useEffect(() => {

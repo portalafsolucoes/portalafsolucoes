@@ -51,13 +51,13 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
-    const result: any[] = []
+    const result: Record<string, unknown>[] = []
 
     for (const resource of (resources || [])) {
-      const calendar = resource.calendar as any
+      const calendar = resource.calendar as { name?: string; workDays?: unknown } | null
       const workDays = calendar ? parseWorkDays(calendar.workDays) : null
 
-      const entry: any = {
+      const entry: Record<string, unknown> = {
         resourceId: resource.id,
         resourceName: resource.name,
         hasCalendar: !!workDays,

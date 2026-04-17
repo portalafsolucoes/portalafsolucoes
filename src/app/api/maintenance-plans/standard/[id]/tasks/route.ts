@@ -44,10 +44,21 @@ export async function GET(
     if (error) throw error
 
     // Enriquecer recursos com dados de calendário
-    const enrichedTasks = (tasks || []).map((task: any) => ({
+    type TaskResource = {
+      resource?: {
+        id: string
+        name: string
+        type: string
+        unit: string
+        unitCost: number
+        calendarId: string | null
+        calendar?: { name?: string; workDays?: unknown } | null
+      } | null
+    }
+    const enrichedTasks = (tasks || []).map((task: Record<string, unknown> & { resources?: TaskResource[] }) => ({
       ...task,
-      resources: (task.resources || []).map((tr: any) => {
-        const resource = tr.resource as any
+      resources: (task.resources || []).map((tr: TaskResource) => {
+        const resource = tr.resource
         const workDays = resource?.calendar?.workDays ? parseWorkDays(resource.calendar.workDays) : null
         return {
           ...tr,
@@ -123,7 +134,7 @@ export async function POST(
 
       // Inserir etapas
       if (task.steps && task.steps.length > 0) {
-        const stepsToInsert = task.steps.map((s: any, j: number) => ({
+        const stepsToInsert = task.steps.map((s: { stepId: string; order?: number }, j: number) => ({
           id: generateId(),
           taskId: newTask.id,
           stepId: s.stepId,
@@ -135,7 +146,17 @@ export async function POST(
 
       // Inserir recursos
       if (task.resources && task.resources.length > 0) {
-        const resourcesToInsert = task.resources.map((r: any) => ({
+        const resourcesToInsert = task.resources.map((r: {
+          resourceType?: string
+          resourceId?: string | null
+          jobTitleId?: string | null
+          userId?: string | null
+          resourceCount?: number
+          quantity?: number
+          hours?: number
+          unit?: string
+          generatesReserve?: boolean
+        }) => ({
           id: generateId(),
           taskId: newTask.id,
           resourceType: r.resourceType || 'MATERIAL',

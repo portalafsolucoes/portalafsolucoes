@@ -11,9 +11,10 @@ import { Input } from '@/components/ui/Input'
 export default function NewRequestPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [assets, setAssets] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
-  const [teams, setTeams] = useState<any[]>([])
+  type LookupOption = { id: string; name: string }
+  const [assets, setAssets] = useState<LookupOption[]>([])
+  const [locations, setLocations] = useState<LookupOption[]>([])
+  const [teams, setTeams] = useState<LookupOption[]>([])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -69,7 +70,7 @@ export default function NewRequestPage() {
         const data = await res.json()
         alert(data.error || 'Erro ao criar solicitação')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)

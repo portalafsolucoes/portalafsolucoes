@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
       .select(summary
         ? `
             id, customId, externalId, internalId, systemStatus, title, description,
-            priority, status, dueDate, dueMeterReading, createdAt, assignedToId,
+            priority, status, dueDate, rescheduledDate, rescheduleCount,
+            dueMeterReading, createdAt, assignedToId,
             maintenancePlanExecId,
             assetMaintenancePlanId,
             asset:Asset(name, tag, protheusCode),
@@ -162,7 +163,8 @@ export async function POST(request: NextRequest) {
       estimatedDuration,
       serviceTypeId,
       maintenanceAreaId,
-      toleranceDays
+      toleranceDays,
+      sourceRequestId
     } = body
     const now = new Date().toISOString()
 
@@ -174,6 +176,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Converter strings vazias para undefined
+    const cleanSourceRequestId = sourceRequestId && typeof sourceRequestId === 'string' && sourceRequestId.trim() ? sourceRequestId.trim() : undefined
     const cleanAssetId = assetId && assetId.trim() ? assetId : undefined
     const cleanLocationId = locationId && locationId.trim() ? locationId : undefined
     const cleanCategoryId = categoryId && categoryId.trim() ? categoryId : undefined
@@ -184,6 +187,37 @@ export async function POST(request: NextRequest) {
     const cleanAssignedTeamIds = Array.isArray(assignedTeamIds) && assignedTeamIds.length > 0 
       ? assignedTeamIds.filter((id: string) => id && id.trim()) 
       : undefined
+
+    // Validar SS de origem (quando OS for criada via "Emitir OS" a partir de uma solicitacao)
+    let sourceRequest: { id: string; status: string; workOrderId: string | null; companyId: string } | null = null
+    if (cleanSourceRequestId) {
+      const { data: req } = await supabase
+        .from('Request')
+        .select('id, status, workOrderId, companyId')
+        .eq('id', cleanSourceRequestId)
+        .eq('companyId', session.companyId)
+        .single()
+
+      if (!req) {
+        return NextResponse.json(
+          { error: 'Solicitação de origem não encontrada' },
+          { status: 404 }
+        )
+      }
+      if (req.status !== 'APPROVED') {
+        return NextResponse.json(
+          { error: 'Apenas solicitações aprovadas podem gerar OS' },
+          { status: 400 }
+        )
+      }
+      if (req.workOrderId) {
+        return NextResponse.json(
+          { error: 'Esta solicitação já possui OS vinculada' },
+          { status: 409 }
+        )
+      }
+      sourceRequest = req
+    }
 
     // Validar externalId fornecido ou gerar sequencial
     let processedExternalId: string
@@ -209,25 +243,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar se as equipes existem antes de tentar conectá-las
-    let validTeamIds: string[] = []
+    let _validTeamIds: string[] = []
     if (cleanAssignedTeamIds && cleanAssignedTeamIds.length > 0) {
       const { data: existingTeams } = await supabase
         .from('Team')
         .select('id')
         .in('id', cleanAssignedTeamIds)
         .eq('companyId', session.companyId)
-      validTeamIds = existingTeams?.map((team: any) => team.id) || []
+      _validTeamIds = existingTeams?.map((team: { id: string }) => team.id) || []
     }
 
     // Validar se os usuários existem antes de tentar conectá-los
-    let validUserIds: string[] = []
+    let _validUserIds: string[] = []
     if (cleanAssignedUserIds && cleanAssignedUserIds.length > 0) {
       const { data: existingUsers } = await supabase
         .from('User')
         .select('id')
         .in('id', cleanAssignedUserIds)
         .eq('companyId', session.companyId)
-      validUserIds = existingUsers?.map((user: any) => user.id) || []
+      _validUserIds = existingUsers?.map((user: { id: string }) => user.id) || []
     }
 
     // Validar assignedToId (técnico específico)
@@ -341,6 +375,7 @@ export async function POST(request: NextRequest) {
         frequencyValue: frequencyValue ? parseInt(frequencyValue) : null,
         nextExecutionDate: nextExecutionDate ? nextExecutionDate.toISOString() : null,
         estimatedDuration: estimatedDuration ? Number(estimatedDuration) : null,
+        sourceRequestId: sourceRequest?.id || null,
         createdAt: now,
         updatedAt: now
       })
@@ -352,9 +387,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create work order' }, { status: 500 })
     }
 
+    // Vincular SS de origem a OS recem criada
+    if (sourceRequest) {
+      await supabase
+        .from('Request')
+        .update({
+          workOrderId: workOrder.id,
+          convertToWorkOrder: true,
+          updatedAt: now,
+        })
+        .eq('id', sourceRequest.id)
+    }
+
     // Criar tasks se fornecidas
     if (tasks && tasks.length > 0) {
-      const taskInserts = tasks.map((task: any, index: number) => ({
+      const taskInserts = tasks.map((task: {
+        label: string
+        notes?: string | null
+        order?: number
+        executionTime?: number | null
+        steps?: unknown
+      }, index: number) => ({
         id: generateId(),
         label: task.label,
         notes: task.notes || null,
@@ -371,7 +424,15 @@ export async function POST(request: NextRequest) {
     // Criar recursos se fornecidos
     const { resources } = body
     if (Array.isArray(resources) && resources.length > 0) {
-      const resourceInserts = resources.map((r: any) => ({
+      const resourceInserts = resources.map((r: {
+        resourceType: string
+        resourceId?: string | null
+        jobTitleId?: string | null
+        userId?: string | null
+        quantity?: number | null
+        hours?: number | null
+        unit?: string | null
+      }) => ({
         id: generateId(),
         workOrderId: workOrder.id,
         resourceType: r.resourceType,

@@ -22,7 +22,7 @@ export async function GET() {
       availableDates: formatted,
       totalDates: formatted.length
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao listar arquivos GEP:', error);
     return NextResponse.json(
       { error: 'Erro ao listar arquivos' },

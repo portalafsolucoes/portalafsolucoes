@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { isAdminRole } from '@/lib/user-roles'
+import { checkApiPermission } from '@/lib/permissions'
 
 // GET - Buscar RAF por ID
 export async function GET(
@@ -12,6 +12,11 @@ export async function GET(
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'rafs', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { id } = await params
@@ -31,6 +36,13 @@ export async function GET(
           maintenanceArea:MaintenanceArea(id, name, code),
           serviceType:ServiceType(id, code, name),
           asset:Asset(id, name, tag)
+        ),
+        request:Request!requestId(
+          id,
+          requestNumber,
+          title,
+          status,
+          asset:Asset(id, name, tag)
         )
       `)
       .eq('id', id)
@@ -44,8 +56,8 @@ export async function GET(
     }
 
     return NextResponse.json({ data: raf })
-  } catch (error: any) {
-    if (error?.code === 'PGRST116') {
+  } catch (error: unknown) {
+    if ((error as { code?: string })?.code === 'PGRST116') {
       return NextResponse.json({ error: 'RAF não encontrado' }, { status: 404 })
     }
     console.error('Error fetching RAF:', error)
@@ -64,14 +76,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    if (!isAdminRole(session)) {
-      return NextResponse.json({ error: 'Apenas administradores podem editar RAFs' }, { status: 403 })
+    const permError = checkApiPermission(session, 'rafs', 'PUT')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { id } = await params
     const body = await request.json()
 
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       updatedAt: new Date().toISOString()
     }
 
@@ -108,6 +121,13 @@ export async function PUT(
           maintenanceArea:MaintenanceArea(id, name, code),
           serviceType:ServiceType(id, code, name),
           asset:Asset(id, name, tag)
+        ),
+        request:Request!requestId(
+          id,
+          requestNumber,
+          title,
+          status,
+          asset:Asset(id, name, tag)
         )
       `)
       .single()
@@ -132,8 +152,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    if (!isAdminRole(session)) {
-      return NextResponse.json({ error: 'Apenas administradores podem deletar RAFs' }, { status: 403 })
+    const permError = checkApiPermission(session, 'rafs', 'DELETE')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { id } = await params

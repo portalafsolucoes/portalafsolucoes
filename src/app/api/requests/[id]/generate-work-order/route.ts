@@ -86,7 +86,8 @@ export async function POST(
 
     // Copiar arquivos se existirem
     if (ss.files && ss.files.length > 0) {
-      const fileInserts = ss.files.map((file: any) => ({
+      type RequestFileRow = { name: string; url: string; type?: string | null; size?: number | null }
+      const fileInserts = (ss.files as RequestFileRow[]).map((file) => ({
         id: generateId(),
         name: file.name,
         url: file.url,

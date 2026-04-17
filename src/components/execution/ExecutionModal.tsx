@@ -73,7 +73,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
         }
       }
       reader.readAsDataURL(file)
-    } catch (error) {
+    } catch {
       alert('Erro ao fazer upload da imagem')
     } finally {
       if (type === 'before') setUploadingBefore(false)
@@ -106,7 +106,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
         const data = await res.json()
         alert(data.error || 'Erro ao iniciar execucao')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)
@@ -147,7 +147,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
         const data = await res.json()
         alert(data.error || 'Erro ao completar execucao')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)
@@ -205,6 +205,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
                   <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Foto ANTES
                   </label>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={beforePhoto}
                     alt="Antes"
@@ -217,6 +218,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
                   <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Foto DEPOIS
                   </label>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={afterPhoto}
                     alt="Depois"
@@ -255,6 +257,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
                 <div className="border-2 border-dashed border-border rounded-[4px] p-6 text-center bg-card">
                   {beforePhoto ? (
                     <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={beforePhoto} alt="Antes" className="max-h-64 mx-auto rounded-[4px]" />
                       <Button
                         size="sm"
@@ -329,6 +332,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
                   <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     Foto ANTES (registrada)
                   </label>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={beforePhoto}
                     alt="Antes"
@@ -345,6 +349,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
                 <div className="border-2 border-dashed border-border rounded-[4px] p-6 text-center bg-card">
                   {afterPhoto ? (
                     <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={afterPhoto} alt="Depois" className="max-h-64 mx-auto rounded-[4px]" />
                       <Button
                         size="sm"

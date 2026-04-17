@@ -24,7 +24,7 @@ export async function copyPlanResourcesToWorkOrder(
 
     const taskIds = tasks.map(t => t.id)
     const execTimeByTask = new Map<string, number | null>(
-      tasks.map((t: any) => [t.id, t.executionTime ?? null])
+      tasks.map((t: { id: string; executionTime: number | null }) => [t.id, t.executionTime ?? null])
     )
 
     const { data: planResources } = await supabase
@@ -34,7 +34,16 @@ export async function copyPlanResourcesToWorkOrder(
 
     if (!planResources || planResources.length === 0) return
 
-    const woResources = planResources.map((r: any) => {
+    const woResources = planResources.map((r: {
+      taskId: string
+      resourceType: string | null
+      resourceId: string | null
+      jobTitleId: string | null
+      userId: string | null
+      resourceCount: number | null
+      hours: number | null
+      unit: string | null
+    }) => {
       const type = r.resourceType || 'MATERIAL'
       const isPersonOrTool = type === 'SPECIALTY' || type === 'LABOR' || type === 'TOOL'
       const execTime = execTimeByTask.get(r.taskId) ?? null
@@ -92,25 +101,36 @@ export async function copyPlanTasksToWorkOrder(
       .order('order', { ascending: true })
 
     // Agrupar etapas por taskId
-    const stepsByTask = new Map<string, any[]>()
-    for (const ts of (taskSteps || [])) {
+    type TaskStep = {
+      taskId: string
+      order: number
+      step?: {
+        id?: string
+        name?: string
+        optionType?: string
+        options?: Array<{ id: string; label: string; order: number }>
+      } | null
+    }
+    const stepsByTask = new Map<string, TaskStep[]>()
+    for (const ts of ((taskSteps || []) as unknown as TaskStep[])) {
       const list = stepsByTask.get(ts.taskId) || []
       list.push(ts)
       stepsByTask.set(ts.taskId, list)
     }
 
     const now = new Date().toISOString()
-    const woTasks = tasks.map((task: any) => {
+    const woTasks = tasks.map((task: { id: string; description: string; order: number; executionTime: number | null }) => {
       const rawSteps = stepsByTask.get(task.id) || []
       const steps = rawSteps
-        .sort((a: any, b: any) => a.order - b.order)
-        .map((ts: any) => ({
+        .sort((a, b) => a.order - b.order)
+        .map((ts) => ({
           stepId: ts.step?.id || '',
           stepName: ts.step?.name || '',
           optionType: ts.step?.optionType || 'NONE',
           options: (ts.step?.options || [])
-            .sort((a: any, b: any) => a.order - b.order)
-            .map((o: any) => ({ id: o.id, label: o.label, order: o.order })),
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((o) => ({ id: o.id, label: o.label, order: o.order })),
         }))
 
       return {
@@ -151,7 +171,13 @@ export async function copyWorkOrderTasks(
     if (!tasks || tasks.length === 0) return
 
     const now = new Date().toISOString()
-    const newTasks = tasks.map((t: any) => ({
+    const newTasks = tasks.map((t: {
+      label: string
+      notes: string | null
+      order: number
+      executionTime: number | null
+      steps: unknown
+    }) => ({
       id: generateId(),
       label: t.label,
       notes: t.notes || null,
@@ -186,7 +212,15 @@ export async function copyWorkOrderResources(
 
     if (!resources || resources.length === 0) return
 
-    const newResources = resources.map((r: any) => ({
+    const newResources = resources.map((r: {
+      resourceType: string
+      resourceId: string | null
+      jobTitleId: string | null
+      userId: string | null
+      quantity: number | null
+      hours: number | null
+      unit: string | null
+    }) => ({
       id: generateId(),
       workOrderId: targetWorkOrderId,
       resourceType: r.resourceType,

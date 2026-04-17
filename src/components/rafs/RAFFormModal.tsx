@@ -1,19 +1,38 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+
+export interface RAFFormInitialValues {
+  failureDescription?: string | null
+  occurrenceDate?: string | null
+  panelOperator?: string | null
+  area?: string | null
+  equipment?: string | null
+}
 
 interface RAFFormModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
   inPage?: boolean
+  /** Quando informado, a RAF e gerada vinculada a essa SS via /api/requests/[id]/generate-raf */
+  sourceRequestId?: string | null
+  initialValues?: RAFFormInitialValues
 }
 
-export function RAFFormModal({ isOpen, onClose, onSuccess, inPage = false }: RAFFormModalProps) {
+export function RAFFormModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  inPage = false,
+  sourceRequestId = null,
+  initialValues,
+}: RAFFormModalProps) {
+  const fromRequest = !!sourceRequestId
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     rafNumber: '',
@@ -31,6 +50,20 @@ export function RAFFormModal({ isOpen, onClose, onSuccess, inPage = false }: RAF
     failureType: 'RANDOM' as 'RANDOM' | 'REPETITIVE'
   })
 
+  useEffect(() => {
+    if (!initialValues) return
+    setFormData((prev) => ({
+      ...prev,
+      failureDescription: initialValues.failureDescription ?? prev.failureDescription,
+      occurrenceDate: initialValues.occurrenceDate
+        ? initialValues.occurrenceDate.slice(0, 10)
+        : prev.occurrenceDate,
+      panelOperator: initialValues.panelOperator ?? prev.panelOperator,
+      area: initialValues.area ?? prev.area,
+      equipment: initialValues.equipment ?? prev.equipment,
+    }))
+  }, [initialValues])
+
   const [fiveWhys, setFiveWhys] = useState<string[]>(['', '', '', '', ''])
   const [hypothesisTests, setHypothesisTests] = useState<Array<{description: string, possible: string, evidence: string}>>([
     { description: '', possible: '', evidence: '' }
@@ -44,7 +77,11 @@ export function RAFFormModal({ isOpen, onClose, onSuccess, inPage = false }: RAF
     setLoading(true)
 
     try {
-      const res = await fetch('/api/rafs', {
+      const endpoint = fromRequest
+        ? `/api/requests/${sourceRequestId}/generate-raf`
+        : '/api/rafs'
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,19 +115,31 @@ export function RAFFormModal({ isOpen, onClose, onSuccess, inPage = false }: RAF
         <div className="p-4 space-y-3">
 
           <ModalSection title="Identificação">
+            {fromRequest && (
+              <div className="mb-3 flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                <Icon name="info" className="text-base" />
+                Esta RAF será vinculada à solicitação de origem. O número da RAF, área e equipamento são herdados automaticamente.
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nº RAF *</label>
-                <input type="text" required value={formData.rafNumber} onChange={(e) => setFormData({...formData, rafNumber: e.target.value})} className={inputClass} placeholder="FQ13" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área *</label>
-                <input type="text" required value={formData.area} onChange={(e) => setFormData({...formData, area: e.target.value})} className={inputClass} placeholder="MOAGEM 2" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Equipamento *</label>
-                <input type="text" required value={formData.equipment} onChange={(e) => setFormData({...formData, equipment: e.target.value})} className={inputClass} placeholder="Sensor de Temperatura" />
-              </div>
+              {!fromRequest && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nº RAF *</label>
+                  <input type="text" required value={formData.rafNumber} onChange={(e) => setFormData({...formData, rafNumber: e.target.value})} className={inputClass} placeholder="FQ13" />
+                </div>
+              )}
+              {!fromRequest && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Área *</label>
+                  <input type="text" required value={formData.area} onChange={(e) => setFormData({...formData, area: e.target.value})} className={inputClass} placeholder="MOAGEM 2" />
+                </div>
+              )}
+              {!fromRequest && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Equipamento *</label>
+                  <input type="text" required value={formData.equipment} onChange={(e) => setFormData({...formData, equipment: e.target.value})} className={inputClass} placeholder="Sensor de Temperatura" />
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data *</label>
                 <input type="date" required value={formData.occurrenceDate} onChange={(e) => setFormData({...formData, occurrenceDate: e.target.value})} className={inputClass} />

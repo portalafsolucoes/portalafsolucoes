@@ -6,12 +6,13 @@ interface PanelActionButtonsProps {
   onEdit?: () => void
   onPrint?: () => void
   onGenerateWorkOrder?: () => void
+  onGenerateRaf?: () => void
   onFinalize?: () => void
   onDelete?: () => void
 }
 
-export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onFinalize, onDelete }: PanelActionButtonsProps) {
-  if (!onEdit && !onPrint && !onGenerateWorkOrder && !onFinalize && !onDelete) {
+export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGenerateRaf, onFinalize, onDelete }: PanelActionButtonsProps) {
+  if (!onEdit && !onPrint && !onGenerateWorkOrder && !onGenerateRaf && !onFinalize && !onDelete) {
     return null
   }
 
@@ -45,6 +46,16 @@ export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onFin
         >
           <Icon name="assignment" className="text-base" />
           Emitir OS
+        </button>
+      )}
+      {onGenerateRaf && (
+        <button
+          type="button"
+          onClick={onGenerateRaf}
+          className="bg-amber-600 text-white hover:bg-amber-500 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
+        >
+          <Icon name="science" className="text-base" />
+          Abrir RAF
         </button>
       )}
       {onFinalize && (

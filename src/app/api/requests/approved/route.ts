@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { isAdminRole } from '@/lib/user-roles'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) {

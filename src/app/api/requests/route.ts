@@ -165,7 +165,8 @@ export async function POST(request: NextRequest) {
 
     // Insert files separately if provided
     if (files.length > 0 && maintenanceRequest) {
-      const fileInserts = files.map((file: any) => ({
+      type RequestFileRow = { name: string; url: string; type?: string | null; size?: number | null }
+      const fileInserts = (files as RequestFileRow[]).map((file) => ({
         id: generateId(),
         name: file.name,
         url: file.url,

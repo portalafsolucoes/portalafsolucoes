@@ -234,6 +234,7 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
                       onClick={() => setImageViewer({ url: file.url, name: file.name })}
                       className="block w-full text-left"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={file.url}
                         alt={file.name}

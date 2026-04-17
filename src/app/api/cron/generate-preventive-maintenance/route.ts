@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
 
         // Copiar relações many-to-many para a nova OS
         if (assignedTeamLinks && assignedTeamLinks.length > 0) {
-          const teamLinks = assignedTeamLinks.map((link: any) => ({
+          const teamLinks = assignedTeamLinks.map((link: { B: string }) => ({
             A: newWorkOrder.id,
             B: link.B
           }))
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (assignedUserLinks && assignedUserLinks.length > 0) {
-          const userLinks = assignedUserLinks.map((link: any) => ({
+          const userLinks = assignedUserLinks.map((link: { B: string }) => ({
             A: newWorkOrder.id,
             B: link.B
           }))

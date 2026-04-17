@@ -64,7 +64,7 @@ function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function AssetAttachments({ assetId, assetName, readOnly = false }: AssetAttachmentsProps) {
+export default function AssetAttachments({ assetId, assetName: _assetName, readOnly = false }: AssetAttachmentsProps) {
   const [attachments, setAttachments] = useState<AssetAttachment[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -116,6 +116,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
     if (assetId) {
       fetchAttachments()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assetId, filterCategory, searchQuery])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,7 +351,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {categoryAttachments.map(attachment => {
                       const isImage = attachment.mimeType?.startsWith('image/')
-                      const isPDF = attachment.mimeType === 'application/pdf'
+                      const _isPDF = attachment.mimeType === 'application/pdf'
 
                       return (
                         <div
@@ -361,6 +362,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
                           {/* Preview or Icon */}
                           <div className="mb-3">
                             {isImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={attachment.url}
                                 alt={attachment.name}
@@ -591,6 +593,7 @@ export default function AssetAttachments({ assetId, assetName, readOnly = false 
           <div className="p-4">
             {/* Preview */}
             {selectedAttachment.mimeType?.startsWith('image/') ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={selectedAttachment.url}
                 alt={selectedAttachment.name}

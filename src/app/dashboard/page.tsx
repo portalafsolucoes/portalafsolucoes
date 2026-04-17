@@ -39,6 +39,7 @@ export default function DashboardPage() {
     } else {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user])
 
   const loadStats = async () => {
@@ -145,7 +146,7 @@ export default function DashboardPage() {
                   <div className="bg-card rounded-[4px] ambient-shadow p-6">
                     <h3 className="text-lg font-semibold text-foreground mb-4">Ordens de Serviço Recentes</h3>
                     <p className="text-sm text-muted-foreground">
-                      Nenhuma ordem de serviço encontrada. Clique em "Ordens de Serviço" no menu para criar uma.
+                      Nenhuma ordem de serviço encontrada. Clique em &quot;Ordens de Serviço&quot; no menu para criar uma.
                     </p>
                   </div>
 

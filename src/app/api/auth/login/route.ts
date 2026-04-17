@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         unitIds,
       }
     })
-  } catch (error) {
+  } catch {
     console.error('Login error')
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

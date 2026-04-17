@@ -41,7 +41,11 @@ export async function GET(
         maintenancePlanExec:MaintenancePlanExecution(id, planNumber),
         serviceType:ServiceType(id, code, name),
         maintenanceArea:MaintenanceArea(id, name, code),
-        raf:FailureAnalysisReport(id, rafNumber)
+        raf:FailureAnalysisReport(id, rafNumber),
+        rescheduleHistory:WorkOrderRescheduleHistory(
+          id, previousDate, newDate, previousStatus, wasOverdue, reason, createdAt,
+          user:User!userId(id, firstName, lastName)
+        )
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -65,7 +69,7 @@ export async function GET(
       .eq('A', id)
 
     if (teamLinks && teamLinks.length > 0) {
-      const teamIds = teamLinks.map((l: any) => l.B)
+      const teamIds = teamLinks.map((l: { B: string }) => l.B)
       const { data: teams } = await supabase
         .from('Team')
         .select('id, name')
@@ -163,7 +167,7 @@ export async function PATCH(
     }
 
     // Preparar dados de atualização
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       title: body.title,
       description: body.description,
       type: body.type,
@@ -242,14 +246,14 @@ export async function PATCH(
       .select('B')
       .eq('A', id)
 
-    let assignedUserDetails: any[] = []
+    let assignedUserDetails: Array<{ id: string; firstName: string; lastName: string; email: string }> = []
     if (assignedUsers && assignedUsers.length > 0) {
-      const userIds = assignedUsers.map((u: any) => u.B)
+      const userIds = assignedUsers.map((u: { B: string }) => u.B)
       const { data: users } = await supabase
         .from('User')
         .select('id, firstName, lastName, email')
         .in('id', userIds)
-      assignedUserDetails = users || []
+      assignedUserDetails = (users || []) as Array<{ id: string; firstName: string; lastName: string; email: string }>
     }
 
     return NextResponse.json({

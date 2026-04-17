@@ -106,7 +106,7 @@ export async function GET() {
 
   const availableUnits = isSuperAdminRole(session)
     ? unitsData || []
-    : (unitsData || []).map((uu: any) => uu.unit).filter(Boolean)
+    : ((unitsData || []) as unknown as Array<{ unit: unknown }>).map((uu) => uu.unit).filter(Boolean)
 
   return NextResponse.json({
     activeUnitId: user?.activeUnitId || null,

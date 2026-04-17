@@ -398,6 +398,7 @@ export default function PeopleTeamsPage() {
                               <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                   {user.image ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                       src={user.image}
                                       alt={`${user.firstName} ${user.lastName}`}
@@ -497,6 +498,7 @@ export default function PeopleTeamsPage() {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                       <div className="flex items-center">
                                         {user.image ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
                                           <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
                                         ) : (
                                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

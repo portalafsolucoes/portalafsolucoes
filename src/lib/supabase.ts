@@ -41,10 +41,10 @@ export const supabasePublic = createClient(
   }
 )
 
-export function handleSupabaseError(error: any) {
+export function handleSupabaseError(error: unknown) {
   console.error('Supabase error:', error)
   return {
-    error: error.message || 'Database error occurred',
+    error: (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Database error occurred',
     details: error,
   }
 }

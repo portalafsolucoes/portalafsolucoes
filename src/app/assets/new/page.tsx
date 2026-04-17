@@ -16,18 +16,44 @@ interface UploadedFile {
   type: string
 }
 
+interface LocationOption {
+  id: string
+  name: string
+}
+
+interface CategoryOption {
+  id: string
+  name: string
+}
+
+interface UserOption {
+  id: string
+  firstName?: string
+  lastName?: string
+}
+
+interface AssetOption {
+  id: string
+  name: string
+}
+
+interface ParentAsset {
+  id: string
+  name: string
+}
+
 export default function NewAssetPage() {
   const router = useRouter()
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
   const parentId = searchParams.get('parentId')
-  
+
   const [loading, setLoading] = useState(false)
-  const [locations, setLocations] = useState<any[]>([])
-  const [categories, setCategories] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
-  const [assets, setAssets] = useState<any[]>([])
+  const [locations, setLocations] = useState<LocationOption[]>([])
+  const [_categories, _setCategories] = useState<CategoryOption[]>([])
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [assets, setAssets] = useState<AssetOption[]>([])
   const [files, setFiles] = useState<UploadedFile[]>([])
-  const [parentAsset, setParentAsset] = useState<any>(null)
+  const [parentAsset, setParentAsset] = useState<ParentAsset | null>(null)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -43,6 +69,7 @@ export default function NewAssetPage() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadData = async () => {
@@ -102,7 +129,7 @@ export default function NewAssetPage() {
         const data = await res.json()
         alert(data.error || 'Erro ao criar ativo')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test } from '@playwright/test'
 import { skipScreenshotSuiteUnlessAuthorized } from './helpers/screenshotAuthorization'
 
 skipScreenshotSuiteUnlessAuthorized(test, 'tests/logo-size-final.spec.ts')
@@ -30,8 +30,8 @@ test.describe('Logo Size Final Test', () => {
     await page.waitForLoadState('networkidle')
     
     // Verificar se o texto está presente (case-sensitive)
-    const textoGestor = page.locator('text=Gestor de Manutenção Mizu')
-    const textoGMM = page.locator('text=(GMM)')
+    const _textoGestor = page.locator('text=Gestor de Manutenção Mizu')
+    const _textoGMM = page.locator('text=(GMM)')
     
     // Aguardar e verificar
     await page.waitForTimeout(2000)

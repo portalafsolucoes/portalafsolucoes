@@ -46,7 +46,7 @@ interface Asset {
 export default function TreePage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { canCreate, canEdit, canDelete } = usePermissions()
+  const { canCreate, canEdit: _canEdit, canDelete: _canDelete } = usePermissions()
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

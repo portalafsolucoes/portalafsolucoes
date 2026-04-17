@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { checkApiPermission } from '@/lib/permissions'
 
 // GET - Listar todos os RAFs
 export async function GET(request: NextRequest) {
@@ -8,6 +9,11 @@ export async function GET(request: NextRequest) {
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const permError = checkApiPermission(session, 'rafs', 'GET')
+    if (permError) {
+      return NextResponse.json({ error: permError }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -32,6 +38,12 @@ export async function GET(request: NextRequest) {
               osType,
               maintenanceArea:MaintenanceArea(id, name, code),
               asset:Asset(id, name, tag)
+            ),
+            request:Request!requestId(
+              id,
+              requestNumber,
+              title,
+              asset:Asset(id, name, tag)
             )
           `
           : `
@@ -46,6 +58,12 @@ export async function GET(request: NextRequest) {
               type,
               maintenanceArea:MaintenanceArea(id, name, code),
               serviceType:ServiceType(id, code, name),
+              asset:Asset(id, name, tag)
+            ),
+            request:Request!requestId(
+              id,
+              requestNumber,
+              title,
               asset:Asset(id, name, tag)
             )
           `

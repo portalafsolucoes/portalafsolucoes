@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Inserir itens (OSs programadas) se fornecidos
     if (items && Array.isArray(items) && items.length > 0) {
-      const itemsToInsert = items.map((item: any) => ({
+      const itemsToInsert = items.map((item: { workOrderId: string; scheduledDate: string }) => ({
         id: generateId(),
         scheduleId: schedule.id,
         workOrderId: item.workOrderId,

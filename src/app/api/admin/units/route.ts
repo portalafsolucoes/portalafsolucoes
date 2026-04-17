@@ -31,7 +31,7 @@ export async function GET() {
 
   // Contar membros (UserUnit) e ativos por unidade
   const enriched = await Promise.all(
-    (units || []).map(async (unit: any) => {
+    (units || []).map(async (unit: { id: string }) => {
       const [membersResult, assetsResult] = await Promise.all([
         supabase
           .from('UserUnit')

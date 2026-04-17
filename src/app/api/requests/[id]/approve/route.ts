@@ -111,7 +111,8 @@ export async function POST(
       
       // Copiar arquivos se existirem
       if (maintenanceRequest.files && maintenanceRequest.files.length > 0) {
-        const fileInserts = maintenanceRequest.files.map((file: any) => ({
+        type RequestFileRow = { name: string; url: string; type?: string | null; size?: number | null }
+        const fileInserts = (maintenanceRequest.files as RequestFileRow[]).map((file) => ({
           id: generateId(),
           name: file.name,
           url: file.url,
@@ -162,7 +163,7 @@ export async function POST(
         message: 'Solicitação aprovada com sucesso'
       })
     }
-  } catch (error) {
+  } catch {
     console.error('Approve request error')
     return NextResponse.json(
       { error: 'Internal server error' },

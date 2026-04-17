@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input'
 export default function NewLocationPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [locations, setLocations] = useState<any[]>([])
+  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -60,7 +60,7 @@ export default function NewLocationPage() {
         const data = await res.json()
         alert(data.error || 'Erro ao criar localização')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setLoading(false)

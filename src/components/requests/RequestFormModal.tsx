@@ -38,11 +38,23 @@ interface AssetHierarchy {
   children: AssetHierarchy[]
 }
 
+interface RequestEditPayload {
+  id: string
+  title?: string | null
+  description?: string | null
+  priority?: string | null
+  dueDate?: string | null
+  teamId?: string | null
+  assetId?: string | null
+  files?: Array<{ name: string; url: string; size?: number; type?: string }> | null
+  asset?: AssetOption | null
+}
+
 interface RequestFormModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
-  request?: any
+  request?: RequestEditPayload
   inPage?: boolean
 }
 
@@ -88,7 +100,12 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
           teamId: request.teamId || '',
           assetId: request.assetId || ''
         })
-        setFiles(request.files || [])
+        setFiles((request.files || []).map((f) => ({
+          name: f.name,
+          url: f.url,
+          size: f.size ?? 0,
+          type: f.type ?? '',
+        })))
         if (request.asset) {
           setSelectedAsset(request.asset)
           setAssetCodeSearch(request.asset.protheusCode || '')

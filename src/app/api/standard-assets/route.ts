@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     return NextResponse.json({ data: data || [] })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
@@ -91,8 +91,8 @@ export async function POST(request: NextRequest) {
     // Salvar características se fornecidas
     if (body.characteristics && Array.isArray(body.characteristics) && data) {
       const charRecords = body.characteristics
-        .filter((c: any) => c.characteristicId && c.value)
-        .map((c: any) => ({
+        .filter((c: { characteristicId?: string; value?: string }) => c.characteristicId && c.value)
+        .map((c: { characteristicId: string; value: string; unit?: string | null }) => ({
           id: generateId(),
           standardAssetId: data.id,
           characteristicId: c.characteristicId,
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ data }, { status: 201 })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

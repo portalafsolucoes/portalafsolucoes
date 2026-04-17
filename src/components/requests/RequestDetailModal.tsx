@@ -45,6 +45,11 @@ interface RequestAsset {
   parentAssetId?: string | null
 }
 
+interface LinkedRaf {
+  id: string
+  rafNumber?: string | null
+}
+
 interface RequestDetail {
   id: string
   requestNumber?: string | null
@@ -61,6 +66,29 @@ interface RequestDetail {
   files?: RequestFile[]
   asset?: RequestAsset | null
   generatedWorkOrder?: GeneratedWorkOrder | null
+  failureAnalysisReport?: LinkedRaf | null
+  executionStartedAt?: string | null
+  executionCompletedAt?: string | null
+  executionNotes?: string | null
+  beforePhotoUrl?: string | null
+  afterPhotoUrl?: string | null
+}
+
+interface GenerateWorkOrderPayload {
+  requestId: string
+  description: string
+  priority: string
+  dueDate?: string | null
+  assetId?: string | null
+  title: string
+}
+
+interface GenerateRafPayload {
+  requestId: string
+  failureDescription?: string | null
+  occurrenceDate?: string | null
+  area?: string | null
+  equipment?: string | null
 }
 
 interface RequestDetailModalProps {
@@ -71,7 +99,8 @@ interface RequestDetailModalProps {
   onEdit: (request: any) => void
   onDelete: (requestId: string) => void
   onFinalize?: () => void
-  onGenerateWorkOrder?: () => void
+  onGenerateWorkOrder?: (payload: GenerateWorkOrderPayload) => void
+  onGenerateRaf?: (payload: GenerateRafPayload) => void
   onPrint?: (requestId: string) => void
   inPage?: boolean
 }
@@ -173,6 +202,7 @@ export function RequestDetailModal({
   onDelete,
   onFinalize,
   onGenerateWorkOrder,
+  onGenerateRaf,
   onPrint,
   inPage = false,
 }: RequestDetailModalProps) {
@@ -181,7 +211,6 @@ export function RequestDetailModal({
   const [error, setError] = useState<string | null>(null)
   const [imageViewer, setImageViewer] = useState<{ url: string; name: string } | null>(null)
   const [finalizing, setFinalizing] = useState(false)
-  const [generatingWO, setGeneratingWO] = useState(false)
 
   const shouldLoad = inPage ? !!requestId : isOpen && !!requestId
 
@@ -294,24 +323,27 @@ export function RequestDetailModal({
     }
   }
 
-  const handleGenerateWorkOrder = async () => {
-    if (!request) return
-    if (!confirm('Deseja emitir uma Ordem de Servico a partir desta solicitacao?')) return
+  const handleGenerateWorkOrder = () => {
+    if (!request || !onGenerateWorkOrder) return
+    onGenerateWorkOrder({
+      requestId: request.id,
+      title: request.title,
+      description: request.description || request.title,
+      priority: request.priority,
+      dueDate: request.dueDate ?? null,
+      assetId: request.asset?.id ?? null,
+    })
+  }
 
-    setGeneratingWO(true)
-    try {
-      const res = await fetch(`/api/requests/${request.id}/generate-work-order`, { method: 'POST' })
-      if (res.ok) {
-        if (onGenerateWorkOrder) onGenerateWorkOrder()
-      } else {
-        const data = await res.json()
-        alert(data.error || 'Erro ao emitir OS')
-      }
-    } catch {
-      alert('Erro ao conectar ao servidor')
-    } finally {
-      setGeneratingWO(false)
-    }
+  const handleGenerateRaf = () => {
+    if (!request || !onGenerateRaf) return
+    onGenerateRaf({
+      requestId: request.id,
+      failureDescription: request.description || request.title,
+      occurrenceDate: request.createdAt ?? null,
+      area: null,
+      equipment: request.asset?.name ?? null,
+    })
   }
 
   const handlePrint = () => {
@@ -361,7 +393,8 @@ export function RequestDetailModal({
       <PanelActionButtons
         onEdit={request.status !== 'COMPLETED' ? handleEdit : undefined}
         onPrint={handlePrint}
-        onGenerateWorkOrder={request.status === 'APPROVED' && !request.workOrderId && !request.generatedWorkOrder && !generatingWO ? handleGenerateWorkOrder : undefined}
+        onGenerateWorkOrder={request.status === 'APPROVED' && !request.workOrderId && !request.generatedWorkOrder ? handleGenerateWorkOrder : undefined}
+        onGenerateRaf={onGenerateRaf && request.status === 'APPROVED' && !request.failureAnalysisReport ? handleGenerateRaf : undefined}
         onFinalize={request.status === 'APPROVED' && !finalizing ? handleFinalize : undefined}
         onDelete={request.status !== 'COMPLETED' ? handleDelete : undefined}
       />
@@ -436,9 +469,111 @@ export function RequestDetailModal({
                 }
               />
             )}
+            {request.failureAnalysisReport && (
+              <DetailField
+                label="RAF Vinculada"
+                className="sm:col-span-2"
+                value={
+                  <span className="font-semibold text-amber-700">
+                    {request.failureAnalysisReport.rafNumber || request.failureAnalysisReport.id.slice(0, 8)}
+                  </span>
+                }
+              />
+            )}
           </div>
         </div>
       </DetailSection>
+
+      {request.asset && (
+        <DetailSection title="Bem Associado" icon="inventory_2">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 px-1 sm:grid-cols-2">
+            <DetailField
+              label="Nome do Bem"
+              value={request.asset.name}
+              className="sm:col-span-2"
+            />
+            {request.asset.protheusCode && (
+              <DetailField
+                label="Código (Protheus)"
+                value={request.asset.protheusCode}
+              />
+            )}
+            {request.asset.tag && (
+              <DetailField
+                label="TAG"
+                value={request.asset.tag}
+              />
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {(request.executionStartedAt || request.executionCompletedAt || request.executionNotes || request.beforePhotoUrl || request.afterPhotoUrl) && (
+        <DetailSection title="Execução / Finalização" icon="task_alt">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 px-1 sm:grid-cols-2">
+              {request.executionStartedAt && (
+                <DetailField
+                  label="Início da Execução"
+                  value={formatDateTime(request.executionStartedAt)}
+                />
+              )}
+              {request.executionCompletedAt && (
+                <DetailField
+                  label="Conclusão da Execução"
+                  value={formatDateTime(request.executionCompletedAt)}
+                />
+              )}
+              {request.executionNotes && (
+                <DetailField
+                  label="Observações da Execução"
+                  value={request.executionNotes}
+                  className="sm:col-span-2"
+                />
+              )}
+            </div>
+
+            {(request.beforePhotoUrl || request.afterPhotoUrl) && (
+              <div className="grid grid-cols-1 gap-3 px-1 sm:grid-cols-2">
+                {request.beforePhotoUrl && (
+                  <div>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">Foto Antes</p>
+                    <button
+                      type="button"
+                      onClick={() => setImageViewer({ url: request.beforePhotoUrl!, name: 'Foto Antes' })}
+                      className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300 w-full"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={request.beforePhotoUrl}
+                        alt="Foto antes da execução"
+                        className="h-48 w-full object-cover"
+                      />
+                    </button>
+                  </div>
+                )}
+                {request.afterPhotoUrl && (
+                  <div>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">Foto Depois</p>
+                    <button
+                      type="button"
+                      onClick={() => setImageViewer({ url: request.afterPhotoUrl!, name: 'Foto Depois' })}
+                      className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300 w-full"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={request.afterPhotoUrl}
+                        alt="Foto depois da execução"
+                        className="h-48 w-full object-cover"
+                      />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DetailSection>
+      )}
 
       {files.length > 0 && (
         <DetailSection title={`Anexos (${files.length})`} icon="attach_file">
@@ -454,6 +589,7 @@ export function RequestDetailModal({
                       onClick={() => setImageViewer({ url: file.url, name: file.name })}
                       className="overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-colors hover:border-gray-300"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={file.url}
                         alt={file.name}

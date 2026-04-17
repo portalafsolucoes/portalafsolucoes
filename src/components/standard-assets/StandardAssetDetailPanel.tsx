@@ -254,6 +254,7 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Imagem</h3>
             <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={item.imageUrl}
                 alt={item.name || 'Bem Padrão'}

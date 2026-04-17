@@ -38,9 +38,19 @@ export async function GET() {
 
     if (woLinksError) throw woLinksError
 
-    const woIds = (teamWoLinks || []).map((link: any) => link.A)
+    const woIds = (teamWoLinks || []).map((link: { A: string }) => link.A)
 
-    let workOrders: any[] = []
+    type WorkOrderItem = {
+      id: string
+      title: string
+      status: string
+      priority: string | null
+      type: string | null
+      dueDate: string | null
+      assignedToId: string | null
+      assignedTo: { firstName?: string; lastName?: string } | null
+    }
+    let workOrders: WorkOrderItem[] = []
     if (woIds.length > 0) {
       // Buscar OS da equipe com status ativos
       const { data: wos, error: wosError } = await supabase
@@ -53,7 +63,7 @@ export async function GET() {
         .limit(10)
 
       if (wosError) throw wosError
-      workOrders = wos || []
+      workOrders = (wos || []) as unknown as WorkOrderItem[]
     }
 
     // Buscar SS pendentes da equipe
@@ -87,8 +97,8 @@ export async function GET() {
     }
 
     // Contar por status
-    const openWorkOrders = workOrders.filter((wo: any) => wo.status === 'PENDING').length
-    const inProgressWorkOrders = workOrders.filter((wo: any) => wo.status === 'IN_PROGRESS').length
+    const openWorkOrders = workOrders.filter((wo) => wo.status === 'PENDING').length
+    const inProgressWorkOrders = workOrders.filter((wo) => wo.status === 'IN_PROGRESS').length
 
     const dashboardData = {
       teamName: team.name,
@@ -97,7 +107,7 @@ export async function GET() {
       inProgressWorkOrders,
       completedThisMonth,
       pendingRequests: (requests || []).length,
-      workOrders: workOrders.map((wo: any) => ({
+      workOrders: workOrders.map((wo) => ({
         id: wo.id,
         title: wo.title,
         status: wo.status,
@@ -106,14 +116,24 @@ export async function GET() {
         dueDate: wo.dueDate,
         assignedTo: wo.assignedTo
       })),
-      requests: (requests || []).map((req: any) => ({
-        id: req.id,
-        title: req.title,
-        priority: req.priority,
-        urgency: req.urgency,
-        createdBy: req.createdBy,
-        createdAt: req.createdAt
-      }))
+      requests: ((requests || []) as unknown as Array<{
+        id: string
+        title: string
+        priority: string | null
+        urgency: string | null
+        createdAt: string
+        createdBy: { firstName?: string; lastName?: string } | Array<{ firstName?: string; lastName?: string }> | null
+      }>).map((req) => {
+        const cb = Array.isArray(req.createdBy) ? (req.createdBy[0] ?? null) : req.createdBy
+        return {
+          id: req.id,
+          title: req.title,
+          priority: req.priority,
+          urgency: req.urgency,
+          createdBy: cb,
+          createdAt: req.createdAt
+        }
+      })
     }
 
     return NextResponse.json({ data: dashboardData })

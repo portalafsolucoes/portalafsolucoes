@@ -269,6 +269,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.image}
                 alt={`${user.firstName} ${user.lastName}`}

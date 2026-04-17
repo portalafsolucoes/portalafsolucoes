@@ -41,6 +41,7 @@ export default function EditWorkOrderPage() {
     if (params.id) {
       loadData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const loadData = async () => {
@@ -119,7 +120,7 @@ export default function EditWorkOrderPage() {
         const data = await res.json()
         alert(data.error || 'Erro ao atualizar ordem de serviço')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setSaving(false)

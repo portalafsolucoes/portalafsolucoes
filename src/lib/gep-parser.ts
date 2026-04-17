@@ -14,7 +14,21 @@ function isTotalizerVariable(varName: string): boolean {
 
 interface ParsedData {
   time: string;
-  [key: string]: any;
+  [key: string]: string | number;
+}
+
+interface VariableStats {
+  sum: number;
+  count: number;
+  first: number;
+  last: number;
+  isTotalizer: boolean;
+}
+
+interface HourData {
+  time: string;
+  hour: number;
+  variables: Record<string, VariableStats>;
 }
 
 export interface GEPDataOptions {
@@ -64,8 +78,8 @@ function parseGEPFile(
   startHour: number,
   endHour: number,
   targetVariables?: string[]
-): Map<string, any> {
-  const hourlyData = new Map<string, any>();
+): Map<string, HourData> {
+  const hourlyData = new Map<string, HourData>();
 
   if (!fs.existsSync(filePath)) {
     return hourlyData;
@@ -132,7 +146,7 @@ export function loadGEPData(options: GEPDataOptions): ParsedData[] {
   const cacheKey = `gep_${date}_${startHour}_${endHour}_${sector || 'ALL'}_${variables?.join(',') || 'all'}`;
   
   // Verificar cache
-  const cached = gepCache.get(cacheKey);
+  const cached = gepCache.get(cacheKey) as ParsedData[] | null;
   if (cached) {
     console.log(`[GEP Cache] Hit: ${cacheKey}`);
     return cached;
@@ -174,7 +188,7 @@ export function loadGEPData(options: GEPDataOptions): ParsedData[] {
   }
 
   // Consolidar dados de todas as horas
-  const consolidatedData = new Map<string, any>();
+  const consolidatedData = new Map<string, HourData>();
 
   // Ler todos os arquivos selecionados
   for (const [sectorKey, filename] of Object.entries(sectorsToRead)) {
@@ -200,7 +214,7 @@ export function loadGEPData(options: GEPDataOptions): ParsedData[] {
       const processed: ParsedData = { time: entry.time };
 
       for (const [varName, varData] of Object.entries(entry.variables)) {
-        const data = varData as any;
+        const data = varData as VariableStats;
         if (data.isTotalizer) {
           // Totalizadores: diferença (último - primeiro)
           processed[varName] = data.last - data.first;

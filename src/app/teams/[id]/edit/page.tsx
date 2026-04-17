@@ -26,6 +26,7 @@ export default function EditTeamPage() {
       fetchTeam()
       fetchUsers()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const fetchTeam = async () => {
@@ -38,7 +39,7 @@ export default function EditTeamPage() {
         setFormData({
           name: team.name,
           description: team.description || '',
-          memberIds: team.members.map((m: any) => m.userId)
+          memberIds: team.members.map((m: { userId: string }) => m.userId)
         })
       }
     } catch (error) {
@@ -182,6 +183,7 @@ export default function EditTeamPage() {
                           className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
                         />
                         {user.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={user.image}
                             alt={`${user.firstName} ${user.lastName}`}

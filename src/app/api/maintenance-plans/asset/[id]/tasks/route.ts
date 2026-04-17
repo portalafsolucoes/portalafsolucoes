@@ -100,7 +100,7 @@ export async function POST(
 
       // Inserir etapas
       if (task.steps && task.steps.length > 0) {
-        const stepsToInsert = task.steps.map((s: any, j: number) => ({
+        const stepsToInsert = task.steps.map((s: { stepId: string; order?: number }, j: number) => ({
           id: generateId(),
           taskId: newTask.id,
           stepId: s.stepId,
@@ -112,7 +112,17 @@ export async function POST(
 
       // Inserir recursos
       if (task.resources && task.resources.length > 0) {
-        const resourcesToInsert = task.resources.map((r: any) => ({
+        const resourcesToInsert = task.resources.map((r: {
+          resourceType?: string
+          resourceId?: string | null
+          jobTitleId?: string | null
+          userId?: string | null
+          resourceCount?: number
+          quantity?: number
+          hours?: number
+          unit?: string
+          generatesReserve?: boolean
+        }) => ({
           id: generateId(),
           taskId: newTask.id,
           resourceType: r.resourceType || 'MATERIAL',

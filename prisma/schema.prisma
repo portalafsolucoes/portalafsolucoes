@@ -400,6 +400,7 @@ model User {
   standardTaskLabors         StandardMaintenanceTaskResource[] @relation("StandardTaskLabor")
   assetTaskLabors            AssetMaintenanceTaskResource[]    @relation("AssetTaskLabor")
   woResourceLabors           WorkOrderResource[]               @relation("WOResourceLabor")
+  workOrderRescheduleEntries WorkOrderRescheduleHistory[]      @relation("WorkOrderRescheduleHistoryUser")
 
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
@@ -1326,6 +1327,7 @@ model WorkOrder {
   status       WorkOrderStatus   @default(PENDING)
   dueDate          DateTime?
   rescheduledDate  DateTime?
+  rescheduleCount  Int               @default(0)
   dueMeterReading    Float?
   actualMeterReading Float?
   completedOn        DateTime?
@@ -1417,6 +1419,7 @@ model WorkOrder {
   files           File[]
   scheduleItems   WorkOrderScheduleItem[]
   woResources     WorkOrderResource[]
+  rescheduleHistory WorkOrderRescheduleHistory[]
 
   @@index([companyId])
   @@index([assetId])
@@ -1427,6 +1430,27 @@ model WorkOrder {
   @@index([companyId, status])
   @@index([companyId, unitId])
   @@index([maintenanceAreaId])
+}
+
+model WorkOrderRescheduleHistory {
+  id              String   @id @default(cuid())
+  workOrderId     String
+  workOrder       WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  previousDate    DateTime?
+  newDate         DateTime
+  previousStatus  String?
+  wasOverdue      Boolean  @default(false)
+  reason          String?
+
+  userId          String?
+  user            User?    @relation("WorkOrderRescheduleHistoryUser", fields: [userId], references: [id])
+
+  createdAt       DateTime @default(now())
+
+  @@index([workOrderId])
+  @@index([userId])
+  @@index([workOrderId, createdAt])
 }
 
 model Task {
@@ -1558,6 +1582,8 @@ model Request {
 
   workOrderId        String?    @unique
   generatedWorkOrder WorkOrder? @relation("GeneratedFromRequest")
+
+  failureAnalysisReport FailureAnalysisReport? @relation("RequestRaf")
 
   files File[]
 
@@ -1857,10 +1883,14 @@ model FailureAnalysisReport {
   workOrderId String?  @unique
   workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
+  requestId String?  @unique
+  request   Request? @relation("RequestRaf", fields: [requestId], references: [id], onDelete: Cascade)
+
   @@index([companyId])
   @@index([createdById])
   @@index([occurrenceDate])
   @@index([workOrderId])
+  @@index([requestId])
 }
 
 // ============================================

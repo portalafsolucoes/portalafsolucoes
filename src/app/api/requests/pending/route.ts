@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { isAdminRole } from '@/lib/user-roles'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) {
@@ -19,11 +19,6 @@ export async function GET(request: NextRequest) {
     }
 
     // ADMIN e SUPER_ADMIN podem ver todas as solicitações pendentes da empresa
-    const whereClause: any = {
-      companyId: session.companyId,
-      status: 'PENDING'
-    }
-
     const { data: requests, error, count: total } = await supabase
       .from('Request')
       .select(`

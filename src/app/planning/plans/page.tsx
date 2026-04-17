@@ -65,6 +65,7 @@ export default function PlansPage() {
       return
     }
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, role])
 
   const loadData = async () => {

@@ -34,10 +34,12 @@ export interface RoleContext {
   jobTitle?: string | null
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function normalizeText(value?: string | null): string {
   return value?.trim().toLowerCase() ?? ''
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function inferLegacyRole(rawRole?: string | null): LegacyUserRole | null {
   switch (rawRole) {
     case 'SUPER_ADMIN':

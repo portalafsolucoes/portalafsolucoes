@@ -266,8 +266,9 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">Imagem Principal</h3>
             <div className="relative w-full h-48 bg-muted rounded-[4px] overflow-hidden">
-              <img 
-                src={asset.image} 
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={asset.image}
                 alt={asset.name}
                 className="w-full h-full object-cover"
               />

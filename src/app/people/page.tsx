@@ -29,6 +29,7 @@ export default function PeoplePage() {
 
   useEffect(() => {
     fetchUsers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter])
 
   const fetchUsers = async () => {
@@ -150,6 +151,7 @@ export default function PeoplePage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     {user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={user.image}
                         alt={`${user.firstName} ${user.lastName}`}

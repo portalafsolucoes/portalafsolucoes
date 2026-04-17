@@ -7,7 +7,6 @@ import { Icon } from '@/components/ui/Icon'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 
-import { User } from '@/types'
 import { getRoleLabel } from '@/lib/rbac'
 
 export default function PersonDetailPage() {
@@ -21,6 +20,7 @@ export default function PersonDetailPage() {
     if (params.id) {
       fetchUser()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const fetchUser = async () => {
@@ -128,6 +128,7 @@ export default function PersonDetailPage() {
           <div className="bg-card rounded-[4px] ambient-shadow p-6">
             <div className="flex items-center gap-4 mb-4">
               {user.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={user.image}
                   alt={`${user.firstName} ${user.lastName}`}

@@ -1134,7 +1134,7 @@ export function ScheduleWorkspace({ scheduleId, onBack, onConfirm }: ScheduleWor
 
   // Dados ativos da Q4 ja vem do estado filtrado unificado acima.
   const activeResourceSummary = filteredResourceSummary
-  const activeResourceDetails = filteredResourceDetails
+  const _activeResourceDetails = filteredResourceDetails
   const activeResourcesByWO = activeWorkOrderIds
     ? resourcesByWO.filter(g => activeWorkOrderIds.has(g.woId))
     : resourcesByWO

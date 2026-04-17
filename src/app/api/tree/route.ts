@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
       ])
 
       // Filtrar RAFs que mencionam o ativo e têm ações pendentes
-      const rafsWithPendingActions = (rafRes.data || []).filter((raf: any) => {
+      const rafsWithPendingActions = (rafRes.data || []).filter((raf: { actionPlan?: unknown }) => {
         if (!raf.actionPlan) return false
         const actions = Array.isArray(raf.actionPlan) ? raf.actionPlan : []
-        return actions.some((a: any) => a.status !== 'DONE')
+        return actions.some((a: { status?: string }) => a.status !== 'DONE')
       })
 
       return NextResponse.json({

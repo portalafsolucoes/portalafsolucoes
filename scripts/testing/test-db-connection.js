@@ -49,7 +49,7 @@ async function testConnection() {
         const userCount = await prisma.user.count()
         const companyCount = await prisma.company.count()
         console.log(`✅ ${userCount} usuários e ${companyCount} empresas cadastradas\n`)
-      } catch (error) {
+      } catch {
         console.log('⚠️  Tabelas existem mas podem estar vazias\n')
       }
     }

@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const variables = variablesParam ? variablesParam.split(',') : undefined;
 
     // Carregar dados para cada dia no período
-    const allData: any[] = [];
+    const allData: Array<Record<string, unknown> & { time: string; dateTime: string }> = [];
     const currentDate = new Date(startDate);
     currentDate.setHours(0, 0, 0, 0); // Resetar para início do dia
 
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       endDateTime,
       sector
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao buscar dados GEP:', error);
     return NextResponse.json(
       { error: 'Erro ao carregar dados' },

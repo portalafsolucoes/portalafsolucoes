@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = (page - 1) * limit
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       companyId: session.companyId
     }
 

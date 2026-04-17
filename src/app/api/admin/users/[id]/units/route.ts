@@ -33,7 +33,7 @@ export async function GET(
   }
 
   return NextResponse.json({
-    data: (userUnits || []).map((uu: any) => uu.unit),
+    data: (userUnits || []).map((uu: { unit: unknown }) => uu.unit),
   })
 }
 

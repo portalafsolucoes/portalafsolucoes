@@ -6,7 +6,6 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
@@ -25,6 +24,7 @@ export default function WorkOrderDetailPage() {
     if (params.id) {
       loadWorkOrder()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const loadWorkOrder = async () => {
@@ -59,7 +59,7 @@ export default function WorkOrderDetailPage() {
       } else {
         alert('Erro ao excluir ordem de serviço')
       }
-    } catch (error) {
+    } catch {
       alert('Erro ao conectar ao servidor')
     } finally {
       setDeleting(false)

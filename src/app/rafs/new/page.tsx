@@ -296,7 +296,7 @@ export default function NewRAFPage() {
                   name="failureType"
                   value="RANDOM"
                   checked={formData.failureType === 'RANDOM'}
-                  onChange={(e) => setFormData({...formData, failureType: 'RANDOM'})}
+                  onChange={(_e) => setFormData({...formData, failureType: 'RANDOM'})}
                   className="w-4 h-4 text-primary"
                 />
                 <span className="text-sm text-foreground">Aleatória</span>
@@ -307,7 +307,7 @@ export default function NewRAFPage() {
                   name="failureType"
                   value="REPETITIVE"
                   checked={formData.failureType === 'REPETITIVE'}
-                  onChange={(e) => setFormData({...formData, failureType: 'REPETITIVE'})}
+                  onChange={(_e) => setFormData({...formData, failureType: 'REPETITIVE'})}
                   className="w-4 h-4 text-primary"
                 />
                 <span className="text-sm text-foreground">Repetitiva</span>

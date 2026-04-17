@@ -161,6 +161,7 @@ export function RequestPrintView({ requestId, onClose }: RequestPrintViewProps) 
             <div className="flex-shrink-0 w-[45mm]">
               {companyLogo ? (
                 <div className="bg-gray-600 rounded px-3 py-2 inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={companyLogo}
                     alt={companyName}
@@ -323,6 +324,7 @@ export function RequestPrintView({ requestId, onClose }: RequestPrintViewProps) 
                   <div className="grid grid-cols-3 gap-2">
                     {imageFiles.map((file, i) => (
                       <div key={i} className="border border-gray-200 rounded overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={file.url} alt={file.name} className="w-full h-[25mm] object-cover" />
                         <p className="text-[8px] text-gray-500 px-1 py-0.5 truncate">{file.name}</p>
                       </div>

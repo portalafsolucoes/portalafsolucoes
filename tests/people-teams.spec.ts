@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test'
 const BASE_URL = 'http://localhost:3000'
 
 test.describe('Pessoas e Equipes - Testes Completos', () => {
-  let personId: string
-  let teamId: string
+  let _personId: string
+  let _teamId: string
 
   test.beforeEach(async ({ page }) => {
     // Login antes de cada teste
@@ -44,7 +44,7 @@ test.describe('Pessoas e Equipes - Testes Completos', () => {
       // Capturar ID da pessoa criada
       const personLink = page.locator('a:has-text("João Silva")').first()
       const href = await personLink.getAttribute('href')
-      personId = href?.split('/').pop() || ''
+      _personId = href?.split('/').pop() || ''
     })
 
     test('03 - Deve visualizar detalhes da pessoa', async ({ page }) => {
@@ -153,7 +153,7 @@ test.describe('Pessoas e Equipes - Testes Completos', () => {
       const teamCard = page.locator('text=Equipe Elétrica').first()
       await teamCard.click()
       
-      const initialMemberCount = await page.locator('text=Membros').first().textContent()
+      const _initialMemberCount = await page.locator('text=Membros').first().textContent()
       
       await page.click('text=Editar')
       

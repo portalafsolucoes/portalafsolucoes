@@ -7,8 +7,6 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
-import { Team } from '@/types'
-
 export default function TeamDetailPage() {
   const router = useRouter()
   const params = useParams()
@@ -20,6 +18,7 @@ export default function TeamDetailPage() {
     if (params.id) {
       fetchTeam()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const fetchTeam = async () => {
@@ -164,6 +163,7 @@ export default function TeamDetailPage() {
                   className="flex items-center gap-3 p-4 rounded-[4px] hover:bg-secondary transition-colors"
                 >
                   {membership.user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={membership.user.image}
                       alt={`${membership.user.firstName} ${membership.user.lastName}`}

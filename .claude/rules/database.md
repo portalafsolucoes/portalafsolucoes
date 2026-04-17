@@ -27,6 +27,8 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - `MaintenancePlan` pode ser padrao por familia de ativo ou especifico por ativo, com tarefas, passos e recursos
 - `Request` pode ser aprovada ou rejeitada e pode gerar `WorkOrder`
 - `WorkOrder` suporta numero interno `MAN-XXXXXX`, numero externo do ERP/TOTVS, checklist, custos, tempos, recursos e fotos antes/depois
+- `WorkOrder.rescheduleCount` e contador denormalizado de quantas vezes a OS foi reprogramada estando atrasada; usado para badge na listagem e KPI sem precisar agregar a tabela de historico
+- `WorkOrderRescheduleHistory` armazena auditoria granular de cada reprogramacao (data anterior, nova data, status anterior, flag `wasOverdue`, motivo opcional, usuario, timestamp); cascade delete em relacao a `WorkOrder`
 - `RAF` deve ter numero unico
 
 ## Convencoes de Schema

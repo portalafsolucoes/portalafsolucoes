@@ -81,6 +81,7 @@ export function ImageViewerModal({ isOpen, onClose, imageUrl, imageName }: Image
           className="flex-1 overflow-auto flex items-center justify-center min-h-0"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={imageName || 'Imagem'}
