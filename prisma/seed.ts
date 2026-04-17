@@ -85,14 +85,6 @@ const seedCompanies: SeedCompany[] = [
     users: [
       // ADMIN da empresa cliente. SUPER_ADMIN é exclusivo de staff Portal AF (seedPlatformStaff).
       {
-        email: 'super.admin@valenorte.local',
-        firstName: 'Carla',
-        lastName: 'Mendes',
-        username: 'super.admin.valenorte',
-        role: 'GESTOR',
-        jobTitle: 'Administradora',
-      },
-      {
         email: 'admin@valenorte.local',
         firstName: 'Marcos',
         lastName: 'Lima',
@@ -142,14 +134,6 @@ const seedCompanies: SeedCompany[] = [
     locationName: 'Unidade Principal Polimix',
     users: [
       // ADMIN da empresa cliente. SUPER_ADMIN é exclusivo de staff Portal AF (seedPlatformStaff).
-      {
-        email: 'super.admin@polimix.local',
-        firstName: 'Carla',
-        lastName: 'Mendes',
-        username: 'super.admin.polimix',
-        role: 'GESTOR',
-        jobTitle: 'Administradora',
-      },
       {
         email: 'admin@polimix.local',
         firstName: 'Marcos',

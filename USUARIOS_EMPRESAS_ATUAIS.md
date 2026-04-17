@@ -1,6 +1,6 @@
 # Usuarios, Senhas, Chaves e Credenciais do Sistema
 
-Atualizado em: 2026-04-11
+Atualizado em: 2026-04-17
 
 > **AVISO**: Este arquivo contem credenciais reais. NAO commitar no repositorio.
 > Mover para local seguro (vault, gerenciador de senhas) apos uso.
@@ -13,14 +13,26 @@ Atualizado em: 2026-04-11
 
 ---
 
+## Separacao de Papeis (2026-04-17)
+
+- **SUPER_ADMIN** e exclusivamente staff Portal AF Solucoes (cross-tenant, `companyId = NULL`). Existe apenas UM usuario desse tipo: `platform@portalafsolucoes.com`. Ele opera em qualquer empresa selecionando-a na tela `/admin/select-company` apos o login.
+- **ADMIN** e o administrador da empresa cliente, com acesso automatico a todas as unidades da sua empresa. Criacao de empresa (`POST /api/admin/companies`) cria o usuario inicial como ADMIN.
+- Os antigos `super.admin@valenorte.local` e `super.admin@polimix.local` foram REMOVIDOS do seed. Ao re-rodar `npx tsx prisma/seed.ts`, eles deixam de ser recriados; em bancos ja populados, remova manualmente ou rode auditoria com `npm run audit:super-admins`.
+
+---
+
 ## Empresas e Usuarios
+
+### 0. Portal AF Solucoes (Staff da plataforma)
+
+- Unico SUPER_ADMIN do sistema. Cross-tenant: escolhe a empresa na tela `/admin/select-company` apos login e pode trocar a qualquer momento via sidebar.
+  - SUPER_ADMIN: `platform@portalafsolucoes.com` | senha: `Teste@123` | nome: Equipe Portal AF
 
 ### 1. Cimento Vale do Norte SA
 
 - Email da empresa: `contato@valenorte.local`
 - Total de ativos criados: `10`
 - Usuarios:
-  - SUPER_ADMIN: `super.admin@valenorte.local` | senha: `Teste@123` | nome: Carla Mendes
   - ADMIN: `admin@valenorte.local` | senha: `Teste@123` | nome: Marcos Lima
   - TECHNICIAN: `tecnico@valenorte.local` | senha: `Teste@123` | nome: Joao Ferreira
   - LIMITED_TECHNICIAN: `tecnico.limitado@valenorte.local` | senha: `Teste@123` | nome: Paula Santos
@@ -32,7 +44,6 @@ Atualizado em: 2026-04-11
 - Email da empresa: `contato@polimix.local`
 - Total de ativos criados: `10`
 - Usuarios:
-  - SUPER_ADMIN: `super.admin@polimix.local` | senha: `Teste@123` | nome: Carla Mendes
   - ADMIN: `admin@polimix.local` | senha: `Teste@123` | nome: Marcos Lima
   - TECHNICIAN: `tecnico@polimix.local` | senha: `Teste@123` | nome: Joao Ferreira
   - LIMITED_TECHNICIAN: `tecnico.limitado@polimix.local` | senha: `Teste@123` | nome: Paula Santos

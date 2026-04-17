@@ -23,7 +23,6 @@ const DEV_QUICK_ACCESS = [
   {
     company: 'Cimento Vale do Norte SA',
     users: [
-      { label: 'ADMIN', email: 'super.admin@valenorte.local', password: 'Teste@123', name: 'Carla Mendes' },
       { label: 'ADMIN', email: 'admin@valenorte.local', password: 'Teste@123', name: 'Marcos Lima' },
       { label: 'TECHNICIAN', email: 'tecnico@valenorte.local', password: 'Teste@123', name: 'Joao Ferreira' },
       { label: 'LIMITED_TECHNICIAN', email: 'tecnico.limitado@valenorte.local', password: 'Teste@123', name: 'Paula Santos' },
@@ -34,7 +33,6 @@ const DEV_QUICK_ACCESS = [
   {
     company: 'Polimix Concreto Ltda',
     users: [
-      { label: 'ADMIN', email: 'super.admin@polimix.local', password: 'Teste@123', name: 'Carla Mendes' },
       { label: 'ADMIN', email: 'admin@polimix.local', password: 'Teste@123', name: 'Marcos Lima' },
       { label: 'TECHNICIAN', email: 'tecnico@polimix.local', password: 'Teste@123', name: 'Joao Ferreira' },
       { label: 'LIMITED_TECHNICIAN', email: 'tecnico.limitado@polimix.local', password: 'Teste@123', name: 'Paula Santos' },
