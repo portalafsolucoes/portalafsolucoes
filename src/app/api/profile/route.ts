@@ -3,6 +3,7 @@ import { hashPassword, validateEmail, validatePassword, verifyPassword } from '@
 import { createSession, getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
 import { normalizeUserRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function GET() {
   try {
@@ -52,7 +53,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const {
       firstName,
       lastName,

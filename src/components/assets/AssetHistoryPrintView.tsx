@@ -318,7 +318,7 @@ export function AssetHistoryPrintView({ assetId, startDate, endDate, sourceFilte
               {asset.maintenanceStatus && (
                 <div>
                   <p className="text-[9px] font-bold text-gray-500 uppercase">Sit. Manutenção</p>
-                  <p className="font-medium">{asset.maintenanceStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}</p>
+                  <p className="font-medium">{asset.maintenanceStatus === 'ACTIVE' ? 'ATIVO' : 'INATIVO'}</p>
                 </div>
               )}
               <div>
@@ -397,13 +397,13 @@ export function AssetHistoryPrintView({ assetId, startDate, endDate, sourceFilte
                 )}
                 <div>
                   <p className="text-[9px] font-bold text-gray-500 uppercase">Estrutura</p>
-                  <p className="font-medium">{asset.hasStructure ? 'Sim' : 'Não'}</p>
+                  <p className="font-medium">{asset.hasStructure ? 'SIM' : 'NAO'}</p>
                 </div>
                 {asset.hasCounter && (
                   <>
                     <div>
                       <p className="text-[9px] font-bold text-gray-500 uppercase">Contador</p>
-                      <p className="font-medium">{asset.counterType || 'Sim'}</p>
+                      <p className="font-medium">{asset.counterType || 'SIM'}</p>
                     </div>
                     {asset.counterPosition != null && (
                       <div>

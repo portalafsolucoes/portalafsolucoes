@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, generateId } from '@/lib/supabase';
 import { getSession } from '@/lib/session';
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Listar variáveis de processo
 export async function GET(req: NextRequest) {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = normalizeTextPayload(await req.json());
     const {
       sector,
       tagName,

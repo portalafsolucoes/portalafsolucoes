@@ -48,11 +48,11 @@ type SortDirection = 'asc' | 'desc'
 type PageMode = 'list' | 'workspace'
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Rascunho',
-  CONFIRMED: 'Confirmada',
-  REPROGRAMMING: 'Reprogramação',
-  PARTIALLY_EXECUTED: 'Parcialmente Executada',
-  COMPLETED: 'Concluída',
+  DRAFT: 'RASCUNHO',
+  CONFIRMED: 'CONFIRMADA',
+  REPROGRAMMING: 'REPROGRAMACAO',
+  PARTIALLY_EXECUTED: 'PARCIALMENTE EXECUTADA',
+  COMPLETED: 'CONCLUIDA',
 }
 
 const STATUS_COLORS: Record<string, string> = {

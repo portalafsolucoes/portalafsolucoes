@@ -1,22 +1,7 @@
-import { normalizeUserRole } from '@/lib/user-roles'
+import { getRoleDisplayName, normalizeUserRole } from '@/lib/user-roles'
 
 export function getRoleLabel(role: string) {
-  switch (normalizeUserRole(role)) {
-    case 'SUPER_ADMIN':
-      return 'Super Administrador'
-    case 'ADMIN':
-      return 'Administrador'
-    case 'TECHNICIAN':
-      return 'Técnico'
-    case 'LIMITED_TECHNICIAN':
-      return 'Técnico Limitado'
-    case 'REQUESTER':
-      return 'Solicitante'
-    case 'VIEW_ONLY':
-      return 'Somente Consulta'
-    default:
-      return role
-  }
+  return getRoleDisplayName(role)
 }
 
 export function getRoleBadgeClass(role: string) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
 
     if (!body.familyId) {
       return NextResponse.json({ error: 'Família é obrigatória' }, { status: 400 })

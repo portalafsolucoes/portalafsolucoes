@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // POST - Abrir programação confirmada para edição
 // CONFIRMED → REPROGRAMMING
@@ -23,7 +24,7 @@ export async function POST(
     // Ler body opcional para flag de preservação de status
     let preserveOSStatus = false
     try {
-      const body = await request.json()
+      const body = normalizeTextPayload(await request.json())
       preserveOSStatus = body?.preserveOSStatus === true
     } catch {
       // Body vazio é aceito (modo padrão)

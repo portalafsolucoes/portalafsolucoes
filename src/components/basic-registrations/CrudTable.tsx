@@ -467,7 +467,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                       className="rounded border-border"
                       disabled={field.readOnly}
                     />
-                    <span className="text-sm text-muted-foreground">{field.placeholder || 'Sim'}</span>
+                    <span className="text-sm text-muted-foreground">{field.placeholder || 'SIM'}</span>
                   </label>
                 ) : (
                   <input

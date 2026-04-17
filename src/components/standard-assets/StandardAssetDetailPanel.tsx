@@ -54,12 +54,12 @@ interface StandardAssetDetailPanelProps {
 }
 
 const priorityLabels: Record<string, string> = {
-  AAA: 'AAA - Altíssima',
-  AA: 'AA - Muito Alta',
-  A: 'A - Alta',
-  B: 'B - Média',
-  C: 'C - Baixa',
-  ZZZ: 'ZZZ - Sem prioridade',
+  AAA: 'AAA - ALTISSIMA',
+  AA: 'AA - MUITO ALTA',
+  A: 'A - ALTA',
+  B: 'B - MEDIA',
+  C: 'C - BAIXA',
+  ZZZ: 'ZZZ - SEM PRIORIDADE',
 }
 
 export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: StandardAssetDetailPanelProps) {
@@ -219,7 +219,7 @@ export function StandardAssetDetailPanel({ item, onClose, onEdit, onDelete }: St
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
               <p className="text-xs text-muted-foreground">Tem Contador</p>
-              <p className="text-sm text-foreground">{item.hasCounter ? 'Sim' : 'Não'}</p>
+              <p className="text-sm text-foreground">{item.hasCounter ? 'SIM' : 'NAO'}</p>
             </div>
             {item.hasCounter && item.counterType && (
               <div>

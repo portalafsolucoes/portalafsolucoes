@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // Entidades em que a coluna "Codigo Protheus" foi removida da UI e passou a ser
 // espelhada a partir do campo "code". Mantem integracao TOTVS e constraint unica.
@@ -102,7 +103,7 @@ export async function PUT(
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
 
     // Extrair options para generic-steps (campo virtual)
     let stepOptions: { label: string; order: number }[] | undefined

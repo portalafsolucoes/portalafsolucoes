@@ -59,9 +59,9 @@ interface ScheduleDetailPanelProps {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Rascunho',
-  CONFIRMED: 'Confirmada',
-  REPROGRAMMING: 'Reprogramação',
+  DRAFT: 'RASCUNHO',
+  CONFIRMED: 'CONFIRMADA',
+  REPROGRAMMING: 'REPROGRAMACAO',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,11 +71,11 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const WO_STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Pendente',
-  RELEASED: 'Liberada',
-  IN_PROGRESS: 'Em Progresso',
-  ON_HOLD: 'Em Espera',
-  COMPLETE: 'Concluída',
+  PENDING: 'PENDENTE',
+  RELEASED: 'LIBERADA',
+  IN_PROGRESS: 'EM PROGRESSO',
+  ON_HOLD: 'EM ESPERA',
+  COMPLETE: 'CONCLUIDA',
 }
 
 const WO_STATUS_COLORS: Record<string, string> = {
@@ -87,15 +87,15 @@ const WO_STATUS_COLORS: Record<string, string> = {
 }
 
 const WO_PRIORITY_LABELS: Record<string, string> = {
-  HIGH: 'Alta',
-  MEDIUM: 'Média',
-  LOW: 'Baixa',
-  NONE: 'Nenhuma',
+  HIGH: 'ALTA',
+  MEDIUM: 'MEDIA',
+  LOW: 'BAIXA',
+  NONE: 'NENHUMA',
 }
 
 const RESOURCE_TYPE_LABELS: Record<string, string> = {
   SPECIALTY: 'Especialidades',
-  LABOR: 'Mão de Obra',
+  LABOR: 'MAO DE OBRA',
   MATERIAL: 'Materiais',
   TOOL: 'Ferramentas',
 }
@@ -302,7 +302,7 @@ export function ScheduleDetailPanel({
                       </p>
                     )}
                     <div className="flex items-center gap-2 sm:gap-3 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
-                      <span>Prioridade: {WO_PRIORITY_LABELS[wo.priority] || wo.priority || 'Nenhuma'}</span>
+                      <span>Prioridade: {WO_PRIORITY_LABELS[wo.priority] || wo.priority || 'NENHUMA'}</span>
                       <span>Programada: {formatDate(item.scheduledDate)}</span>
                     </div>
                   </div>

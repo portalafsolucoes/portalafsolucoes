@@ -4,6 +4,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { isAdminRole, toPersistedUserRole } from '@/lib/user-roles'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 type AdminUserRow = {
   id: string
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json()
+  const body = normalizeTextPayload(await request.json())
   const {
     email, password, firstName, lastName, role,
     phone, jobTitle, jobTitleId, rate, calendarId, locationId,

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { isOperationalRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function GET(
   request: NextRequest,
@@ -105,7 +106,7 @@ export async function PATCH(
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
 
     // Verificar se a OS existe e pertence à empresa
     let existingQuery = supabase

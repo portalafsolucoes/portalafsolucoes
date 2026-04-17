@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // POST - Confirmar programação (muda status das OSs de PENDING para RELEASED)
 // Inclui validação de recursos e retorna avisos de indisponibilidade
@@ -21,7 +22,7 @@ export async function POST(
     // Verificar body para flag de força (pular validação de recursos)
     let forceConfirm = false
     try {
-      const body = await request.json()
+      const body = normalizeTextPayload(await request.json())
       forceConfirm = body?.force === true
     } catch {
       // Body vazio é permitido (confirmação simples)

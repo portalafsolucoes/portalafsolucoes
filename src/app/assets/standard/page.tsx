@@ -184,7 +184,7 @@ export default function StandardAssetsPage() {
         case 'modelType': return item.modelType || ''
         case 'priority': return item.priority || ''
         case 'shiftCode': return item.shiftCode || ''
-        case 'hasCounter': return item.hasCounter ? 'Sim' : 'Não'
+        case 'hasCounter': return item.hasCounter ? 'SIM' : 'NAO'
         default: return ''
       }
     }
@@ -325,7 +325,7 @@ export default function StandardAssetsPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{item.name || '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden md:table-cell">{item.modelType || '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.priority || '-'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.hasCounter ? 'Sim' : 'Não'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground hidden lg:table-cell">{item.hasCounter ? 'SIM' : 'NAO'}</td>
                         </tr>
                       ))}
                     </tbody>

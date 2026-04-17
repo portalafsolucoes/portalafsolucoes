@@ -5,6 +5,7 @@ import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@
 import { checkApiPermission } from '@/lib/permissions'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
 import { toPersistedUserRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 type UserListRow = Record<string, unknown> & {
   calendar?: {
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId, unitIds } = body
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
 

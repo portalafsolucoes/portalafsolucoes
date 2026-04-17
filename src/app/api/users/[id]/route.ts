@@ -5,6 +5,7 @@ import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@
 import { checkApiPermission } from '@/lib/permissions'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
 import { toPersistedUserRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -98,7 +99,7 @@ export async function PUT(
     }
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, locationId, calendarId, unitIds } = body
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 

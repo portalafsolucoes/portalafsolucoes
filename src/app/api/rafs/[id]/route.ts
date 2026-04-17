@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Buscar RAF por ID
 export async function GET(
@@ -82,7 +83,7 @@ export async function PUT(
     }
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date().toISOString()

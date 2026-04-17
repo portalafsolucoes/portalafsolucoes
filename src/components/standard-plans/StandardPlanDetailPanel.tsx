@@ -104,7 +104,7 @@ export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onDelet
             </div>
             <div>
               <span className={labelCls}>Tipo de Controle</span>
-              <p className={valueCls}>{plan.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo Pré-determinado'}</p>
+              <p className={valueCls}>{plan.trackingType === 'HORIMETER' ? 'HORIMETRO' : 'TEMPO PRE-DETERMINADO'}</p>
             </div>
             <div>
               <span className={labelCls}>Calendário</span>
@@ -116,7 +116,7 @@ export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onDelet
             </div>
             <div>
               <span className={labelCls}>Período</span>
-              <p className={valueCls}>{plan.period === 'Repetitiva' ? 'Repetitiva' : 'Única'}</p>
+              <p className={valueCls}>{plan.period === 'REPETITIVA' ? 'REPETITIVA' : 'UNICA'}</p>
             </div>
           </div>
         </div>

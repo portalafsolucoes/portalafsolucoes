@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Listar planos de manutenção do bem
 export async function GET(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { assetId, serviceTypeId, name, maintenanceAreaId, maintenanceTypeId,
             lastMaintenanceDate, calendarId, maintenanceTime, timeUnit, period,
             isStandard, standardPlanId, toleranceDays, considerPlanning,

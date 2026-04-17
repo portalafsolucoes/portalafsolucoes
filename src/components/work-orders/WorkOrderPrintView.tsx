@@ -54,41 +54,41 @@ interface WorkOrderPrintViewProps {
 
 function getTypeLabel(type?: string | null): string {
   switch (type) {
-    case 'PREVENTIVE': return 'Preventiva'
-    case 'CORRECTIVE': return 'Corretiva'
-    case 'PREDICTIVE': return 'Preditiva'
-    case 'REACTIVE': return 'Reativa'
+    case 'PREVENTIVE': return 'PREVENTIVA'
+    case 'CORRECTIVE': return 'CORRETIVA'
+    case 'PREDICTIVE': return 'PREDITIVA'
+    case 'REACTIVE': return 'REATIVA'
     default: return type || '-'
   }
 }
 
 function getPriorityLabel(priority: string): string {
   switch (priority) {
-    case 'CRITICAL': return 'Critica'
-    case 'HIGH': return 'Alta'
-    case 'MEDIUM': return 'Media'
-    case 'LOW': return 'Baixa'
-    default: return 'Nenhuma'
+    case 'CRITICAL': return 'CRITICA'
+    case 'HIGH': return 'ALTA'
+    case 'MEDIUM': return 'MEDIA'
+    case 'LOW': return 'BAIXA'
+    default: return 'NENHUMA'
   }
 }
 
 function getStatusLabel(status: string): string {
   switch (status) {
-    case 'PENDING': return 'Pendente'
-    case 'RELEASED': return 'Liberada'
-    case 'IN_PROGRESS': return 'Em Progresso'
-    case 'ON_HOLD': return 'Em Espera'
-    case 'COMPLETE': return 'Concluida'
+    case 'PENDING': return 'PENDENTE'
+    case 'RELEASED': return 'LIBERADA'
+    case 'IN_PROGRESS': return 'EM PROGRESSO'
+    case 'ON_HOLD': return 'EM ESPERA'
+    case 'COMPLETE': return 'CONCLUIDA'
     default: return status
   }
 }
 
 function getResourceTypeLabel(type: string): string {
   switch (type) {
-    case 'MATERIAL': return 'Material'
-    case 'TOOL': return 'Ferramenta'
-    case 'LABOR': return 'Mao de Obra'
-    case 'SPECIALTY': return 'Especialidade'
+    case 'MATERIAL': return 'MATERIAL'
+    case 'TOOL': return 'FERRAMENTA'
+    case 'LABOR': return 'MAO DE OBRA'
+    case 'SPECIALTY': return 'ESPECIALIDADE'
     default: return type
   }
 }

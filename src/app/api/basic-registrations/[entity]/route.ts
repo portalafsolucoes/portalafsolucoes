@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { parseWorkDays, getWeeklyHours } from '@/lib/calendarUtils'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // Entidades em que a coluna "Codigo Protheus" foi removida da UI e passou a ser
 // espelhada a partir do campo "code" (preserva integracao TOTVS e constraint unica).
@@ -256,7 +257,7 @@ export async function POST(
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
 
     // Validar campos obrigatórios
     for (const field of config.requiredFields) {

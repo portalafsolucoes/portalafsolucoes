@@ -166,8 +166,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
   const getWOStatusText = (status: string) => {
     const texts: Record<string, string> = {
-      PENDING: 'Pendente', RELEASED: 'Liberada', IN_PROGRESS: 'Em Progresso',
-      ON_HOLD: 'Em Espera', COMPLETE: 'Concluída'
+      PENDING: 'PENDENTE', RELEASED: 'LIBERADA', IN_PROGRESS: 'EM PROGRESSO',
+      ON_HOLD: 'EM ESPERA', COMPLETE: 'CONCLUIDA'
     }
     return texts[status] || status
   }
@@ -184,8 +184,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
   const getSSStatusText = (status: string) => {
     const texts: Record<string, string> = {
-      PENDING: 'Pendente', APPROVED: 'Aprovada', REJECTED: 'Rejeitada',
-      CANCELLED: 'Cancelada', COMPLETED: 'Concluída'
+      PENDING: 'PENDENTE', APPROVED: 'APROVADA', REJECTED: 'REJEITADA',
+      CANCELLED: 'CANCELADA', COMPLETED: 'CONCLUIDA'
     }
     return texts[status] || status
   }
@@ -200,8 +200,8 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
   const getPriorityText = (priority: string) => {
     const texts: Record<string, string> = {
-      NONE: 'Nenhuma', LOW: 'Baixa', MEDIUM: 'Média',
-      HIGH: 'Alta', CRITICAL: 'Crítica'
+      NONE: 'NENHUMA', LOW: 'BAIXA', MEDIUM: 'MEDIA',
+      HIGH: 'ALTA', CRITICAL: 'CRITICA'
     }
     return texts[priority] || priority
   }
@@ -342,7 +342,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
             {asset.maintenanceStatus && (
               <div>
                 <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Sit. Manutenção</p>
-                <p className="text-sm text-foreground">{asset.maintenanceStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}</p>
+                <p className="text-sm text-foreground">{asset.maintenanceStatus === 'ACTIVE' ? 'ATIVO' : 'INATIVO'}</p>
               </div>
             )}
           </div>
@@ -404,13 +404,13 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
             )}
             <div>
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Estrutura</p>
-              <p className="text-sm text-foreground">{asset.hasStructure ? 'Sim' : 'Não'}</p>
+              <p className="text-sm text-foreground">{asset.hasStructure ? 'SIM' : 'NAO'}</p>
             </div>
             {asset.hasCounter && (
               <>
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Contador</p>
-                  <p className="text-sm text-foreground">{asset.counterType || 'Sim'}</p>
+                  <p className="text-sm text-foreground">{asset.counterType || 'SIM'}</p>
                 </div>
                 {asset.counterPosition != null && (
                   <div>
@@ -717,7 +717,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       {wo.internalId && <span className="font-mono">{wo.internalId}</span>}
                       <span>{getPriorityText(wo.priority)}</span>
-                      {wo.type && <span>{wo.type === 'PREVENTIVE' ? 'Preventiva' : wo.type === 'CORRECTIVE' ? 'Corretiva' : wo.type === 'PREDICTIVE' ? 'Preditiva' : 'Reativa'}</span>}
+                      {wo.type && <span>{wo.type === 'PREVENTIVE' ? 'PREVENTIVA' : wo.type === 'CORRECTIVE' ? 'CORRETIVA' : wo.type === 'PREDICTIVE' ? 'PREDITIVA' : 'REATIVA'}</span>}
                       <span>{formatDate(wo.createdAt)}</span>
                       {wo.assignedTo && <span>{wo.assignedTo.firstName} {wo.assignedTo.lastName}</span>}
                     </div>

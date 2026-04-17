@@ -133,7 +133,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
                 {getRoleLabel(user.role)}
               </span>
               <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border shadow-sm ${user.enabled ? 'bg-success-light text-success-light-foreground border-gray-200' : 'bg-danger-light text-danger-light-foreground border-gray-200'}`}>
-                {user.enabled ? 'Ativo' : 'Inativo'}
+                {user.enabled ? 'ATIVO' : 'INATIVO'}
               </span>
             </div>
           </div>
@@ -213,7 +213,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
                   )}
                   <div>
                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status</p>
-                    <p className="text-[13px] font-medium text-gray-900">{user.enabled ? 'Ativo' : 'Inativo'}</p>
+                    <p className="text-[13px] font-medium text-gray-900">{user.enabled ? 'ATIVO' : 'INATIVO'}</p>
                   </div>
                 </div>
               </div>

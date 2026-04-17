@@ -4,6 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole } from '@/lib/user-roles'
 import { sanitizeLimit } from '@/lib/pagination'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { title, description, priority, dueDate, teamId, assetId, files = [] } = body
     const now = new Date().toISOString()
 

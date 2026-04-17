@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { hashPassword, validateEmail, validatePassword } from '@/lib/auth'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 /**
  * POST /api/auth/register
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { email, password, firstName, lastName, companyName } = body
 
     if (!email || !password || !firstName || !lastName || !companyName) {

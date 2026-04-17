@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function POST(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function POST(
     }
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { beforePhotoUrl } = body
 
     // Buscar a solicitação

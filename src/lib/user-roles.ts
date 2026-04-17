@@ -18,12 +18,12 @@ export type LegacyUserRole =
 export type UserRole = CanonicalUserRole | LegacyUserRole
 
 export const CANONICAL_ROLE_OPTIONS: Array<{ value: CanonicalUserRole; label: string }> = [
-  { value: 'SUPER_ADMIN', label: 'Super Administrador' },
-  { value: 'ADMIN', label: 'Administrador' },
-  { value: 'TECHNICIAN', label: 'Técnico' },
-  { value: 'LIMITED_TECHNICIAN', label: 'Técnico Limitado' },
-  { value: 'REQUESTER', label: 'Solicitante' },
-  { value: 'VIEW_ONLY', label: 'Somente Consulta' },
+  { value: 'SUPER_ADMIN', label: 'SUPER ADMINISTRADOR' },
+  { value: 'ADMIN', label: 'ADMINISTRADOR' },
+  { value: 'TECHNICIAN', label: 'TECNICO' },
+  { value: 'LIMITED_TECHNICIAN', label: 'TECNICO LIMITADO' },
+  { value: 'REQUESTER', label: 'SOLICITANTE' },
+  { value: 'VIEW_ONLY', label: 'SOMENTE CONSULTA' },
 ]
 
 export interface RoleContext {
@@ -174,19 +174,19 @@ export function getDefaultCmmsPath(input: RoleContext | string | null | undefine
 export function getRoleDisplayName(input: RoleContext | string | null | undefined): string {
   switch (normalizeUserRole(input)) {
     case 'SUPER_ADMIN':
-      return 'Super Administrador'
+      return 'SUPER ADMINISTRADOR'
     case 'ADMIN':
-      return 'Administrador'
+      return 'ADMINISTRADOR'
     case 'TECHNICIAN':
-      return 'Técnico'
+      return 'TECNICO'
     case 'LIMITED_TECHNICIAN':
-      return 'Técnico Limitado'
+      return 'TECNICO LIMITADO'
     case 'REQUESTER':
-      return 'Solicitante'
+      return 'SOLICITANTE'
     case 'VIEW_ONLY':
-      return 'Somente Consulta'
+      return 'SOMENTE CONSULTA'
     default:
-      return 'Usuário'
+      return 'USUARIO'
   }
 }
 

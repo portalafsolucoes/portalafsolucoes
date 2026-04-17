@@ -21,27 +21,27 @@ interface Props {
 }
 
 const gravityLabels: Record<number, string> = {
-  1: 'Sem gravidade',
-  2: 'Pouco grave',
-  3: 'Grave',
-  4: 'Muito grave',
-  5: 'Extremamente grave',
+  1: 'SEM GRAVIDADE',
+  2: 'POUCO GRAVE',
+  3: 'GRAVE',
+  4: 'MUITO GRAVE',
+  5: 'EXTREMAMENTE GRAVE',
 }
 
 const urgencyLabels: Record<number, string> = {
-  1: 'Pode esperar',
-  2: 'Pouco urgente',
-  3: 'Urgente',
-  4: 'Muito urgente',
-  5: 'Ação imediata',
+  1: 'PODE ESPERAR',
+  2: 'POUCO URGENTE',
+  3: 'URGENTE',
+  4: 'MUITO URGENTE',
+  5: 'ACAO IMEDIATA',
 }
 
 const tendencyLabels: Record<number, string> = {
-  1: 'Não piora',
-  2: 'Piora a longo prazo',
-  3: 'Piora a médio prazo',
-  4: 'Piora a curto prazo',
-  5: 'Piora rapidamente',
+  1: 'NAO PIORA',
+  2: 'PIORA A LONGO PRAZO',
+  3: 'PIORA A MEDIO PRAZO',
+  4: 'PIORA A CURTO PRAZO',
+  5: 'PIORA RAPIDAMENTE',
 }
 
 function GutSelector({

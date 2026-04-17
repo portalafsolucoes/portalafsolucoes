@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function GET(
   request: NextRequest,
@@ -95,7 +96,7 @@ export async function PUT(
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { title, description, priority, dueDate, teamId, assetId, files = [] } = body
     const now = new Date().toISOString()
     const canonicalRole = normalizeUserRole(session)

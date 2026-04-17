@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
 import { isAdminRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 /**
  * GET /api/admin/units
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json()
+  const body = normalizeTextPayload(await request.json())
   const { name, address, latitude, longitude } = body
 
   if (!name || !name.trim()) {

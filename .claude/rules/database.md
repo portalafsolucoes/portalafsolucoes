@@ -4,6 +4,13 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 
 # Banco, Schema e Supabase
 
+## Padronizacao Textual (MAIUSCULAS sem acento)
+- Todo texto de negocio persistido no banco deve estar em **MAIUSCULAS e sem acento**
+- A normalizacao acontece no servidor via `normalizeTextPayload` (de `@/lib/textNormalizer`) antes do insert/update
+- Campos preservados em case/acento original: `email`, `password`, `username`, URLs (`website`, `*Url`, `*Link`), descricoes longas (`description`, `notes`, `observation`, `feedback`, `rejectionReason`, `executionNotes`, `failureDescription`, `immediateAction`, `message`), `protheusCode` e enums
+- Buscas devem usar `ILIKE` ou a funcao `upper_no_accent(t)` (criada pela migration `20260416234842_uppercase_text_backfill`) para permanecerem insensiveis ao acento/caso do input
+- Antes de qualquer backfill global similar, rodar `scripts/check-uppercase-collisions.ts` para detectar colisoes em campos UNIQUE
+
 ## Stack de Dados
 - O projeto usa PostgreSQL via Supabase com Prisma ORM
 - `prisma/schema.prisma` e a referencia estrutural principal do schema

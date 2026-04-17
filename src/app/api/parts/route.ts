@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { name, description, cost, quantity, minQuantity, categoryId, barcode } = body
 
     if (!name) {

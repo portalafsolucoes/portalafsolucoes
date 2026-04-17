@@ -420,7 +420,7 @@ export default function RAFsPage() {
                       ? 'bg-danger-light text-foreground'
                       : 'bg-warning-light text-foreground'
                   }`}>
-                    {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatoria'}
+                    {raf.failureType === 'REPETITIVE' ? 'REPETITIVA' : 'ALEATORIA'}
                   </span>
                 </td>
               </tr>

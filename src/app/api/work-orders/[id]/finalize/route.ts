@@ -7,6 +7,7 @@ import {
   calculateEffectiveHours,
 } from '@/lib/calendarUtils'
 import { recomputeScheduleStatus } from '@/lib/scheduleStatus'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // POST - Finalizar uma Ordem de Serviço com dados reais de execução
 export async function POST(
@@ -57,7 +58,7 @@ export async function POST(
       }
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const {
       executionResources,   // Array de { resourceId, resourceName, quantity, hours, memberName, startDate, startTime, endDate, endTime, observation }
       executionSteps,       // Array de { stepId, stepName, completed }

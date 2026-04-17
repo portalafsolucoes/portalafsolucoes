@@ -279,7 +279,7 @@ export default function PlansPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(p.startDate || '')}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(p.endDate || '')}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.status}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.isFinished ? 'Sim' : 'Não'}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.isFinished ? 'SIM' : 'NAO'}</td>
               </tr>
             ))}
           </tbody>

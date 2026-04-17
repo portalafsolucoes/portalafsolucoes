@@ -6,6 +6,7 @@ import { generateSequentialId, isValidExternalId, getPriorityFromGut } from '@/l
 import { isOperationalRole } from '@/lib/user-roles'
 import { sanitizeLimit } from '@/lib/pagination'
 import { generateRafNumber } from '@/lib/rafUtils'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number): Date {
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const {
       title,
       description,

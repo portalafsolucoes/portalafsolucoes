@@ -115,7 +115,7 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
             </div>
             <div>
               <span className={labelCls}>Manutenção Padrão?</span>
-              <p className={valueCls}>{plan.isStandard ? 'Sim' : 'Não'}</p>
+              <p className={valueCls}>{plan.isStandard ? 'SIM' : 'NAO'}</p>
             </div>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
             </div>
             <div>
               <span className={labelCls}>Tipo de Controle</span>
-              <p className={valueCls}>{plan.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo Pré-determinado'}</p>
+              <p className={valueCls}>{plan.trackingType === 'HORIMETER' ? 'HORIMETRO' : 'TEMPO PRE-DETERMINADO'}</p>
             </div>
             <div>
               <span className={labelCls}>Calendário</span>
@@ -158,7 +158,7 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
             )}
             <div>
               <span className={labelCls}>Ativa?</span>
-              <p className={valueCls}>{plan.isActive ? 'Sim' : 'Não'}</p>
+              <p className={valueCls}>{plan.isActive ? 'SIM' : 'NAO'}</p>
             </div>
             {plan.lastMaintenanceDate && (
               <div>

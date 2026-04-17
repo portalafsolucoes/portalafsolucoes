@@ -107,7 +107,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                   ? 'bg-danger-light text-foreground'
                   : 'bg-warning-light text-foreground'
               }`}>
-                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatoria'}
+                {raf.failureType === 'REPETITIVE' ? 'REPETITIVA' : 'ALEATORIA'}
               </span>
               {raf.stopExtension && (
                 <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-foreground border border-border">
@@ -427,7 +427,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                   ? 'bg-danger-light text-foreground'
                   : 'bg-warning-light text-foreground'
               }`}>
-                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatoria'}
+                {raf.failureType === 'REPETITIVE' ? 'REPETITIVA' : 'ALEATORIA'}
               </span>
             </div>
           </div>

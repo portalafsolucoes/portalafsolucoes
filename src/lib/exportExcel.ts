@@ -87,7 +87,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'status', header: 'Status' },
       { key: 'priority', header: 'Prioridade' },
       { key: 'type', header: 'Tipo' },
-      { key: 'asset.name', header: 'Ativo' },
+      { key: 'asset.name', header: 'ATIVO' },
       { key: 'createdAt', header: 'Criado em', transform: formatDateValue },
       { key: 'completedOn', header: 'Concluído em', transform: formatDateValue },
     ],
@@ -122,7 +122,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
   'asset-criticality': {
     filename: 'Criticidade_Ativos',
     columns: [
-      { key: 'name', header: 'Ativo' },
+      { key: 'name', header: 'ATIVO' },
       { key: 'customId', header: 'Codigo' },
       { key: 'location.name', header: 'Localizacao' },
       { key: 'classification', header: 'Classificacao' },
@@ -152,7 +152,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'role', header: 'Perfil' },
       { key: 'jobTitle', header: 'Cargo' },
       { key: 'phone', header: 'Telefone' },
-      { key: 'enabled', header: 'Ativo', transform: (v) => v ? 'Sim' : 'Não' },
+      { key: 'enabled', header: 'ATIVO', transform: (v) => v ? 'SIM' : 'NAO' },
     ],
   },
   rafs: {

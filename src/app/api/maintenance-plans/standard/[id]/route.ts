@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Detalhe do plano padrão com tarefas, etapas e recursos
 export async function GET(
@@ -68,7 +69,7 @@ export async function PUT(
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
 
     delete body.id
     delete body.companyId
