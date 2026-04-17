@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { StandardAssetDetailPanel } from '@/components/standard-assets/StandardAssetDetailPanel'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 
 const StandardAssetFormPanel = dynamic(
   () => import('@/components/standard-assets/StandardAssetFormPanel'),
@@ -76,6 +77,7 @@ export default function StandardAssetsPage() {
   const [sortField, setSortField] = useState<SortField>('family')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedItem, setSelectedItem] = useState<StandardAsset | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isCreating, setIsCreating] = useState(false)
   const [editingItem, setEditingItem] = useState<StandardAsset | null>(null)
   const hasSidePanel = !!(selectedItem || isCreating || editingItem)
@@ -270,6 +272,30 @@ export default function StandardAssetsPage() {
                 <Icon name="inventory_2" className="text-5xl mb-3" />
                 <p className="text-lg font-medium">Nenhum Bem Padrão cadastrado</p>
                 <p className="text-sm">Cadastre um bem padrão para pré-preencher automaticamente os bens individuais.</p>
+              </div>
+            ) : isPhone ? (
+              <div className="h-full flex flex-col bg-card overflow-hidden">
+                <div className="overflow-auto flex-1 p-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {sortedItems.map(item => (
+                      <div
+                        key={item.id}
+                        onClick={() => { setIsCreating(false); setEditingItem(null); setSelectedItem(item) }}
+                        className={`bg-card rounded-[4px] ambient-shadow p-4 hover:shadow-md transition-all cursor-pointer ${selectedItem?.id === item.id ? 'ring-2 ring-primary' : ''}`}
+                      >
+                        <h3 className="text-sm font-bold text-foreground mb-1">{item.name || '-'}</h3>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {item.family ? `${item.family.code} - ${item.family.name}` : '-'}
+                        </p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                          {item.modelType && <span>Modelo: <span className="text-foreground">{item.modelType}</span></span>}
+                          {item.priority && <span>Criticidade: <span className="text-foreground">{item.priority}</span></span>}
+                          <span>Contador: <span className="text-foreground">{item.hasCounter ? 'Sim' : 'Não'}</span></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="h-full flex flex-col bg-card overflow-hidden">

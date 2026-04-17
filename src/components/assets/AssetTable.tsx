@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 
 interface Asset {
   id: string
@@ -77,6 +78,7 @@ export function AssetTable({
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const { isPhone } = useResponsiveLayout()
 
   // Ordenação
   const sortedAssets = [...assets].sort((a, b) => {
@@ -155,6 +157,67 @@ export function AssetTable({
     }
   }
 
+  if (isPhone) {
+    return (
+      <div className="h-full flex flex-col min-h-0 overflow-hidden bg-card">
+        {selectedIds.size > 0 && (
+          <div className="px-4 py-3 bg-secondary border-b border-border flex items-center gap-4">
+            <span className="text-sm font-medium text-foreground">{selectedIds.size} selecionado(s)</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-sm text-muted-foreground hover:text-foreground">
+              Limpar
+            </button>
+          </div>
+        )}
+        <div className="overflow-auto flex-1 p-4">
+          <div className="grid grid-cols-1 gap-3">
+            {sortedAssets.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+                <Icon name="inventory_2" className="text-5xl opacity-20" />
+                <p className="text-sm">Nenhum ativo encontrado</p>
+              </div>
+            ) : (
+              sortedAssets.map((asset) => {
+                const statusInfo = getStatusInfo(asset.status)
+                const isActive = selectedAssetId === asset.id
+                return (
+                  <div
+                    key={asset.id}
+                    onClick={() => onSelectAsset(asset)}
+                    className={`bg-card rounded-[4px] ambient-shadow p-4 hover:shadow-md transition-all cursor-pointer ${isActive ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-foreground truncate">{asset.name}</h3>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          {asset.protheusCode || '-'}{asset.tag ? ` (${asset.tag})` : ''}
+                        </p>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${statusInfo.className}`}>
+                        <Icon name={statusInfo.icon} className="text-sm" />
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                      {showUnit && asset.unit?.name && (
+                        <span className="flex items-center gap-1"><Icon name="business" className="text-sm" />{asset.unit.name}</span>
+                      )}
+                      {(asset.assetArea?.name || asset.area) && (
+                        <span className="flex items-center gap-1"><Icon name="category" className="text-sm" />{asset.assetArea?.name || asset.area}</span>
+                      )}
+                      {asset.parentAsset && (
+                        <span className="flex items-center gap-1 truncate"><Icon name="account_tree" className="text-sm" />{asset.parentAsset.name}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden bg-card">
       {/* Barra de seleção em massa */}
@@ -163,7 +226,7 @@ export function AssetTable({
           <span className="text-sm font-medium text-foreground">
             {selectedIds.size} ativo(s) selecionado(s)
           </span>
-          <button 
+          <button
             onClick={() => setSelectedIds(new Set())}
             className="text-sm text-muted-foreground hover:text-foreground"
           >

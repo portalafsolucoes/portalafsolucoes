@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 
 export interface ColumnConfig {
   key: string
@@ -30,6 +31,7 @@ export function GenericCrudTable({
 }: GenericCrudTableProps) {
   const [sortField, setSortField] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const { isPhone } = useResponsiveLayout()
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -91,6 +93,54 @@ export function GenericCrudTable({
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
             <p className="mt-2 text-muted-foreground">Carregando...</p>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPhone) {
+    const [titleCol, ...restCols] = columns
+    return (
+      <div className="h-full flex flex-col bg-card overflow-hidden">
+        <div className="overflow-auto flex-1 p-4">
+          {sortedItems.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+              <Icon name="inventory_2" className="text-5xl opacity-20" />
+              <p className="text-sm">{emptyMessage}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {sortedItems.map((item) => {
+                const isActive = selectedItemId === item.id
+                const titleValue = titleCol
+                  ? (titleCol.render ? titleCol.render(item[titleCol.key], item) : (item[titleCol.key] ?? '-'))
+                  : '-'
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => onSelectItem(item)}
+                    className={`bg-card rounded-[4px] ambient-shadow p-4 hover:shadow-md transition-all cursor-pointer ${isActive ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    {titleCol && (
+                      <h3 className="text-sm font-bold text-foreground mb-2">{titleValue}</h3>
+                    )}
+                    {restCols.length > 0 && (
+                      <dl className="space-y-1 text-xs">
+                        {restCols.map((col) => (
+                          <div key={col.key} className="flex items-baseline gap-2">
+                            <dt className="font-medium text-muted-foreground shrink-0">{col.label}:</dt>
+                            <dd className="text-foreground min-w-0 truncate">
+                              {col.render ? col.render(item[col.key], item) : (item[col.key] ?? '-')}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     )

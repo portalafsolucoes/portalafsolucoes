@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ScheduleConfirmDialog } from '@/components/planning/ScheduleConfirmDialog'
 import { ScheduleReprogramChoiceDialog } from '@/components/planning/ScheduleReprogramChoiceDialog'
@@ -85,6 +86,7 @@ export default function SchedulesPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isCreating, setIsCreating] = useState(false)
   const [isEditingMetadata, setIsEditingMetadata] = useState(false)
 
@@ -514,6 +516,42 @@ export default function SchedulesPage() {
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
         <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : isPhone ? (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedSchedules.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name="calendar_month" className="text-4xl" />
+            <p className="text-sm">Nenhuma programação encontrada</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedSchedules.map(s => (
+              <div
+                key={s.id}
+                onClick={() => handleSelectSchedule(s)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedSchedule?.id === s.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-foreground min-w-0 truncate font-mono">#{s.scheduleNumber}</h3>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${STATUS_COLORS[s.status || ''] || 'bg-muted text-muted-foreground'}`}>
+                    {STATUS_LABELS[s.status || ''] || s.status || '—'}
+                  </span>
+                </div>
+                <p className="text-xs text-foreground mb-2">{s.description}</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  {s.scheduleDate && <span>Data: <span className="text-foreground">{formatDate(s.scheduleDate)}</span></span>}
+                  {(s.startDate || s.endDate) && (
+                    <span>Período: <span className="text-foreground">{formatDate(s.startDate || '')} - {formatDate(s.endDate || '')}</span></span>
+                  )}
+                  {s.createdBy && <span>Usuário: <span className="text-foreground">{`${s.createdBy.firstName || ''} ${s.createdBy.lastName || ''}`.trim()}</span></span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   ) : (

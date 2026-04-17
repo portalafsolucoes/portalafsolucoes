@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
@@ -45,6 +46,7 @@ export default function RequestApprovalsPage() {
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -170,6 +172,64 @@ export default function RequestApprovalsPage() {
     }
     return <Badge className={colors[priority as keyof typeof colors] || colors.NONE}>{priority}</Badge>
   }
+
+  const renderMobileCards = (variant: 'pending' | 'approved' | 'rejected') => (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedRequests.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name={variant === 'pending' ? 'schedule' : variant === 'approved' ? 'check_circle' : 'cancel'} className="text-4xl" />
+            <p className="text-sm">
+              {variant === 'pending' ? 'Nenhuma solicitação pendente' : variant === 'approved' ? 'Nenhuma solicitação aprovada' : 'Nenhuma solicitação rejeitada'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedRequests.map((request) => (
+              <div
+                key={request.id}
+                onClick={() => handleSelectRequest(request)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedRequest?.id === request.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-foreground min-w-0 truncate">{request.title}</h3>
+                  {variant === 'pending' && getPriorityBadge(request.priority)}
+                </div>
+                {request.description && variant === 'pending' && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{request.description}</p>
+                )}
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  {variant === 'pending' && (
+                    <>
+                      {request.createdBy && <span>Solicitante: <span className="text-foreground">{request.createdBy.firstName} {request.createdBy.lastName}</span></span>}
+                      {request.team?.name && <span>Equipe: <span className="text-foreground">{request.team.name}</span></span>}
+                      <span>Criado: <span className="text-foreground">{formatDate(request.createdAt)}</span></span>
+                    </>
+                  )}
+                  {variant === 'approved' && (
+                    <>
+                      {request.assignedTo && <span>Técnico: <span className="text-foreground">{request.assignedTo.firstName} {request.assignedTo.lastName}</span></span>}
+                      {request.approvedBy && <span>Aprov. por: <span className="text-foreground">{request.approvedBy.firstName} {request.approvedBy.lastName}</span></span>}
+                      {request.approvedAt && <span>Em: <span className="text-foreground">{formatDate(request.approvedAt)}</span></span>}
+                    </>
+                  )}
+                  {variant === 'rejected' && (
+                    <>
+                      {request.createdBy && <span>Solicitante: <span className="text-foreground">{request.createdBy.firstName} {request.createdBy.lastName}</span></span>}
+                      {request.approvedBy && <span>Rejeit. por: <span className="text-foreground">{request.approvedBy.firstName} {request.approvedBy.lastName}</span></span>}
+                    </>
+                  )}
+                </div>
+                {variant === 'rejected' && request.rejectionReason && (
+                  <p className="text-xs text-muted-foreground mt-2 italic">{request.rejectionReason}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   const renderPendingTable = () => (
     <div className="h-full flex flex-col bg-card overflow-hidden">
@@ -485,9 +545,9 @@ export default function RequestApprovalsPage() {
           </div>
         ) : (
           <>
-            {activeTab === 'pending' && renderPendingTable()}
-            {activeTab === 'approved' && renderApprovedTable()}
-            {activeTab === 'rejected' && renderRejectedTable()}
+            {activeTab === 'pending' && (isPhone ? renderMobileCards('pending') : renderPendingTable())}
+            {activeTab === 'approved' && (isPhone ? renderMobileCards('approved') : renderApprovedTable())}
+            {activeTab === 'rejected' && (isPhone ? renderMobileCards('rejected') : renderRejectedTable())}
           </>
         )}
       </div>

@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { usePermissions } from '@/hooks/usePermissions'
 
 const CriticalityDetailPanel = dynamic(
@@ -100,6 +101,7 @@ export default function CriticalityPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'critical' | 'warning' | 'ok'>('all')
   const [sortBy, setSortBy] = useState<SortField>('totalScore')
+  const { isPhone } = useResponsiveLayout()
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [showInfo, setShowInfo] = useState(false)
 
@@ -284,7 +286,46 @@ export default function CriticalityPage() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table / Cards mobile */}
+        {isPhone ? (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedAssets.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum ativo encontrado</p>
+            ) : (
+              sortedAssets.map((asset) => {
+                const config = classificationConfig[asset.classification]
+                const isSelected = selectedAsset?.id === asset.id
+                return (
+                  <div
+                    key={asset.id}
+                    onClick={() => handleSelectAsset(asset)}
+                    className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
+                          <h3 className="text-sm font-bold text-foreground truncate">{asset.name}</h3>
+                        </div>
+                        {asset.customId && <p className="text-xs text-muted-foreground">{asset.customId}</p>}
+                        {asset.location?.name && <p className="text-[11px] text-muted-foreground">{asset.location.name}</p>}
+                      </div>
+                      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-[4px] ${config.color} text-white font-bold`}>
+                        {asset.totalScore}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                      <span>GUT: <span className="text-foreground font-semibold">{asset.gutScore}</span></span>
+                      <span>SS: <span className="text-foreground font-semibold">{asset.openRequestsCount}</span></span>
+                      <span>OS: <span className="text-foreground font-semibold">{asset.openWorkOrdersCount}</span></span>
+                      <span>RAF: <span className="text-foreground font-semibold">{asset.rafCount}</span></span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        ) : (
         <div className="h-full flex flex-col bg-card overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="sticky top-0 bg-secondary z-10">
@@ -410,6 +451,7 @@ export default function CriticalityPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   )

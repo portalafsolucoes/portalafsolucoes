@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 
@@ -374,6 +375,7 @@ export default function AdminPortalPage() {
 
   // Split-panel state
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const showSidePanel = !!(selectedCompany !== null || isCreating)
@@ -873,6 +875,38 @@ export default function AdminPortalPage() {
             <Icon name="add" className="mr-1 text-base" />
             Nova Empresa
           </Button>
+        </div>
+      ) : isPhone ? (
+        <div className="grid grid-cols-1 gap-3">
+          {sortedCompanies.map((company) => (
+            <div
+              key={company.id}
+              onClick={() => handleSelectCompany(company)}
+              className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedCompany?.id === company.id ? 'ring-2 ring-primary' : ''}`}
+            >
+              <div className="flex items-start gap-3 mb-2">
+                {company.logo ? (
+                  <div className="relative w-10 h-10 rounded-[4px] overflow-hidden flex-shrink-0 bg-secondary">
+                    <Image src={company.logo} alt={company.name} fill className="object-contain" sizes="40px" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon name="domain" className="text-xl text-primary" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-foreground truncate">{company.name}</h3>
+                  {company.email && <p className="text-xs text-muted-foreground truncate">{company.email}</p>}
+                  {company.phone && <p className="text-[11px] text-muted-foreground truncate">{company.phone}</p>}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1"><Icon name="group" className="text-sm" />{company.userCount} usuários</span>
+                <span className="flex items-center gap-1"><Icon name="extension" className="text-sm" />{company.moduleCount} módulos</span>
+                <span>Criada: <span className="text-foreground">{new Date(company.createdAt).toLocaleDateString('pt-BR')}</span></span>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="h-full flex flex-col bg-card overflow-hidden">

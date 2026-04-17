@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -30,6 +31,7 @@ export default function AssetMaintenancePlanPage() {
 
   // --- painel de detalhe ---
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [loadingDetail, setLoadingDetail] = useState(false)
 
   // --- painel de criação/edição ---
@@ -201,7 +203,40 @@ export default function AssetMaintenancePlanPage() {
     )
   ) : null
 
-  const listContent = (
+  const listContent = isPhone ? (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedAsset.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano de manutenção do bem cadastrado.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedAsset.map(p => (
+              <div
+                key={p.id}
+                onClick={() => handleSelectPlan(p.id)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedPlan?.id === p.id || editingId === p.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-foreground min-w-0 truncate">{p.name || '-'}</h3>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${p.isActive ? 'bg-surface-low text-foreground' : 'bg-surface-low text-muted-foreground'}`}>
+                    {p.isActive ? 'Ativa' : 'Inativa'}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2 font-mono">
+                  {p.asset?.protheusCode || '-'} · {p.asset?.name || '-'}
+                </p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  {p.serviceType?.name && <span>Serv.: <span className="text-foreground">{p.serviceType.name}</span></span>}
+                  {p.maintenanceTime && <span>Freq.: <span className="text-foreground">{p.maintenanceTime} {p.timeUnit}</span></span>}
+                  <span>Controle: <span className="text-foreground">{p.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo'}</span></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : (
     <div className="flex-1 overflow-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="sticky top-0 bg-secondary z-10">

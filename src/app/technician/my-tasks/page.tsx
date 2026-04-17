@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/Badge'
@@ -259,6 +260,7 @@ export default function MyTasksPage() {
   const [loading, setLoading] = useState(false)
   const [selectedItem, setSelectedItem] = useState<WorkOrder | Request | null>(null)
   const [selectedType, setSelectedType] = useState<'workorder' | 'request' | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isExecuting, setIsExecuting] = useState(false)
   const [woSortField, setWoSortField] = useState<WOSortField>('createdAt')
   const [woSortDirection, setWoSortDirection] = useState<SortDirection>('desc')
@@ -404,6 +406,73 @@ export default function MyTasksPage() {
         return 0
     }
   })
+
+  const renderWorkOrdersCards = () => (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedWorkOrders.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name="construction" className="text-4xl" />
+            <p className="text-sm">Nenhuma ordem de serviço atribuída</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedWorkOrders.map((wo) => (
+              <div
+                key={wo.id}
+                onClick={() => handleSelectItem(wo, 'workorder')}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedItem?.id === wo.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-foreground min-w-0 truncate">{wo.title}</h3>
+                  <PriorityBadge priority={wo.priority} />
+                </div>
+                <p className="text-xs font-mono text-muted-foreground mb-2">{wo.internalId || wo.id.slice(0, 8)}</p>
+                {wo.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{wo.description}</p>}
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <StatusBadge status={wo.status} />
+                  <span>Criada: {formatDate(wo.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  const renderRequestsCards = () => (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedRequests.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name="description" className="text-4xl" />
+            <p className="text-sm">Nenhuma solicitação atribuída</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedRequests.map((req) => (
+              <div
+                key={req.id}
+                onClick={() => handleSelectItem(req, 'request')}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedItem?.id === req.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-foreground min-w-0 truncate">{req.title}</h3>
+                  <PriorityBadge priority={req.priority} />
+                </div>
+                {req.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{req.description}</p>}
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <ExecutionStatusBadge item={req} />
+                  <span>Criada: {formatDate(req.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   const renderWorkOrdersTable = () => (
     <div className="h-full flex flex-col bg-card overflow-hidden">
@@ -639,7 +708,9 @@ export default function MyTasksPage() {
                 </div>
               </div>
             ) : (
-              activeTab === 'workorders' ? renderWorkOrdersTable() : renderRequestsTable()
+              activeTab === 'workorders'
+                ? (isPhone ? renderWorkOrdersCards() : renderWorkOrdersTable())
+                : (isPhone ? renderRequestsCards() : renderRequestsTable())
             )}
             panel={selectedItem && selectedType ? (
               isExecuting ? (

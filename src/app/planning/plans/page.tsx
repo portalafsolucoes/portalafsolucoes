@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatDate } from '@/lib/utils'
 import { hasPermission, type UserRole } from '@/lib/permissions'
@@ -51,6 +52,7 @@ export default function PlansPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isCreating, setIsCreating] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -211,6 +213,38 @@ export default function PlansPage() {
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
         <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : isPhone ? (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedPlans.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name="assignment" className="text-4xl" />
+            <p className="text-sm">Nenhum plano encontrado</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedPlans.map(p => (
+              <div
+                key={p.id}
+                onClick={() => handleSelectPlan(p)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedPlan?.id === p.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-foreground min-w-0 truncate">#{p.planNumber}</h3>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-low text-foreground whitespace-nowrap">{p.status}</span>
+                </div>
+                <p className="text-xs text-foreground mb-2">{p.description}</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  <span>Início: <span className="text-foreground">{formatDate(p.startDate || '')}</span></span>
+                  <span>Fim: <span className="text-foreground">{formatDate(p.endDate || '')}</span></span>
+                  <span>{p.isFinished ? 'Terminado' : 'Em andamento'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   ) : (

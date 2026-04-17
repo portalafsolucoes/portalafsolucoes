@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { getRoleDisplayName } from '@/lib/permissions'
@@ -456,6 +457,7 @@ export default function AdminUsersPage() {
 
   // Split-panel state
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const showSidePanel = !!(selectedUser !== null || isCreating)
@@ -804,6 +806,55 @@ export default function AdminUsersPage() {
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
         <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : isPhone ? (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedUsers.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name="group" className="text-4xl" />
+            <p className="text-sm">Nenhum usuário encontrado</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedUsers.map((user) => (
+              <div
+                key={user.id}
+                onClick={() => handleSelectUser(user)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedUser?.id === user.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start gap-3 mb-2">
+                  {user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary font-semibold text-sm">
+                        {user.firstName[0]}{user.lastName[0]}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-foreground truncate">{user.firstName} {user.lastName}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    {user.jobTitle && <p className="text-[11px] text-muted-foreground truncate">{user.jobTitle}</p>}
+                  </div>
+                  <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap ${user.enabled ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                    {user.enabled ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-foreground font-medium">{getRoleDisplayName(user.role as UserRole)}</span>
+                  {user.units.map(unit => (
+                    <span key={unit.id} className="px-2 py-0.5 rounded-full bg-secondary text-foreground">{unit.name}</span>
+                  ))}
+                  {user.units.length === 0 && <span className="text-muted-foreground italic">Sem unidade</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   ) : (

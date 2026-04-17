@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { isAdminRole } from '@/lib/user-roles'
@@ -214,6 +215,7 @@ export default function AdminUnitsPage() {
 
   // Split-panel state
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const showSidePanel = !!(selectedUnit !== null || isCreating)
@@ -422,6 +424,42 @@ export default function AdminUnitsPage() {
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
         <p className="mt-2 text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  ) : isPhone ? (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedUnits.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground py-12">
+            <Icon name="apartment" className="text-4xl" />
+            <p className="text-sm">Nenhuma unidade encontrada</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedUnits.map((unit) => (
+              <div
+                key={unit.id}
+                onClick={() => handleSelectUnit(unit)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedUnit?.id === unit.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <div className="flex items-start gap-3 mb-2">
+                  <div className="size-10 rounded-[4px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon name="apartment" className="text-xl text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-foreground truncate">{unit.name}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{unit.address || '—'}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  <span>Membros: <span className="text-foreground">{unit.memberCount}</span></span>
+                  <span>Ativos: <span className="text-foreground">{unit.assetCount}</span></span>
+                  <span>Criada: <span className="text-foreground">{new Date(unit.createdAt).toLocaleDateString('pt-BR')}</span></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   ) : (

@@ -434,7 +434,9 @@ export default function WorkOrdersPage() {
                     <p className="text-muted-foreground">Crie uma nova ordem de serviço para começar.</p>
                   </div>
                 </div>
-              ) : viewMode === 'grid' || isPhone ? (
+              ) : (
+                <div className="h-full flex flex-col overflow-hidden">
+                {viewMode === 'grid' || isPhone ? (
                 <div className="overflow-auto flex-1 p-4 md:p-6">
                   <div className="grid grid-cols-1 gap-3 md:gap-4">
                     {filteredWorkOrders.map((wo) => {
@@ -481,7 +483,7 @@ export default function WorkOrdersPage() {
                     })}
                   </div>
                 </div>
-              ) : (
+                ) : (
                 <div className="h-full flex flex-col bg-card overflow-hidden">
                   <div className="flex-1 overflow-auto min-h-0">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -614,6 +616,8 @@ export default function WorkOrdersPage() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+                )}
                 </div>
               )
             }

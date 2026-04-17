@@ -326,8 +326,10 @@ export default function RequestsPage() {
         <p className="text-muted-foreground">Crie uma nova solicitação para começar.</p>
       </div>
     </div>
-  ) : viewMode === 'grid' || isPhone ? (
-    <div className="overflow-auto flex-1 h-full p-4">
+  ) : (
+    <div className="h-full flex flex-col overflow-hidden">
+    {viewMode === 'grid' || isPhone ? (
+    <div className="overflow-auto flex-1 p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredRequests.map((request) => (
           <div
@@ -369,7 +371,7 @@ export default function RequestsPage() {
         ))}
       </div>
     </div>
-  ) : (
+    ) : (
     <div className="h-full flex flex-col bg-card overflow-hidden">
       <div className="flex-1 overflow-auto min-h-0">
         <table className="min-w-full divide-y divide-gray-200">
@@ -488,6 +490,8 @@ export default function RequestsPage() {
           </tbody>
         </table>
       </div>
+    </div>
+    )}
     </div>
   )
 

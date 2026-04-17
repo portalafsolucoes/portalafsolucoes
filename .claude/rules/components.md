@@ -155,6 +155,47 @@ Padrao visual:
 
 ## Padrao de Tela de Listagem (OBRIGATORIO)
 Referencia canonica: telas de `Pessoas` e `Ativos`.
+
+### Cards no mobile (OBRIGATORIO)
+
+Toda listagem DEVE renderizar **cards** quando `isPhone` (< 768px) em vez da tabela desktop. Isso garante ergonomia em celular e scroll funcional.
+
+**Padrao de wrapper (obrigatorio):** o conteudo de `list={...}` do `AdaptiveSplitPanel` DEVE ter o wrapper canonico que envolve tanto o modo cards quanto o modo tabela:
+
+```tsx
+list={
+  loading ? (...) :
+  items.length === 0 ? (...) : (
+    <div className="h-full flex flex-col overflow-hidden">
+      {(viewMode === 'grid' || isPhone) && (
+        <div className="overflow-auto flex-1 p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* card items */}
+          </div>
+        </div>
+      )}
+      {viewMode === 'table' && !isPhone && (
+        <div className="h-full flex flex-col bg-card overflow-hidden">
+          <div className="flex-1 overflow-auto min-h-0">
+            <table className="min-w-full divide-y divide-gray-200">...</table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+**Por que o wrapper `<div className="h-full flex flex-col overflow-hidden">` e obrigatorio:** no modo compact do `AdaptiveSplitPanel`, o container interno e `<div className="w-full overflow-hidden">` — nao e `flex flex-col` com altura. Sem o wrapper, o `flex-1 overflow-auto` dos cards nao se expande corretamente e o scroll quebra.
+
+**Campos minimos de um card mobile:**
+- Titulo (bold, truncate se longo) + badge/status no topo
+- Subtitulo opcional (codigo, area, origem)
+- 2-3 metadados em linha (`flex flex-wrap gap-x-3 gap-y-1`) com `text-[11px]` ou `text-xs`
+- Click no card abre o painel/detalhe (mesmo callback da linha da tabela)
+
+**Hook correto:** usar `const { isPhone } = useResponsiveLayout()` do `@/hooks/useMediaQuery`. Nao usar `useIsMobile()` legado.
+
 - Excecao documentada: em `/people-teams`, o toggle de visualizacao deve oferecer apenas `Tabela` e `Grade`; o modo `Arvore` nao deve aparecer nessa tela
 - Em `/people-teams`, a coluna e os campos de `Papel` devem usar o papel canonico de acesso do produto; `Cargo` deve usar exclusivamente `jobTitle` como funcao profissional da pessoa
 - Quando o campo `Cargo` aparecer em formularios de usuario, ele deve ser renderizado como selecao baseada em `Cadastros Basicos > Cargos`, e nao como texto livre

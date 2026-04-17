@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -30,6 +31,7 @@ export default function StandardMaintenancePlanPage() {
 
   // --- painel de detalhe ---
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null)
+  const { isPhone } = useResponsiveLayout()
   const [loadingDetail, setLoadingDetail] = useState(false)
 
   // --- painel de criação/edição ---
@@ -190,7 +192,36 @@ export default function StandardMaintenancePlanPage() {
     )
   ) : null
 
-  const listContent = (
+  const listContent = isPhone ? (
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
+        {sortedStandard.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano padrão cadastrado.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {sortedStandard.map(p => (
+              <div
+                key={p.id}
+                onClick={() => handleSelectPlan(p.id)}
+                className={`bg-card rounded-[4px] ambient-shadow p-4 cursor-pointer transition-all ${selectedPlan?.id === p.id || editingId === p.id ? 'ring-2 ring-primary' : ''}`}
+              >
+                <h3 className="text-sm font-bold text-foreground mb-1">{p.name}</h3>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {p.family?.code} - {p.family?.name}
+                </p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  {p.serviceType?.name && <span>Serv.: <span className="text-foreground">{p.serviceType.name}</span></span>}
+                  <span>Freq.: <span className="text-foreground">{p.maintenanceTime} {p.timeUnit}</span></span>
+                  <span>Controle: <span className="text-foreground">{p.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo'}</span></span>
+                  <span>Período: <span className="text-foreground">{p.period}</span></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : (
     <div className="flex-1 overflow-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="sticky top-0 bg-secondary z-10">

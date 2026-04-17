@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
+import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { Icon } from '@/components/ui/Icon'
 
@@ -61,6 +62,7 @@ export default function RAFsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
+  const { isPhone } = useResponsiveLayout()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [rafToDelete, setRafToDelete] = useState<string | null>(null)
   const [selectedRAF, setSelectedRAF] = useState<RAF | null>(null)
@@ -269,7 +271,9 @@ export default function RAFsPage() {
         </p>
       </div>
     </div>
-  ) : viewMode === 'cards' ? (
+  ) : (
+    <div className="h-full flex flex-col overflow-hidden">
+    {viewMode === 'cards' || isPhone ? (
     <div className="overflow-auto flex-1 p-4 md:p-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
         {filteredRAFs.map((raf) => (
@@ -324,7 +328,7 @@ export default function RAFsPage() {
         ))}
       </div>
     </div>
-  ) : (
+    ) : (
     <div className="h-full flex flex-col bg-card overflow-hidden">
       <div className="flex-1 overflow-auto min-h-0">
         <table className="min-w-full divide-y divide-gray-200">
@@ -428,6 +432,8 @@ export default function RAFsPage() {
           </tbody>
         </table>
       </div>
+    </div>
+    )}
     </div>
   )
 

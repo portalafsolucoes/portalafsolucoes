@@ -173,7 +173,7 @@ export default function LocationsPage() {
     />
   ) : null
 
-  const effectiveViewMode = isPhone ? 'table' : viewMode
+  const effectiveViewMode = isPhone ? 'grid' : viewMode
 
   const listContent = loading ? (
     <div className="flex-1 flex items-center justify-center">
@@ -424,7 +424,8 @@ function GridView({ locations, selectedId, onSelect }: GridViewProps) {
   }
 
   return (
-    <div className="h-full overflow-auto p-4">
+    <div className="h-full flex flex-col bg-card overflow-hidden">
+      <div className="overflow-auto flex-1 p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {locations.map(location => (
           <button
@@ -455,6 +456,7 @@ function GridView({ locations, selectedId, onSelect }: GridViewProps) {
             </div>
           </button>
         ))}
+      </div>
       </div>
     </div>
   )
