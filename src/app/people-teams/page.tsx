@@ -528,11 +528,11 @@ export default function PeopleTeamsPage() {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                       {user.enabled ? (
                                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">
-                                          Ativo
+                                          ATIVO
                                         </span>
                                       ) : (
                                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-light text-danger-light-foreground">
-                                          Inativo
+                                          INATIVO
                                         </span>
                                       )}
                                     </td>
