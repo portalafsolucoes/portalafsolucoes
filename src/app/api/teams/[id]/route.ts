@@ -106,7 +106,7 @@ export async function PUT(
     // Atualizar a equipe
     const { data: team, error: updateError } = await supabase
       .from('Team')
-      .update({ name, description })
+      .update({ name, description, updatedAt: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()
@@ -115,6 +115,30 @@ export async function PUT(
 
     // Gerenciar membros se memberIds foi fornecido
     if (memberIds !== undefined) {
+      // Validar que os usuarios novos nao estao em outra equipe
+      if (Array.isArray(memberIds) && memberIds.length > 0) {
+        const { data: existing, error: existingErr } = await supabase
+          .from('TeamMember')
+          .select('userId, teamId, team:Team(name)')
+          .in('userId', memberIds)
+        if (existingErr) {
+          console.error('Check membership error:', existingErr)
+          return NextResponse.json({ error: 'Database error' }, { status: 500 })
+        }
+        const conflicts = (existing || [])
+          .filter((m: { teamId: string }) => m.teamId !== id)
+          .map((m: { userId: string; team: { name: string } | { name: string }[] }) => ({
+            userId: m.userId,
+            teamName: Array.isArray(m.team) ? m.team[0]?.name : m.team?.name,
+          }))
+        if (conflicts.length > 0) {
+          return NextResponse.json(
+            { error: 'Um ou mais usuarios ja pertencem a outra equipe', conflicts },
+            { status: 409 }
+          )
+        }
+      }
+
       // Remover membros atuais
       const { error: deleteError } = await supabase
         .from('TeamMember')

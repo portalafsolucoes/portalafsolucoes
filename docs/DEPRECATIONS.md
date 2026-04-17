@@ -21,6 +21,7 @@ Antes de remover, verificar que nenhum import ou referencia depende do item.
 | Arquivo | Motivo | Substituto | Deprecado em | Condicao para remocao |
 |---------|--------|------------|--------------|----------------------|
 | `src/components/basic-registrations/CrudTable.tsx` | Substituido pelo split-panel (GenericCrudTable + GenericEditPanel + GenericDetailPanel) | `GenericCrudTable.tsx`, `GenericEditPanel.tsx`, `GenericDetailPanel.tsx` | 2026-04-10 | Nenhum import restante no projeto |
+| `User.enabled` (Boolean no schema) | Substituido pelo enum `User.status` (`ACTIVE`/`INACTIVE`/`ARCHIVED`); mantido por compatibilidade durante a transicao das listagens e exports | `User.status` em `prisma/schema.prisma` + helpers em `src/lib/users/userReferences.ts` | 2026-04-16 | Quando todas as queries/exports/UIs ja usarem `status`; dropar coluna `enabled` em migration dedicada |
 | `src/app/requests/approvals/page.tsx` — padrao overlay exclusivo | `showModal + handleOpenModal` substituidos por split-panel com `selectedRequest + hasSidePanel`; botoes de acao removidos das linhas da tabela | `ApprovalModal` com `inPage=true` no painel direito; modal overlay mantido apenas no mobile | 2026-04-10 | Padrao ja migrado; entrada pode ser removida apos validacao em producao |
 
 ## Sessão de padronização split-panel — 2026-04-10

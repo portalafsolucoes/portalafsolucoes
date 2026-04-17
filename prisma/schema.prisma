@@ -23,6 +23,12 @@ enum UserRole {
   CONSTRUTOR_CIVIL
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
 enum WorkOrderStatus {
   PENDING
   RELEASED
@@ -358,6 +364,12 @@ model User {
   image             String?
   rate              Float    @default(0)
   enabled           Boolean  @default(true)
+  status            UserStatus @default(ACTIVE)
+  deactivatedAt     DateTime?
+  deactivatedById   String?
+  archivedAt        DateTime?
+  archivedById      String?
+  archivalReason    String?
   lastLogin         DateTime?
   protheusMatricula String?
   createdAt         DateTime @default(now())
@@ -441,7 +453,7 @@ model TeamMember {
   teamId String
   team   Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
-  userId String
+  userId String @unique
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, userId])

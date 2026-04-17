@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Icon } from '@/components/ui/Icon'
+import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 
 interface TeamDetailModalProps {
   isOpen: boolean
@@ -11,9 +12,10 @@ interface TeamDetailModalProps {
   teamId: string
   onEdit: () => void
   onDelete: () => void
+  inPage?: boolean
 }
 
-export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: TeamDetailModalProps) {
+export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete, inPage = false }: TeamDetailModalProps) {
   const [team, setTeam] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -64,6 +66,22 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
   }
 
   if (loading || !team) {
+    if (inPage) {
+      return (
+        <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-lg font-black text-gray-900">Equipe</h2>
+            <PanelCloseButton onClick={onClose} />
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+              <p className="mt-2 text-muted-foreground">Carregando...</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
     return (
       <Modal isOpen={isOpen} onClose={onClose} title="Detalhes da Equipe">
         <div className="text-center py-12">
@@ -71,6 +89,92 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete }: T
           <p className="mt-2 text-muted-foreground">Carregando...</p>
         </div>
       </Modal>
+    )
+  }
+
+  if (inPage) {
+    return (
+      <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
+        <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Icon name="groups" className="text-2xl text-orange-500" />
+              <h2 className="text-lg font-black text-gray-900 truncate">{team.name}</h2>
+            </div>
+            {team.description && (
+              <p className="text-sm text-muted-foreground">{team.description}</p>
+            )}
+          </div>
+          <PanelCloseButton onClick={onClose} className="ml-2" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 border-b border-gray-200 space-y-2">
+            <button
+              onClick={onEdit}
+              className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+            >
+              <Icon name="edit" className="text-base" />
+              Editar
+            </button>
+            <button
+              onClick={handleDelete}
+              className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+            >
+              <Icon name="delete" className="text-base" />
+              Excluir
+            </button>
+          </div>
+
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+              <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">Estatisticas</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-primary/5 rounded p-3 text-center">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Membros</p>
+                <p className="text-xl font-bold text-foreground">{team._count?.members || 0}</p>
+              </div>
+              <div className="bg-success-light rounded p-3 text-center">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">OS</p>
+                <p className="text-xl font-bold text-foreground">{team._count?.assignedWorkOrders || 0}</p>
+              </div>
+              <div className="bg-purple-50 rounded p-3 text-center">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Ativos</p>
+                <p className="text-xl font-bold text-foreground">{team._count?.assignedAssets || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center gap-3 mb-4 bg-gray-100 border border-gray-200 p-2.5 rounded-md shadow-sm">
+              <span className="font-bold text-[12px] uppercase tracking-wider text-gray-900">Membros ({team.members?.length || 0})</span>
+            </div>
+            {team.members && team.members.length > 0 ? (
+              <div className="space-y-2 px-1">
+                {team.members.map((membership: any) => (
+                  <div key={membership.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                    {membership.user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={membership.user.image} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-primary font-semibold text-xs">{membership.user.firstName[0]}{membership.user.lastName[0]}</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{membership.user.firstName} {membership.user.lastName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{membership.user.jobTitle || membership.user.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4 text-sm">Nenhum membro nesta equipe.</p>
+            )}
+          </div>
+        </div>
+      </div>
     )
   }
 

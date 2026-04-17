@@ -6,6 +6,7 @@ import { checkApiPermission } from '@/lib/permissions'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
 import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
 import { ensureAdminUnitAccess } from '@/lib/admin-scope'
+import { countUserReferences } from '@/lib/users/userReferences'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -305,6 +306,19 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Cannot delete your own account' },
         { status: 400 }
+      )
+    }
+
+    // Hard delete so e permitido se nao houver historico operacional
+    const refs = await countUserReferences(id)
+    if (refs.hasHistory) {
+      return NextResponse.json(
+        {
+          error: 'Usuario possui historico operacional e nao pode ser excluido. Use Desativar ou Anonimizar.',
+          references: refs.counts,
+          total: refs.total,
+        },
+        { status: 409 }
       )
     }
 

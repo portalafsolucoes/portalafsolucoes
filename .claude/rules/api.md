@@ -88,6 +88,17 @@ globs: src/app/api/**,src/actions/**
 - A SS continua com status `APPROVED` apos a geracao da RAF; nao existe transicao automatica para `COMPLETED` por consequencia da RAF, e nao se grava `rafId` no registro da SS (o vinculo vive em `FailureAnalysisReport.requestId`)
 - A UI so deve oferecer o botao `Abrir RAF` no painel de detalhe da SS quando `request.status === 'APPROVED'` e `request.failureAnalysisReport == null`
 
+## Lifecycle e Exclusao de Usuario
+- O modelo `User` opera com tres estados via enum `UserStatus`: `ACTIVE` (uso normal), `INACTIVE` (desativado, sem login, historico preservado), `ARCHIVED` (anonimizado para LGPD). O campo `enabled` (Boolean) esta deprecado e e sincronizado pelas rotas de lifecycle por compatibilidade
+- Login (`POST /api/auth/login`): usuarios `INACTIVE` recebem `403` ("Conta desativada"); usuarios `ARCHIVED` recebem `401` indistinguivel de credenciais invalidas
+- `POST /api/users/[id]/deactivate` — bloqueia login (`status = INACTIVE`), mantem PII e referencias historicas. Bloqueia auto-desativacao e desativacao do ultimo `SUPER_ADMIN` ativo
+- `POST /api/users/[id]/reactivate` — volta para `ACTIVE`. Indisponivel se status for `ARCHIVED`
+- `POST /api/users/[id]/archive` — anonimiza PII (`firstName='Usuario'`, `lastName='Removido #<shortId>'`, email/username com sufixo `@archived.local`, phone/image/password limpos) e seta `status = ARCHIVED`. Body opcional `{ reason }`. Bloqueia auto-acao e ultimo `SUPER_ADMIN` ativo. Acao nao reversivel
+- `DELETE /api/users/[id]` — passou a executar hard delete somente quando `countUserReferences(id).hasHistory == false`. Caso contrario retorna `409` com `{ error, references, total }` listando categorias com contagem (`workOrders`, `requestsCreated`, `failureAnalysisReports`, `labors`, `teamMemberships`, etc.). Nao permite auto-exclusao
+- `GET /api/users/[id]/references` — retorna `{ data: { counts, total, hasHistory } }` para a UI decidir quais botoes destrutivos exibir
+- Helper canonico de checagem de FK: `countUserReferences` em `src/lib/users/userReferences.ts`. Verificacao de "ultimo SUPER_ADMIN ativo": `isLastActiveSuperAdmin(userId, companyId)` no mesmo arquivo. Nao reimplementar essa logica nos handlers
+- A UI nunca deve oferecer hard delete sem antes consultar `/references`; o servidor valida novamente para evitar bypass
+
 ## Casos Especificos do Produto
 - `Aprovacoes` e exclusivo de `SUPER_ADMIN` e `ADMIN`
 - `Configuracoes` do portal sao exclusivas de `SUPER_ADMIN`

@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { getRoleLabel } from '@/lib/rbac'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
+import { UserDangerActions } from '@/components/people/UserDangerActions'
 
 interface PersonDetailModalProps {
   isOpen: boolean
@@ -16,6 +17,8 @@ interface PersonDetailModalProps {
   onDelete: () => void
   inPage?: boolean
 }
+
+type PersonStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
 
 interface PersonDetailUser {
   firstName: string
@@ -27,6 +30,9 @@ interface PersonDetailUser {
   phone?: string | null
   rate: number
   enabled: boolean
+  status?: PersonStatus
+  archivedAt?: string | null
+  deactivatedAt?: string | null
   createdAt: string
   updatedAt: string
   lastLogin?: string | null
@@ -37,6 +43,16 @@ interface PersonDetailUser {
       name: string
     }
   }>
+}
+
+const STATUS_BADGE: Record<PersonStatus, { label: string; cls: string }> = {
+  ACTIVE: { label: 'Ativo', cls: 'bg-success-light text-success-light-foreground' },
+  INACTIVE: { label: 'Inativo', cls: 'bg-gray-200 text-gray-700' },
+  ARCHIVED: { label: 'Anonimizado', cls: 'bg-amber-100 text-amber-800' },
+}
+
+function statusOf(user: PersonDetailUser): PersonStatus {
+  return (user.status as PersonStatus) || (user.enabled ? 'ACTIVE' : 'INACTIVE')
 }
 
 export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, inPage = false }: PersonDetailModalProps) {
@@ -66,27 +82,9 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
     }
   }, [fetchUser, isOpen, userId])
 
-  const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja excluir esta pessoa? Esta ação não pode ser desfeita.')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        onDelete()
-        onClose()
-      } else {
-        const data = await response.json()
-        alert(data.error || 'Erro ao excluir pessoa')
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error)
-      alert('Erro ao excluir pessoa')
-    }
+  const handleAfterDangerAction = () => {
+    onDelete()
+    onClose()
   }
 
   if (loading || !user) {
@@ -132,9 +130,14 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
               <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border bg-gray-800 text-white border-transparent shadow-sm">
                 {getRoleLabel(user.role)}
               </span>
-              <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border shadow-sm ${user.enabled ? 'bg-success-light text-success-light-foreground border-gray-200' : 'bg-danger-light text-danger-light-foreground border-gray-200'}`}>
-                {user.enabled ? 'Ativo' : 'Inativo'}
-              </span>
+              {(() => {
+                const s = statusOf(user)
+                return (
+                  <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 shadow-sm ${STATUS_BADGE[s].cls}`}>
+                    {STATUS_BADGE[s].label}
+                  </span>
+                )
+              })()}
             </div>
           </div>
         </div>
@@ -154,20 +157,21 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
 
             <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
               <div className="p-4 border-b border-gray-200 space-y-2">
-                <button
-                  onClick={onEdit}
-                  className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
-                >
-                  <Icon name="edit" className="text-base" />
-                  Editar
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
-                >
-                  <Icon name="delete" className="text-base" />
-                  Excluir
-                </button>
+                {statusOf(user) !== 'ARCHIVED' && (
+                  <button
+                    onClick={onEdit}
+                    className="bg-gray-900 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+                  >
+                    <Icon name="edit" className="text-base" />
+                    Editar
+                  </button>
+                )}
+                <UserDangerActions
+                  userId={userId}
+                  userName={`${user.firstName} ${user.lastName}`}
+                  status={statusOf(user)}
+                  onAfterAction={handleAfterDangerAction}
+                />
               </div>
 
               <div className="px-6 py-4 border-b border-gray-200">
@@ -213,7 +217,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
                   )}
                   <div>
                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status</p>
-                    <p className="text-[13px] font-medium text-gray-900">{user.enabled ? 'Ativo' : 'Inativo'}</p>
+                    <p className="text-[13px] font-medium text-gray-900">{STATUS_BADGE[statusOf(user)].label}</p>
                   </div>
                 </div>
               </div>
@@ -293,21 +297,22 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
-            >
-              <Icon name="edit" className="text-base" />
-              Editar
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-red-700 transition-colors"
-            >
-              <Icon name="delete" className="text-base" />
-              Excluir
-            </button>
+          <div className="flex flex-col gap-2 w-full max-w-[260px]">
+            {statusOf(user) !== 'ARCHIVED' && (
+              <button
+                onClick={onEdit}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-[4px] hover:bg-blue-700 transition-colors"
+              >
+                <Icon name="edit" className="text-base" />
+                Editar
+              </button>
+            )}
+            <UserDangerActions
+              userId={userId}
+              userName={`${user.firstName} ${user.lastName}`}
+              status={statusOf(user)}
+              onAfterAction={handleAfterDangerAction}
+            />
           </div>
         </div>
 
@@ -365,11 +370,10 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
                 <div>
                   <p className="text-sm text-muted-foreground">Status</p>
                   <p className="text-foreground">
-                    {user.enabled ? (
-                      <span className="text-success font-medium">Ativo</span>
-                    ) : (
-                      <span className="text-danger font-medium">Inativo</span>
-                    )}
+                    {(() => {
+                      const s = statusOf(user)
+                      return <span className={`font-medium ${s === 'ACTIVE' ? 'text-success' : s === 'ARCHIVED' ? 'text-amber-700' : 'text-gray-700'}`}>{STATUS_BADGE[s].label}</span>
+                    })()}
                   </p>
                 </div>
               </div>

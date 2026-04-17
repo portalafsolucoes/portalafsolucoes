@@ -64,13 +64,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validar que os usuarios selecionados nao estao em outra equipe
+    if (Array.isArray(memberIds) && memberIds.length > 0) {
+      const { data: existing, error: existingErr } = await supabase
+        .from('TeamMember')
+        .select('userId, team:Team(name)')
+        .in('userId', memberIds)
+      if (existingErr) {
+        console.error('Check membership error:', existingErr)
+        return NextResponse.json({ error: 'Database error' }, { status: 500 })
+      }
+      if (existing && existing.length > 0) {
+        const conflicts = existing.map((m: { userId: string; team: { name: string } | { name: string }[] }) => ({
+          userId: m.userId,
+          teamName: Array.isArray(m.team) ? m.team[0]?.name : m.team?.name,
+        }))
+        return NextResponse.json(
+          { error: 'Um ou mais usuarios ja pertencem a outra equipe', conflicts },
+          { status: 409 }
+        )
+      }
+    }
+
+    const now = new Date().toISOString()
     const { data: team, error: createError } = await supabase
       .from('Team')
       .insert({
         id: generateId(),
         name,
         description,
-        companyId: session.companyId
+        companyId: session.companyId,
+        createdAt: now,
+        updatedAt: now,
       })
       .select(`
         *,

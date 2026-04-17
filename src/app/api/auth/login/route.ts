@@ -29,9 +29,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!user.enabled) {
+    if (user.status === 'ARCHIVED') {
       return NextResponse.json(
-        { error: 'Account is disabled' },
+        { error: 'Conta nao encontrada' },
+        { status: 401 }
+      )
+    }
+
+    if (user.status === 'INACTIVE' || !user.enabled) {
+      return NextResponse.json(
+        { error: 'Conta desativada. Entre em contato com o administrador.' },
         { status: 403 }
       )
     }
