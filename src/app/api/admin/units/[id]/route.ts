@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
 import { isAdminRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 /**
  * PUT /api/admin/units/[id]
@@ -21,7 +22,7 @@ export async function PUT(
   }
 
   const { id } = await params
-  const body = await request.json()
+  const body = normalizeTextPayload(await request.json())
   const { name, address, latitude, longitude } = body
 
   if (!name || !name.trim()) {

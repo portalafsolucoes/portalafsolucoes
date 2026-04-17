@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Listar recursos da OS
 export async function GET(
@@ -62,7 +63,7 @@ export async function PUT(
       return NextResponse.json({ error: 'OS não encontrada' }, { status: 404 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { resources } = body
 
     if (!Array.isArray(resources)) {

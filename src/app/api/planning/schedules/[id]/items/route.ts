@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 import {
   moveOverdueItemToNewSchedule,
   revertMovedItemForWorkOrder,
@@ -69,7 +70,7 @@ export async function PUT(
     if (permError) return NextResponse.json({ error: permError }, { status: 403 })
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { items } = body // Array de { workOrderId, scheduledDate }
 
     if (!Array.isArray(items)) {

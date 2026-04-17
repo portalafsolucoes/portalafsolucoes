@@ -50,10 +50,10 @@ type ReqSortField = 'title' | 'priority' | 'executionStatus' | 'createdAt'
 type SortDirection = 'asc' | 'desc'
 
 const PRIORITY_LABELS: Record<string, string> = {
-  CRITICAL: 'Crítica',
-  HIGH: 'Alta',
-  MEDIUM: 'Média',
-  LOW: 'Baixa',
+  CRITICAL: 'CRITICA',
+  HIGH: 'ALTA',
+  MEDIUM: 'MEDIA',
+  LOW: 'BAIXA',
   NONE: 'Sem prioridade',
 }
 
@@ -66,11 +66,11 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Aberta',
-  IN_PROGRESS: 'Em andamento',
-  ON_HOLD: 'Em espera',
-  COMPLETE: 'Concluída',
-  APPROVED: 'Aprovada',
+  OPEN: 'ABERTA',
+  IN_PROGRESS: 'EM ANDAMENTO',
+  ON_HOLD: 'EM ESPERA',
+  COMPLETE: 'CONCLUIDA',
+  APPROVED: 'APROVADA',
 }
 
 const STATUS_COLORS: Record<string, string> = {

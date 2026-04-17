@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession, createSession } from '@/lib/session'
 import { supabase } from '@/lib/supabase'
 import { canSwitchUnits, isSuperAdminRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 /**
  * PUT /api/user/active-unit
@@ -15,7 +16,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
+  const body = normalizeTextPayload(await request.json())
   const { unitId } = body
 
   if (!unitId) {

@@ -44,12 +44,12 @@ interface JobTitleOption {
 }
 
 const ALL_ROLES: { value: string; label: string }[] = [
-  { value: 'SUPER_ADMIN', label: 'Super Administrador' },
-  { value: 'ADMIN', label: 'Administrador' },
-  { value: 'TECHNICIAN', label: 'Técnico' },
-  { value: 'LIMITED_TECHNICIAN', label: 'Técnico Limitado' },
-  { value: 'REQUESTER', label: 'Solicitante' },
-  { value: 'VIEW_ONLY', label: 'Somente Consulta' },
+  { value: 'SUPER_ADMIN', label: 'SUPER ADMINISTRADOR' },
+  { value: 'ADMIN', label: 'ADMINISTRADOR' },
+  { value: 'TECHNICIAN', label: 'TECNICO' },
+  { value: 'LIMITED_TECHNICIAN', label: 'TECNICO LIMITADO' },
+  { value: 'REQUESTER', label: 'SOLICITANTE' },
+  { value: 'VIEW_ONLY', label: 'SOMENTE CONSULTA' },
 ]
 
 // Mapeia role canônico para valores legados armazenados no banco

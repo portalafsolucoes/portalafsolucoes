@@ -83,12 +83,12 @@ interface TabConfig {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'Super Administrador',
-  ADMIN: 'Administrador',
-  TECHNICIAN: 'Técnico',
-  LIMITED_TECHNICIAN: 'Técnico Limitado',
-  REQUESTER: 'Solicitante',
-  VIEW_ONLY: 'Somente Consulta',
+  SUPER_ADMIN: 'SUPER ADMINISTRADOR',
+  ADMIN: 'ADMINISTRADOR',
+  TECHNICIAN: 'TECNICO',
+  LIMITED_TECHNICIAN: 'TECNICO LIMITADO',
+  REQUESTER: 'SOLICITANTE',
+  VIEW_ONLY: 'SOMENTE CONSULTA',
 }
 
 type PeopleSortField = 'name' | 'jobTitle' | 'role' | 'rate' | 'calendarName'

@@ -51,20 +51,20 @@ type SortField = 'displayId' | 'planNumber' | 'title' | 'status' | 'priority' | 
 type SortDirection = 'asc' | 'desc'
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Pendente',
-  RELEASED: 'Programada',
-  IN_PROGRESS: 'Em Progresso',
-  ON_HOLD: 'Em Espera',
-  COMPLETE: 'Completa',
-  REPROGRAMMED: 'Reprogramada',
+  PENDING: 'PENDENTE',
+  RELEASED: 'PROGRAMADA',
+  IN_PROGRESS: 'EM PROGRESSO',
+  ON_HOLD: 'EM ESPERA',
+  COMPLETE: 'COMPLETA',
+  REPROGRAMMED: 'REPROGRAMADA',
 }
 
 const PRIORITY_LABELS: Record<string, string> = {
-  NONE: 'Nenhuma',
-  LOW: 'Baixa',
-  MEDIUM: 'Média',
-  HIGH: 'Alta',
-  CRITICAL: 'Crítica',
+  NONE: 'NENHUMA',
+  LOW: 'BAIXA',
+  MEDIUM: 'MEDIA',
+  HIGH: 'ALTA',
+  CRITICAL: 'CRITICA',
 }
 
 const translateStatus = (value: string) => STATUS_LABELS[value] ?? value
@@ -222,7 +222,7 @@ export default function WorkOrdersPage() {
   }
 
   const filteredWorkOrders = workOrders.filter(wo => {
-    // Ocultar OSs Completas por padrão; só aparecem quando o usuário escolhe "Completa" no filtro de Status
+    // Ocultar OSs Completas por padrão; só aparecem quando o usuário escolhe "COMPLETA" no filtro de Status
     if (!statusFilter && wo.status === 'COMPLETE') return false
     return (
       wo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

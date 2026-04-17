@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
 import { normalizeModuleForUi, type ModuleRecord } from '@/lib/modules'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 type CompanyModuleStateRow = {
   moduleId: string
@@ -78,7 +79,7 @@ export async function PUT(
   }
 
   const { id: companyId } = await params
-  const body = await request.json()
+  const body = normalizeTextPayload(await request.json())
   const { modules } = body // Array de { slug: string, enabled: boolean }
 
   if (!Array.isArray(modules)) {

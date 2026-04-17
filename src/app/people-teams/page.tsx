@@ -567,9 +567,9 @@ export default function PeopleTeamsPage() {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                       {(() => {
                                         const s = getUserStatus(user)
-                                        if (s === 'ACTIVE') return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">Ativo</span>
-                                        if (s === 'INACTIVE') return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700">Inativo</span>
-                                        return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">Anonimizado</span>
+                                        if (s === 'ACTIVE') return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-light text-success-light-foreground">ATIVO</span>
+                                        if (s === 'INACTIVE') return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700">INATIVO</span>
+                                        return <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">ANONIMIZADO</span>
                                       })()}
                                     </td>
                                   </tr>

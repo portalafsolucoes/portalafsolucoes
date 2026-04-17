@@ -7,6 +7,7 @@ import { resolveJobTitleSelection } from '@/lib/job-titles'
 import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
 import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 import { countUserReferences } from '@/lib/users/userReferences'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -100,7 +101,7 @@ export async function PUT(
     }
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, locationId, calendarId, unitIds } = body
 
     // Apenas staff Portal AF pode atribuir SUPER_ADMIN. ADMIN da empresa cliente nunca pode promover ninguém a SUPER_ADMIN.

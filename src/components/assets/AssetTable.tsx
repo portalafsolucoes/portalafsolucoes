@@ -59,7 +59,7 @@ const statusConfig: Record<string, { label: string; icon: string; className: str
     className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },
   INACTIVE: {
-    label: 'Inativo',
+    label: 'INATIVO',
     icon: 'error',
     className: 'bg-surface-low text-foreground dark:bg-on-surface/30 dark:text-muted-foreground'
   },

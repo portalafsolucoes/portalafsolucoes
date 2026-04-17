@@ -3,10 +3,11 @@ import { supabase } from '@/lib/supabase'
 import { verifyPassword } from '@/lib/auth'
 import { createSession } from '@/lib/session'
 import { normalizeUserRole } from '@/lib/user-roles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { email, password } = body
 
     if (!email || !password) {

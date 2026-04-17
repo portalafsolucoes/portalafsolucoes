@@ -46,9 +46,9 @@ interface PersonDetailUser {
 }
 
 const STATUS_BADGE: Record<PersonStatus, { label: string; cls: string }> = {
-  ACTIVE: { label: 'Ativo', cls: 'bg-success-light text-success-light-foreground' },
-  INACTIVE: { label: 'Inativo', cls: 'bg-gray-200 text-gray-700' },
-  ARCHIVED: { label: 'Anonimizado', cls: 'bg-amber-100 text-amber-800' },
+  ACTIVE: { label: 'ATIVO', cls: 'bg-success-light text-success-light-foreground' },
+  INACTIVE: { label: 'INATIVO', cls: 'bg-gray-200 text-gray-700' },
+  ARCHIVED: { label: 'ANONIMIZADO', cls: 'bg-amber-100 text-amber-800' },
 }
 
 function statusOf(user: PersonDetailUser): PersonStatus {

@@ -12,6 +12,14 @@ globs: src/app/api/**,src/actions/**
 - `POST /api/users` e `PUT /api/users/[id]`: rejeitar com `403` qualquer payload que tente atribuir `role = SUPER_ADMIN` quando a sessao NAO for SUPER_ADMIN. Quando a role final for `ADMIN`, chamar `ensureAdminUnitAccess(companyId, userId)` para garantir o invariante.
 - Em rotas de negocio CMMS (tudo fora de `/api/admin/**` e `/api/auth/**`), usar `requireCompanyScope(session)` de `src/lib/user-roles.ts` para falhar cedo quando `companyId` estiver ausente.
 
+## Normalizacao de Texto (MAIUSCULAS sem acento)
+- Todo handler de escrita (`POST`/`PUT`/`PATCH`) deve chamar `normalizeTextPayload` de `@/lib/textNormalizer` sobre o body logo apos `await request.json()`
+- Padrao: `const body = normalizeTextPayload(await request.json())`
+- Campos preservados (NAO uppercase): `email`, `password`, `currentPassword`, `newPassword`, `confirmPassword`, `username`, `website`, qualquer chave terminada em `Url`/`Link`/`Href`/`Src`, `logo`, `avatarUrl`, `description`, `notes`, `observation`, `feedback`, `rejectionReason`, `executionNotes`, `failureDescription`, `immediateAction`, `message`, `token`, `apiKey`, `secret`, `hash`
+- Qualquer outro campo string e convertido para `UPPER(unaccent(value))` e sofre `trim()`
+- Rotas de integracao ERP/Protheus (`/api/integration/totvs/*`) e importacoes externas (`/api/gep/import`) **nao devem** aplicar o normalizer — preservar o payload bruto do sistema externo
+- Search e filtros devem usar `ILIKE` para permanecer case-insensitive; o dado no banco ja esta em caixa alta
+
 ## Contrato Geral
 - Consultar `docs/SEGURANCA.md` sempre que a mudanca tocar autenticacao, sessao, autorizacao, isolamento multiempresa/unidade, upload sensivel, exportacao, logs de erro, segredos, headers ou readiness de producao
 - Toda rota e toda server action devem validar permissao no servidor; esconder item de menu nao substitui seguranca

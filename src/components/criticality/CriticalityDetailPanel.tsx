@@ -115,7 +115,7 @@ export function CriticalityDetailPanel({ asset, onClose, onEdit, canEdit }: Prop
                 {asset.status === 'DOWN' ? 'Parado' :
                   asset.status === 'OPERATIONAL' ? 'Operacional' :
                     asset.status === 'IN_REPAIR' ? 'Em Reparo' :
-                      asset.status === 'INACTIVE' ? 'Inativo' : asset.status}
+                      asset.status === 'INACTIVE' ? 'INATIVO' : asset.status}
               </p>
             </div>
             <div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/session';
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Buscar variável específica
 export async function GET(
@@ -52,7 +53,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = normalizeTextPayload(await req.json());
 
     const { data, error } = await supabase
       .from('ProcessVariable')

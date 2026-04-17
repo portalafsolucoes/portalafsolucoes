@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { isAdminRole, toPersistedUserRole } from '@/lib/user-roles'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 type UnitSummary = {
   id: string
@@ -89,7 +90,7 @@ export async function PUT(
   }
 
   const { id } = await params
-  const body = await request.json()
+  const body = normalizeTextPayload(await request.json())
   const {
     email, password, firstName, lastName, role,
     phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId,

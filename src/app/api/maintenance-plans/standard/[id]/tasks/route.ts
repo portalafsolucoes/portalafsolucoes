@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { parseWorkDays, getWeeklyHours, getWeeklySummary } from '@/lib/calendarUtils'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Listar tarefas com etapas, recursos e info de calendário
 export async function GET(
@@ -104,7 +105,7 @@ export async function POST(
       return NextResponse.json({ error: 'Plano nao encontrado' }, { status: 404 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { tasks } = body // Array de { description, taskCode, order, executionTime, steps: [{stepId, order}], resources: [{resourceId, resourceCount, quantity, unit}] }
 
     if (!Array.isArray(tasks)) {

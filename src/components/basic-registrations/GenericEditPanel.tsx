@@ -214,7 +214,7 @@ function renderFields(
             className="rounded border-gray-300"
             disabled={field.readOnly}
           />
-          <span className="text-sm text-gray-700">{field.placeholder || 'Sim'}</span>
+          <span className="text-sm text-gray-700">{field.placeholder || 'SIM'}</span>
         </label>
       ) : (
         <input

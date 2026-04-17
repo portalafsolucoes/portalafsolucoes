@@ -40,31 +40,31 @@ interface RequestPrintViewProps {
 
 function getPriorityLabel(priority: string): string {
   switch (priority) {
-    case 'HIGH': return 'Alta'
-    case 'MEDIUM': return 'Media'
-    case 'LOW': return 'Baixa'
-    default: return 'Nenhuma'
+    case 'HIGH': return 'ALTA'
+    case 'MEDIUM': return 'MEDIA'
+    case 'LOW': return 'BAIXA'
+    default: return 'NENHUMA'
   }
 }
 
 function getStatusLabel(status: string): string {
   switch (status) {
-    case 'PENDING': return 'Pendente'
-    case 'APPROVED': return 'Aprovada'
-    case 'REJECTED': return 'Rejeitada'
-    case 'CANCELLED': return 'Cancelada'
-    case 'COMPLETED': return 'Finalizada'
+    case 'PENDING': return 'PENDENTE'
+    case 'APPROVED': return 'APROVADA'
+    case 'REJECTED': return 'REJEITADA'
+    case 'CANCELLED': return 'CANCELADA'
+    case 'COMPLETED': return 'FINALIZADA'
     default: return status
   }
 }
 
 function getWOStatusLabel(status: string): string {
   switch (status) {
-    case 'PENDING': return 'Pendente'
-    case 'RELEASED': return 'Liberada'
-    case 'IN_PROGRESS': return 'Em Progresso'
-    case 'ON_HOLD': return 'Em Espera'
-    case 'COMPLETE': return 'Concluida'
+    case 'PENDING': return 'PENDENTE'
+    case 'RELEASED': return 'LIBERADA'
+    case 'IN_PROGRESS': return 'EM PROGRESSO'
+    case 'ON_HOLD': return 'EM ESPERA'
+    case 'COMPLETE': return 'CONCLUIDA'
     default: return status
   }
 }

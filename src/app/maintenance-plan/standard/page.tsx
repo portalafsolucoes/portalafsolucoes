@@ -260,8 +260,8 @@ export default function StandardMaintenancePlanPage() {
               <td className="px-6 py-3 text-sm">{p.serviceType?.name}</td>
               <td className="px-6 py-3 text-sm font-medium">{p.name}</td>
               <td className="px-6 py-3 text-sm">{p.maintenanceTime} {p.timeUnit}</td>
-              <td className="px-6 py-3 text-sm">{p.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo'}</td>
-              <td className="px-6 py-3 text-sm">{p.period === 'Repetitiva' ? 'Repetitiva' : 'Única'}</td>
+              <td className="px-6 py-3 text-sm">{p.trackingType === 'HORIMETER' ? 'HORIMETRO' : 'TEMPO'}</td>
+              <td className="px-6 py-3 text-sm">{p.period === 'REPETITIVA' ? 'REPETITIVA' : 'UNICA'}</td>
             </tr>
           ))}
         </tbody>

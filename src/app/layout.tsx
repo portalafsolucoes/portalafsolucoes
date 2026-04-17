@@ -3,6 +3,7 @@ import { Manrope, Inter } from "next/font/google";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/branding";
 import { AppShell } from "@/components/layout/AppShell";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { UppercaseInputProvider } from "@/components/providers/UppercaseInputProvider";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${inter.variable} bg-background text-foreground font-sans antialiased`}
       >
+        <UppercaseInputProvider />
         <QueryProvider>
           <AppShell>{children}</AppShell>
         </QueryProvider>

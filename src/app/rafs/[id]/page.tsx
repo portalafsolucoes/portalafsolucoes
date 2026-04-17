@@ -170,7 +170,7 @@ export default function ViewRAFPage() {
                   ? 'bg-danger-light text-foreground'
                   : 'bg-warning-light text-foreground'
               }`}>
-                {raf.failureType === 'REPETITIVE' ? 'Repetitiva' : 'Aleatória'}
+                {raf.failureType === 'REPETITIVE' ? 'REPETITIVA' : 'ALEATORIA'}
               </span>
             </div>
             {raf.productionLost && (

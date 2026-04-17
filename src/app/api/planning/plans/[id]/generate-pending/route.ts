@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, getPriorityFromGut } from '@/lib/workOrderUtils'
 import { copyPlanResourcesToWorkOrder, copyPlanTasksToWorkOrder } from '@/lib/woResourceCopy'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // POST - Gerar OSs para ativos selecionados manualmente (sem dailyVariation)
 export async function POST(
@@ -20,7 +21,7 @@ export async function POST(
     }
 
     const { id: planId } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { assetMaintenancePlanIds } = body
 
     if (!Array.isArray(assetMaintenancePlanIds) || assetMaintenancePlanIds.length === 0) {

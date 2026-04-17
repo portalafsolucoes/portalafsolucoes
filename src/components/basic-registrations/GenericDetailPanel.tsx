@@ -60,7 +60,7 @@ function resolveValue(
   }
 
   if (field?.type === 'checkbox') {
-    return raw ? 'Sim' : 'Nao'
+    return raw ? 'SIM' : 'NAO'
   }
 
   if (field?.type === 'select' || field?.type === 'combobox') {

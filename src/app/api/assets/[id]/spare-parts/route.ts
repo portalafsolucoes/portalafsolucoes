@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Listar peças de reposição do ativo
 export async function GET(
@@ -38,7 +39,7 @@ export async function POST(
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { productCode, quantity, criticality, warrantyTime, warrantyUnit } = body
 
     if (!productCode) {

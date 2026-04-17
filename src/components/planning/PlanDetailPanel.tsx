@@ -48,11 +48,11 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const WO_STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Pendente',
-  RELEASED: 'Liberada',
-  OPEN: 'Aberta',
-  IN_PROGRESS: 'Em Progresso',
-  ON_HOLD: 'Em Espera',
+  PENDING: 'PENDENTE',
+  RELEASED: 'LIBERADA',
+  OPEN: 'ABERTA',
+  IN_PROGRESS: 'EM PROGRESSO',
+  ON_HOLD: 'EM ESPERA',
 }
 
 const WO_STATUS_COLORS: Record<string, string> = {
@@ -64,10 +64,10 @@ const WO_STATUS_COLORS: Record<string, string> = {
 }
 
 const WO_PRIORITY_LABELS: Record<string, string> = {
-  HIGH: 'Alta',
-  MEDIUM: 'Média',
-  LOW: 'Baixa',
-  NONE: 'Nenhuma',
+  HIGH: 'ALTA',
+  MEDIUM: 'MEDIA',
+  LOW: 'BAIXA',
+  NONE: 'NENHUMA',
 }
 
 export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDetailPanelProps) {
@@ -136,7 +136,7 @@ export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDeta
             <div>
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tipo de Controle</p>
               <p className="text-sm text-foreground">
-                {plan.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo Pré-determinado'}
+                {plan.trackingType === 'HORIMETER' ? 'HORIMETRO' : 'TEMPO PRE-DETERMINADO'}
               </p>
             </div>
             {plan.trackingType === 'HORIMETER' && plan.currentHorimeter != null && (
@@ -147,7 +147,7 @@ export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDeta
             )}
             <div>
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Terminado?</p>
-              <p className="text-sm text-foreground">{plan.isFinished ? 'Sim' : 'Não'}</p>
+              <p className="text-sm text-foreground">{plan.isFinished ? 'SIM' : 'NAO'}</p>
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDeta
                     </p>
                   )}
                   <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
-                    <span>Prioridade: {WO_PRIORITY_LABELS[wo.priority] || wo.priority || 'Nenhuma'}</span>
+                    <span>Prioridade: {WO_PRIORITY_LABELS[wo.priority] || wo.priority || 'NENHUMA'}</span>
                     {(wo.dueDate || wo.plannedStartDate) && (
                       <span>Prazo: {formatDate(wo.dueDate || wo.plannedStartDate || '')}</span>
                     )}

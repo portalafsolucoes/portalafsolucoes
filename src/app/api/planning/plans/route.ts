@@ -6,6 +6,7 @@ import { generateSequentialId, getPriorityFromGut } from '@/lib/workOrderUtils'
 import { copyPlanResourcesToWorkOrder, copyPlanTasksToWorkOrder } from '@/lib/woResourceCopy'
 import { getCalendarsForPlans } from '@/lib/calendarData'
 import { getAvailabilityInRange, estimateWorkingDaysForHours } from '@/lib/calendarUtils'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Listar planos de manutenção emitidos
 export async function GET(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const {
       description, startDate, endDate, unitId: unitIdBody,
       trackingType, toleranceDays: bodyToleranceDays,

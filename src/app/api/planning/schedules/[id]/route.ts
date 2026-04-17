@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { revertMovedItemForWorkOrder } from '@/lib/scheduleStatus'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Detalhe da programação com itens e OSs
 export async function GET(
@@ -71,7 +72,7 @@ export async function PUT(
     if (permError) return NextResponse.json({ error: permError }, { status: 403 })
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { description, startDate, endDate } = body
 
     // Verificar se a programação existe

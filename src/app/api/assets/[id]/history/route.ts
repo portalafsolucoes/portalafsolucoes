@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { normalizeTextPayload } from '@/lib/textNormalizer'
 
 // GET - Buscar histórico do ativo
 export async function GET(
@@ -114,7 +115,7 @@ export async function POST(
     }
 
     const { id } = await params
-    const body = await request.json()
+    const body = normalizeTextPayload(await request.json())
     const { eventType, title, description, metadata, workOrderId, requestId, fileId } = body
 
     // Verificar se o ativo existe e pertence à empresa

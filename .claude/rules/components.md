@@ -4,6 +4,15 @@ globs: src/components/**,src/app/**/page.tsx
 
 # Componentes e Paginas
 
+## Texto em MAIUSCULAS (padrao do sistema)
+- O `<Input>` de `@/components/ui/Input` aplica `text-transform: uppercase` por default (classe `uppercase`); o banco recebe o valor ja normalizado via `normalizeTextPayload` no servidor
+- Passar `preserveCase` em inputs onde o case importa:
+  - Email, senha, URL, telefone, numero (detectados automaticamente via `type`: `email`, `password`, `url`, `tel`, `number`)
+  - Textareas e campos de descricao longa (`description`, `notes`, `observation`, `feedback`)
+  - Exemplo: `<Input preserveCase ... />`
+- **NAO** converter manualmente via `onChange={e => e.target.value.toUpperCase()}` — o `text-transform` cuida do visual e o servidor cuida da normalizacao definitiva
+- Para `<textarea>` bruto em formularios, manter estilo original (sem `uppercase`) quando o conteudo for descricao longa
+
 ## Papeis de Componentes React
 - Por padrao, prefira Server Components para paginas e blocos sem interatividade direta
 - Use `'use client'` somente quando houver hooks de estado/efeito, eventos do navegador, refs, modais, tabelas interativas, uploads ou integracao com React Query/Zustand

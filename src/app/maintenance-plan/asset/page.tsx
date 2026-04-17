@@ -274,8 +274,8 @@ export default function AssetMaintenancePlanPage() {
               <td className="px-6 py-3 text-sm">{p.sequence}</td>
               <td className="px-6 py-3 text-sm font-medium">{p.name || '-'}</td>
               <td className="px-6 py-3 text-sm">{p.maintenanceTime ? `${p.maintenanceTime} ${p.timeUnit}` : '-'}</td>
-              <td className="px-6 py-3 text-sm">{p.trackingType === 'HORIMETER' ? 'Horímetro' : 'Tempo'}</td>
-              <td className="px-6 py-3 text-sm">{p.isActive ? 'Sim' : 'Não'}</td>
+              <td className="px-6 py-3 text-sm">{p.trackingType === 'HORIMETER' ? 'HORIMETRO' : 'TEMPO'}</td>
+              <td className="px-6 py-3 text-sm">{p.isActive ? 'SIM' : 'NAO'}</td>
             </tr>
           ))}
         </tbody>
