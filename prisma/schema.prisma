@@ -363,8 +363,10 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  // companyId é NULL apenas para staff Portal AF (SUPER_ADMIN de plataforma, cross-tenant).
+  // Para qualquer ADMIN/TECHNICIAN/REQUESTER/etc., companyId é obrigatório (validado em runtime).
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   locationId String?
   location   Location? @relation("LocationUsers", fields: [locationId], references: [id])

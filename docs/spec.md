@@ -38,8 +38,10 @@ O sistema possui 6 perfis:
 - `VIEW_ONLY`
 
 ### Resumo de Permissoes
-- `SUPER_ADMIN`: controle total do sistema, empresas, usuarios, unidades e dashboard corporativo
-- `ADMIN`: gerencia a operacao da propria empresa/unidade, aprova solicitacoes, acompanha indicadores e gerencia cadastros operacionais
+- `SUPER_ADMIN`: **staff Portal AF Solucoes** (fornecedor do SaaS). `companyId = NULL` no banco (`''` na sessao). Opera cross-tenant: cadastra empresas, habilita produtos/modulos, gerencia staff Portal AF, da suporte. NAO opera telas CMMS de uma empresa sem selecionar um tenant.
+- `ADMIN`: **administrador da empresa cliente**. `companyId` obrigatorio; tem acesso automatico a TODAS as unidades (Location raiz) da sua empresa via `UserUnit`. Responsavel por cadastrar as demais pessoas de cada unidade da empresa. Gerencia a operacao, aprova solicitacoes, acompanha indicadores e mantem cadastros operacionais. **Nao acessa** o painel do portal (`/admin/portal`) nem pode criar/atribuir `SUPER_ADMIN`.
+
+**Invariante de criacao de empresa**: `POST /api/admin/companies` (apenas `SUPER_ADMIN`) cria obrigatoriamente o primeiro usuario da empresa com `role = ADMIN`. Esse usuario ja nasce vinculado a unidade principal via `UserUnit` e a criacao futura de novas unidades propaga automaticamente esse vinculo para todos os ADMINs da empresa.
 - `TECHNICIAN`: executa OS atribuidas, pode abrir solicitacoes e consultar itens necessarios ao trabalho
 - `LIMITED_TECHNICIAN`: atua de forma operacional mais restrita, focado em OS atribuidas e abertura basica de solicitacoes
 - `REQUESTER`: abre solicitacoes e acompanha apenas suas demandas

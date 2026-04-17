@@ -9,6 +9,9 @@ export interface SessionUser {
   lastName: string
   role: string
   canonicalRole: CanonicalUserRole
+  // Para staff Portal AF (SUPER_ADMIN de plataforma sem tenant fixo) o valor é '' (string vazia).
+  // Em todas as demais sessões é o id da empresa do usuário. Use isPlatformStaff(session) para
+  // diferenciar e requireCompanyScope(session) em handlers de negócio que NÃO podem operar cross-tenant.
   companyId: string
   companyName: string
   unitId: string | null       // unidade ativa (activeUnitId)

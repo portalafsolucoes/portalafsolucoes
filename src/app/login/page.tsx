@@ -15,9 +15,15 @@ import { Icon } from '@/components/ui/Icon'
 // Ver docs/SEGURANCA.md item V11.
 const DEV_QUICK_ACCESS = [
   {
+    company: 'Portal AF Solucoes (Staff)',
+    users: [
+      { label: 'SUPER_ADMIN', email: 'platform@portalafsolucoes.com', password: 'Teste@123', name: 'Equipe Portal AF' }
+    ]
+  },
+  {
     company: 'Cimento Vale do Norte SA',
     users: [
-      { label: 'SUPER_ADMIN', email: 'super.admin@valenorte.local', password: 'Teste@123', name: 'Carla Mendes' },
+      { label: 'ADMIN', email: 'super.admin@valenorte.local', password: 'Teste@123', name: 'Carla Mendes' },
       { label: 'ADMIN', email: 'admin@valenorte.local', password: 'Teste@123', name: 'Marcos Lima' },
       { label: 'TECHNICIAN', email: 'tecnico@valenorte.local', password: 'Teste@123', name: 'Joao Ferreira' },
       { label: 'LIMITED_TECHNICIAN', email: 'tecnico.limitado@valenorte.local', password: 'Teste@123', name: 'Paula Santos' },
@@ -28,7 +34,7 @@ const DEV_QUICK_ACCESS = [
   {
     company: 'Polimix Concreto Ltda',
     users: [
-      { label: 'SUPER_ADMIN', email: 'super.admin@polimix.local', password: 'Teste@123', name: 'Carla Mendes' },
+      { label: 'ADMIN', email: 'super.admin@polimix.local', password: 'Teste@123', name: 'Carla Mendes' },
       { label: 'ADMIN', email: 'admin@polimix.local', password: 'Teste@123', name: 'Marcos Lima' },
       { label: 'TECHNICIAN', email: 'tecnico@polimix.local', password: 'Teste@123', name: 'Joao Ferreira' },
       { label: 'LIMITED_TECHNICIAN', email: 'tecnico.limitado@polimix.local', password: 'Teste@123', name: 'Paula Santos' },

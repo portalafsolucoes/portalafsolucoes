@@ -149,6 +149,31 @@ export function isSuperAdminRole(input: RoleContext | string | null | undefined)
   return normalizeUserRole(input) === 'SUPER_ADMIN'
 }
 
+/**
+ * Identifica staff Portal AF Soluções: SUPER_ADMIN sem vínculo a uma empresa cliente
+ * (companyId == null). Esse usuário opera cross-tenant.
+ */
+export function isPlatformStaff(session: { role?: string | null; companyId?: string | null } | null | undefined): boolean {
+  if (!session) return false
+  const isSuper = normalizeUserRole(session.role ?? null) === 'SUPER_ADMIN'
+  // Staff Portal AF: SUPER_ADMIN sem vínculo com empresa cliente.
+  // Sessões serializam companyId como string vazia ('') quando não há tenant; o banco persiste como NULL.
+  return isSuper && (session.companyId == null || session.companyId === '')
+}
+
+/**
+ * Garante escopo de empresa para operações de negócio. Retorna companyId quando definido;
+ * caso contrário lança. Use em handlers que NÃO devem operar cross-tenant
+ * (i.e., todas as rotas /api/** exceto /api/admin/**).
+ */
+export function requireCompanyScope(session: { companyId?: string | null } | null | undefined): string {
+  const companyId = session?.companyId
+  if (!companyId) {
+    throw new Error('CompanyScopeRequired: esta operação exige uma empresa ativa na sessão.')
+  }
+  return companyId
+}
+
 export function isAdminRole(input: RoleContext | string | null | undefined): boolean {
   const role = normalizeUserRole(input)
   return role === 'SUPER_ADMIN' || role === 'ADMIN'
@@ -168,6 +193,12 @@ export function canSwitchUnits(input: RoleContext | string | null | undefined): 
 }
 
 export function getDefaultCmmsPath(input: RoleContext | string | null | undefined): string {
+  // Staff Portal AF (SUPER_ADMIN sem companyId) não tem tenant: precisa selecionar empresa antes.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctx = (input as any) ?? null
+  if (ctx && typeof ctx === 'object' && normalizeUserRole(ctx.role ?? null) === 'SUPER_ADMIN') {
+    if (ctx.companyId == null || ctx.companyId === '') return '/admin/select-company'
+  }
   return isOperationalRole(input) ? '/work-orders' : '/dashboard'
 }
 

@@ -101,6 +101,7 @@ async function main() {
   })
 
   for (const admin of admins) {
+    if (!admin.companyId) continue // staff Portal AF (SUPER_ADMIN de plataforma, sem tenant)
     const companyLocations = await prisma.location.findMany({
       where: { companyId: admin.companyId },
       select: { id: true },

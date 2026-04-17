@@ -4,7 +4,8 @@ import { getSession } from '@/lib/session'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
-import { toPersistedUserRole } from '@/lib/user-roles'
+import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
+import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -100,6 +101,12 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, locationId, calendarId, unitIds } = body
+
+    // Apenas staff Portal AF pode atribuir SUPER_ADMIN. ADMIN da empresa cliente nunca pode promover ninguém a SUPER_ADMIN.
+    const requestedCanonical = normalizeUserRole(role)
+    if (requestedCanonical === 'SUPER_ADMIN' && normalizeUserRole(session) !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Apenas staff Portal AF pode atribuir SUPER_ADMIN' }, { status: 403 })
+    }
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 
     // Verificar se o usuário existe e pertence à empresa
@@ -245,6 +252,11 @@ export async function PUT(
             .eq('id', id)
         }
       }
+    }
+
+    // Invariante: ADMIN tem acesso a todas as unidades raiz da empresa.
+    if (requestedCanonical === 'ADMIN') {
+      await ensureAdminUnitAccess(session.companyId, id)
     }
 
     return NextResponse.json(

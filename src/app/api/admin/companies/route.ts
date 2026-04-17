@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
 import { hash } from 'bcryptjs'
+import { toPersistedUserRole } from '@/lib/user-roles'
 
 /**
  * GET /api/admin/companies
@@ -64,8 +65,14 @@ export async function GET() {
 
 /**
  * POST /api/admin/companies
- * Cria uma nova empresa com um administrador inicial.
- * Apenas SUPER_ADMIN pode criar empresas.
+ * Cria uma nova empresa com um ADMIN inicial.
+ * Apenas SUPER_ADMIN (staff Portal AF) pode criar empresas.
+ *
+ * Invariantes:
+ * - O usuário criado é ADMIN da empresa cliente (NUNCA SUPER_ADMIN, que é staff Portal AF).
+ * - O ADMIN é vinculado automaticamente à unidade principal recém-criada via UserUnit.
+ *   Quando novas unidades forem criadas para esta empresa, devem auto-vincular todos os ADMINs
+ *   (ver helper ensureAdminUnitAccess em src/lib/admin-scope.ts).
  */
 export async function POST(request: NextRequest) {
   const session = await getSession()
@@ -144,6 +151,8 @@ export async function POST(request: NextRequest) {
   const adminId = generateId()
   const adminUsername = adminEmail.split('@')[0].replace(/[^a-zA-Z0-9._-]/g, '.')
 
+  // Persistido como GESTOR (mapping legado de ADMIN canônico) — ver toPersistedUserRole.
+  const persistedRole = toPersistedUserRole('ADMIN')
   const { error: userError } = await supabase.from('User').insert({
     id: adminId,
     email: adminEmail,
@@ -151,7 +160,7 @@ export async function POST(request: NextRequest) {
     firstName: adminFirstName,
     lastName: adminLastName,
     username: adminUsername,
-    role: 'SUPER_ADMIN',
+    role: persistedRole,
     enabled: true,
     companyId,
     locationId,
@@ -163,7 +172,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create admin user' }, { status: 500 })
   }
 
-  // Vincular admin à unidade
+  // Vincular ADMIN à unidade principal (invariante: ADMIN tem UserUnit para todas as Units da empresa).
   await supabase.from('UserUnit').insert({
     id: generateId(),
     userId: adminId,
@@ -188,7 +197,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       company: { id: companyId, name: companyName },
-      admin: { id: adminId, email: adminEmail },
+      admin: { id: adminId, email: adminEmail, role: 'ADMIN' as const },
       location: { id: locationId },
       modulesEnabled: modulesToEnable.length,
     },

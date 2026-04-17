@@ -10,6 +10,8 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - A aplicacao precisa refletir o modelo funcional definido em `docs/SPEC.md`, mesmo quando o schema legado ainda tiver nomes antigos
 
 ## Isolamento e Escopo
+- `User.companyId` e `NULL` APENAS para staff Portal AF (SUPER_ADMIN cross-tenant). Para todos os demais papeis (ADMIN, TECHNICIAN, LIMITED_TECHNICIAN, REQUESTER, VIEW_ONLY) o `companyId` e obrigatorio; queries de negocio CMMS devem rejeitar sessoes com `companyId` ausente (usar `requireCompanyScope`).
+- Invariante de ADMIN: para todo usuario com papel canonico `ADMIN` (persistido como `GESTOR`), deve existir `UserUnit` para todas as `Location` raiz (sem `parentId`) da sua empresa. Propagar via `linkAllCompanyAdminsToUnit` ao criar unidade e `ensureAdminUnitAccess` ao promover usuario.
 - `Company` e o limite maximo de isolamento; usuarios de uma empresa nunca acessam dados de outra
 - `Unit` e o recorte operacional principal; a maior parte das listagens, metricas e consultas deve ser filtrada pela unidade ativa
 - Localizacoes raiz sao tratadas como unidades

@@ -60,8 +60,12 @@ export async function POST(request: NextRequest) {
 
     // Buscar unidades disponíveis para o usuário
     let unitIds: string[] = []
-    if (user.role === 'SUPER_ADMIN') {
-      // Admin vê todas as unidades da empresa (Location raiz = sem parentId)
+    const isPlatformSuperAdmin = canonicalRole === 'SUPER_ADMIN' && !user.companyId
+    if (isPlatformSuperAdmin) {
+      // Staff Portal AF (SUPER_ADMIN sem empresa): não opera em unidade de cliente.
+      unitIds = []
+    } else if (canonicalRole === 'SUPER_ADMIN' || canonicalRole === 'ADMIN') {
+      // ADMIN da empresa cliente vê todas as unidades raiz da empresa (Location.parentId IS NULL).
       const { data: units } = await supabase
         .from('Location')
         .select('id')
@@ -69,7 +73,7 @@ export async function POST(request: NextRequest) {
         .is('parentId', null)
       unitIds = (units || []).map((u: { id: string }) => u.id)
     } else {
-      // Não-admin: apenas unidades vinculadas via UserUnit
+      // Demais perfis: apenas unidades vinculadas via UserUnit.
       const { data: userUnits } = await supabase
         .from('UserUnit')
         .select('unitId')
@@ -98,8 +102,9 @@ export async function POST(request: NextRequest) {
       lastName: user.lastName,
       role: user.role,
       canonicalRole,
-      companyId: user.companyId,
-      companyName: user.company?.name || '',
+      // Sentinela '' representa staff Portal AF (sem tenant); ver isPlatformStaff() em user-roles.ts.
+      companyId: user.companyId ?? '',
+      companyName: user.company?.name ?? '',
       unitId: activeUnitId,
       unitIds,
     })

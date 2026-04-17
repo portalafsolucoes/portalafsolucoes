@@ -83,13 +83,14 @@ const seedCompanies: SeedCompany[] = [
     locationId: 'location-valenorte-principal',
     locationName: 'Unidade Principal Vale do Norte',
     users: [
+      // ADMIN da empresa cliente. SUPER_ADMIN é exclusivo de staff Portal AF (seedPlatformStaff).
       {
         email: 'super.admin@valenorte.local',
         firstName: 'Carla',
         lastName: 'Mendes',
         username: 'super.admin.valenorte',
-        role: 'SUPER_ADMIN',
-        jobTitle: 'Super Administradora',
+        role: 'GESTOR',
+        jobTitle: 'Administradora',
       },
       {
         email: 'admin@valenorte.local',
@@ -140,13 +141,14 @@ const seedCompanies: SeedCompany[] = [
     locationId: 'location-polimix-principal',
     locationName: 'Unidade Principal Polimix',
     users: [
+      // ADMIN da empresa cliente. SUPER_ADMIN é exclusivo de staff Portal AF (seedPlatformStaff).
       {
         email: 'super.admin@polimix.local',
         firstName: 'Carla',
         lastName: 'Mendes',
         username: 'super.admin.polimix',
-        role: 'SUPER_ADMIN',
-        jobTitle: 'Super Administradora',
+        role: 'GESTOR',
+        jobTitle: 'Administradora',
       },
       {
         email: 'admin@polimix.local',
@@ -382,10 +384,43 @@ async function enableCmmsProductForCompany(companyId: string, cmmsProductId: str
   })
 }
 
+async function seedPlatformStaff(passwordHash: string) {
+  // Staff Portal AF Soluções: SUPER_ADMIN cross-tenant, sem vínculo a nenhuma empresa cliente.
+  // companyId = null é o marcador de "staff de plataforma".
+  const email = 'platform@portalafsolucoes.com'
+  await prisma.user.upsert({
+    where: { email },
+    update: {
+      firstName: 'Equipe',
+      lastName: 'Portal AF',
+      username: 'platform.portal-af',
+      role: 'SUPER_ADMIN',
+      enabled: true,
+      companyId: null,
+      locationId: null,
+      activeUnitId: null,
+    },
+    create: {
+      email,
+      password: passwordHash,
+      firstName: 'Equipe',
+      lastName: 'Portal AF',
+      username: 'platform.portal-af',
+      role: 'SUPER_ADMIN',
+      enabled: true,
+      companyId: null,
+    },
+  })
+  console.log(`  ✓ Platform staff seeded: ${email}`)
+}
+
 async function main() {
   console.log('Seeding database with portal products, modules, companies and users...')
 
   const passwordHash = await hash(DEFAULT_PASSWORD, 12)
+
+  // 0. Staff Portal AF (SUPER_ADMIN cross-tenant, sem companyId)
+  await seedPlatformStaff(passwordHash)
 
   // 1. Criar produtos do portal (macro-módulos comerciais)
   const products = await seedProducts()

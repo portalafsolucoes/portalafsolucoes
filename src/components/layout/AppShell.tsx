@@ -10,7 +10,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { isCollapsed } = useSidebar()
 
-  const publicRoutes = ['/hub', '/login', '/register']
+  const publicRoutes = ['/hub', '/login', '/register', '/admin/select-company']
   const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))
 
   if (isPublicRoute) {

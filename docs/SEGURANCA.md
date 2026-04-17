@@ -456,9 +456,16 @@ Executar antes de cada liberacao externa (homologacao, UAT, piloto, go-live):
 - [ ] Rate limiting bloqueia tentativas excessivas de login
 - [ ] Cookie de sessao nao e manipulavel para escalar privilegio
 
+### Separacao SUPER_ADMIN vs ADMIN (tenancy)
+- **SUPER_ADMIN** e exclusivamente staff Portal AF Solucoes: `companyId = NULL` no banco (`''` na sessao). Opera cross-tenant, cadastra empresas, habilita produtos/modulos e da suporte. Nao tem acesso operacional a dados de empresa sem selecionar um tenant.
+- **ADMIN** e o administrador da empresa cliente: `companyId` obrigatorio. Tem acesso automatico a TODAS as unidades (Location raiz) da sua empresa via `UserUnit` (invariante garantido por `src/lib/admin-scope.ts`). E o responsavel por cadastrar as demais pessoas de cada unidade da empresa.
+- Criacao de empresa (`POST /api/admin/companies`, apenas SUPER_ADMIN) cria obrigatoriamente o primeiro usuario com `role = ADMIN` (persistido como `GESTOR`), nunca SUPER_ADMIN.
+- ADMIN nunca pode se auto-promover nem promover outros a SUPER_ADMIN. Apenas staff Portal AF pode criar/atribuir SUPER_ADMIN (validado em `src/app/api/users/route.ts` e `src/app/api/users/[id]/route.ts`).
+- `User.companyId` e `NULL` apenas para staff Portal AF. Qualquer query de negocio CMMS deve falhar para sessao sem `companyId` (use `requireCompanyScope` de `src/lib/user-roles.ts`).
+
 ### Permissoes por Perfil
-- [ ] SUPER_ADMIN: acesso total, troca de unidade, painel admin
-- [ ] ADMIN: gestao da empresa, sem acesso ao portal global
+- [ ] SUPER_ADMIN (staff Portal AF): acesso total, painel admin do portal, sem tenant fixo
+- [ ] ADMIN (cliente): gestao completa da sua empresa e TODAS as suas unidades, sem acesso ao portal global
 - [ ] TECHNICIAN: OS, execucao, sem dashboard como entrada
 - [ ] LIMITED_TECHNICIAN: OS limitada, sem dashboard como entrada
 - [ ] REQUESTER: solicitacoes apenas

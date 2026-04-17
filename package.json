@@ -14,6 +14,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "deploy:hash": "node scripts/generate-password-hash.js",
+    "audit:super-admins": "tsx scripts/audit-super-admins.ts",
     "vercel:build": "prisma generate && next build",
     "postinstall": "prisma generate"
   },

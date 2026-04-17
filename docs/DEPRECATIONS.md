@@ -3,6 +3,21 @@
 Registro de arquivos e componentes substituidos que aguardam remocao.
 Antes de remover, verificar que nenhum import ou referencia depende do item.
 
+## Separacao SUPER_ADMIN (staff Portal AF) vs ADMIN (cliente) — 2026-04-16
+
+### `POST /api/admin/companies` criava usuario inicial como SUPER_ADMIN
+- **Arquivo**: `src/app/api/admin/companies/route.ts:154` (antes)
+- **Motivo**: Cliente nao pode ter perfil de staff Portal AF. O primeiro usuario de uma empresa recem-cadastrada agora e criado como `ADMIN` (persistido como `GESTOR`).
+- **Substituto**: Mesma rota com `role = toPersistedUserRole('ADMIN')`. Staff Portal AF e seedado separadamente em `prisma/seed.ts::seedPlatformStaff`.
+- **Data**: 2026-04-16
+- **Condicao para remocao**: Permanente — comportamento novo e definitivo.
+
+### SUPER_ADMINs existentes em empresas-cliente (legado)
+- **Situacao**: Antes desta mudanca, toda empresa cadastrada criava um usuario inicial com `role = SUPER_ADMIN`. Esses registros permanecem no banco apos a migracao `20260416120000_super_admin_platform_scope` (que NAO toca dados).
+- **Acao requerida (manual)**: rodar `npm run audit:super-admins` para gerar o inventario em `auditoria/<YYYY-MM-DD>/super-admin-vs-admin/dados/super-admins.csv`; revisar caso a caso e aplicar SQL manual para (a) promover staff Portal AF com `UPDATE "User" SET "companyId" = NULL WHERE id = '...';` ou (b) rebaixar admin de cliente com `UPDATE "User" SET role = 'GESTOR' WHERE id = '...';`.
+- **Condicao para remocao deste item**: todos os SUPER_ADMIN com `companyId IS NOT NULL` revisados.
+
+
 | Arquivo | Motivo | Substituto | Deprecado em | Condicao para remocao |
 |---------|--------|------------|--------------|----------------------|
 | `src/components/basic-registrations/CrudTable.tsx` | Substituido pelo split-panel (GenericCrudTable + GenericEditPanel + GenericDetailPanel) | `GenericCrudTable.tsx`, `GenericEditPanel.tsx`, `GenericDetailPanel.tsx` | 2026-04-10 | Nenhum import restante no projeto |

@@ -29,6 +29,7 @@
 - Ordem de imports: React/Next, terceiros, alias `@/`, relativos por ultimo
 - Preferir editar o arquivo seguindo o estilo local existente; neste repo o padrao dominante e aspas simples, sem ponto e virgula e indentacao de 2 espacos
 - Roles canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER`, `VIEW_ONLY`
+- `SUPER_ADMIN` = staff Portal AF Solucoes (cross-tenant, `companyId = NULL`). `ADMIN` = administrador da empresa cliente, com acesso automatico a TODAS as unidades daquela empresa. Criacao de empresa (`POST /api/admin/companies`) cria o usuario inicial como `ADMIN`, nunca `SUPER_ADMIN`.
 - Toda regra dependente de contexto deve respeitar `perfil + empresa + unidade ativa`
 
 ## Regras Operacionais

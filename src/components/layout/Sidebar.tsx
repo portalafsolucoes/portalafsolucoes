@@ -404,7 +404,18 @@ export function Sidebar() {
         <div className="mx-4 h-px bg-sidebar-border" />
 
         {/* Back to Portal Button */}
-        <div className="p-3 bg-[var(--color-sidebar-header)] border-t border-sidebar-border">
+        <div className="p-3 bg-[var(--color-sidebar-header)] border-t border-sidebar-border space-y-1">
+          {userRole === 'SUPER_ADMIN' && (
+            <Link
+              href="/admin/select-company"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-white rounded-[4px] transition-all duration-200`}
+              title={isCollapsed ? 'Trocar empresa' : ''}
+            >
+              <Icon name="swap_horiz" className={`text-xl ${isCollapsed ? '' : 'mr-3'} text-sidebar-muted`} />
+              {!isCollapsed && 'Trocar empresa'}
+            </Link>
+          )}
           <button
             onClick={handleBackToPortal}
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-3'} py-2.5 text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-white rounded-[4px] transition-all duration-200`}

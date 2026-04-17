@@ -4,7 +4,8 @@ import { getSession } from '@/lib/session'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
-import { toPersistedUserRole } from '@/lib/user-roles'
+import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
+import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 
 type UserListRow = Record<string, unknown> & {
   calendar?: {
@@ -102,6 +103,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId, unitIds } = body
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
+
+    // Apenas staff Portal AF pode criar usuário SUPER_ADMIN. ADMIN da empresa cliente não pode.
+    const requestedCanonical = normalizeUserRole(role)
+    if (requestedCanonical === 'SUPER_ADMIN' && normalizeUserRole(session) !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Apenas staff Portal AF pode criar SUPER_ADMIN' }, { status: 403 })
+    }
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
@@ -240,6 +247,11 @@ export async function POST(request: NextRequest) {
       if (uuError) {
         console.error('Error creating UserUnit links:', uuError)
       }
+    }
+
+    // Invariante: ADMIN tem acesso a todas as unidades raiz da empresa.
+    if (requestedCanonical === 'ADMIN') {
+      await ensureAdminUnitAccess(session.companyId, userId)
     }
 
     return NextResponse.json(

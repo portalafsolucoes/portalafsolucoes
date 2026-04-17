@@ -4,6 +4,14 @@ globs: src/app/api/**,src/actions/**
 
 # API Routes e Server Actions
 
+## Tenancy e Escopo de Papeis (SUPER_ADMIN vs ADMIN)
+- `SUPER_ADMIN` e staff Portal AF Solucoes: `companyId` e `NULL` no banco (`''` na sessao). Opera cross-tenant (rotas `/api/admin/**`). NAO pode executar operacoes de negocio CMMS sem um tenant explicito.
+- `ADMIN` e administrador da empresa cliente: `companyId` obrigatorio; tem acesso automatico a TODAS as unidades raiz (Location sem `parentId`) via `UserUnit` (invariante mantido por `src/lib/admin-scope.ts`).
+- `POST /api/admin/companies`: apenas `SUPER_ADMIN` autoriza; o usuario inicial criado DEVE ter `role = ADMIN` (persistido como `GESTOR`). Rejeitar qualquer tentativa de criar usuario SUPER_ADMIN por esta rota.
+- `POST /api/admin/units`: apos inserir a nova unidade, chamar `linkAllCompanyAdminsToUnit(companyId, unitId)` para propagar `UserUnit` para todos os ADMINs da empresa.
+- `POST /api/users` e `PUT /api/users/[id]`: rejeitar com `403` qualquer payload que tente atribuir `role = SUPER_ADMIN` quando a sessao NAO for SUPER_ADMIN. Quando a role final for `ADMIN`, chamar `ensureAdminUnitAccess(companyId, userId)` para garantir o invariante.
+- Em rotas de negocio CMMS (tudo fora de `/api/admin/**` e `/api/auth/**`), usar `requireCompanyScope(session)` de `src/lib/user-roles.ts` para falhar cedo quando `companyId` estiver ausente.
+
 ## Contrato Geral
 - Consultar `docs/SEGURANCA.md` sempre que a mudanca tocar autenticacao, sessao, autorizacao, isolamento multiempresa/unidade, upload sensivel, exportacao, logs de erro, segredos, headers ou readiness de producao
 - Toda rota e toda server action devem validar permissao no servidor; esconder item de menu nao substitui seguranca

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { supabase, generateId } from '@/lib/supabase'
 import { isAdminRole } from '@/lib/user-roles'
+import { linkAllCompanyAdminsToUnit } from '@/lib/admin-scope'
 
 /**
  * GET /api/admin/units
@@ -96,6 +97,9 @@ export async function POST(request: NextRequest) {
     console.error('Error creating unit:', error)
     return NextResponse.json({ error: 'Erro ao criar unidade' }, { status: 500 })
   }
+
+  // Invariante: todo ADMIN da empresa precisa ter UserUnit para esta nova unidade.
+  await linkAllCompanyAdminsToUnit(session.companyId, unit.id)
 
   return NextResponse.json({ data: unit }, { status: 201 })
 }

@@ -42,11 +42,24 @@ export async function GET() {
 
     // Supabase joins podem retornar objeto ou array; normalizar
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const company = Array.isArray((user as any).company) ? (user as any).company[0] : (user as any).company
+    let company = Array.isArray((user as any).company) ? (user as any).company[0] : (user as any).company
+
+    // Staff Portal AF impersonando: o banco tem user.companyId = NULL, mas a sessão tem a empresa selecionada.
+    // Resolver a empresa efetiva pela sessão para que a UI receba o contexto correto.
+    const effectiveCompanyId = session.companyId || user.companyId || null
+    if (!company && session.companyId) {
+      const { data: sessionCompany } = await supabase
+        .from('Company')
+        .select('id, name, logo')
+        .eq('id', session.companyId)
+        .single()
+      if (sessionCompany) company = sessionCompany
+    }
 
     // Enriquecer com dados da session (unitId, unitIds, companyName)
     const enrichedUser = {
       ...user,
+      companyId: effectiveCompanyId,
       company,
       role: session.canonicalRole,
       legacyRole: user.role,
