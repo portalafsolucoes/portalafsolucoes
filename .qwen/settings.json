@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "mcp__playwright__browser_navigate",
-      "Read(E:\\Google Drive/**)"
+      "Read(E:\\Google Drive/**)",
+      "Bash(npx *)",
+      "Bash(findstr *)"
     ]
   },
   "$version": 3
