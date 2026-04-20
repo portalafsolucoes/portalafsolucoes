@@ -206,6 +206,7 @@ Regras complementares:
 - Rejeicao exige motivo
 - Aprovacao pode gerar OS atraves de um formulario guiado (`WorkOrderFormModal` em modo `inPage` no painel direito de `/requests`) pre-preenchido com `description`, `assetId`, `priority`, `dueDate` e `sourceRequestId` da SS; nao existe mais geracao "1-clique" silenciosa
 - O painel de detalhe da SS deve exibir todos os campos do cadastro (incluindo `Bem`/ativo) e tambem os dados de execucao quando a OS vinculada ja foi finalizada (datas de inicio/fim, anotacoes, fotos antes/depois)
+- A SS exige `Area de Manutencao` (obrigatoria, selecionada a partir de `Cadastros Basicos > Areas de Manutencao`); a area eh persistida em `Request.maintenanceAreaId` e herdada automaticamente pelo numero da RAF quando a SS gerar uma RAF direta
 - A SS pode gerar uma RAF diretamente, sem precisar passar por OS, atraves do botao `Abrir RAF` no painel de detalhe; o botao so fica disponivel quando a SS esta `APPROVED` e ainda nao possui RAF vinculada
 - O menu deve exibir badge de pendencias para perfis autorizados
 
@@ -218,6 +219,17 @@ Regras complementares:
 - A tela `/assets/standard` (Bens Padrao) segue o padrao split-panel: detalhe e formulario (criar/editar) abrem no painel direito no desktop; no mobile abrem como `<Modal>` overlay
 - O componente `StandardAssetFormPanel` suporta prop `inPage` para renderizacao inline (painel) ou como modal
 - Criar um Bem Padrao exige selecao de familia; familias que ja possuem Bem Padrao sao ocultadas no select de criacao
+
+#### Relatorio Impresso do Historico do Bem (PDF)
+- Acessado pelo botao Imprimir na aba Historico do painel de detalhe do ativo
+- Permite selecionar periodo (data inicio / data fim), filtro de origem (Ambos, Somente OSs, Somente SSs) e formato (PDF ou XLSX)
+- O PDF exibe secoes fixas do ativo (Identificacao, Localizacao e Hierarquia, Dados Tecnicos, Dados Financeiros, Garantia quando presentes) seguidas do historico de eventos
+- Cada evento e renderizado como um card com: data/hora, tipo, usuario e titulo
+- Eventos vinculados a OS exibem bloco de detalhes completo: numero da OS (`MAN-XXXXXX`), tipo de manutencao, tipo de servico, area de manutencao, plano de manutencao, datas de criacao e finalizacao, lista de recursos aplicados (nome, quantidade, horas), observacoes de execucao e bloco de custos (mao de obra, pecas, terceiros, ferramentas e total)
+- Eventos vinculados a SS exibem bloco de detalhes: numero da SS, status, solicitante, area de manutencao, data de criacao, descricao da falha, motivo de rejeicao (quando rejeitada) e RAF vinculada (quando existente)
+- Os detalhes sao carregados via `GET /api/assets/[id]/history?include=details` — parametro exclusivo do PDF; o timeline interativo e a exportacao XLSX continuam sem este parametro
+- `print:break-inside-avoid` garante que cada card de evento nao seja cortado entre paginas na impressao
+- Componente: `src/components/assets/AssetHistoryPrintView.tsx`; tipos: `src/types/assetHistory.ts`
 
 ### 7. Localizacoes
 - Estrutura hierarquica de unidades e locais fisicos
@@ -305,6 +317,12 @@ Interacao:
 ### 12. Criticidade de Ativos
 - Classificacao por metodo GUT
 - Faixa de resultado de `1` a `125`
+- A listagem mostra, por ativo, os contadores de SS abertas (`PENDING`/`APPROVED`), OS abertas (`PENDING`/`RELEASED`/`IN_PROGRESS`/`ON_HOLD`) e RAFs vinculadas; o painel de detalhe expoe drilldown navegando o mesmo recorte
+- O painel de detalhe possui abas `Visao Geral`, `SS abertas`, `OS abertas` e `RAF` — as tres ultimas so aparecem para perfis com permissao de `view` na respectiva feature (`requests`, `work-orders`, `rafs`); `REQUESTER` e `VIEW_ONLY` continuam sem acesso a `/criticality`
+- As listas de drilldown sao ordenadas por prazo ascendente (`dueDate` asc, NULLs ao final, depois `createdAt` asc); RAFs sao ordenadas por `occurrenceDate` desc
+- Cada linha do drilldown permite impressao individual e selecao via checkbox; o toolbar do drilldown expoe `Selecionar todos` + `Imprimir selecionados (N)` para gerar PDF unico com varias paginas (uma por registro, usando `print:break-after-page`)
+- A selecao de cada aba e resetada sempre que o ativo ativo muda
+- A busca de RAFs do ativo combina FK (`WorkOrder.assetId` e `Request.assetId`) e fallback legado por nome exato do ativo (`FailureAnalysisReport.equipment` sem FK) — RAFs sem vinculo via nome recebem `originKind = 'legacy_name_match'` no retorno da API
 
 ### 13. RAF
 - Modulo de analise de falha com `5 Porques`, testes de hipotese e plano de acao
@@ -312,9 +330,26 @@ Interacao:
 - Numero do RAF deve ser unico
 - A RAF pode nascer a partir de uma OS (vinculo via `workOrderId`) ou diretamente a partir de uma SS aprovada (vinculo via `requestId`); os dois caminhos sao mutuamente exclusivos por registro
 - Quando a RAF e gerada via SS, o sistema usa a rota `POST /api/requests/[id]/generate-raf`; a SS continua com status `APPROVED` apos a geracao e o vinculo SS<->RAF e exibido no painel de detalhe da SS e na propria tela de RAFs
-- O numero da RAF e gerado automaticamente; quando a origem e a SS, `area` e `equipment` podem permanecer em branco no formulario porque sao herdados implicitamente do contexto do ativo da SS
-- A listagem de RAFs deve tolerar registros sem OS, exibindo a coluna `Origem` com badge `OS` ou `SS` conforme o vinculo, e usar o ativo da SS como fallback nos campos derivados quando a OS nao existir
+- O numero da RAF e gerado automaticamente no formato `RAF-{tag|protheusCode do ativo}-{code da area}-{seq}`; quando a origem e a SS, a `area` eh **herdada de `Request.maintenanceAreaId`** (obrigatorio na SS) e o `equipment` vem do ativo da SS. Quando o ativo nao possuir `tag`, o helper faz fallback para `protheusCode` para compor o numero
+- A listagem de RAFs deve tolerar registros sem OS, exibindo a coluna `Origem` com badge `OS` ou `SS` conforme o vinculo, e usar o ativo e a area da SS como fallback nos campos derivados quando a OS nao existir. A coluna `Cod. Bem` exibe `asset.tag` com fallback para `asset.protheusCode`
 - Criacao e edicao pela tela devem persistir com sucesso no contexto da empresa ativa, sem falhar por campos tecnicos de auditoria
+- Cada item do `actionPlan` possui `responsibleUserId` e `responsibleName` persistidos; a selecao de responsavel e feita via dropdown `ResponsibleSelect` nos modais `RAFFormModal`, `RAFEditModal` e visualizacao somente-leitura no `RAFViewModal`. O dropdown lista usuarios com papel `ADMIN`, `TECHNICIAN` ou `LIMITED_TECHNICIAN` (incluindo papeis legados equivalentes) e sinaliza `(inativo)` quando o usuario nao esta com `status = ACTIVE`
+- O status da RAF (`ABERTA` ou `FINALIZADA`) e **derivado no servidor** via helper `recalculateRafStatus` (em `src/lib/rafs/recalculateStatus.ts`) sempre que o `actionPlan` e alterado. A RAF passa automaticamente para `FINALIZADA` quando todos os itens do plano estao `COMPLETED` (nao-vazio) e volta para `ABERTA` se algum item deixa de estar concluido. O cliente NAO pode enviar `status`, `finalizedAt` ou `finalizedById` no payload — a API `PUT /api/rafs/[id]` remove esses campos antes do update
+
+### 13.1 PA das RAFs (Plano de Acao consolidado)
+- Rota `/rafs/action-plan`, exclusiva dos perfis com `view` em `rafs` (`SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`)
+- Acessivel no menu lateral atraves do grupo expansivel `Analise de Falhas`, que agrupa os sub-itens `RAFs` (`/rafs`) e `PA das RAFs` (`/rafs/action-plan`)
+- A tela consolida **todas as acoes** de todas as RAFs do escopo empresa+unidade em uma unica tabela (uma linha por acao)
+- Dashboard com 4 KPIs no topo: `RAFs abertas`, `RAFs finalizadas`, `Acoes no prazo`, `Acoes atrasadas`
+- `Acoes atrasadas` = `actionPlan[i].status != COMPLETED && deadline < hoje` (parser aceita ISO e `dd/mm/yyyy`); acoes sem prazo sao contadas como `no prazo` para nao inflar urgencia visual
+- Filtros disponiveis: busca livre (RAF, acao, responsavel), status da acao (`Pendente`, `Em andamento`, `Concluida`, `Atrasadas`), status da RAF (`Abertas`, `Finalizadas`), responsavel (lista derivada dos dados carregados, incluindo opcao "Sem responsavel")
+- Colunas: RAF (link para o detalhe), Acao, Responsavel, Data criacao (da RAF), Data ocorrencia, Prazo, OS, SS, Status da acao, Status da RAF
+- O status da acao pode ser editado **inline** pelos perfis com permissao de `edit` ou `create` em `rafs` (`SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`); a alteracao dispara `PUT /api/rafs/[id]` com o `actionPlan` atualizado e a API recalcula `status`/`finalizedAt` server-side
+- O painel lateral direito abre o `RAFViewModal` inline quando o usuario clica no numero da RAF
+- Mobile exibe cards empilhados (isPhone) com os campos principais e seletor de status em linha
+- Exportacao para Excel (`.xlsx`) via `ExportButton` com config `action-plan-items` — uma linha por acao, colunas: RAF, Acao, Responsavel, Data criacao, Data ocorrencia, Prazo, OS, Status OS, SS, Status SS, Status da acao, Status da RAF
+- Os 4 KPIs sao fornecidos pelo endpoint `GET /api/rafs/action-plan/stats` (respeita `companyId` e `unitId` via `requireCompanyScope`); a pagina usa a fonte canonica do endpoint e uma derivacao local como fallback imediato
+- Paleta monocromatica: pretos, brancos e tons de cinza. `OVERDUE` recebe borda preta em negrito e simbolo `●`; `COMPLETED` recebe fundo preto com simbolo `✓`; `IN_PROGRESS` usa cinza medio com `◐`; `PENDING` usa fundo branco com `○`
 
 ### 14. KPI
 Indicadores principais:

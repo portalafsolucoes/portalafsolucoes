@@ -15,10 +15,10 @@ export default function EditWorkOrderPage() {
   const params = useParams()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [assets, setAssets] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
-  const [teams, setTeams] = useState<any[]>([])
+  const [assets, setAssets] = useState<{ id: string; name: string }[]>([])
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
+  const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string; email: string }[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -73,8 +73,8 @@ export default function EditWorkOrderPage() {
           dueDate: wo.dueDate ? new Date(wo.dueDate).toISOString().split('T')[0] : '',
           assetId: wo.assetId || '',
           locationId: wo.locationId || '',
-          assignedUserIds: wo.assignedUsers?.map((u: any) => u.id) || [],
-          assignedTeamIds: wo.assignedTeams?.map((t: any) => t.id) || [],
+          assignedUserIds: wo.assignedUsers?.map((u: { id: string }) => u.id) || [],
+          assignedTeamIds: wo.assignedTeams?.map((t: { id: string }) => t.id) || [],
           assignedToId: wo.assignedToId || '',
           externalId: wo.externalId || '',
           maintenanceFrequency: wo.maintenanceFrequency || '',

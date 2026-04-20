@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { formatDate, formatCurrency } from '@/lib/utils'
+import type { AssetHistoryEvent, WorkOrderFullDetail, RequestFullDetail } from '@/types/assetHistory'
 
 interface AssetData {
   id: string
@@ -54,15 +55,6 @@ interface AssetData {
   }[]
 }
 
-interface HistoryEvent {
-  id: string
-  eventType: string
-  title: string
-  description: string | null
-  createdAt: string
-  userName: string | null
-}
-
 interface AssetHistoryPrintViewProps {
   assetId: string
   startDate: string
@@ -98,6 +90,22 @@ const eventTypeLabels: Record<string, string> = {
   CUSTOM: 'Evento Personalizado',
 }
 
+const typeLabel: Record<string, string> = {
+  PREVENTIVE: 'PREVENTIVA',
+  CORRECTIVE: 'CORRETIVA',
+  PREDICTIVE: 'PREDITIVA',
+  REACTIVE: 'REATIVA',
+}
+
+const requestStatusLabel: Record<string, string> = {
+  PENDING: 'PENDENTE',
+  APPROVED: 'APROVADA',
+  REJECTED: 'REJEITADA',
+  IN_PROGRESS: 'EM ANDAMENTO',
+  COMPLETED: 'CONCLUÍDA',
+  CANCELLED: 'CANCELADA',
+}
+
 function getSourceLabel(source: 'all' | 'os' | 'ss'): string {
   switch (source) {
     case 'os': return 'Somente OSs'
@@ -106,10 +114,200 @@ function getSourceLabel(source: 'all' | 'os' | 'ss'): string {
   }
 }
 
+// Sub-componente: detalhes de OS para impressão (sem interatividade)
+function PrintableWorkOrderDetails({ wo }: { wo: WorkOrderFullDetail }) {
+  const osNumber = wo.sequenceNumber != null
+    ? `MAN-${String(wo.sequenceNumber).padStart(6, '0')}`
+    : wo.internalId || '-'
+  const mpNumber = wo.maintenancePlanExec?.planNumber
+    ? `#${wo.maintenancePlanExec.planNumber}`
+    : wo.assetMaintenancePlan?.sequence != null
+      ? `#${wo.assetMaintenancePlan.sequence}`
+      : null
+  const mpName = wo.assetMaintenancePlan?.name || null
+  const totalCost =
+    (wo.laborCost || 0) +
+    (wo.partsCost || 0) +
+    (wo.thirdPartyCost || 0) +
+    (wo.toolsCost || 0)
+
+  return (
+    <div className="mt-2 border border-gray-300 rounded-[2px] bg-gray-50 p-2">
+      <p className="text-[8px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+        Detalhes da OS
+      </p>
+      <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+        <div>
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Número da OS</p>
+          <p className="text-[9px] font-mono font-semibold text-gray-900">{osNumber}</p>
+        </div>
+        <div>
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Tipo de Manutenção</p>
+          <p className="text-[9px] text-gray-900">{wo.type ? (typeLabel[wo.type] || wo.type) : '-'}</p>
+        </div>
+        <div>
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Tipo de Serviço</p>
+          <p className="text-[9px] text-gray-900">{wo.serviceType?.name || '-'}</p>
+        </div>
+        <div>
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Área de Manutenção</p>
+          <p className="text-[9px] text-gray-900">{wo.maintenanceArea?.name || '-'}</p>
+        </div>
+        <div className="col-span-2">
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Plano de Manutenção</p>
+          <p className="text-[9px] text-gray-900">
+            {mpNumber || mpName
+              ? `${mpNumber || ''}${mpNumber && mpName ? ' — ' : ''}${mpName || ''}`
+              : '-'}
+          </p>
+        </div>
+        {wo.createdAt && (
+          <div>
+            <p className="text-[8px] font-bold text-gray-400 uppercase">Criada em</p>
+            <p className="text-[9px] text-gray-900">{formatDate(wo.createdAt)}</p>
+          </div>
+        )}
+        {wo.completedOn && (
+          <div>
+            <p className="text-[8px] font-bold text-gray-400 uppercase">Finalizada em</p>
+            <p className="text-[9px] text-gray-900">{formatDate(wo.completedOn)}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Recursos aplicados */}
+      <div className="mt-1.5">
+        <p className="text-[8px] font-bold text-gray-400 uppercase mb-0.5">Recursos Aplicados</p>
+        {wo.woResources && wo.woResources.length > 0 ? (
+          <ul className="space-y-0.5">
+            {wo.woResources.map((r) => {
+              const name = r.resource?.name
+                || (r.user ? `${r.user.firstName} ${r.user.lastName}` : null)
+                || r.jobTitle?.name
+                || (r.resourceType || 'Recurso')
+              const qty = r.quantity != null ? `${r.quantity}${r.unit ? ' ' + r.unit : ''}` : null
+              const hrs = r.hours != null ? `${r.hours}h` : null
+              const meta = [qty, hrs].filter(Boolean).join(' · ')
+              return (
+                <li key={r.id} className="flex items-start justify-between gap-2 text-[9px]">
+                  <span className="text-gray-800">{name}</span>
+                  {meta && <span className="text-gray-500 whitespace-nowrap">{meta}</span>}
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="text-[9px] text-gray-500">Nenhum recurso registrado</p>
+        )}
+      </div>
+
+      {/* Observações */}
+      {wo.executionNotes && (
+        <div className="mt-1.5">
+          <p className="text-[8px] font-bold text-gray-400 uppercase mb-0.5">Observações</p>
+          <p className="text-[9px] text-gray-800 whitespace-pre-wrap">{wo.executionNotes}</p>
+        </div>
+      )}
+
+      {/* Custos */}
+      <div className="mt-1.5 pt-1.5 border-t border-gray-200">
+        <p className="text-[8px] font-bold text-gray-400 uppercase mb-1">Custos</p>
+        <div className="grid grid-cols-4 gap-x-2 text-[8px] text-gray-500">
+          <div>
+            Mão de obra:<br />
+            <span className="text-gray-900 font-semibold">{formatCurrency(wo.laborCost || 0)}</span>
+          </div>
+          <div>
+            Peças:<br />
+            <span className="text-gray-900 font-semibold">{formatCurrency(wo.partsCost || 0)}</span>
+          </div>
+          <div>
+            Terceiros:<br />
+            <span className="text-gray-900 font-semibold">{formatCurrency(wo.thirdPartyCost || 0)}</span>
+          </div>
+          <div>
+            Ferramentas:<br />
+            <span className="text-gray-900 font-semibold">{formatCurrency(wo.toolsCost || 0)}</span>
+          </div>
+        </div>
+        <div className="mt-1 pt-1 border-t border-gray-200 flex items-center justify-between">
+          <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide">Total</span>
+          <span className="text-[10px] font-bold text-gray-900">{formatCurrency(totalCost)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Sub-componente: detalhes de SS para impressão (sem interatividade)
+function PrintableRequestDetails({ req }: { req: RequestFullDetail }) {
+  const requesterName = req.requester
+    ? `${req.requester.firstName} ${req.requester.lastName}`
+    : '-'
+
+  return (
+    <div className="mt-2 border border-gray-300 rounded-[2px] bg-gray-50 p-2">
+      <p className="text-[8px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+        Detalhes da SS
+      </p>
+      <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+        {req.requestNumber && (
+          <div>
+            <p className="text-[8px] font-bold text-gray-400 uppercase">Número da SS</p>
+            <p className="text-[9px] font-mono font-semibold text-gray-900">{req.requestNumber}</p>
+          </div>
+        )}
+        <div>
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Status</p>
+          <p className="text-[9px] text-gray-900">
+            {req.status ? (requestStatusLabel[req.status] || req.status) : '-'}
+          </p>
+        </div>
+        <div>
+          <p className="text-[8px] font-bold text-gray-400 uppercase">Solicitante</p>
+          <p className="text-[9px] text-gray-900">{requesterName}</p>
+        </div>
+        {req.maintenanceArea && (
+          <div>
+            <p className="text-[8px] font-bold text-gray-400 uppercase">Área de Manutenção</p>
+            <p className="text-[9px] text-gray-900">{req.maintenanceArea.name}</p>
+          </div>
+        )}
+        {req.createdAt && (
+          <div>
+            <p className="text-[8px] font-bold text-gray-400 uppercase">Criada em</p>
+            <p className="text-[9px] text-gray-900">{formatDate(req.createdAt)}</p>
+          </div>
+        )}
+        {req.failureAnalysisReport && (
+          <div>
+            <p className="text-[8px] font-bold text-gray-400 uppercase">RAF Vinculada</p>
+            <p className="text-[9px] font-mono text-gray-900">{req.failureAnalysisReport.rafNumber}</p>
+          </div>
+        )}
+      </div>
+
+      {req.failureDescription && (
+        <div className="mt-1.5">
+          <p className="text-[8px] font-bold text-gray-400 uppercase mb-0.5">Descrição da Falha</p>
+          <p className="text-[9px] text-gray-800 whitespace-pre-wrap">{req.failureDescription}</p>
+        </div>
+      )}
+
+      {req.status === 'REJECTED' && req.rejectionReason && (
+        <div className="mt-1.5">
+          <p className="text-[8px] font-bold text-gray-400 uppercase mb-0.5">Motivo da Rejeição</p>
+          <p className="text-[9px] text-gray-800 whitespace-pre-wrap">{req.rejectionReason}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AssetHistoryPrintView({ assetId, startDate, endDate, sourceFilter, onClose }: AssetHistoryPrintViewProps) {
   const { user } = useAuth()
   const [asset, setAsset] = useState<AssetData | null>(null)
-  const [events, setEvents] = useState<HistoryEvent[]>([])
+  const [events, setEvents] = useState<AssetHistoryEvent[]>([])
   const [loading, setLoading] = useState(true)
   const printRef = useRef<HTMLDivElement>(null)
   const companyLogo = user?.company?.logo || null
@@ -118,16 +316,19 @@ export function AssetHistoryPrintView({ assetId, startDate, endDate, sourceFilte
   useEffect(() => {
     const load = async () => {
       try {
-        // Fetch asset + history in parallel
+        // Fetch asset + history (com detalhes de OS/SS) em paralelo
+        const historyParams = new URLSearchParams({
+          limit: '10000',
+          offset: '0',
+          startDate,
+          endDate,
+          include: 'details',
+          ...(sourceFilter !== 'all' ? { source: sourceFilter } : {}),
+        })
+
         const [assetRes, historyRes] = await Promise.all([
           fetch(`/api/assets/${assetId}`),
-          fetch(`/api/assets/${assetId}/history?${new URLSearchParams({
-            limit: '10000',
-            offset: '0',
-            startDate,
-            endDate,
-            ...(sourceFilter !== 'all' ? { source: sourceFilter } : {}),
-          })}`)
+          fetch(`/api/assets/${assetId}/history?${historyParams}`)
         ])
 
         if (assetRes.ok) {
@@ -501,32 +702,51 @@ export function AssetHistoryPrintView({ assetId, startDate, endDate, sourceFilte
               </span>
             </div>
             {events.length > 0 ? (
-              <table className="w-full text-[10px]">
-                <thead>
-                  <tr className="border-b border-gray-300">
-                    <th className="text-left py-1 px-1 font-bold text-gray-500 uppercase text-[8px] w-[25mm]">Data/Hora</th>
-                    <th className="text-left py-1 px-1 font-bold text-gray-500 uppercase text-[8px] w-[25mm]">Tipo</th>
-                    <th className="text-left py-1 px-1 font-bold text-gray-500 uppercase text-[8px]">Título</th>
-                    <th className="text-left py-1 px-1 font-bold text-gray-500 uppercase text-[8px]">Descrição</th>
-                    <th className="text-left py-1 px-1 font-bold text-gray-500 uppercase text-[8px] w-[25mm]">Usuário</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.map((event) => (
-                    <tr key={event.id} className="border-b border-gray-100">
-                      <td className="py-1 px-1 whitespace-nowrap">
-                        {format(new Date(event.createdAt), "dd/MM/yy HH:mm", { locale: ptBR })}
-                      </td>
-                      <td className="py-1 px-1">
-                        {eventTypeLabels[event.eventType] || event.eventType}
-                      </td>
-                      <td className="py-1 px-1">{event.title}</td>
-                      <td className="py-1 px-1 text-gray-600">{event.description || '-'}</td>
-                      <td className="py-1 px-1">{event.userName || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="space-y-2">
+                {events.map((event) => {
+                  const hasWorkOrder = !!(event.workOrderId && event.workOrder)
+                  const hasRequest = !!(event.requestId && event.request)
+                  const hasDetails = hasWorkOrder || hasRequest
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="border border-gray-200 rounded-[2px] p-2 print:break-inside-avoid"
+                    >
+                      {/* Cabeçalho do evento */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[9px] font-mono text-gray-500 whitespace-nowrap">
+                            {format(new Date(event.createdAt), "dd/MM/yy HH:mm", { locale: ptBR })}
+                          </span>
+                          <span className="text-[8px] font-bold uppercase tracking-wide text-gray-400 bg-gray-100 px-1 rounded">
+                            {eventTypeLabels[event.eventType] || event.eventType}
+                          </span>
+                        </div>
+                        {event.userName && (
+                          <span className="text-[9px] text-gray-500 whitespace-nowrap">{event.userName}</span>
+                        )}
+                      </div>
+
+                      {/* Título e descrição */}
+                      <p className="mt-0.5 text-[10px] font-semibold text-gray-900">{event.title}</p>
+                      {event.description && !hasDetails && (
+                        <p className="mt-0.5 text-[9px] text-gray-600">{event.description}</p>
+                      )}
+
+                      {/* Detalhes de OS */}
+                      {hasWorkOrder && (
+                        <PrintableWorkOrderDetails wo={event.workOrder as WorkOrderFullDetail} />
+                      )}
+
+                      {/* Detalhes de SS */}
+                      {hasRequest && (
+                        <PrintableRequestDetails req={event.request as RequestFullDetail} />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             ) : (
               <p className="text-center text-gray-500 py-4">Nenhum evento encontrado no período selecionado.</p>
             )}

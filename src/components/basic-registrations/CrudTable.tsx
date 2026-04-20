@@ -8,8 +8,8 @@ import { ModalSection } from '@/components/ui/ModalSection'
 import { exportToExcel } from '@/lib/exportExcel'
 import { usePermissions } from '@/hooks/usePermissions'
 
-const crudDataCache = new Map<string, any[]>()
-const crudPromiseCache = new Map<string, Promise<any[]>>()
+const crudDataCache = new Map<string, Record<string, unknown>[]>()
+const crudPromiseCache = new Map<string, Promise<Record<string, unknown>[]>>()
 
 async function fetchCrudData(url: string) {
   if (crudDataCache.has(url)) {
@@ -140,11 +140,11 @@ interface CrudTableProps {
   entity: string
   title: string
   fields: FieldConfig[]
-  columns: { key: string; label: string; render?: (value: any, row: any) => React.ReactNode }[]
+  columns: { key: string; label: string; render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode }[]
   unitScoped?: boolean // Se precisa de unitId
   activeUnitId?: string | null
   apiQueryParams?: string // Query params extras para a API (ex: "types=MATERIAL,TOOL")
-  customModalRender?: (props: { editingItem: any | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
+  customModalRender?: (props: { editingItem: Record<string, unknown> | null; onClose: () => void; onSaved: () => void }) => React.ReactNode
 }
 
 export function CrudTable({ entity, title, fields, columns, unitScoped, activeUnitId, apiQueryParams, customModalRender }: CrudTableProps) {
@@ -153,12 +153,12 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
   const allowEdit = canEdit('basic-registrations')
   const allowDelete = canDelete('basic-registrations')
 
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editingItem, setEditingItem] = useState<any>(null)
-  const [formData, setFormData] = useState<Record<string, any>>({})
+  const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null)
+  const [formData, setFormData] = useState<Record<string, unknown>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [requestUrl, setRequestUrl] = useState('')
@@ -191,7 +191,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
   }, [fetchItems])
 
   const openCreate = () => {
-    const defaults: Record<string, any> = {}
+    const defaults: Record<string, unknown> = {}
     fields.forEach(f => {
       if (f.defaultValue !== undefined) defaults[f.key] = f.defaultValue
       else if (f.type === 'checkbox') defaults[f.key] = false
@@ -207,8 +207,8 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
     setShowModal(true)
   }
 
-  const openEdit = (item: any) => {
-    const data: Record<string, any> = {}
+  const openEdit = (item: Record<string, unknown>) => {
+    const data: Record<string, unknown> = {}
     fields.forEach(f => {
       data[f.key] = item[f.key] ?? (f.type === 'checkbox' ? false : '')
     })

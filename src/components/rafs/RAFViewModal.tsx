@@ -16,6 +16,9 @@ interface ActionPlanItem {
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
   linkedWorkOrderId?: string
   linkedWorkOrderNumber?: string
+  responsibleUserId?: string
+  responsibleName?: string
+  completedAt?: string
 }
 
 interface RAF {
@@ -39,6 +42,9 @@ interface RAF {
   }>
   failureType: string
   actionPlan?: ActionPlanItem[]
+  status?: 'ABERTA' | 'FINALIZADA'
+  finalizedAt?: string | null
+  finalizedBy?: { id: string; firstName?: string | null; lastName?: string | null } | null
   createdAt: string
   createdBy?: {
     firstName: string
@@ -53,14 +59,15 @@ interface RAF {
     type?: string
     maintenanceArea?: { id: string; name: string; code?: string }
     serviceType?: { id: string; code: string; name: string }
-    asset?: { id: string; name: string; tag?: string }
+    asset?: { id: string; name: string; tag?: string; protheusCode?: string }
   } | null
   request?: {
     id: string
     requestNumber?: string | null
     title?: string | null
     status?: string | null
-    asset?: { id: string; name: string; tag?: string } | null
+    asset?: { id: string; name: string; tag?: string; protheusCode?: string } | null
+    maintenanceArea?: { id: string; name: string; code?: string } | null
   } | null
 }
 
@@ -102,6 +109,15 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
           <div className="flex-1">
             <h2 className="text-lg font-black text-gray-900">{raf.rafNumber}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {raf.status && (
+                <span className={`px-2 py-0.5 text-xs font-bold rounded-full border ${
+                  raf.status === 'FINALIZADA'
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-900 border-gray-400'
+                }`}>
+                  {raf.status}
+                </span>
+              )}
               <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                 raf.failureType === 'REPETITIVE'
                   ? 'bg-danger-light text-foreground'
@@ -231,13 +247,23 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                       <>
                         <div>
                           <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Codigo do Bem</p>
-                          <p className="text-sm font-mono text-foreground">{ss.asset.tag || '—'}</p>
+                          <p className="text-sm font-mono text-foreground">{ss.asset.tag || ss.asset.protheusCode || '—'}</p>
                         </div>
                         <div className="col-span-2">
                           <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Nome do Bem</p>
                           <p className="text-sm text-foreground">{ss.asset.name}</p>
                         </div>
                       </>
+                    )}
+                    {ss.maintenanceArea && (
+                      <div className="col-span-2">
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Area</p>
+                        <p className="text-sm text-foreground">
+                          {ss.maintenanceArea.code
+                            ? `${ss.maintenanceArea.code} - ${ss.maintenanceArea.name}`
+                            : ss.maintenanceArea.name}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -369,6 +395,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                         <tr className="border-b border-border">
                           <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-10">Item</th>
                           <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase">Assunto</th>
+                          <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-40">Responsavel</th>
                           <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-28">Prazo</th>
                           <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase">Descricao</th>
                           <th className="px-2 py-1.5 text-left text-xs font-medium text-muted-foreground uppercase w-24">Status</th>
@@ -380,6 +407,7 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
                           <tr key={i} className="hover:bg-gray-50">
                             <td className="px-2 py-2 text-xs font-mono text-muted-foreground">{action.item || i + 1}</td>
                             <td className="px-2 py-2 text-sm text-foreground">{action.subject || '—'}</td>
+                            <td className="px-2 py-2 text-sm text-foreground">{action.responsibleName || '—'}</td>
                             <td className="px-2 py-2 text-sm text-foreground">{action.deadline ? formatDate(action.deadline) : '—'}</td>
                             <td className="px-2 py-2 text-sm text-foreground">{action.actionDescription || '—'}</td>
                             <td className="px-2 py-2">
@@ -466,7 +494,8 @@ export function RAFViewModal({ isOpen, onClose, raf, inPage = false, onEdit, onD
               <h3 className="text-xs font-bold text-amber-800 uppercase mb-2">SS Vinculada</h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {ss.requestNumber && <div><span className="text-gray-500">SS:</span> <span className="font-mono">{ss.requestNumber}</span></div>}
-                {ss.asset?.tag && <div><span className="text-gray-500">Bem:</span> <span className="font-mono">{ss.asset.tag}</span> — {ss.asset.name}</div>}
+                {(ss.asset?.tag || ss.asset?.protheusCode) && <div><span className="text-gray-500">Bem:</span> <span className="font-mono">{ss.asset?.tag || ss.asset?.protheusCode}</span> — {ss.asset?.name}</div>}
+                {ss.maintenanceArea && <div><span className="text-gray-500">Area:</span> {ss.maintenanceArea.code || ''} {ss.maintenanceArea.name}</div>}
                 {ss.title && <div className="col-span-2"><span className="text-gray-500">Titulo:</span> {ss.title}</div>}
               </div>
             </div>

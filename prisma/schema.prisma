@@ -93,6 +93,11 @@ enum FailureType {
   REPETITIVE
 }
 
+enum RafStatus {
+  ABERTA
+  FINALIZADA
+}
+
 enum ProcessSector {
   ENERGIA
   MOAGEM_1
@@ -409,6 +414,7 @@ model User {
   ledTeams                   Team[]       @relation("TeamLeader")
   notifications              Notification[]
   createdRAFs                FailureAnalysisReport[] @relation("RAFCreatedBy")
+  finalizedRAFs              FailureAnalysisReport[] @relation("RafFinalizedBy")
   createdSchedules           WorkOrderSchedule[]     @relation("ScheduleCreatedBy")
   resources                  Resource[]              @relation("UserResources")
   standardTaskLabors         StandardMaintenanceTaskResource[] @relation("StandardTaskLabor")
@@ -764,6 +770,7 @@ model MaintenanceArea {
   serviceTypes          ServiceType[]
   assetMaintenancePlans AssetMaintenancePlan[]
   workOrders            WorkOrder[]
+  requests              Request[]
 
   @@unique([companyId, code])
   @@unique([companyId, protheusCode])
@@ -1576,6 +1583,9 @@ model Request {
   assetId String?
   asset   Asset? @relation(fields: [assetId], references: [id])
 
+  maintenanceAreaId String?
+  maintenanceArea   MaintenanceArea? @relation(fields: [maintenanceAreaId], references: [id])
+
   locationId String?
   location   Location? @relation("LocationRequests", fields: [locationId], references: [id])
 
@@ -1609,6 +1619,7 @@ model Request {
   @@index([status, assignedToId])
   @@index([createdById])
   @@index([companyId, unitId])
+  @@index([maintenanceAreaId])
 }
 
 // ============================================
@@ -1882,6 +1893,10 @@ model FailureAnalysisReport {
   hypothesisTests  Json?
   failureType      FailureType @default(RANDOM)
   actionPlan       Json?
+  status           RafStatus   @default(ABERTA)
+  finalizedAt      DateTime?
+  finalizedById    String?
+  finalizedBy      User?       @relation("RafFinalizedBy", fields: [finalizedById], references: [id])
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

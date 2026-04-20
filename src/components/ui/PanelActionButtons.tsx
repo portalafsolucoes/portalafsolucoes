@@ -42,7 +42,7 @@ export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGen
         <button
           type="button"
           onClick={onGenerateWorkOrder}
-          className="bg-blue-700 text-white hover:bg-blue-600 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
+          className="bg-gray-500 text-white hover:bg-gray-400 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
         >
           <Icon name="assignment" className="text-base" />
           Emitir OS
@@ -52,7 +52,7 @@ export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGen
         <button
           type="button"
           onClick={onGenerateRaf}
-          className="bg-amber-600 text-white hover:bg-amber-500 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
+          className="bg-gray-300 text-gray-900 hover:bg-gray-400 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
         >
           <Icon name="science" className="text-base" />
           Abrir RAF
@@ -62,7 +62,7 @@ export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGen
         <button
           type="button"
           onClick={onFinalize}
-          className="bg-emerald-700 text-white hover:bg-emerald-600 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
+          className="bg-gray-200 text-gray-900 hover:bg-gray-300 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
         >
           <Icon name="check_circle" className="text-base" />
           Finalizar
@@ -72,7 +72,7 @@ export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGen
         <button
           type="button"
           onClick={onDelete}
-          className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
+          className="bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
         >
           <Icon name="delete" className="text-base" />
           Excluir

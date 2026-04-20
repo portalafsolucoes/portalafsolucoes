@@ -15,7 +15,7 @@ import Link from 'next/link'
 export default function WorkOrderDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [workOrder, setWorkOrder] = useState<any>(null)
+  const [workOrder, setWorkOrder] = useState<Record<string, unknown> | null>(null)
   const [loading, setLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -156,7 +156,7 @@ export default function WorkOrderDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {workOrder.tasks.map((task: any) => (
+                    {(workOrder.tasks as { id: string; completed: boolean; label: string; notes?: string }[]).map((task) => (
                       <div key={task.id} className="flex items-start gap-3 p-3 bg-surface rounded-[4px]">
                         {task.completed ? (
                           <Icon name="check_circle" className="text-xl text-success flex-shrink-0 mt-0.5" />
@@ -257,7 +257,7 @@ export default function WorkOrderDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {workOrder.assignedUsers.map((user: any) => (
+                    {(workOrder.assignedUsers as { id: string; firstName: string; lastName: string; email: string }[]).map((user) => (
                       <div key={user.id} className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-primary">

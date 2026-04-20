@@ -63,7 +63,7 @@ const STORAGE_KEYS = {
 export default function GEPPage() {
   const [selectedSector, setSelectedSector] = useState<string>('MOAGEM_2');
   const [selectedVariables, setSelectedVariables] = useState<string[]>([]);
-  const [gepData, setGepData] = useState<any[]>([]);
+  const [gepData, setGepData] = useState<Record<string, unknown>[]>([]);
   const [viewMode, setViewMode] = useState<'selector' | 'chart' | 'table'>('selector');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -91,7 +91,7 @@ export default function GEPPage() {
         console.error('Erro ao carregar variáveis salvas:', e);
       }
     }
-    if (savedViewMode) setViewMode(savedViewMode as any);
+    if (savedViewMode) setViewMode(savedViewMode as 'selector' | 'chart' | 'table');
     
     setIsInitialLoad(false);
   }, []);
@@ -163,15 +163,15 @@ export default function GEPPage() {
   };
 
   // Função para ordenar dados
-  const ordenarDados = (dados: any[], campo: string, direcao: 'asc' | 'desc') => {
+  const ordenarDados = (dados: Record<string, unknown>[], campo: string, direcao: 'asc' | 'desc') => {
     return [...dados].sort((a, b) => {
-      let valorA = a[campo];
-      let valorB = b[campo];
+      const valorA = a[campo];
+      const valorB = b[campo];
 
       // Tratamento especial para hora (time)
       if (campo === 'time') {
-        const hourA = parseInt(valorA.split(':')[0]);
-        const hourB = parseInt(valorB.split(':')[0]);
+        const hourA = parseInt((valorA as string).split(':')[0]);
+        const hourB = parseInt((valorB as string).split(':')[0]);
         const adjustedA = hourA === 0 ? 24 : hourA;
         const adjustedB = hourB === 0 ? 24 : hourB;
         return direcao === 'asc' ? adjustedA - adjustedB : adjustedB - adjustedA;
@@ -252,17 +252,17 @@ export default function GEPPage() {
   };
 
   // Verificar máquinas rodando usando variável indicadora
-  const moagem1Running = gepData.some(d => (d.Z01_VAR_001 || 0) >= 1);
-  const moagem2Running = gepData.some(d => (d.Z02_VAR_001 || 0) >= 1);
-  const moagem3Running = gepData.some(d => (d.Z03_VAR_001 || 0) >= 1);
-  const secadorRunning = gepData.some(d => (d.S01_VAR_01 || 0) >= 1);
+  const moagem1Running = gepData.some(d => ((d.Z01_VAR_001 as number) || 0) >= 1);
+  const moagem2Running = gepData.some(d => ((d.Z02_VAR_001 as number) || 0) >= 1);
+  const moagem3Running = gepData.some(d => ((d.Z03_VAR_001 as number) || 0) >= 1);
+  const secadorRunning = gepData.some(d => ((d.S01_VAR_01 as number) || 0) >= 1);
 
   // Adicionar hora 00:00 se não existir (para completar Turno D)
-  let completeGepData = [...gepData];
+  const completeGepData = [...gepData];
   const hasZeroHour = gepData.some(d => d.time === '00:00');
   if (!hasZeroHour && gepData.length === 23) {
     // Adicionar 00:00 com valores nulos
-    const zeroHourRow: any = {
+    const zeroHourRow: Record<string, unknown> = {
       time: '00:00',
       date: new Date(new Date(selectedDate).getTime() + 86400000).toISOString().split('T')[0]
     };
@@ -275,8 +275,8 @@ export default function GEPPage() {
     completeGepData.push(zeroHourRow);
     // Ordenar por hora
     completeGepData.sort((a, b) => {
-      const hourA = parseInt(a.time.split(':')[0]);
-      const hourB = parseInt(b.time.split(':')[0]);
+      const hourA = parseInt((a.time as string).split(':')[0]);
+      const hourB = parseInt((b.time as string).split(':')[0]);
       // 00:00 deve vir por último
       if (hourA === 0) return 1;
       if (hourB === 0) return -1;
@@ -288,7 +288,7 @@ export default function GEPPage() {
   const variableStats: Record<string, { min: number; max: number; range: number }> = {};
   
   selectedVariables.forEach(varKey => {
-    const values = completeGepData.map(row => row[varKey] || 0).filter(v => v !== null && !isNaN(v));
+    const values = completeGepData.map(row => (row[varKey] as number) || 0).filter(v => v !== null && !isNaN(v));
     const min = Math.min(...values);
     const max = Math.max(...values);
     const range = max - min;
@@ -297,10 +297,10 @@ export default function GEPPage() {
 
   // Preparar dados para o gráfico com normalização Min-Max (0-100%)
   const chartData = completeGepData.map(row => {
-    const dataPoint: any = { time: row.time };
+    const dataPoint: Record<string, unknown> = { time: row.time };
     
     selectedVariables.forEach(varKey => {
-      const realValue = row[varKey] || 0;
+      const realValue = (row[varKey] as number) || 0;
       
       if (chartScaleMode === 'normalized') {
         // Normalização Min-Max: (valor - min) / (max - min) * 100
@@ -327,16 +327,16 @@ export default function GEPPage() {
   // - Turno C: 13h, 14h, 15h, 16h, 17h, 18h
   // - Turno D: 19h, 20h, 21h, 22h, 23h, 00h (do dia seguinte)
   
-  const groupedByDateAndShift: Array<{ date: string; shift: 'A' | 'B' | 'C' | 'D'; data: any[]; error?: string }> = [];
+  const groupedByDateAndShift: Array<{ date: string; shift: 'A' | 'B' | 'C' | 'D'; data: Record<string, unknown>[]; error?: string }> = [];
 
   // Organizar por turno
-  const shiftA: any[] = [];
-  const shiftB: any[] = [];
-  const shiftC: any[] = [];
-  const shiftD: any[] = [];
+  const shiftA: Record<string, unknown>[] = [];
+  const shiftB: Record<string, unknown>[] = [];
+  const shiftC: Record<string, unknown>[] = [];
+  const shiftD: Record<string, unknown>[] = [];
   
   completeGepData.forEach(row => {
-    const hour = parseInt(row.time.split(':')[0]);
+    const hour = parseInt((row.time as string).split(':')[0]);
     
     if (hour >= 1 && hour <= 6) {
       shiftA.push(row);
@@ -353,10 +353,10 @@ export default function GEPPage() {
   });
 
   // Ordenar cada turno
-  const sortShift = (data: any[]) => {
+  const sortShift = (data: Record<string, unknown>[]) => {
     return data.sort((a, b) => {
-      const hourA = parseInt(a.time.split(':')[0]);
-      const hourB = parseInt(b.time.split(':')[0]);
+      const hourA = parseInt((a.time as string).split(':')[0]);
+      const hourB = parseInt((b.time as string).split(':')[0]);
       // Para turno D, 00h vem depois de 19-23
       const adjustedA = hourA === 0 ? 24 : hourA;
       const adjustedB = hourB === 0 ? 24 : hourB;
@@ -365,7 +365,7 @@ export default function GEPPage() {
   };
 
   // Criar turnos SEMPRE na ordem A, B, C, D com validação
-  const shifts: Array<{ shift: 'A' | 'B' | 'C' | 'D'; data: any[]; expectedHours: number[] }> = [
+  const shifts: Array<{ shift: 'A' | 'B' | 'C' | 'D'; data: Record<string, unknown>[]; expectedHours: number[] }> = [
     { shift: 'A', data: sortShift(shiftA), expectedHours: [1, 2, 3, 4, 5, 6] },
     { shift: 'B', data: sortShift(shiftB), expectedHours: [7, 8, 9, 10, 11, 12] },
     { shift: 'C', data: sortShift(shiftC), expectedHours: [13, 14, 15, 16, 17, 18] },
@@ -379,16 +379,16 @@ export default function GEPPage() {
     // VALIDAÇÃO CRÍTICA: Cada turno DEVE ter exatamente 6 leituras
     if (data.length !== 6) {
       error = `ERRO: Turno ${shift} tem ${data.length} leituras, esperado 6!`;
-      console.warn(`Turno ${shift}: ${data.length} leituras (esperado 6). Horas: ${data.map(r => r.time).join(', ')}`);
+      console.warn(`Turno ${shift}: ${data.length} leituras (esperado 6). Horas: ${data.map(r => r.time as string).join(', ')}`);
       
       // WORKAROUND: Se faltar o horário 00h no Turno D, adicionar um registro vazio
-      const hours = data.map(r => parseInt(r.time.split(':')[0]));
+      const hours = data.map(r => parseInt((r.time as string).split(':')[0]));
       const missingHours = expectedHours.filter(h => !hours.includes(h));
-      
+
       if (shift === 'D' && missingHours.includes(0) && data.length === 5) {
         console.warn(`WORKAROUND: Adicionando hora 00h vazia no Turno D`);
         // Criar registro vazio para 00h com as mesmas variáveis
-        const emptyRow: any = { time: '00:00', date: new Date(new Date(selectedDate).getTime() + 86400000).toISOString().split('T')[0] };
+        const emptyRow: Record<string, unknown> = { time: '00:00', date: new Date(new Date(selectedDate).getTime() + 86400000).toISOString().split('T')[0] };
         selectedVariables.forEach(varKey => {
           emptyRow[varKey] = null;
         });
@@ -397,9 +397,9 @@ export default function GEPPage() {
         error = undefined; // Remover erro pois foi corrigido
       }
     }
-    
+
     // Validar que as horas estão corretas
-    const hours = finalData.map(r => parseInt(r.time.split(':')[0]));
+    const hours = finalData.map(r => parseInt((r.time as string).split(':')[0]));
     const missingHours = expectedHours.filter(h => !hours.includes(h));
     if (missingHours.length > 0 && !error) {
       error = `ERRO: Turno ${shift} faltam horas ${missingHours.join(', ')}!`;
@@ -415,12 +415,12 @@ export default function GEPPage() {
   });
 
   // Tooltip customizado que mostra valores reais e normalizados
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { dataKey: string; value: number; color: string; payload: Record<string, unknown> }[]; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 rounded ambient-shadow">
           <p className="font-semibold mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => {
+          {payload.map((entry, index: number) => {
             const varKey = entry.dataKey;
             const varInfo = getVariableInfo(varKey, selectedSector);
             const stats = variableStats[varKey];
@@ -749,8 +749,8 @@ export default function GEPPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {ordenarDados(completeGepData, ordenacao.campo, ordenacao.direcao).map((row: any, idx: number) => {
-                          const shift = getShift(row.time);
+                        {ordenarDados(completeGepData, ordenacao.campo, ordenacao.direcao).map((row, idx: number) => {
+                          const shift = getShift(row.time as string);
                           return (
                             <TableRow key={idx} className={`${SHIFT_COLORS[shift]}`}>
                               <TableCell className={`px-4 py-0.5 font-medium text-sm sticky left-0 ${SHIFT_COLORS[shift]} z-10 border-r align-middle`}>
@@ -777,11 +777,11 @@ export default function GEPPage() {
                           {selectedVariables.map(varKey => {
                             const varInfo = getVariableInfo(varKey, selectedSector);
                             const isTotalizer = isTotalizerVariable(varKey) || isTotalizerVariable(varInfo.name);
-                            const values = completeGepData.map((row: any) => row[varKey] || 0).filter((v: number) => v !== null && !isNaN(v));
-                            const result = values.length > 0 
-                              ? isTotalizer 
-                                ? values.reduce((sum: number, v: number) => sum + v, 0)
-                                : values.reduce((sum: number, v: number) => sum + v, 0) / values.length
+                            const values = completeGepData.map((row) => (row[varKey] as number) || 0).filter((v) => v !== null && !isNaN(v));
+                            const result = values.length > 0
+                              ? isTotalizer
+                                ? values.reduce((sum, v) => sum + v, 0)
+                                : values.reduce((sum, v) => sum + v, 0) / values.length
                               : 0;
                             return (
                               <TableCell key={varKey} className={`px-4 py-3 text-right text-sm font-mono font-bold tabular-nums ${isTotalizer ? 'text-foreground' : 'text-foreground'}`}>
@@ -874,14 +874,14 @@ export default function GEPPage() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {ordenarDados(shiftData, ordenacaoAtual.campo, ordenacaoAtual.direcao).map((row: any, idx: number) => (
+                              {ordenarDados(shiftData, ordenacaoAtual.campo, ordenacaoAtual.direcao).map((row, idx: number) => (
                                 <TableRow key={idx} className={`${SHIFT_COLORS[shift]}`}>
                                   <TableCell className={`px-4 py-0.5 font-medium text-sm sticky left-0 ${SHIFT_COLORS[shift]} z-10 border-r align-middle`}>
-                                    {row.time}
+                                    {row.time as string}
                                   </TableCell>
                                   {selectedVariables.map(varKey => (
                                     <TableCell key={varKey} className="px-4 py-0.5 text-right text-sm font-mono text-foreground tabular-nums align-middle">
-                                      {(row[varKey] || 0).toFixed(2)}
+                                      {((row[varKey] as number) || 0).toFixed(2)}
                                     </TableCell>
                                   ))}
                                 </TableRow>
@@ -896,11 +896,11 @@ export default function GEPPage() {
                                   const isTotalizer = isTotalizerVariable(varKey) || isTotalizerVariable(varInfo.name);
                                   
                                   // Calcular média ou total baseado no tipo
-                                  const values = shiftData.map((row: any) => row[varKey] || 0).filter((v: number) => v !== null && !isNaN(v));
-                                  const result = values.length > 0 
-                                    ? isTotalizer 
-                                      ? values.reduce((sum: number, v: number) => sum + v, 0) // TOTAL
-                                      : values.reduce((sum: number, v: number) => sum + v, 0) / values.length // MÉDIA
+                                  const values = shiftData.map((row) => (row[varKey] as number) || 0).filter((v) => v !== null && !isNaN(v));
+                                  const result = values.length > 0
+                                    ? isTotalizer
+                                      ? values.reduce((sum, v) => sum + v, 0) // TOTAL
+                                      : values.reduce((sum, v) => sum + v, 0) / values.length // MÉDIA
                                     : 0;
                                   
                                   return (

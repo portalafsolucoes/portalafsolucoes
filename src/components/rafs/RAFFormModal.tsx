@@ -5,6 +5,17 @@ import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { ResponsibleSelect } from './ResponsibleSelect'
+
+type ActionPlanItem = {
+  item: number
+  subject: string
+  deadline: string
+  actionDescription: string
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+  responsibleUserId?: string
+  responsibleName?: string
+}
 
 export interface RAFFormInitialValues {
   failureDescription?: string | null
@@ -68,9 +79,32 @@ export function RAFFormModal({
   const [hypothesisTests, setHypothesisTests] = useState<Array<{description: string, possible: string, evidence: string}>>([
     { description: '', possible: '', evidence: '' }
   ])
-  const [actionPlan, setActionPlan] = useState<Array<{what: string, who: string, when: string}>>([
-    { what: '', who: '', when: '' }
+  const [actionPlan, setActionPlan] = useState<ActionPlanItem[]>([
+    { item: 1, subject: '', deadline: '', actionDescription: '', status: 'PENDING' }
   ])
+
+  const addActionItem = () => {
+    setActionPlan((prev) => [
+      ...prev,
+      { item: prev.length + 1, subject: '', deadline: '', actionDescription: '', status: 'PENDING' },
+    ])
+  }
+
+  const updateActionField = (index: number, field: keyof ActionPlanItem, value: string) => {
+    setActionPlan((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], [field]: value }
+      return next
+    })
+  }
+
+  const updateActionResponsible = (index: number, uid: string | undefined, name: string | undefined) => {
+    setActionPlan((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], responsibleUserId: uid, responsibleName: name }
+      return next
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,7 +122,7 @@ export function RAFFormModal({
           ...formData,
           fiveWhys: fiveWhys.filter(w => w.trim() !== ''),
           hypothesisTests: hypothesisTests.map((h, i) => ({ item: i + 1, ...h })),
-          actionPlan
+          actionPlan: actionPlan.map((a, i) => ({ ...a, item: i + 1 }))
         })
       })
 
@@ -169,15 +203,15 @@ export function RAFFormModal({
           </ModalSection>
 
           <ModalSection title="Descrição da Falha">
-            <textarea required rows={3} value={formData.failureDescription} onChange={(e) => setFormData({...formData, failureDescription: e.target.value})} className={`${inputClass} resize-none`} placeholder="Descreva detalhadamente a falha ocorrida..." />
+            <textarea required rows={3} value={formData.failureDescription} onChange={(e) => { const v = e.target.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); setFormData({...formData, failureDescription: v}) }} className={`${inputClass} resize-none`} placeholder="Descreva detalhadamente a falha ocorrida..." />
           </ModalSection>
 
           <ModalSection title="Observação (Levantamento de Pistas)">
-            <textarea required rows={3} value={formData.observation} onChange={(e) => setFormData({...formData, observation: e.target.value})} className={`${inputClass} resize-none`} placeholder="Observações e pistas levantadas durante investigação..." />
+            <textarea required rows={3} value={formData.observation} onChange={(e) => { const v = e.target.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); setFormData({...formData, observation: v}) }} className={`${inputClass} resize-none`} placeholder="Observações e pistas levantadas durante investigação..." />
           </ModalSection>
 
           <ModalSection title="Ação de Bloqueio Imediato">
-            <textarea required rows={3} value={formData.immediateAction} onChange={(e) => setFormData({...formData, immediateAction: e.target.value})} className={`${inputClass} resize-none`} placeholder="Ações tomadas imediatamente para bloquear o problema..." />
+            <textarea required rows={3} value={formData.immediateAction} onChange={(e) => { const v = e.target.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); setFormData({...formData, immediateAction: v}) }} className={`${inputClass} resize-none`} placeholder="Ações tomadas imediatamente para bloquear o problema..." />
           </ModalSection>
 
           <ModalSection title="Método dos 5 Porquês">
@@ -231,25 +265,52 @@ export function RAFFormModal({
           </ModalSection>
 
           <ModalSection title="Plano de Ação">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">O quê?</th>
-                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase w-40">Quem?</th>
-                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase w-40">Quando?</th>
-                </tr>
-              </thead>
-              <tbody>
-                {actionPlan.map((action, index) => (
-                  <tr key={index} className="border-b border-border">
-                    <td className="px-2 py-1.5"><input type="text" value={action.what} onChange={(e) => { const n = [...actionPlan]; n[index].what = e.target.value; setActionPlan(n); }} className={inputClass} /></td>
-                    <td className="px-2 py-1.5"><input type="text" value={action.who} onChange={(e) => { const n = [...actionPlan]; n[index].who = e.target.value; setActionPlan(n); }} className={inputClass} /></td>
-                    <td className="px-2 py-1.5"><input type="date" value={action.when} onChange={(e) => { const n = [...actionPlan]; n[index].when = e.target.value; setActionPlan(n); }} className={inputClass} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button type="button" onClick={() => setActionPlan([...actionPlan, { what: '', who: '', when: '' }])} className="mt-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+            <div className="space-y-3">
+              {actionPlan.map((action, index) => (
+                <div key={index} className="border border-border rounded-[4px] p-3 bg-gray-50/60 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Item {index + 1}</span>
+                  </div>
+
+                  {/* Linha 1: metadados curtos */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Responsável</label>
+                      <ResponsibleSelect
+                        value={action.responsibleUserId}
+                        valueName={action.responsibleName}
+                        onChange={(uid, name) => updateActionResponsible(index, uid, name)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Prazo</label>
+                      <input type="date" value={action.deadline} onChange={(e) => updateActionField(index, 'deadline', e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Status</label>
+                      <select value={action.status} onChange={(e) => updateActionField(index, 'status', e.target.value)} className={inputClass}>
+                        <option value="PENDING">Pendente</option>
+                        <option value="IN_PROGRESS">Em andamento</option>
+                        <option value="COMPLETED">Concluída</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Linha 2: texto longo */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Assunto</label>
+                      <input type="text" value={action.subject} onChange={(e) => updateActionField(index, 'subject', e.target.value)} className={inputClass} placeholder="Assunto" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descrição da Ação</label>
+                      <input type="text" value={action.actionDescription} onChange={(e) => updateActionField(index, 'actionDescription', e.target.value)} className={inputClass} placeholder="Descrição da ação" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={addActionItem} className="mt-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
               <Icon name="add" className="text-sm" /> Adicionar ação
             </button>
           </ModalSection>

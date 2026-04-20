@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { ResponsibleSelect } from './ResponsibleSelect'
 
 interface ActionPlanItem {
   item: number
@@ -14,6 +15,9 @@ interface ActionPlanItem {
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
   linkedWorkOrderId?: string
   linkedWorkOrderNumber?: string
+  responsibleUserId?: string
+  responsibleName?: string
+  completedAt?: string
 }
 
 interface RAFEditModalProps {
@@ -28,8 +32,8 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [rafNumber, setRafNumber] = useState('')
-  const [woInfo, setWoInfo] = useState<{ id: string; internalId?: string; asset?: { name: string; tag?: string }; maintenanceArea?: { name: string; code?: string } } | null>(null)
-  const [ssInfo, setSsInfo] = useState<{ id: string; requestNumber?: string | null; title?: string | null; asset?: { name: string; tag?: string } | null } | null>(null)
+  const [woInfo, setWoInfo] = useState<{ id: string; internalId?: string; asset?: { name: string; tag?: string; protheusCode?: string }; maintenanceArea?: { name: string; code?: string } } | null>(null)
+  const [ssInfo, setSsInfo] = useState<{ id: string; requestNumber?: string | null; title?: string | null; asset?: { name: string; tag?: string; protheusCode?: string } | null; maintenanceArea?: { name: string; code?: string } | null } | null>(null)
   const [formData, setFormData] = useState({
     occurrenceDate: '',
     occurrenceTime: '',
@@ -107,7 +111,10 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
             actionDescription: a.actionDescription || '',
             status: a.status || 'PENDING',
             linkedWorkOrderId: a.linkedWorkOrderId || undefined,
-            linkedWorkOrderNumber: a.linkedWorkOrderNumber || undefined
+            linkedWorkOrderNumber: a.linkedWorkOrderNumber || undefined,
+            responsibleUserId: a.responsibleUserId || undefined,
+            responsibleName: a.responsibleName || undefined,
+            completedAt: a.completedAt || undefined,
           })))
         }
       }
@@ -162,6 +169,12 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
   const updateActionPlan = (index: number, field: keyof ActionPlanItem, value: string) => {
     const updated = [...actionPlan]
     updated[index] = { ...updated[index], [field]: value }
+    setActionPlan(updated)
+  }
+
+  const updateResponsible = (index: number, userId: string | undefined, userName: string | undefined) => {
+    const updated = [...actionPlan]
+    updated[index] = { ...updated[index], responsibleUserId: userId, responsibleName: userName }
     setActionPlan(updated)
   }
 
@@ -237,13 +250,23 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
                     <>
                       <div>
                         <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Codigo do Bem</label>
-                        <p className="text-sm font-mono text-foreground">{ssInfo.asset.tag || '—'}</p>
+                        <p className="text-sm font-mono text-foreground">{ssInfo.asset.tag || ssInfo.asset.protheusCode || '—'}</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nome do Bem</label>
                         <p className="text-sm text-foreground">{ssInfo.asset.name}</p>
                       </div>
                     </>
+                  )}
+                  {ssInfo.maintenanceArea && (
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Area</label>
+                      <p className="text-sm text-foreground">
+                        {ssInfo.maintenanceArea.code
+                          ? `${ssInfo.maintenanceArea.code} - ${ssInfo.maintenanceArea.name}`
+                          : ssInfo.maintenanceArea.name}
+                      </p>
+                    </div>
                   )}
                   {ssInfo.title && (
                     <div className="col-span-2 md:col-span-3">
@@ -378,73 +401,80 @@ export function RAFEditModal({ isOpen, onClose, rafId, onSuccess, inPage = false
             </ModalSection>
 
             <ModalSection title="Plano de Acao">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase w-10">Item</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">Assunto</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase w-32">Prazo</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">Descricao da Acao</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase w-32">Status</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase w-28">N° OS</th>
-                      <th className="w-8"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {actionPlan.map((action, index) => (
-                      <tr key={index} className="border-b border-border">
-                        <td className="px-2 py-1.5 text-xs text-muted-foreground font-mono">{action.item}</td>
-                        <td className="px-2 py-1.5">
-                          <input type="text" value={action.subject} onChange={(e) => updateActionPlan(index, 'subject', e.target.value)} className={inputClass} placeholder="Assunto" />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <input type="date" value={action.deadline} onChange={(e) => updateActionPlan(index, 'deadline', e.target.value)} className={inputClass} />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <input type="text" value={action.actionDescription} onChange={(e) => updateActionPlan(index, 'actionDescription', e.target.value)} className={inputClass} placeholder="Descricao da acao" />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <select
-                            value={action.status}
-                            onChange={(e) => updateActionPlan(index, 'status', e.target.value)}
-                            className={`${inputClass} ${statusColor(action.status)}`}
-                          >
-                            <option value="PENDING">Pendente</option>
-                            <option value="IN_PROGRESS">Andamento</option>
-                            <option value="COMPLETED">Concluido</option>
-                          </select>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {action.linkedWorkOrderNumber ? (
-                            <span className="text-xs font-mono text-primary">{action.linkedWorkOrderNumber}</span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                window.open('/work-orders?createFromRaf=true', '_blank')
-                              }}
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                              title="Gerar OS a partir deste item"
-                            >
-                              <Icon name="add_circle" className="text-sm" />
-                              Gerar OS
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {actionPlan.length > 1 && (
-                            <button type="button" onClick={() => removeActionPlanItem(index)} className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors">
-                              <Icon name="close" className="text-sm" />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-3">
+                {actionPlan.map((action, index) => (
+                  <div key={index} className="border border-border rounded-[4px] p-3 bg-gray-50/60 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Item {action.item}</span>
+                      {actionPlan.length > 1 && (
+                        <button type="button" onClick={() => removeActionPlanItem(index)} className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors" title="Remover item">
+                          <Icon name="close" className="text-sm" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Linha 1: metadados curtos */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Responsavel</label>
+                        <ResponsibleSelect
+                          value={action.responsibleUserId}
+                          valueName={action.responsibleName}
+                          onChange={(uid, name) => updateResponsible(index, uid, name)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Prazo</label>
+                        <input type="date" value={action.deadline} onChange={(e) => updateActionPlan(index, 'deadline', e.target.value)} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Status</label>
+                        <select
+                          value={action.status}
+                          onChange={(e) => updateActionPlan(index, 'status', e.target.value)}
+                          className={`${inputClass} ${statusColor(action.status)}`}
+                        >
+                          <option value="PENDING">Pendente</option>
+                          <option value="IN_PROGRESS">Andamento</option>
+                          <option value="COMPLETED">Concluido</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Linha 2: texto longo */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Assunto</label>
+                        <input type="text" value={action.subject} onChange={(e) => updateActionPlan(index, 'subject', e.target.value)} className={inputClass} placeholder="Assunto" />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Descricao da Acao</label>
+                        <input type="text" value={action.actionDescription} onChange={(e) => updateActionPlan(index, 'actionDescription', e.target.value)} className={inputClass} placeholder="Descricao da acao" />
+                      </div>
+                    </div>
+
+                    {/* Linha 3: vinculo com OS */}
+                    <div className="flex items-center justify-end pt-1">
+                      {action.linkedWorkOrderNumber ? (
+                        <span className="text-xs font-mono text-primary">N° OS: {action.linkedWorkOrderNumber}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.open('/work-orders?createFromRaf=true', '_blank')
+                          }}
+                          className="text-xs text-primary hover:underline flex items-center gap-1"
+                          title="Gerar OS a partir deste item"
+                        >
+                          <Icon name="add_circle" className="text-sm" />
+                          Gerar OS
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <button type="button" onClick={addActionPlanItem} className="mt-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+              <button type="button" onClick={addActionPlanItem} className="mt-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                 <Icon name="add" className="text-sm" /> Adicionar item
               </button>
             </ModalSection>

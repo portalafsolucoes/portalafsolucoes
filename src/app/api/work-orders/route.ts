@@ -56,10 +56,66 @@ export async function GET(request: NextRequest) {
     const limit = sanitizeLimit(searchParams.get('limit'))
     const skip = (page - 1) * limit
     const summary = searchParams.get('summary') === 'true'
+    const idsParam = searchParams.get('ids')
 
     const permError = checkApiPermission(session, 'work-orders', 'GET')
     if (permError) {
       return NextResponse.json({ error: permError }, { status: 403 })
+    }
+
+    // Modo batch para impressão em lote (?ids=id1,id2,...): resposta sem paginação,
+    // limite máximo de 50 IDs por request. A ordem de retorno preserva a ordem dos IDs.
+    if (idsParam) {
+      const ids = idsParam.split(',').map((s) => s.trim()).filter(Boolean)
+      if (ids.length === 0) {
+        return NextResponse.json({ data: [] })
+      }
+      if (ids.length > 50) {
+        return NextResponse.json(
+          { error: 'Máximo de 50 IDs por requisição' },
+          { status: 400 }
+        )
+      }
+
+      let batchQuery = supabase
+        .from('WorkOrder')
+        .select(`
+          *,
+          asset:Asset(*),
+          location:Location!locationId(*),
+          createdBy:User!createdById(id, firstName, lastName, email),
+          maintenancePlanExec:MaintenancePlanExecution(planNumber, trackingType),
+          assetMaintenancePlan:AssetMaintenancePlan(trackingType, maintenanceTime, timeUnit),
+          tasks:Task(id, label, notes, completed, order, executionTime, steps),
+          woResources:WorkOrderResource(
+            id, resourceType, quantity, hours, unit,
+            resource:Resource(id, name),
+            jobTitle:JobTitle(id, name),
+            user:User(id, firstName, lastName)
+          )
+        `)
+        .in('id', ids)
+        .eq('companyId', session.companyId)
+        .eq('archived', false)
+
+      const unitIdParam = searchParams.get('unitId')
+      const effectiveUnitId = getEffectiveUnitId(session, unitIdParam)
+      if (effectiveUnitId) batchQuery = batchQuery.eq('unitId', effectiveUnitId)
+      if (isOperationalRole(session)) batchQuery = batchQuery.eq('assignedToId', session.id)
+
+      const { data: batchData, error: batchError } = await batchQuery
+      if (batchError) {
+        console.error('Batch work-orders error:', batchError)
+        return NextResponse.json({ error: 'Database error' }, { status: 500 })
+      }
+
+      // Preservar ordem original dos IDs enviados
+      const byId = new Map<string, unknown>()
+      for (const row of batchData || []) {
+        byId.set((row as { id: string }).id, row)
+      }
+      const ordered = ids.map((id) => byId.get(id)).filter(Boolean)
+      return NextResponse.json({ data: ordered })
     }
 
     // Build query

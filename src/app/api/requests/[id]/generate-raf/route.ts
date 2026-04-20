@@ -31,7 +31,8 @@ export async function POST(
       .from('Request')
       .select(`
         *,
-        asset:Asset(id, name, tag, protheusCode)
+        asset:Asset(id, name, tag, protheusCode),
+        maintenanceArea:MaintenanceArea(id, name, code)
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -77,11 +78,10 @@ export async function POST(
 
     const now = new Date().toISOString()
 
-    // RAF gerada via SS NAO depende de Area de Manutencao da OS;
-    // se houver, eh derivada manualmente pelo usuario no proprio formulario.
+    // RAF gerada via SS herda a Area de Manutencao da propria SS (campo obrigatorio na SS).
     const rafNumber = await generateRafNumber(
       ss.asset?.id || null,
-      null,
+      ss.maintenanceAreaId || null,
       session.companyId
     )
 
@@ -115,6 +115,9 @@ export async function POST(
       hypothesisTests: Array.isArray(body.hypothesisTests) ? body.hypothesisTests : null,
       failureType: body.failureType === 'REPETITIVE' ? 'REPETITIVE' : 'RANDOM',
       actionPlan: Array.isArray(body.actionPlan) ? body.actionPlan : null,
+      status: 'ABERTA',
+      finalizedAt: null,
+      finalizedById: null,
       companyId: session.companyId,
       unitId: session.unitId || null,
       createdById: session.id,

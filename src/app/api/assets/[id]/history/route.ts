@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import type { WorkOrderFullDetail, RequestFullDetail } from '@/types/assetHistory'
 
 // GET - Buscar histórico do ativo
 export async function GET(
@@ -22,6 +23,7 @@ export async function GET(
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     const sourceFilter = searchParams.get('source') // 'os', 'ss', or null/empty for all
+    const includeDetails = searchParams.get('include') === 'details'
 
     // Verificar se o ativo existe e pertence à empresa
     const { data: asset, error: assetError } = await supabase
@@ -86,9 +88,71 @@ export async function GET(
       }
     }
 
+    // Batch fetch de detalhes de OS e SS (apenas quando include=details)
+    const workOrdersMap = new Map<string, WorkOrderFullDetail>()
+    const requestsMap = new Map<string, RequestFullDetail>()
+
+    if (includeDetails) {
+      const workOrderIds = [
+        ...new Set((history || []).map(e => e.workOrderId).filter(Boolean))
+      ] as string[]
+      const requestIds = [
+        ...new Set((history || []).map(e => e.requestId).filter(Boolean))
+      ] as string[]
+
+      // Batch fetch de OS
+      if (workOrderIds.length > 0) {
+        const { data: workOrders } = await supabase
+          .from('WorkOrder')
+          .select(`
+            id, title, type, status, sequenceNumber, internalId, externalId,
+            executionNotes, laborCost, partsCost, thirdPartyCost, toolsCost,
+            createdAt, completedOn,
+            serviceType:ServiceType(id, name, code),
+            maintenanceArea:MaintenanceArea(id, name, code),
+            assetMaintenancePlan:AssetMaintenancePlan(id, name, sequence),
+            maintenancePlanExec:MaintenancePlanExec(id, planNumber),
+            woResources:WoResource(
+              id, resourceType, quantity, hours, unit,
+              resource:Resource(id, name),
+              jobTitle:JobTitle(id, name),
+              user:User(id, firstName, lastName)
+            )
+          `)
+          .in('id', workOrderIds)
+          .eq('companyId', session.companyId)
+
+        for (const wo of workOrders || []) {
+          workOrdersMap.set(wo.id, wo as unknown as WorkOrderFullDetail)
+        }
+      }
+
+      // Batch fetch de SS
+      if (requestIds.length > 0) {
+        const { data: requests } = await supabase
+          .from('Request')
+          .select(`
+            id, requestNumber, title, status, failureDescription, rejectionReason, createdAt,
+            maintenanceArea:MaintenanceArea(id, name, code),
+            requester:User!Request_requesterId_fkey(id, firstName, lastName),
+            failureAnalysisReport:FailureAnalysisReport(id, rafNumber)
+          `)
+          .in('id', requestIds)
+          .eq('companyId', session.companyId)
+
+        for (const req of requests || []) {
+          requestsMap.set(req.id, req as unknown as RequestFullDetail)
+        }
+      }
+    }
+
     const enrichedHistory = (history || []).map(event => ({
       ...event,
       userName: event.userId ? usersMap.get(event.userId) || null : null,
+      ...(includeDetails ? {
+        workOrder: event.workOrderId ? workOrdersMap.get(event.workOrderId) || null : null,
+        request: event.requestId ? requestsMap.get(event.requestId) || null : null,
+      } : {}),
     }))
 
     return NextResponse.json({

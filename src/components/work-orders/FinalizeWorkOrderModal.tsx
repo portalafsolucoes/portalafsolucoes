@@ -19,7 +19,7 @@ export interface FinalizeResult {
 interface FinalizeModalProps {
   isOpen: boolean
   onClose: () => void
-  workOrder: any
+  workOrder: Record<string, unknown>
   onFinalized: (result?: FinalizeResult) => void
   inPage?: boolean
 }
@@ -192,7 +192,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         .then(r => r.json())
         .then(data => {
           if (data.data?.actionPlan) {
-            const pending = (data.data.actionPlan as any[]).filter((a: any) => a.status !== 'COMPLETED')
+            const pending = (data.data.actionPlan as { status: string }[]).filter((a) => a.status !== 'COMPLETED')
             if (pending.length > 0) {
               setRafPending({ rafNumber: data.data.rafNumber, pendingCount: pending.length })
             }
@@ -313,7 +313,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
     setLoadingSteps(false)
   }
 
-  const updateStep = (index: number, field: keyof ExecutionStep, value: any) => {
+  const updateStep = (index: number, field: keyof ExecutionStep, value: ExecutionStep[keyof ExecutionStep]) => {
     setExecutionSteps(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], [field]: value }
@@ -378,7 +378,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
     setExecutionResources(prev => prev.filter((_, i) => i !== index))
   }
 
-  const updateResource = (index: number, field: string, value: any) => {
+  const updateResource = (index: number, field: string, value: string | number | undefined) => {
     setExecutionResources(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], [field]: value }
@@ -445,7 +445,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
         const planned = plannedResources.find(pr => pr.id === r.plannedResourceId)
         if (!planned?.resourceId) continue
 
-        const resAvail = data?.find((d: any) => d.resourceId === planned.resourceId)
+        const resAvail = data?.find((d: { resourceId: string; hasCalendar?: boolean; resourceName?: string; calendarName?: string; dateAvailability?: { isWorkingDay: boolean; availableHours: number } }) => d.resourceId === planned.resourceId)
         if (!resAvail?.hasCalendar) continue
 
         const resourceLabel = lr.resourceName || resAvail.resourceName || 'Recurso'
@@ -538,7 +538,7 @@ export function FinalizeWorkOrderModal({ isOpen, onClose, workOrder, onFinalized
           }
         })
 
-      const body: any = {
+      const body: Record<string, unknown> = {
         executionResources: apiResources,
         executionSteps: executionSteps.length > 0
           ? executionSteps.map(s => ({

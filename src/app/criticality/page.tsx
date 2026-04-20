@@ -19,6 +19,36 @@ const CriticalityEditPanel = dynamic(
   () => import('@/components/criticality/CriticalityEditPanel').then((m) => ({ default: m.CriticalityEditPanel })),
   { ssr: false }
 )
+const WorkOrderPrintView = dynamic(
+  () => import('@/components/work-orders/WorkOrderPrintView').then((m) => ({ default: m.WorkOrderPrintView })),
+  { ssr: false }
+)
+const WorkOrdersBatchPrintView = dynamic(
+  () => import('@/components/work-orders/WorkOrdersBatchPrintView').then((m) => ({ default: m.WorkOrdersBatchPrintView })),
+  { ssr: false }
+)
+const RequestPrintView = dynamic(
+  () => import('@/components/requests/RequestPrintView').then((m) => ({ default: m.RequestPrintView })),
+  { ssr: false }
+)
+const RequestsBatchPrintView = dynamic(
+  () => import('@/components/requests/RequestsBatchPrintView').then((m) => ({ default: m.RequestsBatchPrintView })),
+  { ssr: false }
+)
+const RAFPrintView = dynamic(
+  () => import('@/components/rafs/RAFPrintView').then((m) => ({ default: m.RAFPrintView })),
+  { ssr: false }
+)
+const RAFsBatchPrintView = dynamic(
+  () => import('@/components/rafs/RAFsBatchPrintView').then((m) => ({ default: m.RAFsBatchPrintView })),
+  { ssr: false }
+)
+
+type PrintKind = 'request' | 'work-order' | 'raf'
+type PrintState =
+  | { kind: PrintKind; mode: 'single'; id: string }
+  | { kind: PrintKind; mode: 'batch'; ids: string[] }
+  | null
 
 interface AssetCriticality {
   id: string
@@ -108,6 +138,18 @@ export default function CriticalityPage() {
   // Split-panel state
   const [selectedAsset, setSelectedAsset] = useState<AssetCriticality | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [printState, setPrintState] = useState<PrintState>(null)
+
+  const handlePrintSingle = useCallback((kind: PrintKind, id: string) => {
+    setPrintState({ kind, mode: 'single', id })
+  }, [])
+
+  const handlePrintBatch = useCallback((kind: PrintKind, ids: string[]) => {
+    if (ids.length === 0) return
+    setPrintState({ kind, mode: 'batch', ids })
+  }, [])
+
+  const closePrint = useCallback(() => setPrintState(null), [])
 
   const showSidePanel = selectedAsset !== null
 
@@ -200,6 +242,8 @@ export default function CriticalityPage() {
       onClose={closeSidePanel}
       onEdit={() => setIsEditing(true)}
       canEdit={canEdit('criticality')}
+      onPrintSingle={handlePrintSingle}
+      onPrintBatch={handlePrintBatch}
     />
   ) : null
 
@@ -520,6 +564,26 @@ export default function CriticalityPage() {
           />
         </div>
       </div>
+
+      {/* Print overlays */}
+      {printState?.kind === 'work-order' && printState.mode === 'single' && (
+        <WorkOrderPrintView workOrderId={printState.id} onClose={closePrint} />
+      )}
+      {printState?.kind === 'work-order' && printState.mode === 'batch' && (
+        <WorkOrdersBatchPrintView workOrderIds={printState.ids} onClose={closePrint} />
+      )}
+      {printState?.kind === 'request' && printState.mode === 'single' && (
+        <RequestPrintView requestId={printState.id} onClose={closePrint} />
+      )}
+      {printState?.kind === 'request' && printState.mode === 'batch' && (
+        <RequestsBatchPrintView requestIds={printState.ids} onClose={closePrint} />
+      )}
+      {printState?.kind === 'raf' && printState.mode === 'single' && (
+        <RAFPrintView rafId={printState.id} onClose={closePrint} />
+      )}
+      {printState?.kind === 'raf' && printState.mode === 'batch' && (
+        <RAFsBatchPrintView rafIds={printState.ids} onClose={closePrint} />
+      )}
     </PageContainer>
   )
 }

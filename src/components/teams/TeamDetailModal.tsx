@@ -16,7 +16,7 @@ interface TeamDetailModalProps {
 }
 
 export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete, inPage = false }: TeamDetailModalProps) {
-  const [team, setTeam] = useState<any>(null)
+  const [team, setTeam] = useState<Record<string, unknown> | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete, inP
             </div>
             {team.members && team.members.length > 0 ? (
               <div className="space-y-2 px-1">
-                {team.members.map((membership: any) => (
+                {(team.members as { id: string; user: { firstName: string; lastName: string; image?: string; jobTitle?: string; email: string } }[]).map((membership) => (
                   <div key={membership.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
                     {membership.user.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -250,7 +250,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete, inP
         <ModalSection title="Membros">
           {team.members && team.members.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {team.members.map((membership: any) => (
+              {(team.members as { id: string; user: { firstName: string; lastName: string; image?: string; jobTitle?: string; email: string } }[]).map((membership) => (
                 <div
                   key={membership.id}
                   className="flex items-center gap-3 p-3 bg-card rounded-[4px]"

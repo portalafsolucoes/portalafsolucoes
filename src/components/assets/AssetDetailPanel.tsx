@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Icon } from '@/components/ui/Icon'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
@@ -8,6 +9,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import AssetAttachments from './AssetAttachments'
 import AssetTimeline from './AssetTimelineEnhanced'
+
+const WorkOrderDetailModal = dynamic(
+  () => import('@/components/work-orders/WorkOrderDetailModal').then(m => ({ default: m.WorkOrderDetailModal })),
+  { ssr: false }
+)
+
+const RequestDetailModal = dynamic(
+  () => import('@/components/requests/RequestDetailModal').then(m => ({ default: m.RequestDetailModal })),
+  { ssr: false }
+)
+
+const WorkOrderPrintView = dynamic(
+  () => import('@/components/work-orders/WorkOrderPrintView').then(m => ({ default: m.WorkOrderPrintView })),
+  { ssr: false }
+)
+
+const RequestPrintView = dynamic(
+  () => import('@/components/requests/RequestPrintView').then(m => ({ default: m.RequestPrintView })),
+  { ssr: false }
+)
+
+const normalizeSearch = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim()
 
 interface Asset {
   id: string
@@ -74,11 +102,14 @@ interface Asset {
 interface OpenWorkOrder {
   id: string
   title: string
+  description?: string | null
   status: string
   priority: string
   type?: string
   internalId?: string
+  sequenceNumber?: number | null
   createdAt: string
+  dueDate?: string | null
   assignedTo?: { firstName: string; lastName: string } | null
 }
 
@@ -86,6 +117,7 @@ interface OpenRequest {
   id: string
   requestNumber?: string
   title: string
+  description?: string | null
   status: string
   priority: string
   createdAt: string
@@ -116,6 +148,20 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   const [loadingWOs, setLoadingWOs] = useState(false)
   const [loadingSSs, setLoadingSSs] = useState(false)
 
+  // Filtros das abas OSs/SSs em aberto
+  const [woSearch, setWoSearch] = useState('')
+  const [woStartDate, setWoStartDate] = useState('')
+  const [woEndDate, setWoEndDate] = useState('')
+  const [ssSearch, setSsSearch] = useState('')
+  const [ssStartDate, setSsStartDate] = useState('')
+  const [ssEndDate, setSsEndDate] = useState('')
+
+  // Modais sobre as linhas
+  const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null)
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
+  const [printWorkOrderId, setPrintWorkOrderId] = useState<string | null>(null)
+  const [printRequestId, setPrintRequestId] = useState<string | null>(null)
+
   // Fetch open work orders for this asset
   useEffect(() => {
     if (activeTab !== 'open-wo') return
@@ -145,6 +191,60 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
       .catch(() => setOpenRequests([]))
       .finally(() => setLoadingSSs(false))
   }, [activeTab, asset.id])
+
+  const filteredWorkOrders = useMemo(() => {
+    const term = normalizeSearch(woSearch)
+    const start = woStartDate ? new Date(woStartDate) : null
+    const end = woEndDate ? new Date(`${woEndDate}T23:59:59`) : null
+    return openWorkOrders.filter((wo) => {
+      if (start || end) {
+        const created = new Date(wo.createdAt).getTime()
+        if (start && created < start.getTime()) return false
+        if (end && created > end.getTime()) return false
+      }
+      if (!term) return true
+      const haystack = [
+        wo.title,
+        wo.description,
+        wo.status,
+        wo.priority,
+        wo.type,
+        wo.internalId,
+        wo.sequenceNumber != null ? String(wo.sequenceNumber) : '',
+        wo.assignedTo ? `${wo.assignedTo.firstName} ${wo.assignedTo.lastName}` : ''
+      ]
+        .filter(Boolean)
+        .map((v) => normalizeSearch(String(v)))
+        .join(' ')
+      return haystack.includes(term)
+    })
+  }, [openWorkOrders, woSearch, woStartDate, woEndDate])
+
+  const filteredRequests = useMemo(() => {
+    const term = normalizeSearch(ssSearch)
+    const start = ssStartDate ? new Date(ssStartDate) : null
+    const end = ssEndDate ? new Date(`${ssEndDate}T23:59:59`) : null
+    return openRequests.filter((req) => {
+      if (start || end) {
+        const created = new Date(req.createdAt).getTime()
+        if (start && created < start.getTime()) return false
+        if (end && created > end.getTime()) return false
+      }
+      if (!term) return true
+      const haystack = [
+        req.title,
+        req.description,
+        req.status,
+        req.priority,
+        req.requestNumber,
+        req.createdBy ? `${req.createdBy.firstName} ${req.createdBy.lastName}` : ''
+      ]
+        .filter(Boolean)
+        .map((v) => normalizeSearch(String(v)))
+        .join(' ')
+      return haystack.includes(term)
+    })
+  }, [openRequests, ssSearch, ssStartDate, ssEndDate])
 
   const getStatusBadge = (status: string) => {
     const colors = {
@@ -694,33 +794,86 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
           {/* OSs em aberto */}
           <TabsContent value="open-wo" className="flex-1 overflow-y-auto mt-0">
+            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 space-y-2">
+              <div className="relative">
+                <Icon name="search" className="absolute left-2 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  value={woSearch}
+                  onChange={(e) => setWoSearch(e.target.value)}
+                  placeholder="BUSCAR POR NUMERO, TITULO, DESCRICAO, RESPONSAVEL..."
+                  className="w-full pl-8 pr-3 py-2 text-xs border border-gray-300 rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">De</label>
+                  <input
+                    type="date"
+                    value={woStartDate}
+                    onChange={(e) => setWoStartDate(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Até</label>
+                  <input
+                    type="date"
+                    value={woEndDate}
+                    onChange={(e) => setWoEndDate(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
             {loadingWOs ? (
               <div className="flex items-center justify-center py-12">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
                 <p className="ml-2 text-muted-foreground">Carregando...</p>
               </div>
-            ) : openWorkOrders.length === 0 ? (
+            ) : filteredWorkOrders.length === 0 ? (
               <div className="text-center py-12">
                 <Icon name="assignment" className="text-5xl text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">Nenhuma OS em aberto para este ativo</p>
+                <p className="text-muted-foreground">
+                  {openWorkOrders.length === 0
+                    ? 'Nenhuma OS em aberto para este ativo'
+                    : 'Nenhuma OS corresponde aos filtros'}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {openWorkOrders.map((wo) => (
-                  <div key={wo.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="text-sm font-medium text-foreground flex-1">{wo.title}</p>
-                      <span className={`ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full ${getWOStatusColor(wo.status)}`}>
-                        {getWOStatusText(wo.status)}
-                      </span>
+                {filteredWorkOrders.map((wo) => (
+                  <div
+                    key={wo.id}
+                    onClick={() => setSelectedWorkOrderId(wo.id)}
+                    className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer flex items-start gap-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="text-sm font-medium text-foreground flex-1">{wo.title}</p>
+                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${getWOStatusColor(wo.status)}`}>
+                          {getWOStatusText(wo.status)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {wo.internalId && <span className="font-mono">{wo.internalId}</span>}
+                        <span>{getPriorityText(wo.priority)}</span>
+                        {wo.type && <span>{wo.type === 'PREVENTIVE' ? 'PREVENTIVA' : wo.type === 'CORRECTIVE' ? 'CORRETIVA' : wo.type === 'PREDICTIVE' ? 'PREDITIVA' : 'REATIVA'}</span>}
+                        <span>{formatDate(wo.createdAt)}</span>
+                        {wo.assignedTo && <span>{wo.assignedTo.firstName} {wo.assignedTo.lastName}</span>}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {wo.internalId && <span className="font-mono">{wo.internalId}</span>}
-                      <span>{getPriorityText(wo.priority)}</span>
-                      {wo.type && <span>{wo.type === 'PREVENTIVE' ? 'PREVENTIVA' : wo.type === 'CORRECTIVE' ? 'CORRETIVA' : wo.type === 'PREDICTIVE' ? 'PREDITIVA' : 'REATIVA'}</span>}
-                      <span>{formatDate(wo.createdAt)}</span>
-                      {wo.assignedTo && <span>{wo.assignedTo.firstName} {wo.assignedTo.lastName}</span>}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPrintWorkOrderId(wo.id)
+                      }}
+                      title="Imprimir OS"
+                      className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
+                    >
+                      <Icon name="print" className="text-base" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -729,32 +882,85 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
 
           {/* SSs em aberto */}
           <TabsContent value="open-ss" className="flex-1 overflow-y-auto mt-0">
+            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 space-y-2">
+              <div className="relative">
+                <Icon name="search" className="absolute left-2 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
+                <input
+                  type="text"
+                  value={ssSearch}
+                  onChange={(e) => setSsSearch(e.target.value)}
+                  placeholder="BUSCAR POR NUMERO, TITULO, DESCRICAO, SOLICITANTE..."
+                  className="w-full pl-8 pr-3 py-2 text-xs border border-gray-300 rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">De</label>
+                  <input
+                    type="date"
+                    value={ssStartDate}
+                    onChange={(e) => setSsStartDate(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Até</label>
+                  <input
+                    type="date"
+                    value={ssEndDate}
+                    onChange={(e) => setSsEndDate(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-[4px] bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
             {loadingSSs ? (
               <div className="flex items-center justify-center py-12">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
                 <p className="ml-2 text-muted-foreground">Carregando...</p>
               </div>
-            ) : openRequests.length === 0 ? (
+            ) : filteredRequests.length === 0 ? (
               <div className="text-center py-12">
                 <Icon name="description" className="text-5xl text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">Nenhuma SS em aberto para este ativo</p>
+                <p className="text-muted-foreground">
+                  {openRequests.length === 0
+                    ? 'Nenhuma SS em aberto para este ativo'
+                    : 'Nenhuma SS corresponde aos filtros'}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {openRequests.map((req) => (
-                  <div key={req.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="text-sm font-medium text-foreground flex-1">{req.title}</p>
-                      <span className={`ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full ${getSSStatusColor(req.status)}`}>
-                        {getSSStatusText(req.status)}
-                      </span>
+                {filteredRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    onClick={() => setSelectedRequestId(req.id)}
+                    className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer flex items-start gap-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="text-sm font-medium text-foreground flex-1">{req.title}</p>
+                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${getSSStatusColor(req.status)}`}>
+                          {getSSStatusText(req.status)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {req.requestNumber && <span className="font-mono">{req.requestNumber}</span>}
+                        <span>{getPriorityText(req.priority)}</span>
+                        <span>{formatDate(req.createdAt)}</span>
+                        {req.createdBy && <span>{req.createdBy.firstName} {req.createdBy.lastName}</span>}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {req.requestNumber && <span className="font-mono">{req.requestNumber}</span>}
-                      <span>{getPriorityText(req.priority)}</span>
-                      <span>{formatDate(req.createdAt)}</span>
-                      {req.createdBy && <span>{req.createdBy.firstName} {req.createdBy.lastName}</span>}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPrintRequestId(req.id)
+                      }}
+                      title="Imprimir SS"
+                      className="flex items-center justify-center p-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-md text-gray-500 shadow-sm transition-colors"
+                    >
+                      <Icon name="print" className="text-base" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -762,6 +968,48 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
           </TabsContent>
         </Tabs>
       </div>
+
+      {selectedWorkOrderId && (
+        <WorkOrderDetailModal
+          isOpen
+          onClose={() => setSelectedWorkOrderId(null)}
+          workOrderId={selectedWorkOrderId}
+          onEdit={() => {
+            const id = selectedWorkOrderId
+            setSelectedWorkOrderId(null)
+            if (id) window.open(`/work-orders?id=${id}`, '_blank')
+          }}
+          onDelete={() => {}}
+        />
+      )}
+
+      {selectedRequestId && (
+        <RequestDetailModal
+          isOpen
+          onClose={() => setSelectedRequestId(null)}
+          requestId={selectedRequestId}
+          onEdit={() => {
+            const id = selectedRequestId
+            setSelectedRequestId(null)
+            if (id) window.open(`/requests?id=${id}`, '_blank')
+          }}
+          onDelete={() => {}}
+        />
+      )}
+
+      {printWorkOrderId && (
+        <WorkOrderPrintView
+          workOrderId={printWorkOrderId}
+          onClose={() => setPrintWorkOrderId(null)}
+        />
+      )}
+
+      {printRequestId && (
+        <RequestPrintView
+          requestId={printRequestId}
+          onClose={() => setPrintRequestId(null)}
+        />
+      )}
     </div>
   )
 }

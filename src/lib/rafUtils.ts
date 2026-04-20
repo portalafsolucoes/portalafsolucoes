@@ -14,15 +14,17 @@ export async function generateRafNumber(
   let assetTag = 'SEM'
   let areaCode = 'GER'
 
-  // Buscar tag do ativo
+  // Buscar tag do ativo (com fallback para protheusCode quando tag nao estiver preenchida)
   if (assetId) {
     const { data: asset } = await supabase
       .from('Asset')
-      .select('tag')
+      .select('tag, protheusCode')
       .eq('id', assetId)
       .single()
     if (asset?.tag) {
       assetTag = asset.tag.toUpperCase()
+    } else if (asset?.protheusCode) {
+      assetTag = asset.protheusCode.toUpperCase()
     }
   }
 

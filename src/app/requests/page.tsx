@@ -183,6 +183,18 @@ export default function RequestsPage() {
     }
   }
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'Pendente'
+      case 'APPROVED': return 'Aprovada'
+      case 'REJECTED': return 'Rejeitada'
+      case 'CANCELLED': return 'Cancelada'
+      case 'COMPLETED': return 'Finalizada'
+      case 'IN_PROGRESS': return 'Em Andamento'
+      default: return status
+    }
+  }
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
@@ -342,7 +354,7 @@ export default function RequestsPage() {
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h3 className="text-base font-bold text-foreground">{request.title}</h3>
               <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                {request.status}
+                {getStatusLabel(request.status)}
               </span>
               {request.priority !== 'NONE' && (
                 <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full">
@@ -457,7 +469,7 @@ export default function RequestsPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col gap-1">
                     <Badge className={getStatusColor(request.status) + ' text-xs w-fit'}>
-                      {request.status}
+                      {getStatusLabel(request.status)}
                     </Badge>
                     {request.priority !== 'NONE' && (
                       <Badge className="text-xs w-fit">

@@ -6,7 +6,16 @@ import { ptBR } from 'date-fns/locale'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { exportToExcel } from '@/lib/exportExcel'
+import { formatCurrency, formatDate as formatDateLib } from '@/lib/utils'
 import dynamic from 'next/dynamic'
+import type { WorkOrderFullDetail, AssetHistoryEvent } from '@/types/assetHistory'
+
+const typeLabel: Record<string, string> = {
+  PREVENTIVE: 'PREVENTIVA',
+  CORRECTIVE: 'CORRETIVA',
+  PREDICTIVE: 'PREDITIVA',
+  REACTIVE: 'REATIVA',
+}
 
 const WorkOrderDetailModal = dynamic(
   () => import('@/components/work-orders/WorkOrderDetailModal').then(m => ({ default: m.WorkOrderDetailModal })),
@@ -22,21 +31,6 @@ const AssetHistoryPrintView = dynamic(
   () => import('@/components/assets/AssetHistoryPrintView').then(m => ({ default: m.AssetHistoryPrintView })),
   { ssr: false }
 )
-
-interface AssetHistoryEvent {
-  id: string
-  eventType: string
-  title: string
-  description: string | null
-  metadata: Record<string, unknown> | null
-  createdAt: string
-  assetId: string
-  workOrderId: string | null
-  requestId: string | null
-  fileId: string | null
-  userId: string | null
-  userName: string | null
-}
 
 interface AssetTimelineProps {
   assetId: string
@@ -188,6 +182,34 @@ export default function AssetTimeline({ assetId, assetName, defaultFilter, compa
   // Clickable event modals
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null)
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
+
+  // Cache dos detalhes carregados sob demanda para o expand de eventos de OS
+  const [woDetailsCache, setWoDetailsCache] = useState<Record<string, {
+    loading: boolean
+    data: WorkOrderFullDetail | null
+    error: string | null
+  }>>({})
+
+  const loadWorkOrderDetails = useCallback(async (workOrderId: string) => {
+    setWoDetailsCache((prev) => {
+      if (prev[workOrderId]?.data || prev[workOrderId]?.loading) return prev
+      return { ...prev, [workOrderId]: { loading: true, data: null, error: null } }
+    })
+    try {
+      const res = await fetch(`/api/work-orders/${workOrderId}`)
+      if (!res.ok) throw new Error('Falha ao carregar OS')
+      const body = await res.json()
+      setWoDetailsCache((prev) => ({
+        ...prev,
+        [workOrderId]: { loading: false, data: body.data as WorkOrderFullDetail, error: null }
+      }))
+    } catch (e) {
+      setWoDetailsCache((prev) => ({
+        ...prev,
+        [workOrderId]: { loading: false, data: null, error: e instanceof Error ? e.message : 'Erro' }
+      }))
+    }
+  }, [])
 
   // Print/export
   const [showPrintForm, setShowPrintForm] = useState(false)
@@ -729,8 +751,30 @@ export default function AssetTimeline({ assetId, assetName, defaultFilter, compa
                                     </div>
                                   )}
 
-                                  {/* Metadata */}
-                                  {event.metadata && Object.keys(event.metadata).length > 0 && (
+                                  {/* Detalhes da OS (quando evento for vinculado a uma OS) */}
+                                  {event.workOrderId && (
+                                    <div className="mt-3 pt-3 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                                      <details
+                                        className="group"
+                                        onToggle={(e) => {
+                                          if ((e.target as HTMLDetailsElement).open && event.workOrderId) {
+                                            loadWorkOrderDetails(event.workOrderId)
+                                          }
+                                        }}
+                                      >
+                                        <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
+                                          <Icon name="expand_more" className="text-sm group-open:rotate-180 transition-transform" />
+                                          Detalhes da OS
+                                        </summary>
+                                        <WorkOrderDetailsExpand
+                                          state={woDetailsCache[event.workOrderId]}
+                                        />
+                                      </details>
+                                    </div>
+                                  )}
+
+                                  {/* Metadata (campos alterados) — só quando evento não for de OS */}
+                                  {!event.workOrderId && event.metadata && Object.keys(event.metadata).length > 0 && (
                                     <div className="mt-3 pt-3 border-t border-border" onClick={(e) => e.stopPropagation()}>
                                       <details className="group">
                                         <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
@@ -892,5 +936,128 @@ export default function AssetTimeline({ assetId, assetName, defaultFilter, compa
         />
       )}
     </>
+  )
+}
+
+function WorkOrderDetailsExpand({ state }: {
+  state?: { loading: boolean; data: WorkOrderFullDetail | null; error: string | null }
+}) {
+  if (!state || state.loading) {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <Icon name="progress_activity" className="text-base animate-spin" />
+        Carregando detalhes...
+      </div>
+    )
+  }
+  if (state.error) {
+    return (
+      <div className="mt-2 text-xs text-danger-light-foreground">
+        Erro ao carregar detalhes: {state.error}
+      </div>
+    )
+  }
+  const wo = state.data
+  if (!wo) return null
+
+  const osNumber = wo.sequenceNumber != null
+    ? `MAN-${String(wo.sequenceNumber).padStart(6, '0')}`
+    : wo.internalId || '-'
+  const mpNumber = wo.maintenancePlanExec?.planNumber
+    ? `#${wo.maintenancePlanExec.planNumber}`
+    : wo.assetMaintenancePlan?.sequence != null
+      ? `#${wo.assetMaintenancePlan.sequence}`
+      : null
+  const mpName = wo.assetMaintenancePlan?.name || null
+  const totalCost =
+    (wo.laborCost || 0) +
+    (wo.partsCost || 0) +
+    (wo.thirdPartyCost || 0) +
+    (wo.toolsCost || 0)
+
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 bg-white border border-gray-200 rounded-[4px] p-3">
+      <div>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Número da OS</p>
+        <p className="text-xs text-foreground font-mono font-semibold">{osNumber}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tipo de Manutenção</p>
+        <p className="text-xs text-foreground">{wo.type ? (typeLabel[wo.type] || wo.type) : '-'}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Tipo de Serviço</p>
+        <p className="text-xs text-foreground">{wo.serviceType?.name || '-'}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Área de Manutenção</p>
+        <p className="text-xs text-foreground">{wo.maintenanceArea?.name || '-'}</p>
+      </div>
+      <div className="col-span-2">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Plano de Manutenção</p>
+        <p className="text-xs text-foreground">
+          {mpNumber || mpName
+            ? `${mpNumber || ''}${mpNumber && mpName ? ' — ' : ''}${mpName || ''}`
+            : '-'}
+        </p>
+      </div>
+
+      {wo.completedOn && (
+        <div>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Finalizada em</p>
+          <p className="text-xs text-foreground">{formatDateLib(wo.completedOn)}</p>
+        </div>
+      )}
+      {wo.createdAt && (
+        <div>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Criada em</p>
+          <p className="text-xs text-foreground">{formatDateLib(wo.createdAt)}</p>
+        </div>
+      )}
+
+      <div className="col-span-2 mt-1">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Recursos Aplicados</p>
+        {wo.woResources && wo.woResources.length > 0 ? (
+          <ul className="space-y-1">
+            {wo.woResources.map((r) => {
+              const name = r.resource?.name
+                || (r.user ? `${r.user.firstName} ${r.user.lastName}` : null)
+                || r.jobTitle?.name
+                || (r.resourceType || 'Recurso')
+              const qty = r.quantity != null ? `${r.quantity}${r.unit ? ' ' + r.unit : ''}` : null
+              const hrs = r.hours != null ? `${r.hours}h` : null
+              const metadata = [qty, hrs].filter(Boolean).join(' · ')
+              return (
+                <li key={r.id} className="flex items-start justify-between gap-2 text-xs">
+                  <span className="text-foreground">{name}</span>
+                  {metadata && <span className="text-muted-foreground">{metadata}</span>}
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="text-xs text-muted-foreground">Nenhum recurso registrado</p>
+        )}
+      </div>
+
+      <div className="col-span-2">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Observações</p>
+        <p className="text-xs text-foreground whitespace-pre-wrap">{wo.executionNotes || '-'}</p>
+      </div>
+
+      <div className="col-span-2 mt-1 p-2 bg-gray-50 rounded-[4px]">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Custos</p>
+        <div className="grid grid-cols-4 gap-2 text-[11px] text-muted-foreground">
+          <div>Mão de obra: <span className="text-foreground font-semibold">{formatCurrency(wo.laborCost || 0)}</span></div>
+          <div>Peças: <span className="text-foreground font-semibold">{formatCurrency(wo.partsCost || 0)}</span></div>
+          <div>Terceiros: <span className="text-foreground font-semibold">{formatCurrency(wo.thirdPartyCost || 0)}</span></div>
+          <div>Ferramentas: <span className="text-foreground font-semibold">{formatCurrency(wo.toolsCost || 0)}</span></div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between">
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Total</span>
+          <span className="text-sm font-bold text-foreground">{formatCurrency(totalCost)}</span>
+        </div>
+      </div>
+    </div>
   )
 }

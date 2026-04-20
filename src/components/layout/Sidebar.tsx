@@ -77,10 +77,13 @@ export function Sidebar() {
     ]},
     { name: 'Ordens de Serviço (OS)', href: '/work-orders', icon: 'construction', module: 'work-orders' },
     { name: 'Solicitações de Serviço', href: '/requests', icon: 'assignment', module: 'requests', subItems: [
-      { name: 'Lista de SS', href: '/requests', module: 'requests' },
+      { name: 'Solicitações', href: '/requests', module: 'requests' },
       { name: 'Aprovações', href: '/requests/approvals', module: 'approvals', badge: pendingCount },
     ]},
-    { name: 'RAF', href: '/rafs', icon: 'description', module: 'rafs' },
+    { name: 'Análise de Falhas', href: '/rafs', icon: 'troubleshoot', module: 'rafs', subItems: [
+      { name: 'RAFs', href: '/rafs', module: 'rafs' },
+      { name: 'PA das RAFs', href: '/rafs/action-plan', module: 'rafs' },
+    ]},
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
     { name: 'Configurações', href: '/admin/portal', icon: 'settings', module: 'settings' },

@@ -34,11 +34,14 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - `Asset` e hierarquico e pode ter subativos, anexos, pecas, OS relacionadas, solicitacoes relacionadas, contador, imagem e criticidade GUT
 - `Location` organiza a estrutura fisica hierarquica da unidade
 - `MaintenancePlan` pode ser padrao por familia de ativo ou especifico por ativo, com tarefas, passos e recursos
-- `Request` pode ser aprovada ou rejeitada e pode gerar `WorkOrder`
+- `Request` pode ser aprovada ou rejeitada e pode gerar `WorkOrder`; carrega `maintenanceAreaId` (FK opcional no banco para preservar registros legados, mas obrigatorio pela API em criacao/edicao) que alimenta o numero da RAF quando a SS gerar uma RAF direta
 - `WorkOrder` suporta numero interno `MAN-XXXXXX`, numero externo do ERP/TOTVS, checklist, custos, tempos, recursos e fotos antes/depois
 - `WorkOrder.rescheduleCount` e contador denormalizado de quantas vezes a OS foi reprogramada estando atrasada; usado para badge na listagem e KPI sem precisar agregar a tabela de historico
 - `WorkOrderRescheduleHistory` armazena auditoria granular de cada reprogramacao (data anterior, nova data, status anterior, flag `wasOverdue`, motivo opcional, usuario, timestamp); cascade delete em relacao a `WorkOrder`
 - `RAF` deve ter numero unico
+- `FailureAnalysisReport.status` usa o enum `RafStatus { ABERTA, FINALIZADA }` (default `ABERTA`); `finalizedAt` e `finalizedById` (FK `User.id` opcional) registram quem e quando finalizou. O valor e sempre **derivado** pela aplicacao via `recalculateRafStatus` em `src/lib/rafs/recalculateStatus.ts` — nao existe trigger SQL
+- `FailureAnalysisReport.actionPlan` (JSONB) persiste `ActionPlanItem[]` no shape v2: `{ item, subject, deadline, actionDescription, status: 'PENDING'|'IN_PROGRESS'|'COMPLETED', linkedWorkOrderId?, linkedWorkOrderNumber?, responsibleUserId?, responsibleName?, completedAt? }`. Nao normalizar o campo (descricao livre) alem do que `normalizeTextPayload` ja faz via preservacao de `description`/`notes`
+- A migration `20260420120000_add_raf_status_and_finalized_tracking` cria o enum, adiciona as colunas `status`, `finalizedAt`, `finalizedById`, cria FK para `User(id) ON DELETE SET NULL`, indices sobre `status`/`finalizedById` e aplica backfill marcando como `FINALIZADA` as RAFs cujo `actionPlan` tenha todos os itens `COMPLETED` (via `jsonb_array_elements`)
 
 ## Convencoes de Schema
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`

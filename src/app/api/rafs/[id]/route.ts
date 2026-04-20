@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recalculateRafStatus } from '@/lib/rafs/recalculateStatus'
+import type { ActionPlanItem } from '@/types/raf'
 
 // GET - Buscar RAF por ID
 export async function GET(
@@ -27,6 +29,7 @@ export async function GET(
       .select(`
         *,
         createdBy:User!createdById(id, firstName, lastName, email),
+        finalizedBy:User!finalizedById(id, firstName, lastName),
         workOrder:WorkOrder!workOrderId(
           id,
           internalId,
@@ -36,14 +39,15 @@ export async function GET(
           type,
           maintenanceArea:MaintenanceArea(id, name, code),
           serviceType:ServiceType(id, code, name),
-          asset:Asset(id, name, tag)
+          asset:Asset(id, name, tag, protheusCode)
         ),
         request:Request!requestId(
           id,
           requestNumber,
           title,
           status,
-          asset:Asset(id, name, tag)
+          asset:Asset(id, name, tag, protheusCode),
+          maintenanceArea:MaintenanceArea(id, name, code)
         )
       `)
       .eq('id', id)
@@ -83,19 +87,30 @@ export async function PUT(
     }
 
     const { id } = await params
-    const body = normalizeTextPayload(await request.json())
+    const rawBody = normalizeTextPayload(await request.json())
+
+    // Regra de seguranca: status da RAF e derivado server-side.
+    // Cliente nao pode setar status, finalizedAt, finalizedById direto.
+    const {
+      status: _ignoredStatus,
+      finalizedAt: _ignoredFinalizedAt,
+      finalizedById: _ignoredFinalizedById,
+      finalizedBy: _ignoredFinalizedBy,
+      ...body
+    } = rawBody as Record<string, unknown>
+    void _ignoredStatus; void _ignoredFinalizedAt; void _ignoredFinalizedById; void _ignoredFinalizedBy
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date().toISOString()
     }
 
     // Campos opcionais - atualizar apenas os enviados
-    if (body.occurrenceDate !== undefined) updateData.occurrenceDate = new Date(body.occurrenceDate).toISOString()
+    if (body.occurrenceDate !== undefined) updateData.occurrenceDate = new Date(body.occurrenceDate as string).toISOString()
     if (body.occurrenceTime !== undefined) updateData.occurrenceTime = body.occurrenceTime
     if (body.panelOperator !== undefined) updateData.panelOperator = body.panelOperator
     if (body.stopExtension !== undefined) updateData.stopExtension = body.stopExtension
     if (body.failureBreakdown !== undefined) updateData.failureBreakdown = body.failureBreakdown
-    if (body.productionLost !== undefined) updateData.productionLost = body.productionLost ? parseFloat(body.productionLost) : null
+    if (body.productionLost !== undefined) updateData.productionLost = body.productionLost ? parseFloat(body.productionLost as string) : null
     if (body.failureDescription !== undefined) updateData.failureDescription = body.failureDescription
     if (body.observation !== undefined) updateData.observation = body.observation
     if (body.immediateAction !== undefined) updateData.immediateAction = body.immediateAction
@@ -103,6 +118,27 @@ export async function PUT(
     if (body.hypothesisTests !== undefined) updateData.hypothesisTests = body.hypothesisTests
     if (body.failureType !== undefined) updateData.failureType = body.failureType
     if (body.actionPlan !== undefined) updateData.actionPlan = body.actionPlan
+
+    // Recalcular status derivado. Se actionPlan nao veio no body,
+    // precisamos buscar o atual para nao perder o tracking.
+    let effectiveActionPlan = body.actionPlan as ActionPlanItem[] | undefined
+    if (effectiveActionPlan === undefined) {
+      const { data: current } = await supabase
+        .from('FailureAnalysisReport')
+        .select('actionPlan')
+        .eq('id', id)
+        .eq('companyId', session.companyId)
+        .single()
+      effectiveActionPlan = (current?.actionPlan as ActionPlanItem[] | null) || undefined
+    }
+
+    const { status, finalizedAt, finalizedById } = recalculateRafStatus(
+      effectiveActionPlan ?? [],
+      session.id
+    )
+    updateData.status = status
+    updateData.finalizedAt = finalizedAt
+    updateData.finalizedById = finalizedById
 
     const { data: raf, error } = await supabase
       .from('FailureAnalysisReport')
@@ -112,6 +148,7 @@ export async function PUT(
       .select(`
         *,
         createdBy:User!createdById(id, firstName, lastName, email),
+        finalizedBy:User!finalizedById(id, firstName, lastName),
         workOrder:WorkOrder!workOrderId(
           id,
           internalId,
@@ -121,14 +158,15 @@ export async function PUT(
           type,
           maintenanceArea:MaintenanceArea(id, name, code),
           serviceType:ServiceType(id, code, name),
-          asset:Asset(id, name, tag)
+          asset:Asset(id, name, tag, protheusCode)
         ),
         request:Request!requestId(
           id,
           requestNumber,
           title,
           status,
-          asset:Asset(id, name, tag)
+          asset:Asset(id, name, tag, protheusCode),
+          maintenanceArea:MaintenanceArea(id, name, code)
         )
       `)
       .single()

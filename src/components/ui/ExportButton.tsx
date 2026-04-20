@@ -4,7 +4,7 @@ import { Icon } from './Icon'
 import { exportToExcel, EXPORT_CONFIGS } from '@/lib/exportExcel'
 
 interface ExportButtonProps {
-  data: any[]
+  data: Record<string, unknown>[]
   entity: keyof typeof EXPORT_CONFIGS
   className?: string
 }

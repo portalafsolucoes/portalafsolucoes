@@ -43,7 +43,7 @@ export function WorkOrderExecuteModal({
   const [observations, setObservations] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string>('')
-  const [workOrderDetails, setWorkOrderDetails] = useState<any>(null)
+  const [workOrderDetails, setWorkOrderDetails] = useState<Record<string, unknown> | null>(null)
   const [imageViewer, setImageViewer] = useState<{url: string; name: string} | null>(null)
 
   const beforePhotoRef = useRef<HTMLInputElement>(null)
@@ -236,7 +236,7 @@ export function WorkOrderExecuteModal({
         if (details.beforePhotoUrl) {
           setBeforePhoto({
             id: 'existing-before',
-            file: null as any, // Não temos o File original
+            file: null, // Não temos o File original
             preview: details.beforePhotoUrl,
             name: 'foto-antes.jpg',
             type: 'image/jpeg'
@@ -246,7 +246,7 @@ export function WorkOrderExecuteModal({
         if (details.afterPhotoUrl) {
           setAfterPhoto({
             id: 'existing-after',
-            file: null as any, // Não temos o File original
+            file: null, // Não temos o File original
             preview: details.afterPhotoUrl,
             name: 'foto-depois.jpg',
             type: 'image/jpeg'
@@ -264,15 +264,18 @@ export function WorkOrderExecuteModal({
         // Carregar apenas anexos da EXECUÇÃO (não da SS)
         // Filtrar files que NÃO são da sourceRequest
         if (details.files && details.files.length > 0) {
-          const sourceRequestFileIds = details.sourceRequest?.files?.map((f: any) => f.id) || []
-          const executionFiles = details.files.filter((file: any) =>
+          type FileItem = { id: string; name: string; type?: string; url?: string }
+          const srcReq = details.sourceRequest as { files?: FileItem[] } | undefined
+          const sourceRequestFileIds = srcReq?.files?.map((f) => f.id) || []
+          const allFiles = details.files as FileItem[]
+          const executionFiles = allFiles.filter((file) =>
             !sourceRequestFileIds.includes(file.id)
           )
 
           if (executionFiles.length > 0) {
-            const existingAttachments = executionFiles.map((file: any) => ({
+            const existingAttachments = executionFiles.map((file) => ({
               id: file.id,
-              file: null as any,
+              file: null,
               name: file.name,
               type: file.type || 'application/octet-stream',
               preview: file.type?.startsWith('image/') ? file.url : undefined,
@@ -590,7 +593,7 @@ export function WorkOrderExecuteModal({
                   <div className="space-y-2 bg-secondary p-3 rounded-[4px] mt-3">
                     <h3 className="text-sm font-semibold text-foreground mb-2">Imagens da Solicitação Original:</h3>
                     <div className="grid grid-cols-3 gap-2">
-                      {workOrderDetails.sourceRequest.files.filter((f: any) => f.type?.startsWith('image/')).map((file: any) => (
+                      {(workOrderDetails.sourceRequest as { files: { id: string; url: string; name: string; type?: string }[] }).files.filter((f) => f.type?.startsWith('image/')).map((file) => (
                         <div key={file.id} className="relative group">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -702,15 +705,18 @@ export function WorkOrderExecuteModal({
 
                 {/* Anexos Adicionais da Execução */}
                 {workOrderDetails.files && workOrderDetails.files.length > 0 && (() => {
-                  const sourceRequestFileIds = workOrderDetails.sourceRequest?.files?.map((f: any) => f.id) || []
-                  const executionFiles = workOrderDetails.files.filter((file: any) =>
-                    !sourceRequestFileIds.includes(file.id)
+                  type WOFileItem = { id: string; url?: string; name: string; type?: string }
+                  const woSrcReq = workOrderDetails.sourceRequest as { files?: WOFileItem[] } | undefined
+                  const woSrcFileIds = woSrcReq?.files?.map((f) => f.id) || []
+                  const woAllFiles = workOrderDetails.files as WOFileItem[]
+                  const executionFiles = woAllFiles.filter((file) =>
+                    !woSrcFileIds.includes(file.id)
                   )
                   return executionFiles.length > 0 && (
                     <div className="space-y-2 bg-secondary p-3 rounded-[4px]">
                       <h3 className="text-sm font-semibold text-foreground mb-2">Anexos Adicionais da Execução ({executionFiles.length}):</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        {executionFiles.map((file: any) => (
+                        {executionFiles.map((file) => (
                           <div key={file.id} className="flex items-center gap-2 p-2 bg-card rounded-[4px] hover:border-blue-400 transition-all">
                             {file.type?.startsWith('image/') ? (
                               // eslint-disable-next-line @next/next/no-img-element

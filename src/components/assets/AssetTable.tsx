@@ -76,7 +76,6 @@ export function AssetTable({
 }: AssetTableProps) {
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const { isPhone } = useResponsiveLayout()
 
@@ -114,24 +113,6 @@ export function AssetTable({
     }
   }
 
-  const handleSelectAll = () => {
-    if (selectedIds.size === assets.length) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(assets.map(a => a.id)))
-    }
-  }
-
-  const handleSelectOne = (id: string) => {
-    const newSelected = new Set(selectedIds)
-    if (newSelected.has(id)) {
-      newSelected.delete(id)
-    } else {
-      newSelected.add(id)
-    }
-    setSelectedIds(newSelected)
-  }
-
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
       return <Icon name="unfold_more" className="text-sm text-muted-foreground" />
@@ -160,14 +141,6 @@ export function AssetTable({
   if (isPhone) {
     return (
       <div className="h-full flex flex-col min-h-0 overflow-hidden bg-card">
-        {selectedIds.size > 0 && (
-          <div className="px-4 py-3 bg-secondary border-b border-border flex items-center gap-4">
-            <span className="text-sm font-medium text-foreground">{selectedIds.size} selecionado(s)</span>
-            <button onClick={() => setSelectedIds(new Set())} className="text-sm text-muted-foreground hover:text-foreground">
-              Limpar
-            </button>
-          </div>
-        )}
         <div className="overflow-auto flex-1 p-4">
           <div className="grid grid-cols-1 gap-3">
             {sortedAssets.length === 0 ? (
@@ -220,36 +193,11 @@ export function AssetTable({
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden bg-card">
-      {/* Barra de seleção em massa */}
-      {selectedIds.size > 0 && (
-        <div className="px-6 py-3 bg-secondary border-b border-border flex items-center gap-4">
-          <span className="text-sm font-medium text-foreground">
-            {selectedIds.size} ativo(s) selecionado(s)
-          </span>
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Limpar seleção
-          </button>
-        </div>
-      )}
-
       {/* Tabela */}
       <div className="flex-1 overflow-auto min-h-0">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              {/* Checkbox */}
-              <th className="w-12 px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.size === assets.length && assets.length > 0}
-                  onChange={handleSelectAll}
-                  className="w-4 h-4 rounded border-input text-primary focus:ring-primary"
-                />
-              </th>
-              
               {/* Unidade (apenas SUPER_ADMIN) */}
               {showUnit && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -329,7 +277,7 @@ export function AssetTable({
           <tbody className="bg-card divide-y divide-gray-100">
             {sortedAssets.length === 0 ? (
               <tr>
-                <td colSpan={showUnit ? 9 : 8} className="px-6 py-12 text-center">
+                <td colSpan={showUnit ? 8 : 7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Icon name="inventory_2" className="text-5xl opacity-20" />
                     <p className="text-sm">Nenhum ativo encontrado</p>
@@ -339,29 +287,17 @@ export function AssetTable({
             ) : (
               sortedAssets.map((asset) => {
                 const statusInfo = getStatusInfo(asset.status)
-                const isSelected = selectedIds.has(asset.id)
                 const isActive = selectedAssetId === asset.id
-                
+
                 return (
-                  <tr 
+                  <tr
                     key={asset.id}
                     className={`
                       transition-colors cursor-pointer
                       ${isActive ? 'bg-primary/10' : 'hover:bg-secondary'}
-                      ${isSelected ? 'bg-primary/5' : ''}
                     `}
                     onClick={() => onSelectAsset(asset)}
                   >
-                    {/* Checkbox */}
-                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleSelectOne(asset.id)}
-                        className="w-4 h-4 rounded border-input text-primary focus:ring-primary"
-                      />
-                    </td>
-                    
                     {/* Unidade */}
                     {showUnit && (
                       <td className="px-6 py-4 whitespace-nowrap">

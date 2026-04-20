@@ -10,7 +10,7 @@ import { Icon } from '@/components/ui/Icon'
 export default function TeamDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [team, setTeam] = useState<any>(null)
+  const [team, setTeam] = useState<Record<string, unknown> | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
@@ -156,7 +156,7 @@ export default function TeamDetailPage() {
           <h2 className="text-lg font-semibold text-foreground mb-4">Membros da Equipe</h2>
           {team.members && team.members.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {team.members.map((membership: any) => (
+              {(team.members as { id: string; user: { id: string; firstName: string; lastName: string; email: string; image?: string; jobTitle?: string } }[]).map((membership) => (
                 <Link
                   key={membership.id}
                   href={`/people/${membership.user.id}`}

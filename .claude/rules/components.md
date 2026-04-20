@@ -311,6 +311,22 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 
 - **NAO** use `border-blue-600`; use `border-on-surface-variant`
 
+## Grupo `Analise de Falhas` na Sidebar (OBRIGATORIO)
+- A sidebar expoe o grupo expansivel `Analise de Falhas` (icone `troubleshoot`, module `rafs`) agrupando dois sub-itens:
+  - `RAFs` → `/rafs`
+  - `PA das RAFs` → `/rafs/action-plan`
+- O grupo e gated pela permissao `hasPermission(user, 'rafs', 'view')`; perfis sem acesso a `rafs` nao veem o grupo inteiro
+
+## Tela PA das RAFs (OBRIGATORIO)
+- Rota `/rafs/action-plan`, componentes em `src/components/rafs/ActionPlan*.tsx`
+- Componentes canonicos: `ActionPlanTable` + `ActionPlanCards` (mobile), `ActionPlanDashboardCards` (4 KPIs), `ActionPlanFilters`, `ActionPlanLegend`, `ActionPlanStatusBadge`
+- Paleta estritamente **monocromatica**: pretos, brancos e tons de cinza. Nao usar verde/amarelo/azul/vermelho. Status de acao usa simbolos: `○` PENDING, `◐` IN_PROGRESS, `✓` COMPLETED, `●` (borda preta negrito) OVERDUE
+- Selecao de responsavel usa o componente `ResponsibleSelect` em `src/components/rafs/ResponsibleSelect.tsx`. Consome `/api/users` (mesma fonte de `/people-teams`) **sem filtro por role** — qualquer pessoa cadastrada na empresa pode ser atribuida como responsavel por uma acao, ja que "responsavel" e atributo operacional da acao, nao papel de acesso ao sistema. Busca por nome, email ou cargo (`jobTitle`). Marca `(inativo)` quando `enabled === false` ou `status !== 'ACTIVE'`. Ordena ativos antes dos inativos. Limita a 30 resultados visiveis e sinaliza `+N resultado(s) — refine a busca` quando o total exceder. Usado em `RAFFormModal`, `RAFEditModal` e lido pelo `RAFViewModal`
+- Layout do bloco `Plano de Acao` dentro de `RAFFormModal` e `RAFEditModal` usa **card-por-item** (nao tabela densa): cada acao e um cartao `border rounded-[4px] p-3 bg-gray-50/60` com header `Item N` + botao de remover, seguido de duas linhas em grid — linha 1 `md:grid-cols-3` (Responsavel, Prazo, Status) e linha 2 `md:grid-cols-2` (Assunto, Descricao da Acao). No `RAFEditModal` ha uma terceira linha alinhada a direita para `N° OS` / botao `Gerar OS`. Esse padrao substitui a tabela horizontal anterior que quebrava em paineis lateral `w-1/2`
+- Edicao inline de status e **gated por permissao**: so renderiza `<select>` quando `hasPermission(user, 'rafs', 'edit' | 'create')`; caso contrario mostra `ActionPlanStatusBadge` readonly
+- Mudanca de status dispara `PUT /api/rafs/[id]` com o `actionPlan` atualizado; a pagina recarrega em seguida para pegar o `status` da RAF recalculado server-side
+- Export Excel usa `ExportButton entity="action-plan-items"` (config em `src/lib/exportExcel.ts`); gera uma linha por acao com colunas: RAF, Acao, Responsavel, Data criacao, Data ocorrencia, Prazo, OS, Status OS, SS, Status SS, Status da acao, Status da RAF
+
 ## Logo da Empresa na Sidebar (OBRIGATORIO)
 - A logo no topo esquerdo da sidebar deve vir **exclusivamente** de `user.company.logo` retornado por `/api/auth/me`
 - **NAO** hardcode logos em `public/`, `imagens/` ou qualquer arquivo local para uso na sidebar principal
@@ -422,6 +438,26 @@ Toda tela de listagem DEVE usar o padrao split-panel no desktop para TODOS os fl
 
 Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 
+## Print Views e Impressao em Lote (OBRIGATORIO)
+- Toda print view de entidade (ex: `RAFPrintView`, `WorkOrderPrintView`) deve poder ser reutilizada em modo unitario ou em lote
+- Modo unitario: recebe `{idEntidade}: string` + `onClose`, renderiza overlay fixo (`fixed inset-0 z-[9999]`) com toolbar Imprimir/Fechar e uma pagina A4 (`w-[210mm] min-h-[297mm]`). A toolbar e escondida na impressao via `print:hidden`
+- Modo batch: um componente dedicado `{Entidade}sBatchPrintView` recebe `{idsEntidade}: string[]` + `onClose`, busca os registros via `GET /api/{entidade}?ids=id1,id2,...`, e renderiza uma pagina A4 por registro. Todas as paginas exceto a ultima devem ter `print:break-after-page` para forcar quebra de pagina no PDF
+- Quando for possivel reutilizar a print view unitaria dentro do batch, expor props opcionais:
+  - `data?: PrintEntityShape` para receber o registro ja carregado (evitando refetch)
+  - `embedded?: boolean` para suprimir a toolbar/overlay fixo e renderizar somente a pagina A4
+  - O tipo da forma renderizavel deve ser exportado (ex: `export type PrintRAF = ...`) para consumo pelo componente de batch
+- A UI que dispara impressao deve usar `dynamic(() => import('...'), { ssr: false })` para evitar SSR da janela de impressao e controlar o estado via um `printState` unico na pagina: `{ kind, mode: 'single', id } | { kind, mode: 'batch', ids } | null`
+
+## Drilldown com Abas e Selecao para Impressao em Lote
+- Paineis de detalhe que oferecem drilldown de entidades relacionadas (padrao canonico: `CriticalityDetailPanel` em `/criticality`) devem usar `Tabs` / `TabsList` / `TabsTrigger` / `TabsContent` para separar `Visao Geral` das abas especificas
+- Cada aba de drilldown deve ser gated por permissao (`usePermissions()` + `has('feature', 'view')`) — quando o usuario nao tem acesso, a `TabsTrigger` correspondente nao e renderizada
+- Cada aba mantem seu proprio `Set<string>` de selecao (`selectedSS`, `selectedOS`, `selectedRAF`); a selecao de todas as abas deve ser resetada sempre que a entidade-mae mudar (via `useEffect` com dependencia na PK do contexto)
+- O toolbar de cada drilldown deve expor:
+  - Checkbox `Selecionar todos` (indeterminado quando a selecao e parcial)
+  - Botao `Imprimir selecionados (N)` desabilitado quando `N === 0`
+  - Botao de impressao individual por linha
+- Os callbacks de impressao chegam como props (`onPrintSingle: (kind, id) => void`, `onPrintBatch: (kind, ids) => void`) para que a pagina dona do painel decida como renderizar os print views
+
 ## Mapa de Telas e Modais
 | Rota | Titulo | Tipo | Paineis inPage (desktop) | Overlay (mobile + confirmacao) | Produto |
 |------|--------|------|--------------------------|-------------------------------|---------|
@@ -435,9 +471,10 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 | `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal(inPage), RequestFormModal(inPage) | ConfirmDialog | CMMS |
 | `/requests/approvals` | Aprovacoes | Listagem split-panel | ApprovalModal(inPage) | - | CMMS |
 | `/rafs` | RAF | Listagem split-panel | RAFViewModal, RAFEditModal, RAFFormModal | ConfirmationModal | CMMS |
+| `/rafs/action-plan` | PA das RAFs | Listagem split-panel | RAFViewModal (readonly) | - | CMMS |
 | `/locations` | Localizacoes | Listagem split-panel | LocationDetailPanel, LocationFormPanel | ConfirmDialog | CMMS |
 | `/basic-registrations/[entity]` | Cadastros Basicos | Listagem split-panel | GenericDetailPanel, GenericEditPanel, CalendarModal, ResourceModal, AssetFamilyModal, GenericStepModal | ConfirmDialog | CMMS |
-| `/criticality` | Criticidade | Listagem split-panel | CriticalityDetailPanel, CriticalityEditPanel | ConfirmDialog | CMMS |
+| `/criticality` | Criticidade | Listagem split-panel | CriticalityDetailPanel (abas + drilldown), CriticalityEditPanel, WorkOrderPrintView / WorkOrdersBatchPrintView, RequestPrintView / RequestsBatchPrintView, RAFPrintView / RAFsBatchPrintView | ConfirmDialog | CMMS |
 | `/maintenance-plan/standard` | Plano Padrao | Listagem split-panel | PlanDetailPanel, PlanFormPanel(inPage) | ConfirmDialog | CMMS |
 | `/maintenance-plan/asset` | Plano por Ativo | Listagem split-panel | AssetPlanDetailPanel, AssetPlanFormPanel(inPage) | ConfirmDialog | CMMS |
 | `/planning/plans` | Planejamento | Listagem split-panel | PlanDetailPanel, PlanFormPanel | ConfirmDialog | CMMS |

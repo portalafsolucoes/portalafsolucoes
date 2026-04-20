@@ -18,7 +18,7 @@ interface PrintWorkOrder {
   estimatedDuration?: number | null
   createdAt?: string | null
   dueDate?: string | null
-  asset?: { name: string; parentAsset?: any } | null
+  asset?: { name: string; parentAsset?: { name: string } | null } | null
   location?: { name: string } | null
   assignedTo?: { firstName: string; lastName: string } | null
   assignedTeams?: { id: string; name: string }[]
@@ -33,7 +33,7 @@ interface PrintWorkOrder {
     completed: boolean
     order: number
     executionTime?: number | null
-    steps?: any
+    steps?: TaskStep[] | string | null
   }[]
   woResources?: {
     id: string
@@ -100,7 +100,7 @@ interface TaskStep {
   options?: { id?: string; label: string; order: number }[]
 }
 
-function parseTaskSteps(steps: any): TaskStep[] {
+function parseTaskSteps(steps: TaskStep[] | string | null | undefined): TaskStep[] {
   if (!steps) return []
   if (Array.isArray(steps)) return steps
   try {

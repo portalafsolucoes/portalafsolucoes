@@ -7,15 +7,15 @@ import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 export interface ColumnConfig {
   key: string
   label: string
-  render?: (value: any, row: any) => React.ReactNode
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode
 }
 
 interface GenericCrudTableProps {
-  items: any[]
+  items: Record<string, unknown>[]
   columns: ColumnConfig[]
   loading: boolean
   selectedItemId?: string | null
-  onSelectItem: (item: any) => void
+  onSelectItem: (item: Record<string, unknown>) => void
   emptyMessage?: string
 }
 

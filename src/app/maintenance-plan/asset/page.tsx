@@ -24,13 +24,13 @@ export default function AssetMaintenancePlanPage() {
   const role = user?.role ?? ''
 
   // --- dados da listagem ---
-  const [assetPlans, setAssetPlans] = useState<any[]>([])
+  const [assetPlans, setAssetPlans] = useState<Record<string, unknown>[]>([])
   const [search, setSearch] = useState('')
   const [sortField, setSortField] = useState<SortField>('code')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // --- painel de detalhe ---
-  const [selectedPlan, setSelectedPlan] = useState<any | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<Record<string, unknown> | null>(null)
   const { isPhone } = useResponsiveLayout()
   const [loadingDetail, setLoadingDetail] = useState(false)
 

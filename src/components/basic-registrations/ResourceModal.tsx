@@ -26,10 +26,10 @@ const UNIT_OPTIONS: Record<string, { value: string; label: string }[]> = {
 }
 
 interface ResourceModalProps {
-  editingItem: any | null
+  editingItem: Record<string, unknown> | null
   onClose: () => void
   onSaved: () => void
-  calendars: any[]
+  calendars: { id: string; name: string }[]
   inPage?: boolean
 }
 
@@ -92,7 +92,7 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars, inPage
         : `/api/basic-registrations/resources`
       const method = editingItem ? 'PUT' : 'POST'
 
-      const body: Record<string, any> = {
+      const body: Record<string, unknown> = {
         name,
         type,
         unit: unit || null,

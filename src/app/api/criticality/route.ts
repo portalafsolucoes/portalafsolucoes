@@ -143,12 +143,19 @@ export async function GET(request: NextRequest) {
         .in('assetId', assetIds)
         .in('status', ['PENDING', 'RELEASED', 'IN_PROGRESS', 'ON_HOLD']),
       
-      // RAFs por equipamento (usando campo equipment que contém o nome)
+      // RAFs da empresa com vínculos de ativo (FK prioritária, equipment como fallback)
       (() => {
         let query = supabase
-        .from('FailureAnalysisReport')
-        .select('equipment')
-        .eq('companyId', session.companyId)
+          .from('FailureAnalysisReport')
+          .select(`
+            id,
+            equipment,
+            workOrderId,
+            requestId,
+            workOrder:WorkOrder!workOrderId(assetId),
+            request:Request!requestId(assetId)
+          `)
+          .eq('companyId', session.companyId)
         if (effectiveUnitId) {
           query = query.eq('unitId', effectiveUnitId)
         }
@@ -173,6 +180,11 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Match de RAFs por ativo (lógica híbrida):
+    // 1) FK via WorkOrder.assetId
+    // 2) FK via Request.assetId
+    // 3) Fallback: match exato por nome em equipment (apenas quando ambas as FKs forem nulas)
+    // Dedup por raf.id para não contar uma mesma RAF duas vezes quando vinculada a OS e SS.
     const assetsByNormalizedName = new Map<string, string[]>()
     for (const asset of assets) {
       const normalizedName = normalizeText(asset.name)
@@ -186,31 +198,63 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const normalizedAssetEntries = Array.from(assetsByNormalizedName.entries()).sort(
-      (a, b) => b[0].length - a[0].length
-    )
+    type RafRow = {
+      id: string
+      equipment: string | null
+      workOrderId: string | null
+      requestId: string | null
+      workOrder: { assetId: string | null } | { assetId: string | null }[] | null
+      request: { assetId: string | null } | { assetId: string | null }[] | null
+    }
 
-    for (const raf of rafsResult.data || []) {
-      const equipmentName = normalizeText(raf.equipment)
+    const countedRafPerAsset = new Map<string, Set<string>>()
+    const addRafForAsset = (assetId: string, rafId: string) => {
+      let bucket = countedRafPerAsset.get(assetId)
+      if (!bucket) {
+        bucket = new Set<string>()
+        countedRafPerAsset.set(assetId, bucket)
+      }
+      bucket.add(rafId)
+    }
+
+    const pickAssetId = (
+      value: { assetId: string | null } | { assetId: string | null }[] | null
+    ): string | null => {
+      if (!value) return null
+      if (Array.isArray(value)) return value[0]?.assetId ?? null
+      return value.assetId ?? null
+    }
+
+    for (const rawRaf of (rafsResult.data || []) as RafRow[]) {
+      const woAssetId = pickAssetId(rawRaf.workOrder)
+      const reqAssetId = pickAssetId(rawRaf.request)
+
+      let matched = false
+      if (woAssetId) {
+        addRafForAsset(woAssetId, rawRaf.id)
+        matched = true
+      }
+      if (reqAssetId) {
+        addRafForAsset(reqAssetId, rawRaf.id)
+        matched = true
+      }
+      if (matched) continue
+
+      // Fallback legado: só quando não há FK nenhuma
+      if (rawRaf.workOrderId || rawRaf.requestId) continue
+      const equipmentName = normalizeText(rawRaf.equipment)
       if (!equipmentName) continue
 
       const exactMatchIds = assetsByNormalizedName.get(equipmentName)
-      if (exactMatchIds) {
-        for (const assetId of exactMatchIds) {
-          rafCounts[assetId] = (rafCounts[assetId] || 0) + 1
-        }
-        continue
+      if (!exactMatchIds) continue
+
+      for (const assetId of exactMatchIds) {
+        addRafForAsset(assetId, rawRaf.id)
       }
+    }
 
-      const partialMatch = normalizedAssetEntries.find(([assetName]) =>
-        equipmentName.includes(assetName) || assetName.includes(equipmentName)
-      )
-
-      if (!partialMatch) continue
-
-      for (const assetId of partialMatch[1]) {
-        rafCounts[assetId] = (rafCounts[assetId] || 0) + 1
-      }
+    for (const [assetId, bucket] of countedRafPerAsset.entries()) {
+      rafCounts[assetId] = bucket.size
     }
 
     // Calcular scores

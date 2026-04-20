@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
 
 interface ExecutionModalProps {
-  item: any
+  item: Record<string, unknown>
   type: 'workorder' | 'request'
   onClose: () => void
   onSuccess: () => void

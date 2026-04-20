@@ -63,6 +63,7 @@ globs: src/app/api/**,src/actions/**
 - Modulos habilitados por empresa devem refletir na navegacao real do sistema
 - Acoes, menus e badges devem respeitar perfil e tambem ser validados na API
 - Quando a API expuser dados de upload, anexos, fotos ou logo, usar somente URLs vindas da fonte configurada, sem fallback hardcoded
+- `POST /api/requests` e `PUT /api/requests/[id]` exigem `maintenanceAreaId` (campo obrigatorio da SS). A API deve retornar `400` quando ausente e validar que o id pertence a empresa ativa da sessao. Registros legados sem area permanecem no banco como `NULL` (coluna nullable para nao quebrar migracao), mas toda nova SS ou edicao precisa informar o campo
 
 ## Server Actions
 - Aplicar as mesmas validacoes de sessao, empresa, unidade e papel usadas nas API routes
@@ -86,15 +87,31 @@ globs: src/app/api/**,src/actions/**
 - `GET /api/requests/[id]` deve retornar `failureAnalysisReport: { id, rafNumber } | null` para que a UI consiga sinalizar o vinculo SS<->RAF e desabilitar o botao de gerar RAF quando ja existir uma
 - `GET /api/rafs` (lista) e `GET /api/rafs/[id]` (detalhe) devem retornar tambem `request: { id, requestNumber, title, asset, ... } | null`, alem da OS, para que a tela de RAF tolere casos sem `workOrder`
 
+## Status da RAF (derivacao server-side)
+- `FailureAnalysisReport.status` tem tipo `RafStatus { ABERTA, FINALIZADA }` com default `ABERTA`. O valor e SEMPRE derivado no servidor pelo helper `recalculateRafStatus(actionPlan, currentUserId)` em `src/lib/rafs/recalculateStatus.ts`
+- `PUT /api/rafs/[id]` deve **remover** `status`, `finalizedAt`, `finalizedById` e `finalizedBy` do body antes do update; usar o `actionPlan` efetivo (do body ou da leitura atual) e recalcular
+- Regra de transicao: `actionPlan` vazio → `ABERTA`; todos os itens com `status = 'COMPLETED'` → `FINALIZADA` (preserva `finalizedAt` e `finalizedById` existentes, senao preenche com `now` e `currentUserId`); qualquer item nao-concluido → `ABERTA` (reabertura zera `finalizedAt` e `finalizedById`)
+- `POST /api/requests/[id]/generate-raf` insere com `status: 'ABERTA'`, `finalizedAt: null`, `finalizedById: null`
+- `GET /api/rafs` (lista e summary) e `GET /api/rafs/[id]` devem retornar `status`, `finalizedAt` e `finalizedBy:User!finalizedById(id, firstName, lastName)` para a UI
+- Parser canonico de deadline: `parseDeadline`/`isOverdue` em `src/lib/rafs/deadline.ts`; aceita ISO e `dd/mm/yyyy` e considera `OVERDUE` quando a data e estritamente anterior a `hoje` e o status nao e `COMPLETED`
+
+## PA das RAFs — Stats (GET /api/rafs/action-plan/stats)
+- Endpoint unico que alimenta os 4 KPIs da tela `/rafs/action-plan`: `openRafs`, `finalizedRafs`, `onTimeActions`, `overdueActions`
+- Valida sessao (`401`), permissao `checkApiPermission(session, 'rafs', 'GET')` (`403`) e escopo empresa via `requireCompanyScope` (`403` quando companyId ausente)
+- Aceita query opcional `unitId`; quando ausente, usa `session.unitId` como recorte operacional
+- `onTimeActions` conta acoes nao-concluidas com `deadline >= hoje` ou sem deadline; `overdueActions` conta nao-concluidas com `deadline < hoje`
+- Resposta: `{ data: { openRafs, finalizedRafs, onTimeActions, overdueActions } }`
+
 ## Geracao de RAF a partir de SS
 - A rota `POST /api/requests/[id]/generate-raf` e o ponto unico que cria uma RAF vinculada diretamente a uma SS sem precisar de OS intermediaria
 - A rota deve validar `checkApiPermission(session, 'rafs', 'POST')`, retornar `404` quando a SS nao existir no escopo da empresa, `400` quando o status da SS nao for `APPROVED` e `409` quando ja existir RAF vinculada (`FailureAnalysisReport.requestId = ss.id`)
 - O body e opcional: sem body, a rota cria um rascunho rapido herdando `failureDescription` da SS, `occurrenceDate` do `createdAt` da SS, `panelOperator` do nome da sessao e `failureType = RANDOM`; com body, aceita os mesmos campos do `RAFFormModal` (incluindo `fiveWhys`, `hypothesisTests`, `actionPlan`, `failureType`, `stopExtension`, `failureBreakdown`, `productionLost`, `observation`, `immediateAction`)
-- `rafNumber` e gerado pelo helper `generateRafNumber(assetId, maintenanceAreaId, companyId)` usando o ativo da SS quando disponivel; `maintenanceAreaId` e `null` neste fluxo (a SS nao carrega area de manutencao)
-- O insert deve preencher `requestId = ss.id` e `workOrderId = null`, alem de `companyId`, `unitId` e `createdById` derivados da sessao
+- `rafNumber` e gerado pelo helper `generateRafNumber(assetId, maintenanceAreaId, companyId)` usando o ativo da SS quando disponivel e a area de manutencao **da propria SS** (`Request.maintenanceAreaId`, campo obrigatorio na criacao da SS); quando o ativo nao tiver `tag` preenchida, o helper faz fallback para `Asset.protheusCode` para compor o segundo token do nome da RAF
+- O insert deve preencher `requestId = ss.id` e `workOrderId = null`, alem de `companyId`, `unitId` e `createdById` derivados da sessao. `FailureAnalysisReport` nao persiste `maintenanceAreaId` proprio — a area vive na origem (OS ou SS) e e lida via join em `/api/rafs`
 - A resposta de sucesso retorna `{ data: { id, rafNumber, requestId } }` com status `201`
 - A SS continua com status `APPROVED` apos a geracao da RAF; nao existe transicao automatica para `COMPLETED` por consequencia da RAF, e nao se grava `rafId` no registro da SS (o vinculo vive em `FailureAnalysisReport.requestId`)
 - A UI so deve oferecer o botao `Abrir RAF` no painel de detalhe da SS quando `request.status === 'APPROVED'` e `request.failureAnalysisReport == null`
+- `GET /api/rafs` (lista) e `GET /api/rafs/[id]` (detalhe) devem incluir `maintenanceArea:MaintenanceArea(id, name, code)` no join de `request`, alem do join ja existente em `workOrder`, para que a tela de RAF exiba area tanto para RAFs nascidas de OS quanto de SS. O `asset` em ambos os joins deve expor `protheusCode` para sustentar o fallback visual do `Cod. Bem`
 
 ## Lifecycle e Exclusao de Usuario
 - O modelo `User` opera com tres estados via enum `UserStatus`: `ACTIVE` (uso normal), `INACTIVE` (desativado, sem login, historico preservado), `ARCHIVED` (anonimizado para LGPD). O campo `enabled` (Boolean) esta deprecado e e sincronizado pelas rotas de lifecycle por compatibilidade
@@ -106,6 +123,34 @@ globs: src/app/api/**,src/actions/**
 - `GET /api/users/[id]/references` — retorna `{ data: { counts, total, hasHistory } }` para a UI decidir quais botoes destrutivos exibir
 - Helper canonico de checagem de FK: `countUserReferences` em `src/lib/users/userReferences.ts`. Verificacao de "ultimo SUPER_ADMIN ativo": `isLastActiveSuperAdmin(userId, companyId)` no mesmo arquivo. Nao reimplementar essa logica nos handlers
 - A UI nunca deve oferecer hard delete sem antes consultar `/references`; o servidor valida novamente para evitar bypass
+
+## Historico do Ativo (GET /api/assets/[id]/history)
+- Sem parametros extras, retorna apenas os campos brutos de `AssetHistory` + `userName` (batch por `userId`); comportamento atual preservado para o timeline interativo e exportacao XLSX
+- Com `?include=details`, retorna tambem os objetos `workOrder` e `request` aninhados em cada evento, usando batch fetch (mesmo padrao do `userId`) por `workOrderId` e `requestId` distintos:
+  - `workOrder`: `id`, `title`, `type`, `status`, `sequenceNumber`, `internalId`, `externalId`, `executionNotes`, `laborCost`, `partsCost`, `thirdPartyCost`, `toolsCost`, `createdAt`, `completedOn`, joins para `serviceType`, `maintenanceArea`, `assetMaintenancePlan`, `maintenancePlanExec` e colecao `woResources` (com `resource`, `jobTitle`, `user`)
+  - `request`: `id`, `requestNumber`, `title`, `status`, `failureDescription`, `rejectionReason`, `createdAt`, joins para `maintenanceArea`, `requester` e `failureAnalysisReport`
+- Ambos os batch fetchs validam `companyId` da sessao (`eq('companyId', session.companyId)`)
+- `include=details` e consumido exclusivamente pelo `AssetHistoryPrintView` (geracao de PDF). O timeline interativo e a exportacao XLSX NAO devem enviar este param
+- Tipos canonicos em `src/types/assetHistory.ts`: `WorkOrderFullDetail`, `RequestFullDetail`, `AssetHistoryEvent`
+
+## Drilldown de Criticidade (GET /api/criticality/[assetId]/open-items)
+- Endpoint unico que alimenta as abas `SS abertas`, `OS abertas` e `RAF` do painel de detalhe da tela `/criticality`
+- Valida sessao (`401` quando ausente), escopo de empresa via `requireCompanyScope` (`403` quando companyId ausente), existencia do ativo no tenant (`404` quando nao existir) e escopo da unidade ativa (`403` quando o ativo estiver fora da unidade efetiva da sessao)
+- Permissoes sao avaliadas por feature: `hasPermission(session, 'requests'|'work-orders'|'rafs', 'view')`. Quando um perfil nao tiver `view` em uma feature, a respectiva colecao no retorno e `[]` (nao e erro)
+- Filtros fixos de "aberto": `OPEN_REQUEST_STATUSES = ['PENDING', 'APPROVED']`, `OPEN_WORK_ORDER_STATUSES = ['PENDING', 'RELEASED', 'IN_PROGRESS', 'ON_HOLD']` (OS respeitam tambem `archived = false`); RAFs nao aplicam filtro de status
+- RAFs seguem abordagem hibrida de lookup:
+  1. FK via `WorkOrder.assetId` (`originKind = 'work_order'`, `originLabel` = `internalId` da OS)
+  2. FK via `Request.assetId` (`originKind = 'request'`, `originLabel` = `requestNumber` da SS)
+  3. Fallback legado por nome exato do ativo (match case/acento-insensitivo do `equipment` com `Asset.name`) apenas para RAFs sem `workOrderId` e sem `requestId` (`originKind = 'legacy_name_match'`)
+- Ordenacao: `requests` e `workOrders` por `dueDate` asc (NULLS LAST) + `createdAt` asc; `rafs` por `occurrenceDate` desc
+- Resposta: `{ data: { requests: RequestItem[], workOrders: WorkOrderItem[], rafs: RafItem[] } }`
+
+## Modo Batch via ?ids= (OS, SS, RAF)
+- `GET /api/work-orders`, `GET /api/requests` e `GET /api/rafs` aceitam `?ids=id1,id2,...` para retornar lote de registros pela PK
+- Sempre aplicar filtro de `companyId` alem do `in('id', ids)`; ids de fora do tenant silenciosamente somem do retorno
+- Limite maximo de `50` ids por requisicao; ids acima do limite devem ser truncados server-side
+- A ordem do resultado deve preservar a ordem do parametro de entrada (uso do padrao `Map<id, row>` para reassociar)
+- Este modo alimenta os componentes `WorkOrdersBatchPrintView`, `RequestsBatchPrintView` e `RAFsBatchPrintView`, que renderizam uma pagina A4 por registro com `print:break-after-page` entre elas
 
 ## Casos Especificos do Produto
 - `Aprovacoes` e exclusivo de `SUPER_ADMIN` e `ADMIN`

@@ -25,14 +25,15 @@ interface RAFWorkOrder {
   internalId?: string
   osType?: string
   maintenanceArea?: { id: string; name: string; code?: string }
-  asset?: { id: string; name: string; tag?: string }
+  asset?: { id: string; name: string; tag?: string; protheusCode?: string }
 }
 
 interface RAFRequest {
   id: string
   requestNumber?: string | null
   title?: string | null
-  asset?: { id: string; name: string; tag?: string } | null
+  asset?: { id: string; name: string; tag?: string; protheusCode?: string } | null
+  maintenanceArea?: { id: string; name: string; code?: string } | null
 }
 
 interface RAF {
@@ -152,12 +153,16 @@ export default function RAFsPage() {
   const getRafAssetName = (raf: RAF) =>
     raf.workOrder?.asset?.name || raf.request?.asset?.name || ''
   const getRafAssetTag = (raf: RAF) =>
-    raf.workOrder?.asset?.tag || raf.request?.asset?.tag || ''
+    raf.workOrder?.asset?.tag
+    || raf.workOrder?.asset?.protheusCode
+    || raf.request?.asset?.tag
+    || raf.request?.asset?.protheusCode
+    || ''
   const getRafAreaLabel = (raf: RAF) => {
-    if (raf.workOrder?.maintenanceArea?.code) {
-      return `${raf.workOrder.maintenanceArea.code} - ${raf.workOrder.maintenanceArea.name}`
-    }
-    return raf.workOrder?.maintenanceArea?.name || ''
+    const area = raf.workOrder?.maintenanceArea || raf.request?.maintenanceArea
+    if (!area) return ''
+    if (area.code) return `${area.code} - ${area.name}`
+    return area.name || ''
   }
   const getRafOriginNumber = (raf: RAF) =>
     raf.workOrder?.internalId || raf.request?.requestNumber || ''

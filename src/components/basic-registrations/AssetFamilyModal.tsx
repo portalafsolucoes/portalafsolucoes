@@ -7,10 +7,10 @@ import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 
 interface AssetFamilyModalProps {
-  editingItem: any | null
+  editingItem: Record<string, unknown> | null
   onClose: () => void
   onSaved: () => void
-  assetFamilyModels: any[]
+  assetFamilyModels: { id: string; name: string; description?: string; protheusCode?: string }[]
   onModelsChanged: () => void
   inPage?: boolean
 }
@@ -48,7 +48,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
     try {
       const res = await fetch(`/api/basic-registrations/asset-family-model-mappings?familyId=${familyId}`)
       const data = await res.json()
-      const ids = (data.data || []).map((m: any) => m.modelId)
+      const ids = (data.data || []).map((m: { modelId: string }) => m.modelId)
       setSelectedModelIds(ids)
     } catch {
       setSelectedModelIds([])
@@ -80,7 +80,7 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
         : `/api/basic-registrations/asset-families`
       const method = editingItem ? 'PUT' : 'POST'
 
-      const familyBody: Record<string, any> = {
+      const familyBody: Record<string, string | null> = {
         code,
         name,
         familyType,

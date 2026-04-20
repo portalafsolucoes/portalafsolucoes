@@ -6,7 +6,7 @@ import { AssetEditPanel } from './AssetEditPanel'
 interface AssetEditModalProps {
   isOpen: boolean
   onClose: () => void
-  asset: any
+  asset: Record<string, unknown>
   onSuccess: () => void
   inPage?: boolean
 }

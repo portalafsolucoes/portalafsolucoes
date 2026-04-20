@@ -22,6 +22,12 @@ interface Team {
   name: string
 }
 
+interface MaintenanceArea {
+  id: string
+  name: string
+  code?: string | null
+}
+
 interface AssetOption {
   id: string
   name: string
@@ -46,6 +52,7 @@ interface RequestEditPayload {
   dueDate?: string | null
   teamId?: string | null
   assetId?: string | null
+  maintenanceAreaId?: string | null
   files?: Array<{ name: string; url: string; size?: number; type?: string }> | null
   asset?: AssetOption | null
 }
@@ -61,6 +68,7 @@ interface RequestFormModalProps {
 export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage = false }: RequestFormModalProps) {
   const [loading, setLoading] = useState(false)
   const [teams, setTeams] = useState<Team[]>([])
+  const [maintenanceAreas, setMaintenanceAreas] = useState<MaintenanceArea[]>([])
   const [files, setFiles] = useState<UploadedFile[]>([])
 
   // Asset autocomplete state
@@ -84,13 +92,15 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
     priority: 'NONE',
     dueDate: '',
     teamId: '',
-    assetId: ''
+    assetId: '',
+    maintenanceAreaId: ''
   })
 
   useEffect(() => {
     const shouldInit = inPage || isOpen
     if (shouldInit) {
       loadTeams()
+      loadMaintenanceAreas()
       if (request) {
         setFormData({
           title: request.title || '',
@@ -98,7 +108,8 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
           priority: request.priority || 'NONE',
           dueDate: request.dueDate ? new Date(request.dueDate).toISOString().split('T')[0] : '',
           teamId: request.teamId || '',
-          assetId: request.assetId || ''
+          assetId: request.assetId || '',
+          maintenanceAreaId: request.maintenanceAreaId || ''
         })
         setFiles((request.files || []).map((f) => ({
           name: f.name,
@@ -151,7 +162,8 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
       priority: 'NONE',
       dueDate: '',
       teamId: '',
-      assetId: ''
+      assetId: '',
+      maintenanceAreaId: ''
     })
     setFiles([])
     setSelectedAsset(null)
@@ -168,6 +180,16 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
       setTeams(data.data || [])
     } catch (error) {
       console.error('Error loading teams:', error)
+    }
+  }
+
+  const loadMaintenanceAreas = async () => {
+    try {
+      const response = await fetch('/api/basic-registrations/maintenance-areas')
+      const data = await response.json()
+      setMaintenanceAreas(data.data || [])
+    } catch (error) {
+      console.error('Error loading maintenance areas:', error)
     }
   }
 
@@ -320,6 +342,12 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.maintenanceAreaId) {
+      alert('Selecione a Área de Manutenção')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -336,6 +364,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
           dueDate: formData.dueDate,
           teamId: formData.teamId,
           assetId: formData.assetId || null,
+          maintenanceAreaId: formData.maintenanceAreaId,
           files: files.map(f => ({
             name: f.name,
             url: f.url,
@@ -525,13 +554,38 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
           placeholder="Ex: Vazamento no banheiro"
         />
 
-        <div>
+        <div className="mt-3">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Área de Manutenção *
+          </label>
+          <select
+            value={formData.maintenanceAreaId}
+            onChange={(e) => setFormData({ ...formData, maintenanceAreaId: e.target.value })}
+            required
+            className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">Selecione a área...</option>
+            {maintenanceAreas.map(area => (
+              <option key={area.id} value={area.id}>
+                {area.code ? `${area.code} - ${area.name}` : area.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mt-3">
           <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
             Descrição
           </label>
           <textarea
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => {
+              const normalized = e.target.value
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toUpperCase()
+              setFormData({ ...formData, description: normalized })
+            }}
             rows={3}
             className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Descreva detalhadamente o problema ou necessidade..."

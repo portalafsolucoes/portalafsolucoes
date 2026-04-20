@@ -51,7 +51,7 @@ const defaultWorkDays = (): WorkDays => ({
 })
 
 interface CalendarModalProps {
-  editingItem: any | null
+  editingItem: Record<string, unknown> | null
   onClose: () => void
   onSaved: () => void
   inPage?: boolean

@@ -165,4 +165,21 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'failureDescription', header: 'Descrição da Falha' },
     ],
   },
+  'action-plan-items': {
+    filename: 'PA_das_RAFs',
+    columns: [
+      { key: 'rafNumber', header: 'RAF' },
+      { key: 'actionDescription', header: 'Ação' },
+      { key: 'responsibleName', header: 'Responsável' },
+      { key: 'rafCreatedAt', header: 'Data criação', transform: formatDateValue },
+      { key: 'occurrenceDate', header: 'Data ocorrência', transform: formatDateValue },
+      { key: 'deadline', header: 'Prazo', transform: formatDateValue },
+      { key: 'linkedWorkOrderNumber', header: 'OS' },
+      { key: 'linkedWorkOrderStatus', header: 'Status OS' },
+      { key: 'linkedRequestNumber', header: 'SS' },
+      { key: 'linkedRequestStatus', header: 'Status SS' },
+      { key: 'actionStatusLabel', header: 'Status da ação' },
+      { key: 'rafStatus', header: 'Status da RAF' },
+    ],
+  },
 }

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
 interface GenericStepModalProps {
-  editingItem: any | null
+  editingItem: Record<string, unknown> | null
   onClose: () => void
   onSaved: () => void
   inPage?: boolean
@@ -35,7 +35,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved, inPage = false
       setOptions(
         (editingItem.options || [])
           .sort((a: StepOption, b: StepOption) => a.order - b.order)
-          .map((o: any) => ({ label: o.label, order: o.order }))
+          .map((o: { label: string; order: number }) => ({ label: o.label, order: o.order }))
       )
     } else {
       setName('')
@@ -81,7 +81,7 @@ export function GenericStepModal({ editingItem, onClose, onSaved, inPage = false
         : `/api/basic-registrations/generic-steps`
       const method = editingItem ? 'PUT' : 'POST'
 
-      const body: any = {
+      const body: Record<string, unknown> = {
         name: name.trim(),
         optionType,
         protheusCode: protheusCode.trim() || null,

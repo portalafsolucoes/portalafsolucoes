@@ -30,7 +30,8 @@ export async function GET(
         createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(*),
-        asset:Asset(id, name, protheusCode, tag, parentAssetId)
+        asset:Asset(id, name, protheusCode, tag, parentAssetId),
+        maintenanceArea:MaintenanceArea(id, name, code)
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
@@ -97,13 +98,35 @@ export async function PUT(
     }
 
     const body = normalizeTextPayload(await request.json())
-    const { title, description, priority, dueDate, teamId, assetId, files = [] } = body
+    const { title, description, priority, dueDate, teamId, assetId, maintenanceAreaId, files = [] } = body
     const now = new Date().toISOString()
     const canonicalRole = normalizeUserRole(session)
 
     if (!title) {
       return NextResponse.json(
         { error: 'Title is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!maintenanceAreaId) {
+      return NextResponse.json(
+        { error: 'Área de manutenção é obrigatória' },
+        { status: 400 }
+      )
+    }
+
+    // Validar que a área pertence à empresa ativa
+    const { data: areaCheck } = await supabase
+      .from('MaintenanceArea')
+      .select('id')
+      .eq('id', maintenanceAreaId)
+      .eq('companyId', session.companyId)
+      .maybeSingle()
+
+    if (!areaCheck) {
+      return NextResponse.json(
+        { error: 'Área de manutenção inválida para esta empresa' },
         { status: 400 }
       )
     }
@@ -130,7 +153,8 @@ export async function PUT(
         priority: priority || 'NONE',
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         teamId: teamId || null,
-        assetId: assetId || null
+        assetId: assetId || null,
+        maintenanceAreaId
       })
       .eq('id', id)
       .select(`
@@ -138,7 +162,8 @@ export async function PUT(
         createdBy:User!createdById(id, firstName, lastName, email),
         team:Team(id, name),
         files:File(*),
-        asset:Asset(id, name, protheusCode, tag, parentAssetId)
+        asset:Asset(id, name, protheusCode, tag, parentAssetId),
+        maintenanceArea:MaintenanceArea(id, name, code)
       `)
       .single()
 

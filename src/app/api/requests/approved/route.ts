@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest) {
         team:Team(id, name),
         asset:Asset(id, name),
         location:Location!locationId(id, name),
-        generatedWorkOrder:WorkOrder!workOrderId(id, internalId, status),
+        generatedWorkOrder:WorkOrder(id, internalId, status),
         files:File(*)
       `, { count: 'exact' })
       .eq('companyId', session.companyId)
