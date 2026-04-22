@@ -176,17 +176,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Falha ao criar usuário administrador' }, { status: 500 })
     }
 
-    // 3. Módulos escolhidos pelo usuário (quando informados)
+    // 3. Produtos escolhidos pelo usuário (quando informados). Resolve slug -> productId
+    // e grava com o shape correto (productId + enabled). Apenas produtos ACTIVE são
+    // habilitados; COMING_SOON/DISABLED entram como enabled=false.
     if (Array.isArray(products) && products.length > 0) {
-      const productRows = products.map((p) => ({
+      const slugs = products.map((p) => String(p).toUpperCase())
+      const { data: productRecords, error: productLookupError } = await supabase
+        .from('Product')
+        .select('id, slug, status')
+        .in('slug', slugs)
+      if (productLookupError) {
+        console.error('Register — Product lookup error:', productLookupError)
+      }
+      const productRows = (productRecords || []).map((pr: { id: string; status: string }) => ({
         id: generateId(),
         companyId,
-        product: String(p).toUpperCase(),
-        status: 'ACTIVE',
+        productId: pr.id,
+        enabled: pr.status === 'ACTIVE',
+        activatedAt: now,
         createdAt: now,
         updatedAt: now,
       }))
-      await supabase.from('CompanyProduct').insert(productRows)
+      if (productRows.length > 0) {
+        const { error: cpError } = await supabase.from('CompanyProduct').insert(productRows)
+        if (cpError) {
+          console.error('Register — CompanyProduct insert error:', cpError)
+        }
+      }
     }
 
     // 4. EmailOutbox: verificação de e-mail para o admin

@@ -94,6 +94,34 @@ export async function POST(
     }
   }
 
+  // Popular CompanyProduct com todos os produtos (o Hub filtra por esta tabela).
+  // Idempotente: só insere produtos ainda não presentes. ACTIVE entra enabled=true;
+  // COMING_SOON/DISABLED entram enabled=false (aparecem no Hub como indisponíveis).
+  const [{ data: allProducts }, { data: existingProducts }] = await Promise.all([
+    supabase.from('Product').select('id, status'),
+    supabase.from('CompanyProduct').select('productId').eq('companyId', id),
+  ])
+  const existingProductIds = new Set(
+    (existingProducts || []).map((p: { productId: string }) => p.productId)
+  )
+  const productsToInsert = (allProducts || [])
+    .filter((p: { id: string }) => !existingProductIds.has(p.id))
+    .map((p: { id: string; status: string }) => ({
+      id: generateId(),
+      companyId: id,
+      productId: p.id,
+      enabled: p.status === 'ACTIVE',
+      activatedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    }))
+  if (productsToInsert.length > 0) {
+    const { error: cpError } = await supabase.from('CompanyProduct').insert(productsToInsert)
+    if (cpError) {
+      console.error('Approve company — CompanyProduct insert error:', cpError)
+    }
+  }
+
   // Notificar admin(s) da empresa aprovada
   const { data: admins } = await supabase
     .from('User')

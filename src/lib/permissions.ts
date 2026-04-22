@@ -79,7 +79,7 @@ const PERMISSIONS: Record<CanonicalUserRole, Permission[]> = {
     { module: 'settings', actions: { view: false, create: false, edit: false, delete: false } },
   ],
   MANUTENTOR: [
-    { module: 'dashboard', actions: { view: false, create: false, edit: false, delete: false } },
+    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
     { module: 'tree', actions: { view: false, create: false, edit: false, delete: false } },
     { module: 'people-teams', actions: { view: false, create: false, edit: false, delete: false } },
     { module: 'basic-registrations', actions: { view: false, create: false, edit: false, delete: false } },
