@@ -10,12 +10,13 @@ globs: src/app/api/**,src/actions/**
 - `POST /api/admin/companies`: apenas `SUPER_ADMIN` autoriza; o usuario inicial criado DEVE ter `role = ADMIN` (persistido como `GESTOR`). Rejeitar qualquer tentativa de criar usuario SUPER_ADMIN por esta rota.
 - `POST /api/admin/units`: apos inserir a nova unidade, chamar `linkAllCompanyAdminsToUnit(companyId, unitId)` para propagar `UserUnit` para todos os ADMINs da empresa.
 - `POST /api/users` e `PUT /api/users/[id]`: rejeitar com `403` qualquer payload que tente atribuir `role = SUPER_ADMIN` quando a sessao NAO for SUPER_ADMIN. Quando a role final for `ADMIN`, chamar `ensureAdminUnitAccess(companyId, userId)` para garantir o invariante.
+- Quando a sessao for `PLANEJADOR`, `POST /api/users` e `PUT /api/users/[id]` devem rejeitar com `403` qualquer payload cuja role canonica final NAO seja `PLANEJADOR` ou `MANUTENTOR`. Em `PUT`, validar tambem que a role canonica atual do usuario-alvo esta nesse mesmo conjunto — PLANEJADOR nao pode editar `ADMIN`/`SUPER_ADMIN` mesmo mantendo a role original. `DELETE /api/users/[id]` e lifecycle destrutivo (`archive`, `reset-password`) continuam restritos a `SUPER_ADMIN`/`ADMIN` (matriz `people-teams/DELETE`).
 - Em rotas de negocio CMMS (tudo fora de `/api/admin/**` e `/api/auth/**`), usar `requireCompanyScope(session)` de `src/lib/user-roles.ts` para falhar cedo quando `companyId` estiver ausente.
 
 ## Normalizacao de Texto (MAIUSCULAS sem acento)
 - Todo handler de escrita (`POST`/`PUT`/`PATCH`) deve chamar `normalizeTextPayload` de `@/lib/textNormalizer` sobre o body logo apos `await request.json()`
 - Padrao: `const body = normalizeTextPayload(await request.json())`
-- Campos preservados (NAO uppercase): `email`, `password`, `currentPassword`, `newPassword`, `confirmPassword`, `username`, `website`, qualquer chave terminada em `Url`/`Link`/`Href`/`Src`, `logo`, `avatarUrl`, `description`, `notes`, `observation`, `feedback`, `rejectionReason`, `executionNotes`, `failureDescription`, `immediateAction`, `message`, `token`, `apiKey`, `secret`, `hash`
+- Campos preservados (NAO uppercase): `email`, `password`, `currentPassword`, `newPassword`, `confirmPassword`, `username`, `website`, qualquer chave terminada em `Url`/`Link`/`Href`/`Src`, `logo`, `avatarUrl`, `description`, `notes`, `observation`, `feedback`, `rejectionReason`, `executionNotes`, `failureDescription`, `immediateAction`, `message`, `token`, `apiKey`, `secret`, `hash`, `workDays` (JSON de configuracao de calendario — chaves internas como `day`/`label`/`shifts[].start|end` devem permanecer no formato original)
 - Qualquer outro campo string e convertido para `UPPER(unaccent(value))` e sofre `trim()`
 - Rotas de integracao ERP/Protheus (`/api/integration/totvs/*`) e importacoes externas (`/api/gep/import`) **nao devem** aplicar o normalizer — preservar o payload bruto do sistema externo
 - Search e filtros devem usar `ILIKE` para permanecer case-insensitive; o dado no banco ja esta em caixa alta
@@ -30,6 +31,24 @@ globs: src/app/api/**,src/actions/**
 - A normalizacao de papel deve usar exclusivamente o campo `role` persistido no banco; email, username e jobTitle NAO podem influenciar o papel efetivo (V04 — escalada de privilegio por padrao de email foi corrigida e nao deve ser reintroduzida)
 - Em payloads e respostas do modulo de `Pessoas`, `role` representa o papel de acesso do sistema e `jobTitle` representa o cargo profissional; APIs nao devem misturar esses conceitos nem rotular valores legados operacionais como se fossem o papel exibido ao usuario
 - Quando a UI enviar `jobTitleId`, as APIs de usuario devem validar que o cargo pertence a empresa ativa, persistir o vinculo no banco e manter o nome do cargo refletido no campo textual exibido na ficha da pessoa
+
+## Registro Publico e Aprovacao de Empresa
+- `POST /api/auth/register` e rota **publica** (sem sessao) usada pela tela `/register`. Deve validar CNPJ, e-mail unico, criar `Company` em `status = 'PENDING_APPROVAL'`, criar primeiro usuario como `ADMIN` (persistido como `GESTOR`) com `emailVerificationToken` + `emailVerificationExpires` (24h), enfileirar e-mail de verificacao em `EmailOutbox` e retornar `201` com `{ data: { companyId, email } }`
+- `GET /api/auth/verify-email?token=...` valida o token, marca `emailVerifiedAt`, retorna `404` para token inexistente, `410` para token expirado, `200` para sucesso (`{ data: { alreadyVerified: boolean } }`). **Nao** loga o usuario — a aprovacao ainda e obrigatoria
+- `POST /api/admin/companies/[id]/approve` e `POST /api/admin/companies/[id]/reject` sao exclusivos de SUPER_ADMIN. `reject` exige `reason` no body, anonimiza PII do admin inicial, registra em `RejectedCompanyLog` e mantem CNPJ/email reaproveitaveis via indices parciais
+- `approve` deve popular `CompanyModule` com todos os modulos habilitados (`enabled = true`) de forma idempotente — buscar `Module` + `CompanyModule` existentes, inserir apenas os ausentes. A sidebar filtra por esta tabela, entao empresas aprovadas sem esse passo aparecem com menu vazio ao logar. Mesmo padrao ja aplicado em `POST /api/admin/companies` quando o SUPER_ADMIN cria a empresa diretamente
+- Login em `/api/auth/login` bloqueia usuarios cuja empresa esteja em `PENDING_APPROVAL` (403) ou `REJECTED` (401 indistinguivel de credenciais invalidas). Usuario com `emailVerificationToken` e sem `emailVerifiedAt` tambem recebe 403 com mensagem clara de verificar e-mail
+
+## Notificacoes In-App
+- `GET /api/notifications` retorna as notificacoes do usuario autenticado, ordem desc por `createdAt`, com `unreadCount`. Suporta `?unreadOnly=1` e `?limit=N` (default 30, max 100)
+- `POST /api/notifications/[id]/read` marca uma notificacao como lida; 403 quando `userId` nao corresponde a sessao; 404 se nao existir
+- `POST /api/notifications/read-all` marca todas as notificacoes nao lidas do usuario como lidas
+- Os eventos de signup, aprovacao e rejeicao de empresa, alem de reset manual de senha, devem inserir notificacoes destinadas ao usuario afetado e/ou aos SUPER_ADMINs correspondentes
+
+## Reset Manual de Senha e Troca Forcada
+- `POST /api/users/[id]/reset-password` e restrito a SUPER_ADMIN/ADMIN (matriz `people-teams/DELETE`). Gera senha temporaria aleatoria, atualiza hash no banco, seta `mustChangePassword = true` e retorna `{ data: { userId, tempPassword, mustChangePassword } }`. A senha em texto claro so aparece nesta resposta — nao e persistida em claro nem enviada por e-mail automatico. Rejeita auto-reset (usuario operando sobre a propria conta) e usuarios `ARCHIVED`
+- `POST /api/auth/change-password` recebe `{ currentPassword, newPassword, confirmPassword }`, valida senha atual com `verifyPassword`, limpa `mustChangePassword` ao finalizar. **Nao** aplicar `normalizeTextPayload` neste body (senhas sao preservadas). Rejeita `newPassword === currentPassword` e `newPassword === user.email`
+- `/api/auth/login` e `/api/auth/me` devem expor `mustChangePassword` no retorno para a UI gatear o redirect para `/change-password`. O guard client-side mora em `AppShell` (`ForcedPasswordChangeGuard`) e forca o usuario para `/change-password` em qualquer rota interna enquanto a flag estiver `true`
 
 ## Autenticacao e Sessao
 - O endpoint `/api/auth/me` e a leitura de modulos da empresa devem ser tratados como dados dinamicos de sessao, sem cache compartilhado entre usuarios

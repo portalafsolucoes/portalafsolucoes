@@ -28,6 +28,40 @@ interface FilePreview {
   url?: string // Para arquivos existentes
 }
 
+interface WOUser {
+  firstName?: string
+  lastName?: string
+}
+
+interface WOFileItem {
+  id: string
+  url: string
+  name: string
+  type?: string
+}
+
+interface WorkOrderDetails {
+  id?: string
+  title?: string
+  description?: string | null
+  externalId?: string | null
+  internalId?: string | null
+  executionNotes?: string | null
+  completedOn?: string | null
+  actualDuration?: number | null
+  beforePhotoUrl?: string | null
+  afterPhotoUrl?: string | null
+  createdAt?: string | null
+  createdBy?: WOUser | null
+  asset?: { name?: string } | null
+  location?: { name?: string } | null
+  sourceRequest?: {
+    createdBy?: WOUser | null
+    files?: WOFileItem[]
+  } | null
+  files?: WOFileItem[]
+}
+
 export function WorkOrderExecuteModal({
   isOpen,
   onClose,
@@ -43,7 +77,7 @@ export function WorkOrderExecuteModal({
   const [observations, setObservations] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string>('')
-  const [workOrderDetails, setWorkOrderDetails] = useState<Record<string, unknown> | null>(null)
+  const [workOrderDetails, setWorkOrderDetails] = useState<WorkOrderDetails | null>(null)
   const [imageViewer, setImageViewer] = useState<{url: string; name: string} | null>(null)
 
   const beforePhotoRef = useRef<HTMLInputElement>(null)
@@ -683,7 +717,7 @@ export function WorkOrderExecuteModal({
                             src={workOrderDetails.beforePhotoUrl}
                             alt="Foto Antes"
                             className="w-full h-48 object-contain rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
-                            onClick={() => setImageViewer({url: workOrderDetails.beforePhotoUrl, name: 'Foto ANTES'})}
+                            onClick={() => setImageViewer({url: workOrderDetails.beforePhotoUrl!, name: 'Foto ANTES'})}
                           />
                         </div>
                       )}
@@ -695,7 +729,7 @@ export function WorkOrderExecuteModal({
                             src={workOrderDetails.afterPhotoUrl}
                             alt="Foto Depois"
                             className="w-full h-48 object-contain rounded-[4px] border-2 border-input cursor-pointer hover:border-primary transition-all bg-muted"
-                            onClick={() => setImageViewer({url: workOrderDetails.afterPhotoUrl, name: 'Foto DEPOIS'})}
+                            onClick={() => setImageViewer({url: workOrderDetails.afterPhotoUrl!, name: 'Foto DEPOIS'})}
                           />
                         </div>
                       )}
@@ -724,7 +758,7 @@ export function WorkOrderExecuteModal({
                                 src={file.url}
                                 alt={file.name}
                                 className="w-12 h-12 object-cover rounded cursor-pointer"
-                                onClick={() => setImageViewer({url: file.url, name: file.name})}
+                                onClick={() => file.url && setImageViewer({url: file.url, name: file.name})}
                               />
                             ) : (
                               <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">

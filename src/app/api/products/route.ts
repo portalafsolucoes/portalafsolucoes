@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isPlatformStaff } from '@/lib/user-roles'
 
 /**
  * GET /api/products
@@ -31,7 +32,19 @@ export async function GET() {
       })
     }
 
-    // Com sessão: enriquece com habilitação por empresa
+    // Staff Portal AF (SUPER_ADMIN sem companyId): opera cross-tenant,
+    // trata qualquer produto ACTIVE como acessível. A seleção de empresa
+    // acontece no destino (getDefaultCmmsPath → /admin/select-company).
+    if (isPlatformStaff(session)) {
+      return NextResponse.json({
+        data: (products || []).map(p => ({
+          ...p,
+          enabled: p.status === 'ACTIVE',
+        })),
+      })
+    }
+
+    // Com sessão de tenant: enriquece com habilitação por empresa
     const { data: companyProducts, error: cpError } = await supabase
       .from('CompanyProduct')
       .select('productId, enabled')

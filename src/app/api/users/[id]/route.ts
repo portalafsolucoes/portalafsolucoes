@@ -106,7 +106,8 @@ export async function PUT(
 
     // Apenas staff Portal AF pode atribuir SUPER_ADMIN. ADMIN da empresa cliente nunca pode promover ninguém a SUPER_ADMIN.
     const requestedCanonical = normalizeUserRole(role)
-    if (requestedCanonical === 'SUPER_ADMIN' && normalizeUserRole(session) !== 'SUPER_ADMIN') {
+    const sessionCanonical = normalizeUserRole(session)
+    if (requestedCanonical === 'SUPER_ADMIN' && sessionCanonical !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Apenas staff Portal AF pode atribuir SUPER_ADMIN' }, { status: 403 })
     }
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
@@ -121,6 +122,17 @@ export async function PUT(
 
     if (findError || !existingUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // PLANEJADOR so pode editar usuarios PLANEJADOR ou MANUTENTOR e manter o papel dentro desse mesmo conjunto
+    if (sessionCanonical === 'PLANEJADOR') {
+      const existingCanonical = normalizeUserRole(existingUser.role)
+      if (existingCanonical !== 'PLANEJADOR' && existingCanonical !== 'MANUTENTOR') {
+        return NextResponse.json({ error: 'Planejador nao pode editar Administradores' }, { status: 403 })
+      }
+      if (requestedCanonical !== 'PLANEJADOR' && requestedCanonical !== 'MANUTENTOR') {
+        return NextResponse.json({ error: 'Planejador so pode atribuir papel Planejador ou Manutentor' }, { status: 403 })
+      }
     }
 
     if (!firstName || !lastName || !normalizedEmail) {

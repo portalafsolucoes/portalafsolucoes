@@ -47,20 +47,16 @@ interface JobTitleOption {
 const ALL_ROLES: { value: string; label: string }[] = [
   { value: 'SUPER_ADMIN', label: 'SUPER ADMINISTRADOR' },
   { value: 'ADMIN', label: 'ADMINISTRADOR' },
-  { value: 'TECHNICIAN', label: 'TECNICO' },
-  { value: 'LIMITED_TECHNICIAN', label: 'TECNICO LIMITADO' },
-  { value: 'REQUESTER', label: 'SOLICITANTE' },
-  { value: 'VIEW_ONLY', label: 'SOMENTE CONSULTA' },
+  { value: 'PLANEJADOR', label: 'PLANEJADOR' },
+  { value: 'MANUTENTOR', label: 'MANUTENTOR' },
 ]
 
 // Mapeia role canônico para valores legados armazenados no banco
 const CANONICAL_TO_LEGACY_ROLES: Record<string, string> = {
   SUPER_ADMIN: 'SUPER_ADMIN',
-  ADMIN: 'ADMIN,GESTOR,PLANEJADOR',
-  TECHNICIAN: 'TECHNICIAN,MECANICO',
-  LIMITED_TECHNICIAN: 'LIMITED_TECHNICIAN,ELETRICISTA,CONSTRUTOR_CIVIL',
-  REQUESTER: 'REQUESTER,OPERADOR',
-  VIEW_ONLY: 'VIEW_ONLY',
+  ADMIN: 'ADMIN,GESTOR',
+  PLANEJADOR: 'PLANEJADOR',
+  MANUTENTOR: 'MANUTENTOR,MECANICO,ELETRICISTA,OPERADOR,CONSTRUTOR_CIVIL',
 }
 
 type UserSortField = 'name' | 'role' | 'units' | 'status'
@@ -465,7 +461,7 @@ export default function AdminUsersPage() {
   // Form state
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '', lastName: '', email: '', password: '',
-    phone: '', jobTitleId: '', role: 'TECHNICIAN', rate: '0',
+    phone: '', jobTitleId: '', role: 'MANUTENTOR', rate: '0',
     enabled: true, unitIds: [],
   })
   const [saving, setSaving] = useState(false)
@@ -584,7 +580,7 @@ export default function AdminUsersPage() {
     setIsEditing(false)
     setFormData({
       firstName: '', lastName: '', email: '', password: '',
-      phone: '', jobTitleId: '', role: 'TECHNICIAN', rate: '0',
+      phone: '', jobTitleId: '', role: 'MANUTENTOR', rate: '0',
       enabled: true, unitIds: [],
     })
     setFormError('')

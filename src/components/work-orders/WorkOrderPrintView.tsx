@@ -4,6 +4,11 @@ import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
 
+interface AssetChain {
+  name: string
+  parentAsset?: AssetChain | null
+}
+
 interface PrintWorkOrder {
   id: string
   title: string
@@ -18,7 +23,7 @@ interface PrintWorkOrder {
   estimatedDuration?: number | null
   createdAt?: string | null
   dueDate?: string | null
-  asset?: { name: string; parentAsset?: { name: string } | null } | null
+  asset?: AssetChain | null
   location?: { name: string } | null
   assignedTo?: { firstName: string; lastName: string } | null
   assignedTeams?: { id: string; name: string }[]

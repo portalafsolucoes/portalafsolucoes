@@ -11,11 +11,9 @@ import { getRoleLabel } from '@/lib/rbac'
 
 const CANONICAL_TO_LEGACY_ROLES: Record<string, string> = {
   SUPER_ADMIN: 'SUPER_ADMIN',
-  ADMIN: 'ADMIN,GESTOR,PLANEJADOR',
-  TECHNICIAN: 'TECHNICIAN,MECANICO',
-  LIMITED_TECHNICIAN: 'LIMITED_TECHNICIAN,ELETRICISTA,CONSTRUTOR_CIVIL',
-  REQUESTER: 'REQUESTER,OPERADOR',
-  VIEW_ONLY: 'VIEW_ONLY',
+  ADMIN: 'ADMIN,GESTOR',
+  PLANEJADOR: 'PLANEJADOR',
+  MANUTENTOR: 'MANUTENTOR,MECANICO,ELETRICISTA,OPERADOR,CONSTRUTOR_CIVIL',
 }
 
 export default function PeoplePage() {
@@ -120,10 +118,8 @@ export default function PeoplePage() {
               <option value="">Todos os Papéis</option>
               <option value="SUPER_ADMIN">Super Administrador</option>
               <option value="ADMIN">Administrador</option>
-              <option value="TECHNICIAN">Técnico</option>
-              <option value="LIMITED_TECHNICIAN">Técnico Limitado</option>
-              <option value="REQUESTER">Solicitante</option>
-              <option value="VIEW_ONLY">Somente Consulta</option>
+              <option value="PLANEJADOR">Planejador</option>
+              <option value="MANUTENTOR">Manutentor</option>
             </select>
           </div>
         </div>

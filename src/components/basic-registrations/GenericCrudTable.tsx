@@ -111,13 +111,14 @@ export function GenericCrudTable({
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {sortedItems.map((item) => {
-                const isActive = selectedItemId === item.id
+                const itemId = item.id as string | undefined
+                const isActive = selectedItemId === itemId
                 const titleValue = titleCol
-                  ? (titleCol.render ? titleCol.render(item[titleCol.key], item) : (item[titleCol.key] ?? '-'))
+                  ? (titleCol.render ? titleCol.render(item[titleCol.key], item) : ((item[titleCol.key] ?? '-') as React.ReactNode))
                   : '-'
                 return (
                   <div
-                    key={item.id}
+                    key={itemId}
                     onClick={() => onSelectItem(item)}
                     className={`bg-card rounded-[4px] ambient-shadow p-4 hover:shadow-md transition-all cursor-pointer ${isActive ? 'ring-2 ring-primary' : ''}`}
                   >
@@ -130,7 +131,7 @@ export function GenericCrudTable({
                           <div key={col.key} className="flex items-baseline gap-2">
                             <dt className="font-medium text-muted-foreground shrink-0">{col.label}:</dt>
                             <dd className="text-foreground min-w-0 truncate">
-                              {col.render ? col.render(item[col.key], item) : (item[col.key] ?? '-')}
+                              {col.render ? col.render(item[col.key], item) : ((item[col.key] ?? '-') as React.ReactNode)}
                             </dd>
                           </div>
                         ))}
@@ -179,17 +180,18 @@ export function GenericCrudTable({
               </tr>
             ) : (
               sortedItems.map((item) => {
-                const isActive = selectedItemId === item.id
+                const itemId = item.id as string | undefined
+                const isActive = selectedItemId === itemId
 
                 return (
                   <tr
-                    key={item.id}
+                    key={itemId}
                     className={`hover:bg-secondary cursor-pointer transition-colors ${isActive ? 'bg-primary/5' : ''}`}
                     onClick={() => onSelectItem(item)}
                   >
                     {columns.map((col) => (
                       <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                        {col.render ? col.render(item[col.key], item) : (item[col.key] ?? '-')}
+                        {col.render ? col.render(item[col.key], item) : ((item[col.key] ?? '-') as React.ReactNode)}
                       </td>
                     ))}
                   </tr>

@@ -28,7 +28,7 @@ export async function GET() {
         locationId,
         activeUnitId,
         createdAt,
-        company:Company(id, name, logo),
+        company:Company!companyId(id, name, logo),
         location:Location(id, name)
       `)
       .eq('id', session.id)

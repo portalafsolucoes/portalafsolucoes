@@ -8,6 +8,7 @@ import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { Location } from '@/types'
 import { CANONICAL_ROLE_OPTIONS, normalizeUserRole } from '@/lib/user-roles'
+import { useAuth } from '@/hooks/useAuth'
 
 interface PersonFormModalProps {
   isOpen: boolean
@@ -96,6 +97,11 @@ function PanelSection({
 }
 
 export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = false }: PersonFormModalProps) {
+  const { user: currentUser } = useAuth()
+  const currentRole = normalizeUserRole(currentUser)
+  const roleOptions = currentRole === 'PLANEJADOR'
+    ? CANONICAL_ROLE_OPTIONS.filter((r) => r.value === 'PLANEJADOR' || r.value === 'MANUTENTOR')
+    : CANONICAL_ROLE_OPTIONS
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [locations, setLocations] = useState<Location[]>([])
@@ -109,7 +115,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
     password: '',
     phone: '',
     jobTitleId: '',
-    role: 'TECHNICIAN',
+    role: 'MANUTENTOR',
     rate: '0',
     locationId: '',
     calendarId: '',
@@ -125,7 +131,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
       password: '',
       phone: '',
       jobTitleId: '',
-      role: 'TECHNICIAN',
+      role: 'MANUTENTOR',
       rate: '0',
       locationId: '',
       calendarId: '',
@@ -469,7 +475,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                     required
                     className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                   >
-                    {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
+                    {roleOptions.map((roleOption) => (
                       <option key={roleOption.value} value={roleOption.value}>
                         {roleOption.label}
                       </option>
@@ -716,7 +722,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                   required
                   className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
                 >
-                  {CANONICAL_ROLE_OPTIONS.map((roleOption) => (
+                  {roleOptions.map((roleOption) => (
                     <option key={roleOption.value} value={roleOption.value}>
                       {roleOption.label}
                     </option>

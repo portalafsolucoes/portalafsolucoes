@@ -237,7 +237,8 @@ Regras complementares:
 - Dados do sistema devem refletir a unidade ativa
 
 ### 8. Pessoas e Equipes
-- Gestao de usuarios por `SUPER_ADMIN` e `ADMIN`
+- Gestao de usuarios por `SUPER_ADMIN` e `ADMIN` (acesso completo: `view/create/edit/delete`)
+- `PLANEJADOR` tambem cadastra pessoas, porem restrito: pode criar e editar apenas usuarios com papel `PLANEJADOR` ou `MANUTENTOR`, sem poder excluir. Nunca pode criar ou promover ninguem a `ADMIN`/`SUPER_ADMIN`; a API `/api/users` (POST/PUT) bloqueia com `403` qualquer tentativa e o modal de pessoa oculta papeis acima do proprio perfil
 - Equipes agrupam tecnicos para atribuicao de OS e ativos
 - Usuarios podem ter multiplas unidades de acesso
 - Rotas autenticadas de listagem, detalhe e formulario devem expor o titulo principal no cabecalho padronizado da pagina, mantendo consistencia visual entre perfis e modulos

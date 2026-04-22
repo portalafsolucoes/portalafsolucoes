@@ -17,6 +17,7 @@ enum UserRole {
   SUPER_ADMIN
   GESTOR
   PLANEJADOR
+  MANUTENTOR
   MECANICO
   ELETRICISTA
   OPERADOR
@@ -27,6 +28,13 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   ARCHIVED
+  REJECTED_USER
+}
+
+enum CompanyStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  REJECTED
 }
 
 enum WorkOrderStatus {
@@ -285,6 +293,34 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Ciclo de aprovação (signup público)
+  status             CompanyStatus @default(ACTIVE)
+  cnpj               String?
+  razaoSocial        String?
+  nomeFantasia       String?
+  inscricaoEstadual  String?
+  inscricaoMunicipal String?
+  segmento           String?
+  porte              String?
+  faixaColaboradores String?
+  cep                String?
+  logradouro         String?
+  numero             String?
+  complemento        String?
+  bairro             String?
+  cidade             String?
+  uf                 String?
+  pais               String?   @default("BRASIL")
+  emailVerifiedAt    DateTime?
+  approvedAt         DateTime?
+  approvedById       String?
+  approvedBy         User?     @relation("CompanyApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectedAt         DateTime?
+  rejectedById       String?
+  rejectedBy         User?     @relation("CompanyRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
+  rejectedReason     String?   @db.Text
+  signupPayload      Json?
+
   // Módulos e produtos habilitados para esta empresa
   companyModules         CompanyModule[]
   companyProducts        CompanyProduct[]
@@ -335,6 +371,9 @@ model Company {
   workOrderSchedules       WorkOrderSchedule[]
   kpiIndicators            KpiIndicator[]
   kpiVariables             KpiVariable[]
+
+  // SUPER_ADMINs com esta empresa selecionada como contexto ativo
+  activeForUsers User[] @relation("ActiveCompanyUsers")
 }
 
 // Unit foi removido — Localizações (Location) agora servem como unidades organizacionais.
@@ -425,9 +464,24 @@ model User {
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
 
+  // Reset de senha manual + verificação de email de signup
+  mustChangePassword       Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  emailVerifiedAt          DateTime?
+
+  // Back-relations de aprovação/rejeição de empresas
+  approvedCompanies Company[] @relation("CompanyApprovedBy")
+  rejectedCompanies Company[] @relation("CompanyRejectedBy")
+
+  // Back-relation de empresa ativa (SUPER_ADMIN)
+  activeCompanyId String?
+  activeCompany   Company? @relation("ActiveCompanyUsers", fields: [activeCompanyId], references: [id], onDelete: SetNull)
+
   @@index([companyId])
   @@index([email])
   @@index([jobTitleId])
+  @@index([emailVerificationToken])
 }
 
 model Team {
@@ -1863,6 +1917,7 @@ model Notification {
   title     String
   message   String
   read      Boolean  @default(false)
+  href      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1871,6 +1926,51 @@ model Notification {
 
   @@index([userId])
   @@index([read])
+}
+
+enum EmailOutboxStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model EmailOutbox {
+  id            String   @id @default(cuid())
+  to            String
+  cc            String[] @default([])
+  subject       String
+  body          String   @db.Text
+  template      String?
+  payload       Json?
+  status        EmailOutboxStatus @default(PENDING)
+  attempts      Int      @default(0)
+  lastError     String?  @db.Text
+  scheduledFor  DateTime @default(now())
+  sentAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, scheduledFor])
+  @@index([createdAt])
+}
+
+model RejectedCompanyLog {
+  id                String   @id @default(cuid())
+  cnpj              String?
+  razaoSocial       String?
+  nomeFantasia      String?
+  originalEmail     String
+  originalFirstName String?
+  originalLastName  String?
+  originalPhone     String?
+  rejectedReason    String   @db.Text
+  rejectedById      String?
+  rejectedAt        DateTime @default(now())
+  originalPayload   Json?
+
+  @@index([cnpj])
+  @@index([originalEmail])
+  @@index([rejectedAt])
 }
 
 // ============================================

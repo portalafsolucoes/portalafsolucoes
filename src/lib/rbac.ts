@@ -1,8 +1,23 @@
 import { UserRole } from '@/types'
-import { getRoleDisplayName } from './user-roles'
+import { getRoleDisplayName, normalizeUserRole, type CanonicalUserRole } from './user-roles'
 
-// Definição de permissões por papel
-export const PERMISSIONS = {
+type Resource =
+  | 'users'
+  | 'teams'
+  | 'assets'
+  | 'workOrders'
+  | 'parts'
+  | 'locations'
+  | 'vendors'
+  | 'customers'
+  | 'analytics'
+  | 'settings'
+type Action = 'create' | 'read' | 'update' | 'delete' | 'archive'
+
+// Definição de permissões por papel canônico.
+// Roles legados (GESTOR, MECANICO, ELETRICISTA, OPERADOR, CONSTRUTOR_CIVIL) são normalizados
+// para o papel canônico correspondente em `hasPermission`.
+export const PERMISSIONS: Record<CanonicalUserRole, Record<Resource, readonly Action[]>> = {
   SUPER_ADMIN: {
     users: ['create', 'read', 'update', 'delete', 'archive'],
     teams: ['create', 'read', 'update', 'delete'],
@@ -13,9 +28,9 @@ export const PERMISSIONS = {
     vendors: ['create', 'read', 'update', 'delete'],
     customers: ['create', 'read', 'update', 'delete'],
     analytics: ['read'],
-    settings: ['read', 'update']
+    settings: ['read', 'update'],
   },
-  GESTOR: {
+  ADMIN: {
     users: ['create', 'read', 'update', 'archive'],
     teams: ['create', 'read', 'update', 'delete'],
     assets: ['create', 'read', 'update', 'archive'],
@@ -25,35 +40,23 @@ export const PERMISSIONS = {
     vendors: ['create', 'read', 'update', 'delete'],
     customers: ['create', 'read', 'update', 'delete'],
     analytics: ['read'],
-    settings: ['read']
+    settings: ['read'],
   },
   PLANEJADOR: {
     users: ['read'],
     teams: ['read'],
-    assets: ['read', 'update'],
+    assets: ['create', 'read', 'update'],
     workOrders: ['create', 'read', 'update'],
     parts: ['read', 'update'],
     locations: ['read'],
     vendors: ['read'],
     customers: ['read'],
     analytics: ['read'],
-    settings: []
+    settings: [],
   },
-  MECANICO: {
-    users: ['read'],
-    teams: ['read'],
-    assets: ['read', 'update'],
-    workOrders: ['create', 'read', 'update'],
-    parts: ['read', 'update'],
-    locations: ['read'],
-    vendors: ['read'],
-    customers: ['read'],
-    analytics: [],
-    settings: []
-  },
-  ELETRICISTA: {
-    users: ['read'],
-    teams: ['read'],
+  MANUTENTOR: {
+    users: [],
+    teams: [],
     assets: ['read'],
     workOrders: ['read', 'update'],
     parts: ['read'],
@@ -61,36 +64,9 @@ export const PERMISSIONS = {
     vendors: [],
     customers: [],
     analytics: [],
-    settings: []
+    settings: [],
   },
-  OPERADOR: {
-    users: [],
-    teams: [],
-    assets: ['read'],
-    workOrders: ['create', 'read'],
-    parts: [],
-    locations: ['read'],
-    vendors: [],
-    customers: [],
-    analytics: [],
-    settings: []
-  },
-  CONSTRUTOR_CIVIL: {
-    users: [],
-    teams: [],
-    assets: ['read'],
-    workOrders: ['read'],
-    parts: ['read'],
-    locations: ['read'],
-    vendors: [],
-    customers: [],
-    analytics: [],
-    settings: []
-  }
-} as const
-
-type Resource = keyof typeof PERMISSIONS.SUPER_ADMIN
-type Action = 'create' | 'read' | 'update' | 'delete' | 'archive'
+}
 
 /**
  * Verifica se um papel tem permissão para executar uma ação em um recurso
@@ -100,12 +76,13 @@ export function hasPermission(
   resource: Resource,
   action: Action
 ): boolean {
-  const permissions = (PERMISSIONS as Record<string, Record<Resource, readonly Action[]> | undefined>)[role]
+  const canonical = normalizeUserRole(role)
+  const permissions = PERMISSIONS[canonical]
   if (!permissions) return false
-  
-  const resourcePermissions = permissions[resource] as readonly Action[]
+
+  const resourcePermissions = permissions[resource]
   if (!resourcePermissions) return false
-  
+
   return resourcePermissions.includes(action)
 }
 
@@ -113,7 +90,7 @@ export function hasPermission(
  * Verifica se um papel pode gerenciar usuários
  */
 export function canManageUsers(role: UserRole): boolean {
-  return hasPermission(role, 'users', 'create') || 
+  return hasPermission(role, 'users', 'create') ||
          hasPermission(role, 'users', 'update')
 }
 
@@ -121,7 +98,7 @@ export function canManageUsers(role: UserRole): boolean {
  * Verifica se um papel pode gerenciar equipes
  */
 export function canManageTeams(role: UserRole): boolean {
-  return hasPermission(role, 'teams', 'create') || 
+  return hasPermission(role, 'teams', 'create') ||
          hasPermission(role, 'teams', 'update')
 }
 
@@ -129,7 +106,8 @@ export function canManageTeams(role: UserRole): boolean {
  * Verifica se um papel tem acesso administrativo
  */
 export function isAdmin(role: UserRole): boolean {
-  return role === 'SUPER_ADMIN' || role === 'GESTOR'
+  const canonical = normalizeUserRole(role)
+  return canonical === 'SUPER_ADMIN' || canonical === 'ADMIN'
 }
 
 /**

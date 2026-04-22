@@ -4,7 +4,7 @@ import { Icon } from './Icon'
 import { exportToExcel, EXPORT_CONFIGS } from '@/lib/exportExcel'
 
 interface ExportButtonProps {
-  data: Record<string, unknown>[]
+  data: readonly object[]
   entity: keyof typeof EXPORT_CONFIGS
   className?: string
 }
@@ -19,7 +19,7 @@ export function ExportButton({ data, entity, className }: ExportButtonProps) {
       return
     }
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    exportToExcel(data, config.columns, `${config.filename}_${date}`)
+    exportToExcel(data as Record<string, unknown>[], config.columns, `${config.filename}_${date}`)
   }
 
   return (

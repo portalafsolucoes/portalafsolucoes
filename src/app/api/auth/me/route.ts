@@ -18,8 +18,8 @@ export async function GET() {
     const { data: user, error } = await supabase
       .from('User')
       .select(`
-        id, email, firstName, lastName, role, jobTitle, companyId, activeUnitId, locationId,
-        company:Company(id, name, logo),
+        id, email, firstName, lastName, role, jobTitle, companyId, activeUnitId, locationId, mustChangePassword,
+        company:Company!companyId(id, name, logo),
         location:Location!locationId(id, name)
       `)
       .eq('id', session.id)

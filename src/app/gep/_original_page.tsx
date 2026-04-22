@@ -427,8 +427,8 @@ export default function GEPPage() {
             
             if (chartScaleMode === 'normalized') {
               // Mostrar valor real e normalizado
-              const normalizedValue = entry.value || 0;
-              const realValue = entry.payload[`${varKey}_real`] || 0;
+              const normalizedValue = (entry.value as number) || 0;
+              const realValue = (entry.payload[`${varKey}_real`] as number) || 0;
               
               return (
                 <div key={index} style={{ color: entry.color }} className="text-sm mb-1">
@@ -444,7 +444,7 @@ export default function GEPPage() {
               );
             } else {
               // Mostrar apenas valor real
-              const value = entry.value || 0;
+              const value = (entry.value as number) || 0;
               return (
                 <p key={index} style={{ color: entry.color }} className="text-sm">
                   {varInfo.name}: <strong>{value.toFixed(2)}</strong> {varInfo.unit}
@@ -754,7 +754,7 @@ export default function GEPPage() {
                           return (
                             <TableRow key={idx} className={`${SHIFT_COLORS[shift]}`}>
                               <TableCell className={`px-4 py-0.5 font-medium text-sm sticky left-0 ${SHIFT_COLORS[shift]} z-10 border-r align-middle`}>
-                                {row.time}
+                                {row.time as string}
                               </TableCell>
                               <TableCell className="px-4 py-0.5 text-sm font-medium align-middle">
                                 <span className={`px-2 py-1 rounded text-xs ${SHIFT_COLORS[shift]}`}>
@@ -763,7 +763,7 @@ export default function GEPPage() {
                               </TableCell>
                               {selectedVariables.map(varKey => (
                                 <TableCell key={varKey} className="px-4 py-0.5 text-right text-sm font-mono tabular-nums align-middle">
-                                  {(row[varKey] || 0).toFixed(2)}
+                                  {((row[varKey] as number) || 0).toFixed(2)}
                                 </TableCell>
                               ))}
                             </TableRow>

@@ -14,6 +14,17 @@ import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 
+type CompanyStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'REJECTED' | 'SUSPENDED' | null
+
+interface SignupPayload {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  products?: string[]
+  [key: string]: unknown
+}
+
 interface Company {
   id: string
   name: string
@@ -24,6 +35,16 @@ interface Company {
   createdAt: string
   userCount: number
   moduleCount: number
+  status?: CompanyStatus
+  cnpj?: string | null
+  razaoSocial?: string | null
+  nomeFantasia?: string | null
+  cidade?: string | null
+  uf?: string | null
+  approvedAt?: string | null
+  rejectedAt?: string | null
+  rejectedReason?: string | null
+  signupPayload?: SignupPayload | null
 }
 
 interface PortalStats {
@@ -50,6 +71,48 @@ interface ModuleConfig {
 type CompanySortField = 'name' | 'contact' | 'userCount' | 'moduleCount' | 'createdAt'
 type CompanySortDirection = 'asc' | 'desc'
 
+// ─── Status helpers ─────────────────────────────────────────────────────────
+
+function formatCnpj(value?: string | null): string {
+  if (!value) return '—'
+  const digits = value.replace(/\D/g, '')
+  if (digits.length !== 14) return value
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`
+}
+
+function StatusBadge({ status }: { status: CompanyStatus }) {
+  const config: Record<string, { label: string; className: string; icon: string }> = {
+    ACTIVE: {
+      label: 'Ativa',
+      className: 'bg-success-light text-success-light-foreground',
+      icon: 'check_circle',
+    },
+    PENDING_APPROVAL: {
+      label: 'Aguardando aprovação',
+      className: 'bg-amber-100 text-amber-900',
+      icon: 'hourglass_top',
+    },
+    REJECTED: {
+      label: 'Rejeitada',
+      className: 'bg-danger-light text-danger-light-foreground',
+      icon: 'cancel',
+    },
+    SUSPENDED: {
+      label: 'Suspensa',
+      className: 'bg-gray-200 text-gray-800',
+      icon: 'pause_circle',
+    },
+  }
+  const key = (status || 'ACTIVE') as keyof typeof config
+  const c = config[key] || config.ACTIVE
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[11px] font-semibold ${c.className}`}>
+      <Icon name={c.icon} className="text-sm" />
+      {c.label}
+    </span>
+  )
+}
+
 // ─── Company Detail Panel ───────────────────────────────────────────────────
 
 interface CompanyDetailPanelProps {
@@ -59,6 +122,8 @@ interface CompanyDetailPanelProps {
   onDelete: (company: Company) => void
   onManageLogo: (company: Company) => void
   onManageModules: (company: Company) => void
+  onApprove: (company: Company) => void
+  onReject: (company: Company) => void
 }
 
 function CompanyDetailPanel({
@@ -68,12 +133,23 @@ function CompanyDetailPanel({
   onDelete,
   onManageLogo,
   onManageModules,
+  onApprove,
+  onReject,
 }: CompanyDetailPanelProps) {
+  const status = company.status ?? 'ACTIVE'
+  const isPending = status === 'PENDING_APPROVAL'
+  const isRejected = status === 'REJECTED'
+  const signup = company.signupPayload || null
   return (
     <div className="h-full flex flex-col bg-card border-l border-border">
       {/* Header */}
       <div className="flex items-start justify-between p-4 border-b border-border">
-        <h2 className="text-xl font-bold text-foreground">{company.name}</h2>
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-foreground truncate">{company.name}</h2>
+          <div className="mt-1">
+            <StatusBadge status={status} />
+          </div>
+        </div>
         <button
           onClick={onClose}
           className="p-1 hover:bg-muted rounded transition-colors"
@@ -86,35 +162,125 @@ function CompanyDetailPanel({
       <div className="flex-1 overflow-y-auto">
         {/* Action buttons */}
         <div className="p-4 border-b border-border space-y-2">
-          <button
-            onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
-          >
-            <Icon name="edit" className="text-base" />
-            Editar
-          </button>
-          <button
-            onClick={() => onManageLogo(company)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
-          >
-            <Icon name="image" className="text-base" />
-            Gerenciar Logo
-          </button>
-          <button
-            onClick={() => onManageModules(company)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
-          >
-            <Icon name="extension" className="text-base" />
-            Configurar Módulos
-          </button>
-          <button
-            onClick={() => onDelete(company)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
-          >
-            <Icon name="delete" className="text-base" />
-            Excluir
-          </button>
+          {isPending && (
+            <>
+              <button
+                onClick={() => onApprove(company)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-success text-white rounded-[4px] hover:bg-success/90 transition-colors"
+              >
+                <Icon name="check_circle" className="text-base" />
+                Aprovar cadastro
+              </button>
+              <button
+                onClick={() => onReject(company)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
+              >
+                <Icon name="cancel" className="text-base" />
+                Rejeitar cadastro
+              </button>
+            </>
+          )}
+
+          {!isPending && (
+            <>
+              <button
+                onClick={onEdit}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-[4px] hover:bg-gray-800 transition-colors"
+              >
+                <Icon name="edit" className="text-base" />
+                Editar
+              </button>
+              <button
+                onClick={() => onManageLogo(company)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+              >
+                <Icon name="image" className="text-base" />
+                Gerenciar Logo
+              </button>
+              <button
+                onClick={() => onManageModules(company)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-[4px] hover:bg-muted transition-colors text-sm text-foreground"
+              >
+                <Icon name="extension" className="text-base" />
+                Configurar Módulos
+              </button>
+              <button
+                onClick={() => onDelete(company)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger text-white rounded-[4px] hover:bg-danger/90 transition-colors"
+              >
+                <Icon name="delete" className="text-base" />
+                Excluir
+              </button>
+            </>
+          )}
         </div>
+
+        {/* Signup payload for pending approvals */}
+        {isPending && (
+          <div className="p-4 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Dados do cadastro</h3>
+            <div className="grid grid-cols-1 gap-y-2 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">CNPJ</p>
+                <p className="text-foreground">{formatCnpj(company.cnpj)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Razão social</p>
+                <p className="text-foreground">{company.razaoSocial || company.name}</p>
+              </div>
+              {company.nomeFantasia && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Nome fantasia</p>
+                  <p className="text-foreground">{company.nomeFantasia}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground">Cidade / UF</p>
+                <p className="text-foreground">
+                  {[company.cidade, company.uf].filter(Boolean).join(' / ') || '—'}
+                </p>
+              </div>
+              <div className="pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">Administrador inicial</p>
+                <p className="text-foreground">
+                  {[signup?.firstName, signup?.lastName].filter(Boolean).join(' ') || '—'}
+                </p>
+                <p className="text-xs text-muted-foreground">{signup?.email || '—'}</p>
+                {signup?.phone && <p className="text-xs text-muted-foreground">{signup.phone}</p>}
+              </div>
+              {Array.isArray(signup?.products) && signup.products.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Produtos solicitados</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {signup.products.map((p) => (
+                      <span key={p} className="inline-flex items-center rounded-[4px] bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">Solicitado em</p>
+                <p className="text-foreground">{new Date(company.createdAt).toLocaleString('pt-BR')}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isRejected && company.rejectedReason && (
+          <div className="p-4 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-2">Motivo da rejeição</h3>
+            <p className="text-sm text-danger-light-foreground bg-danger-light px-3 py-2 rounded-[4px]">
+              {company.rejectedReason}
+            </p>
+            {company.rejectedAt && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Rejeitada em {new Date(company.rejectedAt).toLocaleString('pt-BR')}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Logo */}
         <div className="p-4 border-b border-border">
@@ -410,6 +576,15 @@ export default function AdminPortalPage() {
   const [deleteCompany, setDeleteCompany] = useState<Company | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Approve / reject
+  const [rejectCompany, setRejectCompany] = useState<Company | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejecting, setRejecting] = useState(false)
+  const [rejectError, setRejectError] = useState('')
+
+  // Status filter
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED'>('ALL')
+
   useEffect(() => {
     if (!authLoading && role !== 'SUPER_ADMIN') {
       router.push('/dashboard')
@@ -611,6 +786,69 @@ export default function AdminPortalPage() {
     }
   }
 
+  // Approve pending company
+  const handleApprove = async (company: Company) => {
+    if (!confirm(`Aprovar cadastro de ${company.razaoSocial || company.name}?`)) return
+    try {
+      const res = await fetch(`/api/admin/companies/${company.id}/approve`, {
+        method: 'POST',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error || 'Erro ao aprovar empresa')
+        return
+      }
+      await fetchCompanies()
+      await fetchStats()
+      const updatedStatus: CompanyStatus = 'ACTIVE'
+      setSelectedCompany((prev) => (prev && prev.id === company.id ? { ...prev, status: updatedStatus, approvedAt: data?.data?.approvedAt ?? null } : prev))
+    } catch {
+      alert('Erro de conexão')
+    }
+  }
+
+  // Open reject modal
+  const openRejectModal = (company: Company) => {
+    setRejectCompany(company)
+    setRejectReason('')
+    setRejectError('')
+  }
+
+  // Submit rejection
+  const handleReject = async () => {
+    if (!rejectCompany) return
+    const reason = rejectReason.trim()
+    if (!reason) {
+      setRejectError('Informe o motivo da rejeição.')
+      return
+    }
+    try {
+      setRejecting(true)
+      setRejectError('')
+      const res = await fetch(`/api/admin/companies/${rejectCompany.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setRejectError(data.error || 'Erro ao rejeitar cadastro')
+        return
+      }
+      setRejectCompany(null)
+      setRejectReason('')
+      await fetchCompanies()
+      await fetchStats()
+      if (selectedCompany?.id === rejectCompany.id) {
+        setSelectedCompany(null)
+      }
+    } catch {
+      setRejectError('Erro de conexão')
+    } finally {
+      setRejecting(false)
+    }
+  }
+
   // Modules
   const openModules = async (company: Company) => {
     setModulesCompany(company)
@@ -771,7 +1009,15 @@ export default function AdminPortalPage() {
     )
   }
 
-  const sortedCompanies = [...companies].sort((a, b) => {
+  const pendingCount = companies.filter((c) => (c.status ?? 'ACTIVE') === 'PENDING_APPROVAL').length
+
+  const filteredCompanies = companies.filter((c) => {
+    const s = (c.status ?? 'ACTIVE') as NonNullable<CompanyStatus>
+    if (statusFilter === 'ALL') return true
+    return s === statusFilter
+  })
+
+  const sortedCompanies = [...filteredCompanies].sort((a, b) => {
     const modifier = sortDirection === 'asc' ? 1 : -1
     switch (sortField) {
       case 'name':
@@ -824,6 +1070,8 @@ export default function AdminPortalPage() {
       onDelete={(c) => setDeleteCompany(c)}
       onManageLogo={openLogoModal}
       onManageModules={openModules}
+      onApprove={handleApprove}
+      onReject={openRejectModal}
     />
   ) : null
 
@@ -854,9 +1102,49 @@ export default function AdminPortalPage() {
         </div>
       )}
 
-      {/* Table section heading */}
-      <div className="mb-4">
+      {/* Pending approval banner */}
+      {pendingCount > 0 && statusFilter !== 'PENDING_APPROVAL' && (
+        <button
+          type="button"
+          onClick={() => setStatusFilter('PENDING_APPROVAL')}
+          className="w-full mb-4 flex items-center gap-3 rounded-[4px] border border-amber-300 bg-amber-50 px-4 py-3 text-left hover:bg-amber-100 transition-colors"
+        >
+          <Icon name="hourglass_top" className="text-2xl text-amber-600" />
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-amber-900">
+              {pendingCount} {pendingCount === 1 ? 'empresa aguardando aprovação' : 'empresas aguardando aprovação'}
+            </div>
+            <div className="text-xs text-amber-800/80">
+              Clique para filtrar e analisar cada cadastro individualmente.
+            </div>
+          </div>
+          <Icon name="chevron_right" className="text-xl text-amber-700" />
+        </button>
+      )}
+
+      {/* Table section heading + status filter */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-foreground">Empresas Cadastradas</h2>
+        <div className="flex items-center gap-1 bg-muted rounded-[4px] p-1">
+          {([
+            { key: 'ALL', label: 'Todas' },
+            { key: 'PENDING_APPROVAL', label: `Pendentes${pendingCount ? ` (${pendingCount})` : ''}` },
+            { key: 'ACTIVE', label: 'Ativas' },
+            { key: 'REJECTED', label: 'Rejeitadas' },
+          ] as const).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setStatusFilter(opt.key)}
+              className={`px-3 py-1.5 rounded-[4px] text-sm font-medium transition-colors ${
+                statusFilter === opt.key
+                  ? 'bg-background text-foreground ambient-shadow'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -898,6 +1186,9 @@ export default function AdminPortalPage() {
                   <h3 className="text-sm font-bold text-foreground truncate">{company.name}</h3>
                   {company.email && <p className="text-xs text-muted-foreground truncate">{company.email}</p>}
                   {company.phone && <p className="text-[11px] text-muted-foreground truncate">{company.phone}</p>}
+                  <div className="mt-1">
+                    <StatusBadge status={company.status ?? 'ACTIVE'} />
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
@@ -943,6 +1234,9 @@ export default function AdminPortalPage() {
                       <span>Criada em</span>
                       {renderSortIcon('createdAt')}
                     </button>
+                  </th>
+                  <th className="text-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Status
                   </th>
                 </tr>
               </thead>
@@ -996,6 +1290,9 @@ export default function AdminPortalPage() {
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-muted-foreground">
                       {new Date(company.createdAt).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
+                      <StatusBadge status={company.status ?? 'ACTIVE'} />
                     </td>
                   </tr>
                 ))}
@@ -1191,6 +1488,58 @@ export default function AdminPortalPage() {
             </Button>
           </div>
         )}
+      </Modal>
+
+      {/* Reject Company Modal */}
+      <Modal
+        isOpen={!!rejectCompany}
+        onClose={() => { setRejectCompany(null); setRejectReason(''); setRejectError('') }}
+        title={`Rejeitar cadastro — ${rejectCompany?.razaoSocial || rejectCompany?.name || ''}`}
+        size="md"
+      >
+        <div className="p-4 space-y-3">
+          <div className="rounded-[4px] bg-danger-light px-3 py-2 text-sm text-danger-light-foreground">
+            A rejeição é definitiva. A empresa entra em <strong>REJECTED</strong>, o usuário
+            administrador é anonimizado e o CNPJ/e-mail ficam liberados para um novo cadastro.
+            Os dados originais permanecem no log de auditoria.
+          </div>
+
+          {rejectError && (
+            <div className="rounded-[4px] bg-danger/10 px-3 py-2 text-sm text-danger">
+              {rejectError}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              Motivo da rejeição <span className="text-danger">*</span>
+            </label>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={5}
+              placeholder="Explique o motivo para fins de auditoria e para comunicar ao solicitante."
+              className="w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Este texto é enviado por e-mail ao solicitante e fica registrado em RejectedCompanyLog.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 px-4 py-4 border-t border-border">
+          <Button
+            variant="outline"
+            onClick={() => { setRejectCompany(null); setRejectReason(''); setRejectError('') }}
+            className="flex-1"
+          >
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleReject} disabled={rejecting} className="flex-1">
+            <Icon name="cancel" className="text-base mr-2" />
+            {rejecting ? 'Rejeitando...' : 'Confirmar rejeição'}
+          </Button>
+        </div>
       </Modal>
 
       {/* Delete Confirmation Modal */}

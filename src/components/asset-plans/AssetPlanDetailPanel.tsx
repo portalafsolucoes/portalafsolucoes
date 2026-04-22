@@ -3,7 +3,7 @@
 import { Icon } from '@/components/ui/Icon'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 
-interface AssetPlanDetail {
+export interface AssetPlanDetail {
   id: string
   name: string
   sequence: number

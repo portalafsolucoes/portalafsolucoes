@@ -28,6 +28,7 @@ export const PRESERVED_FIELDS = new Set<string>([
   'apiKey',
   'secret',
   'hash',
+  'workDays',
 ])
 
 const URL_SUFFIXES = ['Url', 'Link', 'Href', 'Src']

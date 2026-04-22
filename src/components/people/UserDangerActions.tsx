@@ -38,8 +38,40 @@ const REFERENCE_LABELS: Record<string, string> = {
 export function UserDangerActions({ userId, userName, status, onAfterAction }: UserDangerActionsProps) {
   const [refs, setRefs] = useState<{ counts: ReferenceCounts; total: number; hasHistory: boolean } | null>(null)
   const [loading, setLoading] = useState(false)
-  const [confirm, setConfirm] = useState<null | 'deactivate' | 'reactivate' | 'archive' | 'delete'>(null)
+  const [confirm, setConfirm] = useState<null | 'deactivate' | 'reactivate' | 'archive' | 'delete' | 'reset-password'>(null)
   const [archiveTyped, setArchiveTyped] = useState('')
+  const [tempPassword, setTempPassword] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleResetPassword = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/users/${userId}/reset-password`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error || 'Erro ao resetar senha')
+        return
+      }
+      setConfirm(null)
+      setTempPassword(data.data?.tempPassword ?? null)
+    } catch (error) {
+      console.error('Reset password error:', error)
+      alert('Erro de rede ao resetar senha')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCopyPassword = async () => {
+    if (!tempPassword) return
+    try {
+      await navigator.clipboard.writeText(tempPassword)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // ignore
+    }
+  }
 
   const fetchRefs = useCallback(async () => {
     try {
@@ -101,13 +133,22 @@ export function UserDangerActions({ userId, userName, status, onAfterAction }: U
     <>
       <div className="space-y-2">
         {status === 'ACTIVE' && (
-          <button
-            onClick={() => setConfirm('deactivate')}
-            className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
-          >
-            <Icon name="person_off" className="text-base" />
-            Desativar
-          </button>
+          <>
+            <button
+              onClick={() => setConfirm('reset-password')}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+            >
+              <Icon name="lock_reset" className="text-base" />
+              Resetar senha
+            </button>
+            <button
+              onClick={() => setConfirm('deactivate')}
+              className="bg-danger text-white hover:bg-danger/90 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] transition-colors"
+            >
+              <Icon name="person_off" className="text-base" />
+              Desativar
+            </button>
+          </>
         )}
 
         {status === 'INACTIVE' && (
@@ -145,6 +186,58 @@ export function UserDangerActions({ userId, userName, status, onAfterAction }: U
           </p>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirm === 'reset-password'}
+        onClose={() => setConfirm(null)}
+        onConfirm={handleResetPassword}
+        title={`Resetar senha de ${userName}?`}
+        message="Uma senha temporaria sera gerada. O usuario precisara troca-la no proximo login. Voce devera repassar a senha por um canal seguro — ela so e exibida uma unica vez."
+        confirmText="Gerar nova senha"
+        variant="danger"
+        loading={loading}
+      />
+
+      {tempPassword && (
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={() => setTempPassword(null)}>
+          <div
+            className="bg-white rounded-[4px] shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Icon name="key" className="text-2xl text-amber-700" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-on-surface">Senha temporaria gerada</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Repasse esta senha ao usuario por canal seguro. Ela nao sera exibida novamente.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-[4px] border border-gray-300 bg-gray-50 p-3 font-mono text-lg text-center tracking-widest mb-3 select-all break-all">
+              {tempPassword}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyPassword}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-[4px] bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+              >
+                <Icon name={copied ? 'check' : 'content_copy'} className="text-base" />
+                {copied ? 'Copiado!' : 'Copiar senha'}
+              </button>
+              <button
+                onClick={() => { setTempPassword(null); onAfterAction() }}
+                className="flex-1 px-4 py-2 rounded-[4px] border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={confirm === 'deactivate'}

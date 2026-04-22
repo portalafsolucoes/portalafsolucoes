@@ -6,8 +6,17 @@ import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 
+interface EditingAssetFamily {
+  id?: string
+  code?: string
+  name?: string
+  familyType?: string
+  protheusCode?: string
+  [key: string]: unknown
+}
+
 interface AssetFamilyModalProps {
-  editingItem: Record<string, unknown> | null
+  editingItem: EditingAssetFamily | null
   onClose: () => void
   onSaved: () => void
   assetFamilyModels: { id: string; name: string; description?: string; protheusCode?: string }[]
@@ -27,12 +36,12 @@ export function AssetFamilyModal({ editingItem, onClose, onSaved, assetFamilyMod
 
   useEffect(() => {
     if (editingItem) {
-      setCode(editingItem.code || '')
-      setName(editingItem.name || '')
-      setFamilyType(editingItem.familyType || 'BEM')
-      setProtheusCode(editingItem.protheusCode || '')
+      setCode(editingItem.code ?? '')
+      setName(editingItem.name ?? '')
+      setFamilyType(editingItem.familyType ?? 'BEM')
+      setProtheusCode(editingItem.protheusCode ?? '')
       // Carregar mapeamentos existentes
-      loadExistingMappings(editingItem.id)
+      if (editingItem.id) loadExistingMappings(editingItem.id)
     } else {
       setCode('')
       setName('')

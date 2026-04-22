@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       const unitIdParamBatch = searchParams.get('unitId')
       const effectiveUnitIdBatch = getEffectiveUnitId(session, unitIdParamBatch)
       if (effectiveUnitIdBatch) batchQuery = batchQuery.eq('unitId', effectiveUnitIdBatch)
-      if (canonicalRole === 'REQUESTER') batchQuery = batchQuery.eq('createdById', session.id)
+      if (canonicalRole === 'MANUTENTOR') batchQuery = batchQuery.eq('createdById', session.id)
 
       const { data: batchData, error: batchError } = await batchQuery
       if (batchError) {
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
     const assetId = searchParams.get('assetId')
     if (assetId) query = query.eq('assetId', assetId)
 
-    if (canonicalRole === 'REQUESTER') query = query.eq('createdById', session.id)
+    if (canonicalRole === 'MANUTENTOR') query = query.eq('createdById', session.id)
 
     const { data: requests, error, count: total } = await query
 

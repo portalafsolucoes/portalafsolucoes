@@ -327,6 +327,30 @@ Busca (w-64) > Toggle de visualizacao > Filtros > Exportacao (Excel) > Acao prim
 - Mudanca de status dispara `PUT /api/rafs/[id]` com o `actionPlan` atualizado; a pagina recarrega em seguida para pegar o `status` da RAF recalculado server-side
 - Export Excel usa `ExportButton entity="action-plan-items"` (config em `src/lib/exportExcel.ts`); gera uma linha por acao com colunas: RAF, Acao, Responsavel, Data criacao, Data ocorrencia, Prazo, OS, Status OS, SS, Status SS, Status da acao, Status da RAF
 
+## Fluxo de Registro Publico e Aprovacao (OBRIGATORIO)
+- `/register` e rota publica coberta pelo `publicRoutes` do `AppShell` e do `middleware.ts`; nunca voltar a redireciona-la para `/login`
+- A tela `/register` usa autofill de CNPJ via BrasilAPI e abre `/register/pending` apos o submit
+- `/register/verify?token=...` trata sete estados distintos: `loading`, `verified`, `already`, `expired` (HTTP 410), `invalid` (404), `missing` (sem token), `error` (fallback). Usar o helper `renderView(status, message)` para manter icone, titulo e descricao consistentes
+- Em `/login` e `/hub`, expor entry point para `/register` (`Cadastre-se` no login, `Cadastre sua empresa` no hub ao lado do `Acessar`)
+- Em `/admin/portal`, a listagem de empresas tem filtros `Todas / Pendentes / Ativas / Rejeitadas`, banner ambar com contagem de pendentes e `StatusBadge` por linha. Para empresas `PENDING_APPROVAL`, o painel de detalhe deve mostrar o bloco `Dados do cadastro` (CNPJ, razao social, cidade/UF, admin, produtos solicitados) e substituir Editar/Excluir por Aprovar (sucesso) e Rejeitar (motivo obrigatorio em textarea). Para empresas `REJECTED`, exibir o motivo em bloco `bg-danger-light`
+
+## Trocar Empresa e Administracao do Portal no UserMenu
+- O `UserMenu` (header, top-right) expoe, **apenas para SUPER_ADMIN** (via `normalizeUserRole(user) === 'SUPER_ADMIN'`), os itens `Trocar empresa` (icone `swap_horiz`) e `Administracao do Portal` (icone `admin_panel_settings`)
+- `Trocar empresa` chama `POST /api/admin/switch-company` com `{ companyId: null }`, invalida `['auth', 'me']` e `['company-modules']` no React Query e navega para `/admin/select-company`
+- `/admin/select-company` e rota publica coberta pelo `AppShell` (sem sidebar/header) — nao adicionar layout interno por cima
+
+## Sino de Notificacoes (OBRIGATORIO)
+- O componente `NotificationBell` em `src/components/layout/NotificationBell.tsx` fica no header principal, imediatamente a esquerda do `UserMenu` e a direita do `UnitSelector`
+- Usa React Query (`queryKey: ['notifications']`) com `refetchInterval: 60_000` e `staleTime: 30_000`
+- Dropdown de 20rem (`w-80`) com header `Notificacoes` + link `Marcar todas como lidas`; cada notificacao tem ponto azul se nao lida, titulo truncado, mensagem em 2 linhas e tempo relativo em portugues
+- Clique em uma notificacao marca como lida e, se tiver `href`, navega para a URL
+- Badge vermelho com contagem (`99+` maximo) posicionado absolutamente no canto superior direito do botao
+
+## Troca Forcada de Senha (OBRIGATORIO)
+- Quando `user.mustChangePassword === true` (retornado por `/api/auth/me`), o `ForcedPasswordChangeGuard` dentro de `AppShell` redireciona o usuario para `/change-password` em todas as rotas internas
+- A tela `/change-password` e rota **publica** no `AppShell` e exibe layout autocontido (sem sidebar/header); no fluxo forcado, esconde o botao `Cancelar` e altera o titulo para `Defina uma nova senha`
+- No painel de detalhe de `Pessoas` (`UserDangerActions`), o botao `Resetar senha` (disponivel apenas para status `ACTIVE`) chama `POST /api/users/[id]/reset-password` e exibe a senha temporaria em um overlay com botao `Copiar senha`. A senha nao deve ser exibida em nenhum outro lugar (toast, log, e-mail automatico)
+
 ## Logo da Empresa na Sidebar (OBRIGATORIO)
 - A logo no topo esquerdo da sidebar deve vir **exclusivamente** de `user.company.logo` retornado por `/api/auth/me`
 - **NAO** hardcode logos em `public/`, `imagens/` ou qualquer arquivo local para uso na sidebar principal

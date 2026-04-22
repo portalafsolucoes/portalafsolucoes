@@ -29,9 +29,19 @@ export async function GET() {
       phone,
       website,
       logo,
-      createdAt
+      createdAt,
+      status,
+      cnpj,
+      razaoSocial,
+      nomeFantasia,
+      cidade,
+      uf,
+      approvedAt,
+      rejectedAt,
+      rejectedReason,
+      signupPayload
     `)
-    .order('name')
+    .order('createdAt', { ascending: false })
 
   if (error) {
     console.error('Error fetching companies:', error)

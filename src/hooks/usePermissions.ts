@@ -5,8 +5,8 @@ import { hasPermission, isOperationalRole, type UserRole, type Permission } from
 
 export function usePermissions() {
   const { user, role } = useAuth()
-  const permissionSubject = user ?? (role || 'REQUESTER')
-  const userRole = (role || 'REQUESTER') as UserRole
+  const permissionSubject = user ?? (role || 'MANUTENTOR')
+  const userRole = (role || 'MANUTENTOR') as UserRole
 
   return {
     /** Verifica se tem permissão para ação no módulo */

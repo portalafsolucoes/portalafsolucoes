@@ -15,8 +15,31 @@ interface TeamDetailModalProps {
   inPage?: boolean
 }
 
+interface TeamMembership {
+  id: string
+  user: {
+    firstName: string
+    lastName: string
+    image?: string | null
+    jobTitle?: string | null
+    email: string
+  }
+}
+
+interface TeamDetail {
+  id: string
+  name: string
+  description?: string | null
+  members?: TeamMembership[]
+  _count?: {
+    members?: number
+    assignedWorkOrders?: number
+    assignedAssets?: number
+  }
+}
+
 export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete, inPage = false }: TeamDetailModalProps) {
-  const [team, setTeam] = useState<Record<string, unknown> | null>(null)
+  const [team, setTeam] = useState<TeamDetail | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -152,7 +175,7 @@ export function TeamDetailModal({ isOpen, onClose, teamId, onEdit, onDelete, inP
             </div>
             {team.members && team.members.length > 0 ? (
               <div className="space-y-2 px-1">
-                {(team.members as { id: string; user: { firstName: string; lastName: string; image?: string; jobTitle?: string; email: string } }[]).map((membership) => (
+                {team.members.map((membership) => (
                   <div key={membership.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
                     {membership.user.image ? (
                       // eslint-disable-next-line @next/next/no-img-element

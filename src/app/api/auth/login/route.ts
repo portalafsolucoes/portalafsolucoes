@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     const { data: user, error: userError } = await supabase
       .from('User')
-      .select('*, company:Company(*)')
+      .select('*, company:Company!companyId(*)')
       .eq('email', email)
       .single()
 
@@ -44,12 +44,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Company.status gates: empresa rejeitada = indistinguível de credenciais inválidas
+    if (user.company?.status === 'REJECTED') {
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      )
+    }
+
     const isPasswordValid = await verifyPassword(password, user.password)
 
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
+      )
+    }
+
+    // Empresa aguardando aprovação do SUPER_ADMIN
+    if (user.company?.status === 'PENDING_APPROVAL') {
+      return NextResponse.json(
+        { error: 'Seu cadastro está aguardando aprovação. Você receberá uma notificação quando for liberado.' },
+        { status: 403 }
+      )
+    }
+
+    // Email ainda não verificado (signup público): bloquear até confirmar
+    if (user.emailVerificationToken && !user.emailVerifiedAt) {
+      return NextResponse.json(
+        { error: 'E-mail ainda não verificado. Verifique sua caixa de entrada para confirmar o cadastro.' },
+        { status: 403 }
       )
     }
 
@@ -128,6 +152,7 @@ export async function POST(request: NextRequest) {
         company: user.company,
         unitId: activeUnitId,
         unitIds,
+        mustChangePassword: Boolean(user.mustChangePassword),
       }
     })
   } catch {

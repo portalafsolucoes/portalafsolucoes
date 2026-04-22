@@ -25,10 +25,15 @@ export function getProductHref(slug: ProductSlug): string {
   return MAP[slug] ?? '/hub'
 }
 
-/** Retorna o path padrão considerando a role do usuário */
-export function getProductDefaultPath(slug: ProductSlug, role: CanonicalUserRole | null): string {
+export type ProductDefaultPathContext =
+  | CanonicalUserRole
+  | null
+  | { role: CanonicalUserRole | string | null; companyId?: string | null }
+
+/** Retorna o path padrão considerando a role e o companyId do usuário */
+export function getProductDefaultPath(slug: ProductSlug, ctx: ProductDefaultPathContext): string {
   if (slug === 'CMMS') {
-    return getDefaultCmmsPath(role)
+    return getDefaultCmmsPath(ctx as Parameters<typeof getDefaultCmmsPath>[0])
   }
   return getProductHref(slug)
 }

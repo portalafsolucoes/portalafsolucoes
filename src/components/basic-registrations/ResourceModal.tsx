@@ -25,8 +25,18 @@ const UNIT_OPTIONS: Record<string, { value: string; label: string }[]> = {
   ],
 }
 
+interface EditingResource {
+  id?: string
+  name?: string
+  type?: string
+  unit?: string
+  unitCost?: number
+  calendarId?: string
+  protheusCode?: string
+}
+
 interface ResourceModalProps {
-  editingItem: Record<string, unknown> | null
+  editingItem: EditingResource | null
   onClose: () => void
   onSaved: () => void
   calendars: { id: string; name: string }[]
@@ -45,12 +55,12 @@ export function ResourceModal({ editingItem, onClose, onSaved, calendars, inPage
 
   useEffect(() => {
     if (editingItem) {
-      setName(editingItem.name || '')
-      setType(editingItem.type || '')
-      setUnit(editingItem.unit || '')
+      setName(editingItem.name ?? '')
+      setType(editingItem.type ?? '')
+      setUnit(editingItem.unit ?? '')
       setUnitCost(editingItem.unitCost ?? 0)
-      setCalendarId(editingItem.calendarId || '')
-      setProtheusCode(editingItem.protheusCode || '')
+      setCalendarId(editingItem.calendarId ?? '')
+      setProtheusCode(editingItem.protheusCode ?? '')
     } else {
       setName('')
       setType('')

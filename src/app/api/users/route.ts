@@ -107,8 +107,13 @@ export async function POST(request: NextRequest) {
 
     // Apenas staff Portal AF pode criar usuário SUPER_ADMIN. ADMIN da empresa cliente não pode.
     const requestedCanonical = normalizeUserRole(role)
-    if (requestedCanonical === 'SUPER_ADMIN' && normalizeUserRole(session) !== 'SUPER_ADMIN') {
+    const sessionCanonical = normalizeUserRole(session)
+    if (requestedCanonical === 'SUPER_ADMIN' && sessionCanonical !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Apenas staff Portal AF pode criar SUPER_ADMIN' }, { status: 403 })
+    }
+    // PLANEJADOR so pode criar PLANEJADOR ou MANUTENTOR (nao pode criar ADMIN/SUPER_ADMIN)
+    if (sessionCanonical === 'PLANEJADOR' && requestedCanonical !== 'PLANEJADOR' && requestedCanonical !== 'MANUTENTOR') {
+      return NextResponse.json({ error: 'Planejador so pode cadastrar Planejadores ou Manutentores' }, { status: 403 })
     }
 
     if (!email || !password || !firstName || !lastName) {

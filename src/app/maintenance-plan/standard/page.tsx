@@ -12,11 +12,15 @@ import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 
+import type { StandardPlanDetail } from '@/components/standard-plans/StandardPlanDetailPanel'
+
 const StandardPlanDetailPanel = dynamic(() => import('@/components/standard-plans/StandardPlanDetailPanel'), { ssr: false })
 const StandardPlanFormPanel = dynamic(() => import('@/components/standard-plans/StandardPlanFormPanel'), { ssr: false })
 
 type SortField = 'family' | 'familyModel' | 'sequence' | 'serviceType' | 'name' | 'frequency' | 'trackingType' | 'period'
 type SortDirection = 'asc' | 'desc'
+
+type StandardPlanListItem = StandardPlanDetail
 
 export default function StandardMaintenancePlanPage() {
   const router = useRouter()
@@ -24,13 +28,13 @@ export default function StandardMaintenancePlanPage() {
   const role = user?.role ?? ''
 
   // --- dados da listagem ---
-  const [standardPlans, setStandardPlans] = useState<Record<string, unknown>[]>([])
+  const [standardPlans, setStandardPlans] = useState<StandardPlanListItem[]>([])
   const [search, setSearch] = useState('')
   const [sortField, setSortField] = useState<SortField>('family')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // --- painel de detalhe ---
-  const [selectedPlan, setSelectedPlan] = useState<Record<string, unknown> | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<StandardPlanListItem | null>(null)
   const { isPhone } = useResponsiveLayout()
   const [loadingDetail, setLoadingDetail] = useState(false)
 

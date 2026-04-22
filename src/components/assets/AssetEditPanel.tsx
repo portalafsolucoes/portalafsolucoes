@@ -20,7 +20,7 @@ import type {
   WorkCenterOption,
 } from '@/types/catalog'
 
-interface Asset {
+export interface Asset {
   id?: string
   name: string
   description?: string | null

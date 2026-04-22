@@ -8,8 +8,23 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
 
+export interface ExecutionItem {
+  id: string
+  title?: string
+  description?: string | null
+  priority?: string
+  status?: string
+  internalId?: string | null
+  beforePhotoUrl?: string | null
+  afterPhotoUrl?: string | null
+  executionNotes?: string | null
+  executionStartedAt?: string | null
+  executionCompletedAt?: string | null
+  createdAt?: string | Date | null
+}
+
 interface ExecutionModalProps {
-  item: Record<string, unknown>
+  item: ExecutionItem
   type: 'workorder' | 'request'
   onClose: () => void
   onSuccess: () => void
@@ -18,9 +33,9 @@ interface ExecutionModalProps {
 
 export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false }: ExecutionModalProps) {
   const [step, setStep] = useState<'view' | 'start' | 'complete'>('view')
-  const [beforePhoto, setBeforePhoto] = useState<string | null>(item.beforePhotoUrl || null)
-  const [afterPhoto, setAfterPhoto] = useState<string | null>(item.afterPhotoUrl || null)
-  const [executionNotes, setExecutionNotes] = useState(item.executionNotes || '')
+  const [beforePhoto, setBeforePhoto] = useState<string | null>(item.beforePhotoUrl ?? null)
+  const [afterPhoto, setAfterPhoto] = useState<string | null>(item.afterPhotoUrl ?? null)
+  const [executionNotes, setExecutionNotes] = useState<string>(item.executionNotes ?? '')
   const [loading, setLoading] = useState(false)
   const [uploadingBefore, setUploadingBefore] = useState(false)
   const [uploadingAfter, setUploadingAfter] = useState(false)
@@ -178,7 +193,7 @@ export function ExecutionModal({ item, type, onClose, onSuccess, inPage = false 
           <div>
             <h3 className="text-lg font-semibold text-foreground mb-2">{item.title}</h3>
             <div className="flex gap-2 items-center">
-              {getPriorityBadge(item.priority)}
+              {getPriorityBadge(item.priority ?? 'NONE')}
               {isCompleted && <Badge className="bg-success-light0">Concluida</Badge>}
               {isStarted && !isCompleted && <Badge className="bg-warning-light0">Em Execucao</Badge>}
               {!isStarted && <Badge className="bg-secondary0">Nao Iniciada</Badge>}

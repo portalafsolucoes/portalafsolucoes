@@ -69,7 +69,7 @@ export function Navbar() {
                   >
                     <Icon name={item.icon} className="mr-2 text-base" />
                     {item.name}
-                    {item.badge > 0 && (
+                    {'badge' in item && item.badge > 0 && (
                       <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-danger-foreground bg-danger rounded-full">
                         {item.badge}
                       </span>

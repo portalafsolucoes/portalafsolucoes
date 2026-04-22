@@ -12,11 +12,15 @@ import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 
+import type { AssetPlanDetail } from '@/components/asset-plans/AssetPlanDetailPanel'
+
 const AssetPlanDetailPanel = dynamic(() => import('@/components/asset-plans/AssetPlanDetailPanel'), { ssr: false })
 const AssetPlanFormPanel = dynamic(() => import('@/components/asset-plans/AssetPlanFormPanel'), { ssr: false })
 
 type SortField = 'code' | 'assetName' | 'serviceType' | 'sequence' | 'name' | 'frequency' | 'trackingType' | 'isActive'
 type SortDirection = 'asc' | 'desc'
+
+type AssetPlanListItem = AssetPlanDetail
 
 export default function AssetMaintenancePlanPage() {
   const router = useRouter()
@@ -24,13 +28,13 @@ export default function AssetMaintenancePlanPage() {
   const role = user?.role ?? ''
 
   // --- dados da listagem ---
-  const [assetPlans, setAssetPlans] = useState<Record<string, unknown>[]>([])
+  const [assetPlans, setAssetPlans] = useState<AssetPlanListItem[]>([])
   const [search, setSearch] = useState('')
   const [sortField, setSortField] = useState<SortField>('code')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // --- painel de detalhe ---
-  const [selectedPlan, setSelectedPlan] = useState<Record<string, unknown> | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<AssetPlanListItem | null>(null)
   const { isPhone } = useResponsiveLayout()
   const [loadingDetail, setLoadingDetail] = useState(false)
 

@@ -1,12 +1,12 @@
 'use client'
 
 import { Modal } from '../ui/Modal'
-import { AssetEditPanel } from './AssetEditPanel'
+import { AssetEditPanel, type Asset } from './AssetEditPanel'
 
 interface AssetEditModalProps {
   isOpen: boolean
   onClose: () => void
-  asset: Record<string, unknown>
+  asset: Asset
   onSuccess: () => void
   inPage?: boolean
 }

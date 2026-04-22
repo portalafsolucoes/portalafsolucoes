@@ -27,7 +27,7 @@ export default function NewPersonPage() {
     password: '',
     phone: '',
     jobTitleId: '',
-    role: 'TECHNICIAN',
+    role: 'MANUTENTOR',
     rate: '0',
     locationId: '',
     enabled: true

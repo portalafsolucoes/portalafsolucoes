@@ -420,8 +420,32 @@ O sistema ja possui uma base solida em varios aspectos:
 - `.gitignore` exclui `.env*` (segredos nao commitados)
 - Image domains restritos no `next.config.ts`
 - Normalizacao de email no login — `src/lib/auth.ts:16-18`
-- Middleware protege rotas internas e bloqueia registro publico
+- Middleware protege rotas internas; `/register`, `/login`, `/hub`, `/admin/select-company` e `/change-password` sao as unicas rotas publicas
 - Isolamento multiempresa funcional na maioria das rotas
+
+---
+
+## Registro Publico e Aprovacao
+
+- `/api/auth/register` e publica, valida CNPJ (BrasilAPI) e cria `Company` em `PENDING_APPROVAL` com o primeiro usuario em `role = ADMIN` (persistido como `GESTOR`). NAO loga o usuario — o login depende de e-mail verificado e aprovacao SUPER_ADMIN
+- Tokens de verificacao de e-mail ficam em `User.emailVerificationToken/Expires` com TTL de 24h; `GET /api/auth/verify-email` retorna `404` token inexistente, `410` expirado, `200` verificado (sem login automatico)
+- Login bloqueia empresas `PENDING_APPROVAL` com `403` e mensagem clara; empresas `REJECTED` recebem `401` indistinguivel de credenciais invalidas para nao vazar existencia de conta
+- `POST /api/admin/companies/[id]/reject` exige `reason`, grava `RejectedCompanyLog`, anonimiza PII do admin inicial (email/phone/username/firstName/lastName). Indices UNIQUE parciais em `Company.cnpj` e `User.email` permitem reaproveitamento apos rejeicao
+- `EmailOutbox` armazena convites/aprovacoes/rejeicoes em fila; o dispatcher real de e-mail ainda nao esta ligado — a fila e auditoria + hook de integracao futura
+
+## Reset Manual de Senha
+
+- `POST /api/users/[id]/reset-password` (SUPER_ADMIN/ADMIN) gera senha temporaria com `generateTempPassword()`, seta `mustChangePassword=true` e retorna o texto claro UMA UNICA VEZ
+- A senha em texto claro NAO e persistida em claro, NAO e enviada por e-mail automatico, NAO e gravada em log estruturado. O admin repassa por canal seguro (ligacao, mensageria corporativa) e a UI oferece botao `Copiar senha` no overlay
+- Rejeita auto-reset (bloqueia usuario resetando a propria conta) e usuarios `ARCHIVED`
+- `ForcedPasswordChangeGuard` em `src/components/layout/AppShell.tsx` redireciona qualquer usuario com `mustChangePassword=true` para `/change-password`; o guard e client-side (a flag esta na sessao via `/api/auth/me`), portanto o backend NAO pode depender dele — toda rota sensivel que pudesse ser pulada sem trocar a senha deve ter validacao propria se o requisito evoluir para bloqueio total
+- `POST /api/auth/change-password` nao aplica `normalizeTextPayload` (senhas sao preservadas), valida `currentPassword` com `verifyPassword`, exige `newPassword.length >= 8`, diferente da atual e diferente do e-mail
+
+## Notificacoes In-App
+
+- `Notification` e per-user; so o dono pode ler/marcar. Rotas `POST /api/notifications/[id]/read` validam `userId` antes de atualizar
+- Payload nao aceita HTML; renderizacao e sempre texto via React (sem `dangerouslySetInnerHTML`)
+- O polling de 60s do `NotificationBell` nao expoe dados sensiveis — apenas titulo, mensagem e `href` opcional
 
 ---
 

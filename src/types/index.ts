@@ -1,12 +1,10 @@
 export type UserRole =
   | 'SUPER_ADMIN'
   | 'ADMIN'
-  | 'TECHNICIAN'
-  | 'LIMITED_TECHNICIAN'
-  | 'REQUESTER'
-  | 'VIEW_ONLY'
-  | 'GESTOR'
   | 'PLANEJADOR'
+  | 'MANUTENTOR'
+  // Legados persistidos no banco (enum UserRole do Prisma); normalizados para canônicos na camada de aplicação
+  | 'GESTOR'
   | 'MECANICO'
   | 'ELETRICISTA'
   | 'OPERADOR'

@@ -2,6 +2,7 @@
 
 import { UserMenu } from './UserMenu'
 import { UnitSelector } from './UnitSelector'
+import { NotificationBell } from './NotificationBell'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { Icon } from '@/components/ui/Icon'
 
@@ -27,6 +28,7 @@ export function Header() {
         {/* Direita — Unidade + Usuário */}
         <div className="flex items-center gap-2 sm:gap-3">
           <UnitSelector />
+          <NotificationBell />
           <UserMenu />
         </div>
       </div>

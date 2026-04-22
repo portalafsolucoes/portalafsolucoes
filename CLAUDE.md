@@ -83,3 +83,11 @@ Cada produto e habilitado por empresa via `CompanyProduct`. A spec completa de p
 ## Features do CMMS (Modulos de navegacao)
 
 Hub, Login e Autenticacao, Dashboard, Ordens de Servico (OS), Solicitacoes (SS), Gestao de Ativos, Localizacoes, Pessoas e Equipes, Planos de Manutencao, Planejamento e Programacao, Cadastros Basicos, Criticidade de Ativos, Analise de Falhas (RAF + PA das RAFs), KPI - Indicadores, Painel Administrativo, Perfil do Usuario, Configuracoes do Usuario, Arvore Hierarquica, Relatorios e Analiticos (em desenvolvimento)
+
+## Fluxos Publicos e Self-Service
+- `/register` (publico): auto-signup de empresa com CNPJ via BrasilAPI → cria `Company` em `PENDING_APPROVAL` + primeiro `ADMIN` com e-mail nao verificado
+- `/register/verify?token=...` + `/register/pending`: verificacao de e-mail e tela explicativa pos-submit
+- SUPER_ADMIN aprova/rejeita em `/admin/portal` com filtros, banner de pendentes, motivo obrigatorio na rejeicao
+- SUPER_ADMIN troca de empresa via `UserMenu > Trocar empresa` → `/admin/select-company`
+- `NotificationBell` no header alimenta-se de `/api/notifications` com polling de 60s
+- Reset manual de senha (botao em `Pessoas > Resetar senha`) gera senha temporaria exibida **uma unica vez** em overlay, seta `mustChangePassword=true`; `ForcedPasswordChangeGuard` em `AppShell` redireciona para `/change-password` ate a troca ser concluida

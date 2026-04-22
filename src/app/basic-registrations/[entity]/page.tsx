@@ -85,10 +85,13 @@ interface TabConfig {
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: 'SUPER ADMINISTRADOR',
   ADMIN: 'ADMINISTRADOR',
-  TECHNICIAN: 'TECNICO',
-  LIMITED_TECHNICIAN: 'TECNICO LIMITADO',
-  REQUESTER: 'SOLICITANTE',
-  VIEW_ONLY: 'SOMENTE CONSULTA',
+  GESTOR: 'ADMINISTRADOR',
+  PLANEJADOR: 'PLANEJADOR',
+  MANUTENTOR: 'MANUTENTOR',
+  MECANICO: 'MANUTENTOR',
+  ELETRICISTA: 'MANUTENTOR',
+  OPERADOR: 'MANUTENTOR',
+  CONSTRUTOR_CIVIL: 'MANUTENTOR',
 }
 
 type PeopleSortField = 'name' | 'jobTitle' | 'role' | 'rate' | 'calendarName'
@@ -403,7 +406,7 @@ export default function BasicRegistrationEntityPage() {
       fields: [],
       columns: [
         { key: 'name', label: 'Nome' },
-        { key: 'type', label: 'Tipo', render: (v: string) => v === 'WORK' ? 'Mao de Obra' : 'Equipamento' },
+        { key: 'type', label: 'Tipo', render: (v) => v === 'WORK' ? 'Mao de Obra' : 'Equipamento' },
         { key: 'protheusCode', label: 'Cod. Protheus' },
       ],
     },
@@ -510,12 +513,13 @@ export default function BasicRegistrationEntityPage() {
       ],
       columns: [
         { key: 'name', label: 'Nome' },
-        { key: 'type', label: 'Tipo', render: (v: string) => {
+        { key: 'type', label: 'Tipo', render: (v) => {
           const typeLabels: Record<string, string> = {
             MATERIAL: 'Material',
             TOOL: 'Ferramenta',
           }
-          return typeLabels[v] || v
+          const key = String(v ?? '')
+          return typeLabels[key] || key
         }},
         { key: 'calendarName', label: 'Calendario' },
         { key: 'unit', label: 'Unidade' },
@@ -549,12 +553,13 @@ export default function BasicRegistrationEntityPage() {
       ],
       columns: [
         { key: 'name', label: 'Descricao' },
-        { key: 'optionType', label: 'Tipo', render: (value: string, row: EntityRecord) => {
+        { key: 'optionType', label: 'Tipo', render: (value, row) => {
+          const key = String(value ?? '')
           const labels: Record<string, string> = { NONE: 'Nenhuma', RESPONSE: 'Resposta', OPTION: 'Opcao' }
-          const label = labels[value] || value
-          const opts = (row as Record<string, unknown>).options
+          const label = labels[key] || key
+          const opts = row.options
           const optCount = Array.isArray(opts) ? opts.length : 0
-          return value === 'OPTION' && optCount > 0 ? `${label} (${optCount})` : label
+          return key === 'OPTION' && optCount > 0 ? `${label} (${optCount})` : label
         }},
         { key: 'protheusCode', label: 'Cod. Protheus' },
       ],

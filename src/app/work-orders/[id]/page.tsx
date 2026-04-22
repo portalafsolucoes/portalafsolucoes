@@ -12,10 +12,30 @@ import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
 import Link from 'next/link'
 
+type WorkOrderDetail = {
+  id: string
+  title: string
+  description?: string | null
+  status: string
+  priority: string
+  systemStatus?: string
+  externalId?: string | null
+  internalId?: string | null
+  customId?: string | null
+  createdAt: string
+  dueDate?: string | null
+  completedOn?: string | null
+  asset?: { id: string; name: string } | null
+  location?: { id: string; name: string } | null
+  createdBy?: { firstName: string; lastName: string } | null
+  tasks?: { id: string; completed: boolean; label: string; notes?: string }[]
+  assignedUsers?: { id: string; firstName: string; lastName: string; email: string }[]
+}
+
 export default function WorkOrderDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [workOrder, setWorkOrder] = useState<Record<string, unknown> | null>(null)
+  const [workOrder, setWorkOrder] = useState<WorkOrderDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -156,7 +176,7 @@ export default function WorkOrderDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {(workOrder.tasks as { id: string; completed: boolean; label: string; notes?: string }[]).map((task) => (
+                    {workOrder.tasks.map((task) => (
                       <div key={task.id} className="flex items-start gap-3 p-3 bg-surface rounded-[4px]">
                         {task.completed ? (
                           <Icon name="check_circle" className="text-xl text-success flex-shrink-0 mt-0.5" />
@@ -257,7 +277,7 @@ export default function WorkOrderDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {(workOrder.assignedUsers as { id: string; firstName: string; lastName: string; email: string }[]).map((user) => (
+                    {workOrder.assignedUsers.map((user) => (
                       <div key={user.id} className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-primary">

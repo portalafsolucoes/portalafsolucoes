@@ -16,10 +16,27 @@ export interface FinalizeResult {
   }
 }
 
+export interface FinalizeWorkOrder {
+  id: string
+  title?: string
+  type?: string
+  status?: string
+  osType?: string
+  externalId?: string | null
+  internalId?: string | null
+  customId?: string | null
+  assetId?: string | null
+  locationId?: string | null
+  assetMaintenancePlanId?: string | null
+  dueMeterReading?: number | null
+  asset?: { id: string; name: string; locationId?: string | null } | null
+  raf?: { id: string } | null
+}
+
 interface FinalizeModalProps {
   isOpen: boolean
   onClose: () => void
-  workOrder: Record<string, unknown>
+  workOrder: FinalizeWorkOrder
   onFinalized: (result?: FinalizeResult) => void
   inPage?: boolean
 }

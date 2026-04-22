@@ -35,7 +35,7 @@ export async function GET(
       `)
       .eq('id', id)
       .eq('companyId', session.companyId)
-    if (canonicalRole === 'REQUESTER') query = query.eq('createdById', session.id)
+    if (canonicalRole === 'MANUTENTOR') query = query.eq('createdById', session.id)
 
     const { data: maintenanceRequest, error } = await query.single()
 
@@ -137,7 +137,7 @@ export async function PUT(
       .select('id')
       .eq('id', id)
       .eq('companyId', session.companyId)
-    if (canonicalRole === 'REQUESTER') existingQuery = existingQuery.eq('createdById', session.id)
+    if (canonicalRole === 'MANUTENTOR') existingQuery = existingQuery.eq('createdById', session.id)
     const { data: existingRequest } = await existingQuery.single()
 
     if (!existingRequest) {
@@ -227,7 +227,7 @@ export async function DELETE(
       .select('id')
       .eq('id', id)
       .eq('companyId', session.companyId)
-    if (canonicalRole === 'REQUESTER') existingQuery = existingQuery.eq('createdById', session.id)
+    if (canonicalRole === 'MANUTENTOR') existingQuery = existingQuery.eq('createdById', session.id)
     const { data: maintenanceRequest } = await existingQuery.single()
 
     if (!maintenanceRequest) {

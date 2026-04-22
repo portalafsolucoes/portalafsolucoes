@@ -11,6 +11,7 @@ export interface AuthUser {
   canonicalRole?: string
   legacyRole?: string
   jobTitle?: string
+  mustChangePassword?: boolean
   companyId: string
   companyName: string
   unitId?: string

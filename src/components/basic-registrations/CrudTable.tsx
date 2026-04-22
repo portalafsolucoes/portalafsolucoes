@@ -341,10 +341,10 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(item => (
-                <tr key={item.id} className="hover:bg-muted/50 transition-colors">
+                <tr key={item.id as string} className="hover:bg-muted/50 transition-colors">
                   {columns.map(col => (
                     <td key={col.key} className="px-4 py-3 text-foreground">
-                      {col.render ? col.render(item[col.key], item) : (item[col.key] ?? '-')}
+                      {col.render ? col.render(item[col.key], item) : ((item[col.key] ?? '-') as React.ReactNode)}
                     </td>
                   ))}
                   {(allowEdit || allowDelete) && (
@@ -361,7 +361,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                         )}
                         {allowDelete && (
                           <button
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => handleDelete(item.id as string)}
                             className="p-1.5 hover:bg-danger-light rounded transition-colors"
                             title="Excluir"
                           >
@@ -404,7 +404,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
             {fields.filter(f => {
               if (f.readOnly && !editingItem) return false
               if (f.visibleWhen) {
-                const depValue = formData[f.visibleWhen.field]
+                const depValue = formData[f.visibleWhen.field] as string
                 const expected = f.visibleWhen.value
                 if (Array.isArray(expected)) {
                   if (!expected.includes(depValue)) return false
@@ -420,14 +420,14 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                 </label>
                 {field.type === 'combobox' ? (
                   <ComboboxField
-                    value={formData[field.key] || ''}
+                    value={(formData[field.key] as string) || ''}
                     onChange={(val) => setFormData({ ...formData, [field.key]: val })}
                     options={field.options || []}
                     placeholder={field.placeholder || 'Selecione ou digite...'}
                   />
                 ) : field.type === 'select' ? (
                   <select
-                    value={formData[field.key] || ''}
+                    value={(formData[field.key] as string) || ''}
                     onChange={e => {
                       const newVal = e.target.value
                       const updated = { ...formData, [field.key]: newVal }
@@ -451,7 +451,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                   </select>
                 ) : field.type === 'textarea' ? (
                   <textarea
-                    value={formData[field.key] || ''}
+                    value={(formData[field.key] as string) || ''}
                     onChange={e => setFormData({ ...formData, [field.key]: e.target.value })}
                     placeholder={field.placeholder}
                     rows={3}
@@ -472,7 +472,7 @@ export function CrudTable({ entity, title, fields, columns, unitScoped, activeUn
                 ) : (
                   <input
                     type={field.type}
-                    value={formData[field.key] ?? ''}
+                    value={(formData[field.key] as string | number | undefined) ?? ''}
                     onChange={e => setFormData({
                       ...formData,
                       [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value

@@ -20,13 +20,8 @@ export function middleware(request: NextRequest) {
   // Cookie existe mas tem formato antigo (pre-HMAC) — tratar como sem sessao
   const hasSession = !!sessionCookie && hasValidSessionFormat(sessionCookie.value)
 
-  // Registro público desabilitado - redireciona para login
-  if (pathname.startsWith('/register')) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/hub']
+  const publicRoutes = ['/login', '/hub', '/register']
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
 
   // If user is not authenticated and trying to access protected route

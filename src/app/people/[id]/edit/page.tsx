@@ -29,7 +29,7 @@ export default function EditPersonPage() {
     password: '',
     phone: '',
     jobTitleId: '',
-    role: 'TECHNICIAN',
+    role: 'MANUTENTOR',
     rate: '0',
     locationId: '',
     enabled: true

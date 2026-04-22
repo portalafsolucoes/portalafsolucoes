@@ -67,7 +67,7 @@ export default function HubPage() {
     if (!module.enabled) return
 
     if (isAuthenticated) {
-      router.push(getProductDefaultPath(module.slug, userRole))
+      router.push(getProductDefaultPath(module.slug, { role: userRole, companyId: user?.companyId ?? null }))
     } else {
       router.push(`/login?returnUrl=${encodeURIComponent(getProductHref(module.slug))}`)
     }
@@ -155,13 +155,22 @@ export default function HubPage() {
                 </div>
               </div>
             ) : (
-              <button
-                onClick={handleLoginClick}
-                className="flex items-center gap-2 rounded-[8px] bg-sidebar px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-sidebar/20 transition-all hover:bg-sidebar/90 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <Icon name="login" className="text-base" />
-                <span>Acessar</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/register')}
+                  className="hidden sm:flex items-center gap-2 rounded-[8px] border border-sidebar/15 px-4 py-2.5 text-sm font-bold text-sidebar transition-all hover:bg-sidebar/5"
+                >
+                  <Icon name="add_business" className="text-base" />
+                  <span>Cadastre sua empresa</span>
+                </button>
+                <button
+                  onClick={handleLoginClick}
+                  className="flex items-center gap-2 rounded-[8px] bg-sidebar px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-sidebar/20 transition-all hover:bg-sidebar/90 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <Icon name="login" className="text-base" />
+                  <span>Acessar</span>
+                </button>
+              </div>
             )}
           </div>
         </div>

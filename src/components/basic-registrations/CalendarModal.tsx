@@ -50,8 +50,17 @@ const defaultWorkDays = (): WorkDays => ({
   holidays: [],
 })
 
+interface EditingCalendar {
+  id?: string
+  name?: string
+  description?: string
+  type?: string
+  protheusCode?: string
+  workDays?: string | WorkDays | null
+}
+
 interface CalendarModalProps {
-  editingItem: Record<string, unknown> | null
+  editingItem: EditingCalendar | null
   onClose: () => void
   onSaved: () => void
   inPage?: boolean
@@ -70,17 +79,23 @@ export function CalendarModal({ editingItem, onClose, onSaved, inPage = false }:
 
   useEffect(() => {
     if (editingItem) {
-      setName(editingItem.name || '')
-      setDescription(editingItem.description || '')
-      setType(editingItem.type || 'WORK')
-      setProtheusCode(editingItem.protheusCode || '')
+      setName(editingItem.name ?? '')
+      setDescription(editingItem.description ?? '')
+      setType(editingItem.type ?? 'WORK')
+      setProtheusCode(editingItem.protheusCode ?? '')
       const wd = editingItem.workDays
       if (wd) {
         const parsed = typeof wd === 'string' ? JSON.parse(wd) : wd
-        // Garante que todos os dias existam mesmo em registros antigos
+        // Garante que todos os dias existam mesmo em registros antigos.
+        // Comparacao case-insensitive recupera calendarios salvos antes do fix
+        // do textNormalizer (quando `day` era persistido em MAIUSCULAS).
         const mergedWeekDays = WEEK_DAYS.map(d => {
-          const existing = parsed.weekDays?.find((w: DayConfig) => w.day === d.day)
-          return existing ?? { day: d.day, label: d.label, active: false, shifts: [] }
+          const existing = parsed.weekDays?.find(
+            (w: DayConfig) => String(w.day).toLowerCase() === d.day
+          )
+          return existing
+            ? { ...existing, day: d.day, label: d.label }
+            : { day: d.day, label: d.label, active: false, shifts: [] }
         })
         setWorkDays({ weekDays: mergedWeekDays, holidays: parsed.holidays || [] })
       } else {

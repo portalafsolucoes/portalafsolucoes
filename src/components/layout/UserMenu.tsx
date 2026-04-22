@@ -6,14 +6,16 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/hooks/useAuth'
-import { getRoleDisplayName, getRoleIcon } from '@/lib/user-roles'
+import { getRoleDisplayName, getRoleIcon, normalizeUserRole } from '@/lib/user-roles'
 
 export function UserMenu() {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [switchingAway, setSwitchingAway] = useState(false)
   const router = useRouter()
   const queryClient = useQueryClient()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const isSuperAdmin = normalizeUserRole(user) === 'SUPER_ADMIN'
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -32,6 +34,24 @@ export function UserMenu() {
     queryClient.removeQueries({ queryKey: ['company-modules'] })
     router.replace('/login')
     router.refresh()
+  }
+
+  const handleSwitchCompany = async () => {
+    try {
+      setSwitchingAway(true)
+      await fetch('/api/admin/switch-company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: null }),
+      })
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] })
+      queryClient.removeQueries({ queryKey: ['company-modules'] })
+      setIsOpen(false)
+      router.push('/admin/select-company')
+      router.refresh()
+    } finally {
+      setSwitchingAway(false)
+    }
   }
 
   if (!user) return null
@@ -103,6 +123,27 @@ export function UserMenu() {
               <Icon name="settings" className="text-lg text-on-surface-variant" />
               Configurações
             </Link>
+
+            {isSuperAdmin && (
+              <>
+                <button
+                  onClick={handleSwitchCompany}
+                  disabled={switchingAway}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-gray-50 transition-colors w-full disabled:opacity-60"
+                >
+                  <Icon name="swap_horiz" className="text-lg text-on-surface-variant" />
+                  {switchingAway ? 'Trocando…' : 'Trocar empresa'}
+                </button>
+                <Link
+                  href="/admin/portal"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-gray-50 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Icon name="admin_panel_settings" className="text-lg text-on-surface-variant" />
+                  Administração do Portal
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="mx-4 h-px bg-gray-200" />

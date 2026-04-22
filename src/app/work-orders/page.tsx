@@ -36,14 +36,20 @@ interface WorkOrder {
   description?: string | null
   priority: string
   status: string
+  type?: string
+  osType?: string
   dueDate?: string | null
   rescheduledDate?: string | null
   rescheduleCount?: number | null
   dueMeterReading?: number | null
-  asset?: { name: string; tag?: string; protheusCode?: string }
+  assetId?: string | null
+  locationId?: string | null
+  assetMaintenancePlanId?: string | null
+  asset?: { id: string; name: string; tag?: string; protheusCode?: string; locationId?: string | null }
   location?: { name: string }
   maintenancePlanExec?: { planNumber: number; trackingType?: string }
   assetMaintenancePlan?: { trackingType?: string; maintenanceTime?: number; timeUnit?: string }
+  raf?: { id: string } | null
   createdAt: string
 }
 

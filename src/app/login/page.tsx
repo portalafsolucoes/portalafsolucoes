@@ -24,20 +24,20 @@ const DEV_QUICK_ACCESS = [
     company: 'Cimento Vale do Norte SA',
     users: [
       { label: 'ADMIN', email: 'admin@valenorte.local', password: 'Teste@123', name: 'Marcos Lima' },
-      { label: 'TECHNICIAN', email: 'tecnico@valenorte.local', password: 'Teste@123', name: 'Joao Ferreira' },
-      { label: 'LIMITED_TECHNICIAN', email: 'tecnico.limitado@valenorte.local', password: 'Teste@123', name: 'Paula Santos' },
-      { label: 'REQUESTER', email: 'solicitante@valenorte.local', password: 'Teste@123', name: 'Ana Souza' },
-      { label: 'VIEW_ONLY', email: 'consulta@valenorte.local', password: 'Teste@123', name: 'Bruno Almeida' }
+      { label: 'MANUTENTOR', email: 'tecnico@valenorte.local', password: 'Teste@123', name: 'Joao Ferreira' },
+      { label: 'MANUTENTOR', email: 'tecnico.limitado@valenorte.local', password: 'Teste@123', name: 'Paula Santos' },
+      { label: 'MANUTENTOR', email: 'solicitante@valenorte.local', password: 'Teste@123', name: 'Ana Souza' },
+      { label: 'MANUTENTOR', email: 'consulta@valenorte.local', password: 'Teste@123', name: 'Bruno Almeida' }
     ]
   },
   {
     company: 'Polimix Concreto Ltda',
     users: [
       { label: 'ADMIN', email: 'admin@polimix.local', password: 'Teste@123', name: 'Marcos Lima' },
-      { label: 'TECHNICIAN', email: 'tecnico@polimix.local', password: 'Teste@123', name: 'Joao Ferreira' },
-      { label: 'LIMITED_TECHNICIAN', email: 'tecnico.limitado@polimix.local', password: 'Teste@123', name: 'Paula Santos' },
-      { label: 'REQUESTER', email: 'solicitante@polimix.local', password: 'Teste@123', name: 'Ana Souza' },
-      { label: 'VIEW_ONLY', email: 'consulta@polimix.local', password: 'Teste@123', name: 'Bruno Almeida' }
+      { label: 'MANUTENTOR', email: 'tecnico@polimix.local', password: 'Teste@123', name: 'Joao Ferreira' },
+      { label: 'MANUTENTOR', email: 'tecnico.limitado@polimix.local', password: 'Teste@123', name: 'Paula Santos' },
+      { label: 'MANUTENTOR', email: 'solicitante@polimix.local', password: 'Teste@123', name: 'Ana Souza' },
+      { label: 'MANUTENTOR', email: 'consulta@polimix.local', password: 'Teste@123', name: 'Bruno Almeida' }
     ]
   }
 ] as const
@@ -169,6 +169,16 @@ function LoginForm() {
                   {loading ? 'Entrando...' : 'Entrar'}
                 </Button>
 
+                <div className="text-center text-sm text-muted-foreground">
+                  Sua empresa ainda não faz parte do Portal?{' '}
+                  <button
+                    type="button"
+                    onClick={() => router.push('/register')}
+                    className="font-medium text-primary hover:text-primary-hover"
+                  >
+                    Cadastre-se
+                  </button>
+                </div>
                 <div className="text-center text-xs text-muted-foreground/60">
                   Acesso restrito. Contate o administrador da sua empresa.
                 </div>

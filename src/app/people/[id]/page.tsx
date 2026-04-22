@@ -9,10 +9,28 @@ import { PageHeader } from '@/components/layout/PageHeader'
 
 import { getRoleLabel } from '@/lib/rbac'
 
+type PersonDetail = {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  jobTitle?: string | null
+  image?: string | null
+  phone?: string | null
+  rate: number
+  role: string
+  enabled: boolean
+  location?: { id: string; name: string } | null
+  teamMemberships?: { team: { id: string; name: string } }[]
+  createdAt: string
+  updatedAt: string
+  lastLogin?: string | null
+}
+
 export default function PersonDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [user, setUser] = useState<Record<string, unknown> | null>(null)
+  const [user, setUser] = useState<PersonDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
@@ -218,7 +236,7 @@ export default function PersonDetailPage() {
           <div className="mt-6 bg-card rounded-[4px] ambient-shadow p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Equipes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(user.teamMemberships as { team: { id: string; name: string } }[]).map((membership) => (
+              {user.teamMemberships.map((membership) => (
                 <Link
                   key={membership.team.id}
                   href={`/teams/${membership.team.id}`}

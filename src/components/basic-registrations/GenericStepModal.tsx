@@ -6,16 +6,24 @@ import { ModalSection } from '@/components/ui/ModalSection'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
-interface GenericStepModalProps {
-  editingItem: Record<string, unknown> | null
-  onClose: () => void
-  onSaved: () => void
-  inPage?: boolean
-}
-
 interface StepOption {
   label: string
   order: number
+}
+
+interface EditingGenericStep {
+  id?: string
+  name?: string
+  optionType?: string
+  protheusCode?: string
+  options?: StepOption[]
+}
+
+interface GenericStepModalProps {
+  editingItem: EditingGenericStep | null
+  onClose: () => void
+  onSaved: () => void
+  inPage?: boolean
 }
 
 export function GenericStepModal({ editingItem, onClose, onSaved, inPage = false }: GenericStepModalProps) {
@@ -29,13 +37,13 @@ export function GenericStepModal({ editingItem, onClose, onSaved, inPage = false
 
   useEffect(() => {
     if (editingItem) {
-      setName(editingItem.name || '')
-      setOptionType(editingItem.optionType || 'NONE')
-      setProtheusCode(editingItem.protheusCode || '')
+      setName(editingItem.name ?? '')
+      setOptionType(editingItem.optionType ?? 'NONE')
+      setProtheusCode(editingItem.protheusCode ?? '')
       setOptions(
-        (editingItem.options || [])
-          .sort((a: StepOption, b: StepOption) => a.order - b.order)
-          .map((o: { label: string; order: number }) => ({ label: o.label, order: o.order }))
+        [...(editingItem.options ?? [])]
+          .sort((a, b) => a.order - b.order)
+          .map((o) => ({ label: o.label, order: o.order }))
       )
     } else {
       setName('')

@@ -7,10 +7,23 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Icon } from '@/components/ui/Icon'
 
+type TeamMember = {
+  id: string
+  user: { id: string; firstName: string; lastName: string; email: string; image?: string; jobTitle?: string }
+}
+
+type TeamDetail = {
+  id: string
+  name: string
+  description?: string | null
+  members?: TeamMember[]
+  _count?: { members?: number; assignedWorkOrders?: number; assignedAssets?: number }
+}
+
 export default function TeamDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [team, setTeam] = useState<Record<string, unknown> | null>(null)
+  const [team, setTeam] = useState<TeamDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
@@ -98,7 +111,7 @@ export default function TeamDetailPage() {
 
         <PageHeader
           title={team.name}
-          description={team.description}
+          description={team.description ?? undefined}
           actions={
             <div className="flex gap-2">
               <Link
@@ -156,7 +169,7 @@ export default function TeamDetailPage() {
           <h2 className="text-lg font-semibold text-foreground mb-4">Membros da Equipe</h2>
           {team.members && team.members.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(team.members as { id: string; user: { id: string; firstName: string; lastName: string; email: string; image?: string; jobTitle?: string } }[]).map((membership) => (
+              {team.members.map((membership) => (
                 <Link
                   key={membership.id}
                   href={`/people/${membership.user.id}`}

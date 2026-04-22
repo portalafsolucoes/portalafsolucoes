@@ -131,6 +131,32 @@ export function LocationDetailPanel({
             </div>
           </div>
         )}
+
+        {/* Map section */}
+        {location.latitude != null && location.longitude != null && (
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3">Mapa</h3>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Abrir no Google Maps"
+              className="relative block w-full h-56 rounded-[4px] overflow-hidden border border-gray-200 hover:opacity-90 transition-opacity group"
+            >
+              <iframe
+                src={`https://www.google.com/maps?q=${location.latitude},${location.longitude}&hl=pt-BR&z=15&output=embed`}
+                className="w-full h-full pointer-events-none"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div className="absolute inset-0 cursor-pointer" />
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-[4px] shadow-sm text-[11px] font-medium text-gray-700 group-hover:bg-gray-50">
+                <Icon name="open_in_new" className="text-sm" />
+                Abrir no Google Maps
+              </div>
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )
