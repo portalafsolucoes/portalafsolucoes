@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -10,6 +10,14 @@ import { PORTAL_NAME } from '@/lib/branding'
 type Status = 'loading' | 'verified' | 'already' | 'expired' | 'invalid' | 'missing' | 'error'
 
 export default function RegisterVerifyPage() {
+  return (
+    <Suspense fallback={<RegisterVerifyShell status="loading" message="" />}>
+      <RegisterVerifyContent />
+    </Suspense>
+  )
+}
+
+function RegisterVerifyContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -68,6 +76,11 @@ export default function RegisterVerifyPage() {
     }
   }, [token])
 
+  return <RegisterVerifyShell status={status} message={message} />
+}
+
+function RegisterVerifyShell({ status, message }: { status: Status; message: string }) {
+  const router = useRouter()
   const view = renderView(status, message)
 
   return (
