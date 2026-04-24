@@ -6,7 +6,13 @@ import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { ParentAssetSelect } from './ParentAssetSelect'
+import {
+  StandardPlansIncorporationDialog,
+  type IncorporationStandardPlan,
+} from './StandardPlansIncorporationDialog'
 import { useActiveUnit } from '@/hooks/useActiveUnit'
+import { pickParentInheritedValues } from '@/lib/assets/parentInheritance'
 import type { ApiItemResponse, ApiListResponse } from '@/types/api'
 import type {
   AreaOption,
@@ -97,6 +103,30 @@ interface AssetCharacteristicValue {
   } | null
 }
 
+function collectDescendantIds(rootId: string, assets: AssetOption[]): Set<string> {
+  const childrenByParent = new Map<string, string[]>()
+  for (const a of assets) {
+    if (a.parentAssetId) {
+      const bucket = childrenByParent.get(a.parentAssetId) || []
+      bucket.push(a.id)
+      childrenByParent.set(a.parentAssetId, bucket)
+    }
+  }
+  const result = new Set<string>()
+  const stack = [rootId]
+  while (stack.length) {
+    const cur = stack.pop()!
+    const kids = childrenByParent.get(cur) || []
+    for (const k of kids) {
+      if (!result.has(k)) {
+        result.add(k)
+        stack.push(k)
+      }
+    }
+  }
+  return result
+}
+
 function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
@@ -141,6 +171,9 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
   const [mainImagePreview, setMainImagePreview] = useState<string>(asset.image || '')
   const [attachments, setAttachments] = useState<File[]>([])
   const [existingFiles, setExistingFiles] = useState(asset.files || [])
+  const [compatiblePlans, setCompatiblePlans] = useState<IncorporationStandardPlan[]>([])
+  const [incorporationOpen, setIncorporationOpen] = useState(false)
+  const [incorporationSubmitting, setIncorporationSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
     // Identificação
@@ -260,6 +293,85 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
   useEffect(() => {
     void loadData()
   }, [loadData])
+
+  const loadCompatiblePlans = useCallback(async () => {
+    if (!asset.id || !asset.familyId) {
+      setCompatiblePlans([])
+      return
+    }
+    try {
+      const res = await fetch(
+        `/api/maintenance-plans/standard/by-family?assetId=${asset.id}`
+      )
+      const body = (await res.json()) as ApiListResponse<IncorporationStandardPlan>
+      setCompatiblePlans(body.data || [])
+    } catch (err) {
+      console.error('Erro ao buscar planos padrao compativeis:', err)
+      setCompatiblePlans([])
+    }
+  }, [asset.id, asset.familyId])
+
+  useEffect(() => {
+    void loadCompatiblePlans()
+  }, [loadCompatiblePlans])
+
+  const handleIncorporatePlans = async (selectedIds: string[]) => {
+    if (!asset.id || selectedIds.length === 0) {
+      setIncorporationOpen(false)
+      return
+    }
+    setIncorporationSubmitting(true)
+    try {
+      const res = await fetch('/api/maintenance-plans/asset/batch-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId: asset.id, standardPlanIds: selectedIds }),
+      })
+      const body = (await res.json()) as {
+        data?: {
+          createdCount: number
+          failureCount: number
+        }
+        error?: string
+      }
+      if (!res.ok) {
+        alert(body?.error || 'Erro ao incorporar planos padrao')
+      } else if (body.data && body.data.failureCount > 0) {
+        alert(
+          `${body.data.createdCount} plano(s) incorporado(s). ${body.data.failureCount} falharam.`
+        )
+      }
+    } catch (err) {
+      console.error('Erro ao incorporar planos:', err)
+      alert('Erro ao conectar ao servidor')
+    } finally {
+      setIncorporationSubmitting(false)
+      setIncorporationOpen(false)
+      await loadCompatiblePlans()
+    }
+  }
+
+  // Herança de Bem Pai: copia Localização/Organização + Matriz GUT quando o
+  // usuário TROCA o pai do ativo. Abrir o painel com o pai atual não deve
+  // sobrescrever os valores já salvos — por isso o ref inicia com o pai
+  // atual do ativo.
+  const appliedParentIdRef = useRef<string>(asset.parentAssetId || '')
+
+  useEffect(() => {
+    const currentParentId = formData.parentAssetId
+    if (!currentParentId) {
+      appliedParentIdRef.current = ''
+      return
+    }
+    if (currentParentId === appliedParentIdRef.current) return
+    const parent = assets.find(a => a.id === currentParentId)
+    if (!parent) return
+    const inherited = pickParentInheritedValues(parent)
+    setFormData(prev => ({ ...prev, ...inherited }))
+    appliedParentIdRef.current = currentParentId
+  }, [formData.parentAssetId, assets])
+
+  const hasParent = !!formData.parentAssetId
 
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -429,6 +541,14 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
   }
 
   const selectClass = "w-full px-3 py-2 border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+  const lockedSelectClass = `${selectClass} opacity-70 cursor-not-allowed bg-muted/30`
+  const locationFieldClass = hasParent ? lockedSelectClass : selectClass
+  const lockedHint = (
+    <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+      <Icon name="lock" className="text-[11px]" />
+      Herdado do Bem Pai
+    </p>
+  )
 
   return (
     <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
@@ -438,6 +558,26 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-3">
+
+        {/* Banner: planos padrao compativeis disponiveis para incorporar */}
+        {compatiblePlans.length > 0 && (
+          <div className="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-[4px]">
+            <div className="flex items-center gap-2 text-sm text-amber-900">
+              <Icon name="auto_awesome" className="text-base text-amber-700" />
+              <span>
+                Há {compatiblePlans.length} plano(s) padrão compatíve(is) disponível(is) para
+                incorporar a este bem.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIncorporationOpen(true)}
+              className="text-xs font-semibold text-amber-900 hover:text-amber-700 underline underline-offset-2"
+            >
+              Ver
+            </button>
+          </div>
+        )}
 
         {/* === IDENTIFICAÇÃO === */}
         <Section title="Identificação" defaultOpen={true}>
@@ -461,12 +601,12 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
         <Section title="Classificação" defaultOpen={true}>
           <div>
             <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Ativo Pai</label>
-            <select value={formData.parentAssetId} onChange={(e) => updateField('parentAssetId', e.target.value)} className={selectClass}>
-              <option value="">Nenhum (Ativo Raiz)</option>
-              {assets.filter(a => !a.parentAssetId && a.id !== asset.id).map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
+            <ParentAssetSelect
+              assets={assets}
+              value={formData.parentAssetId}
+              onChange={(id) => updateField('parentAssetId', id)}
+              excludeIds={new Set<string>([asset.id!, ...collectDescendantIds(asset.id!, assets)])}
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -520,43 +660,48 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Área</label>
-              <select value={formData.areaId} onChange={(e) => updateField('areaId', e.target.value)} className={selectClass}>
+              <select value={formData.areaId} onChange={(e) => updateField('areaId', e.target.value)} disabled={hasParent} className={locationFieldClass}>
                 <option value="">Selecione</option>
                 {filteredAreas.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
               </select>
+              {hasParent && lockedHint}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Centro de Trabalho</label>
-              <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} className={selectClass}>
+              <select value={formData.workCenterId} onChange={(e) => updateField('workCenterId', e.target.value)} disabled={hasParent} className={locationFieldClass}>
                 <option value="">Selecione</option>
                 {filteredWorkCenters.map((wc) => (<option key={wc.id} value={wc.id}>{wc.name}</option>))}
               </select>
+              {hasParent && lockedHint}
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Centro de Custo</label>
-              <select value={formData.costCenterId} onChange={(e) => updateField('costCenterId', e.target.value)} className={selectClass}>
+              <select value={formData.costCenterId} onChange={(e) => updateField('costCenterId', e.target.value)} disabled={hasParent} className={locationFieldClass}>
                 <option value="">Selecione</option>
                 {costCenters.map((cc) => (<option key={cc.id} value={cc.id}>{cc.code ? `${cc.code} - ${cc.name}` : cc.name}</option>))}
               </select>
+              {hasParent && lockedHint}
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Posição</label>
-              <select value={formData.positionId} onChange={(e) => updateField('positionId', e.target.value)} className={selectClass}>
+              <select value={formData.positionId} onChange={(e) => updateField('positionId', e.target.value)} disabled={hasParent} className={locationFieldClass}>
                 <option value="">Selecione</option>
                 {positions.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
               </select>
+              {hasParent && lockedHint}
             </div>
           </div>
           <div>
             <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Turno</label>
-            <select value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} className={selectClass}>
+            <select value={formData.shiftCode} onChange={(e) => updateField('shiftCode', e.target.value)} disabled={hasParent} className={locationFieldClass}>
               <option value="">Selecione</option>
               {calendars.map((cal) => (
                 <option key={cal.id} value={cal.name}>{cal.name}</option>
               ))}
             </select>
+            {hasParent && lockedHint}
           </div>
         </Section>
 
@@ -812,6 +957,15 @@ export function AssetEditPanel({ asset, onClose, onSuccess }: AssetEditPanelProp
           </Button>
         </div>
       </form>
+
+      <StandardPlansIncorporationDialog
+        isOpen={incorporationOpen}
+        onClose={() => setIncorporationOpen(false)}
+        onConfirm={handleIncorporatePlans}
+        plans={compatiblePlans}
+        assetLabel={asset.name}
+        submitting={incorporationSubmitting}
+      />
     </div>
   )
 }

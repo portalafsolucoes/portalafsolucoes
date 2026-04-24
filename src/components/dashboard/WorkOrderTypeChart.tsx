@@ -8,6 +8,7 @@ interface WOTypeDatum {
   key: string
   label: string
   count: number
+  [extra: string]: unknown
 }
 
 const TYPE_COLORS: Record<string, string> = {

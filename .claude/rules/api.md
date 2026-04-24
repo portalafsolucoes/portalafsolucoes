@@ -171,6 +171,37 @@ globs: src/app/api/**,src/actions/**
 - A ordem do resultado deve preservar a ordem do parametro de entrada (uso do padrao `Map<id, row>` para reassociar)
 - Este modo alimenta os componentes `WorkOrdersBatchPrintView`, `RequestsBatchPrintView` e `RAFsBatchPrintView`, que renderizam uma pagina A4 por registro com `print:break-after-page` entre elas
 
+## Auto-vinculo Bem <-> Plano Padrao
+Feature que cria `AssetMaintenancePlan` automaticamente a partir de planos padrao (`StandardMaintenancePlan`) compativeis, com rastreio de override e reversao e propagacao de alteracoes. Helpers centralizados em `src/lib/maintenance-plans/standardSync.ts`; duplicata canonica em `src/lib/assets/planMatching.ts` (chave funcional `{assetId, serviceTypeId, maintenanceTime, timeUnit, trackingType}`).
+
+### Criterio de compatibilidade (mesma regra em ambas as direcoes)
+- `assetFamilyId` do Bem === `assetFamilyId` do plano padrao (obrigatorio)
+- `assetModelId`: plano com `modelId = NULL` casa com qualquer modelo; plano com `modelId` preenchido so casa com bens do mesmo modelo (regra assimetrica)
+- Plano padrao deve estar ativo (`isActive = true`)
+- Bem deve estar operacional (nao arquivado/inativo)
+
+### Situacao 1 — A partir do Bem
+- `POST /api/assets` e `PUT /api/assets/[id]`: apos salvar, o handler calcula planos padrao compativeis. Se houver candidatos, a resposta inclui `compatibleStandardPlans: StandardPlanCandidate[]` para a UI abrir `AssetLinkingDialog`
+- `POST /api/assets/[id]/apply-standard-plans` recebe `{ standardPlanIds: string[] }`; para cada id compativel, chama `applyStandardToAsset(standardPlanId, assetId, companyId)` que cria o `AssetMaintenancePlan` + tarefas/passos/recursos clonados. Rejeita duplicatas (chave funcional) como `skipped`; falhas de I/O viram `failed`
+- Resposta: `{ data: { applied, skipped, failed } }` com contagens e ids
+
+### Situacao 2 — A partir do Plano Padrao
+- `GET /api/maintenance-plans/standard/[id]/compatible-assets` lista bens compativeis (aplica filtro de familia/modelo + escopo empresa/unidade) marcando `alreadyLinked: boolean` para bens com plano ativo baseado neste padrao
+- `POST /api/maintenance-plans/standard/[id]/apply-to-assets` recebe `{ assetIds: string[] }`; cria `AssetMaintenancePlan` para cada bem compativel sem plano preexistente. Mesma semantica de `applied/skipped/failed`
+- `POST /api/maintenance-plans/standard` (criacao): apos salvar, o handler retorna `compatibleAssets` para abrir o dialog imediatamente
+
+### Override e Reversao
+- Editar estruturalmente um `AssetMaintenancePlan` (tarefas, passos, recursos, tempos, tolerancia, tipo de medidor) marca `hasLocalOverrides = true`, preenche `detachedAt = now()` e `detachedById = session.userId`
+- Campos operacionais (`assetId`, `lastMaintenanceDate`, `toleranceDays`, `maintenanceAreaId`, `serviceTypeId`, `sequence`, `isActive`) podem ser editados sem disparar override
+- Helper `markAsOverridden(planId, userId)` em `src/lib/maintenance-plans/standardSync.ts` e o ponto unico que aplica esse marcador — invocado pelas rotas de edicao estrutural
+- `POST /api/maintenance-plans/asset/[id]/revert` reverte o plano ao estado atual do plano padrao: preserva campos operacionais, reescreve campos estruturais, deleta/recria tarefas e limpa `hasLocalOverrides = false`, `detachedAt = null`, `detachedById = null`. Rejeita com `400` se `standardPlanId` estiver ausente ou `404` se o plano nao existir no tenant
+
+### Propagacao de Alteracoes do Padrao
+- `GET /api/maintenance-plans/standard/[id]/linked-assets` retorna `{ data: { items, eligible, detached } }` onde `items` e a lista completa, `eligible` sao os planos sem override (`hasLocalOverrides = false`) e `detached` sao os com override. Cada item expoe `assetMaintenancePlanId`, `asset`, `hasLocalOverrides`, `detachedAt`, `detachedBy`, `isActive`, `updatedAt`
+- `POST /api/maintenance-plans/standard/[id]/propagate` recebe `{ assetPlanIds: string[] }` (nao vazio). Para cada id, chama `propagateStandardChanges` em `standardSync.ts`: revalida vinculo ao plano padrao, skipa se `hasLocalOverrides = true` (defesa em profundidade — a UI ja filtra), skipa ids nao encontrados/fora do padrao, atualiza campos estruturais preservando operacionais, deleta tarefas antigas e recria a partir do padrao. Preserva `hasLocalOverrides = false`
+- Falhas por item viram `failed`, sem abortar o lote. Status `500` apenas quando todos falham; caso contrario `200` com `{ data: { applied, skipped, failed, appliedCount, skippedCount, failedCount }, message }`
+- `PUT /api/maintenance-plans/standard/[id]` (edicao): apos salvar, a UI consulta `/linked-assets` e, se houver `eligible.length > 0`, abre `PropagateChangesDialog` listando eligiveis como selecionaveis e customizados como contexto (desabilitados com badge e explicacao "nao recebera propagacao")
+
 ## Casos Especificos do Produto
 - `Aprovacoes` e exclusivo de `SUPER_ADMIN` e `ADMIN`
 - `Configuracoes` do portal sao exclusivas de `SUPER_ADMIN`

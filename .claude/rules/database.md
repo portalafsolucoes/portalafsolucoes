@@ -43,6 +43,17 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - `FailureAnalysisReport.actionPlan` (JSONB) persiste `ActionPlanItem[]` no shape v2: `{ item, subject, deadline, actionDescription, status: 'PENDING'|'IN_PROGRESS'|'COMPLETED', linkedWorkOrderId?, linkedWorkOrderNumber?, responsibleUserId?, responsibleName?, completedAt? }`. Nao normalizar o campo (descricao livre) alem do que `normalizeTextPayload` ja faz via preservacao de `description`/`notes`
 - A migration `20260420120000_add_raf_status_and_finalized_tracking` cria o enum, adiciona as colunas `status`, `finalizedAt`, `finalizedById`, cria FK para `User(id) ON DELETE SET NULL`, indices sobre `status`/`finalizedById` e aplica backfill marcando como `FINALIZADA` as RAFs cujo `actionPlan` tenha todos os itens `COMPLETED` (via `jsonb_array_elements`)
 
+## Auto-vinculo Bem <-> Plano Padrao (campos de override)
+- `AssetMaintenancePlan.standardPlanId` (FK opcional) identifica o `StandardMaintenancePlan` de origem quando o plano nasceu de um padrao; `NULL` para planos criados manualmente
+- `AssetMaintenancePlan.hasLocalOverrides: Boolean` (default `false`) indica se o plano foi editado estruturalmente apos o clone inicial. Fica `true` quando o usuario altera tarefas, passos, recursos, tempos, tolerancia ou tipo de medidor; `false` quando recebeu propagacao do padrao ou foi revertido
+- `AssetMaintenancePlan.detachedAt: DateTime?` registra o instante da primeira edicao estrutural que marcou override. Preservado enquanto `hasLocalOverrides = true`; limpo (`NULL`) ao reverter
+- `AssetMaintenancePlan.detachedById` (FK opcional para `User.id`) registra quem fez a edicao que marcou override; limpo ao reverter
+- Chave funcional que detecta duplicata entre planos do mesmo ativo: `(assetId, serviceTypeId, maintenanceTime, timeUnit, trackingType)`. Helper canonico em `src/lib/assets/planMatching.ts` — nao reimplementar nos handlers. Retorna-se `skipped` para duplicatas em vez de `409` para permitir processamento em lote
+- Semantica: apenas edicoes **estruturais** setam override. Edicoes de campos **operacionais** (`assetId`, `lastMaintenanceDate`, `toleranceDays`, `maintenanceAreaId`, `serviceTypeId`, `sequence`, `isActive`) NAO marcam override — o plano continua sincronizado com o padrao para fins de propagacao
+- Helper canonico para marcar override: `markAsOverridden(planId, userId)` em `src/lib/maintenance-plans/standardSync.ts`. Invocado pelas rotas de edicao estrutural de `AssetMaintenancePlan`
+- Helper canonico para reverter: `revertToStandard(planId, companyId)` no mesmo arquivo. Reescreve os campos estruturais do plano com o estado atual do padrao, deleta tarefas e recria a partir do padrao, preserva campos operacionais e zera `hasLocalOverrides`/`detachedAt`/`detachedById`
+- Helper canonico de propagacao: `propagateStandardChanges(standardPlanId, assetPlanIds, companyId)` no mesmo arquivo. Processa lote e retorna `{ applied, skipped, failed }`; skipa planos com `hasLocalOverrides = true` (defesa em profundidade), ids sem vinculo ao padrao ou ids fora do tenant
+
 ## Convencoes de Schema
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
 - Se enums ou registros legados ainda usarem papeis antigos, a aplicacao deve mapear esses valores antes de decidir acesso

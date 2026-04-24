@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { markAsOverridden } from '@/lib/maintenance-plans/standardSync'
 
 // GET - Listar tarefas com etapas (incluindo optionType e options)
 export async function GET(
@@ -139,6 +140,12 @@ export async function POST(
         const { error: resError } = await supabase.from('AssetMaintenanceTaskResource').insert(resourcesToInsert)
         if (resError) throw resError
       }
+    }
+
+    // Fase 4: editar tasks/steps/resources marca o plano como customizado
+    // (se vier de padrao). No-op quando standardPlanId e null ou ja esta marcado.
+    if (session.companyId) {
+      await markAsOverridden(planId, session.userId, session.companyId)
     }
 
     return NextResponse.json({ message: 'Tarefas salvas com sucesso' })

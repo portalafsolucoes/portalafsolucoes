@@ -254,6 +254,14 @@ Regras complementares:
 - Planos possuem tarefas, passos e recursos
 - Planos ativos devem gerar OS automaticamente quando vencidos
 
+#### 9.1 Auto-vinculo Bem <-> Plano Padrao
+- **Situacao 1** (a partir do Bem): ao criar ou editar um Bem, se houver planos padrao compativeis (mesma familia + modelo casando ou modelo `NULL` no plano), o sistema oferece dialogo de selecao multipla para incorporar esses planos como `AssetMaintenancePlan`. Copia estrutura (tarefas/etapas/recursos) e vincula via `standardPlanId`.
+- **Situacao 2** (a partir do Plano Padrao): ao criar um plano padrao, se houver Bens compativeis, oferece dialogo de vinculo em lote. Ao editar plano padrao existente, um banner no topo do formulario ("N bens compativeis ainda nao vinculados") permite abrir o mesmo dialogo sob demanda.
+- **Criterio de compatibilidade**: familia obrigatoria; plano com modelo NULL casa com qualquer modelo da familia, plano com modelo X so casa com bens desse modelo ou sem modelo quando o bem tem modelo X.
+- **Regra de duplicata** (chave funcional): impede `(assetId, serviceTypeId, maintenanceTime, timeUnit, trackingType)` duplicado em um mesmo ativo. `sequence` nao faz parte da chave. Validada na UI (filtra antes de exibir no dialogo) e no servidor (defesa em profundidade em `applyStandardToAsset`).
+- **Override e reversao**: editar estruturalmente um `AssetMaintenancePlan` que veio de padrao (via `PUT /api/maintenance-plans/asset/[id]` ou `POST /api/maintenance-plans/asset/[id]/tasks`) marca `hasLocalOverrides = true`, preenche `detachedAt` e `detachedById`. O painel de detalhe exibe badge `CUSTOMIZADO` e botao `Reverter ao padrao` que chama `POST /api/maintenance-plans/asset/[id]/revert` — essa rota sobrescreve campos estruturais e recria tasks/steps/resources, preservando campos operacionais (ativo, ultima manutencao, tolerancia, area/tipo de manutencao, sequence do ativo) e zerando as flags de override.
+- **Propagacao**: apos salvar edicao de um plano padrao, se houver `AssetMaintenancePlan` vinculados elegiveis (sem override), o sistema abre o dialogo `PropagateChangesDialog`. O usuario escolhe quais planos recebem a propagacao; planos customizados aparecem listados como referencia mas com checkbox desabilitado (precisam usar "Reverter" explicitamente). A acao chama `POST /api/maintenance-plans/standard/[id]/propagate` e retorna `applied`/`skipped`/`failed`.
+
 ### 10. Planejamento
 - Gera OS preventivas em lote por periodo e filtros
 - Programacao agenda OS em um periodo e confirma datas planejadas

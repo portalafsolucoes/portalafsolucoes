@@ -23,6 +23,7 @@ interface AssetCriticality {
   id: string
   name: string
   customId: string | null
+  protheusCode: string | null
   area: string | null
   status: string
   location: { id: string; name: string } | null
@@ -49,6 +50,7 @@ interface AssetRow {
   id: string
   name: string
   customId: string | null
+  protheusCode: string | null
   area: string | null
   status: string
   locationId: string | null
@@ -92,6 +94,7 @@ export async function GET(request: NextRequest) {
         id,
         name,
         customId,
+        protheusCode,
         area,
         status,
         locationId,
@@ -362,6 +365,7 @@ export async function GET(request: NextRequest) {
         id: asset.id,
         name: asset.name,
         customId: asset.customId,
+        protheusCode: asset.protheusCode,
         area: asset.area,
         status: asset.status,
         location,

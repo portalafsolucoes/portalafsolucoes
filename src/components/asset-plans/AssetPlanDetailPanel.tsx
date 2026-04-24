@@ -1,7 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { Button } from '@/components/ui/Button'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export interface AssetPlanDetail {
   id: string
@@ -16,6 +19,10 @@ export interface AssetPlanDetail {
   lastMaintenanceDate: string | null
   createdAt: string
   updatedAt: string
+  standardPlanId: string | null
+  hasLocalOverrides?: boolean
+  detachedAt?: string | null
+  detachedById?: string | null
   asset?: { id: string; name: string; tag?: string; protheusCode?: string; family?: { id: string; code: string; name: string }; familyModel?: { id: string; name: string } }
   serviceType?: { id: string; code: string; name: string }
   maintenanceArea?: { id: string; name: string }
@@ -51,6 +58,7 @@ interface AssetPlanDetailPanelProps {
   onClose: () => void
   onEdit: (planId: string) => void
   onDelete: (planId: string) => void
+  onRevert?: (planId: string) => Promise<void> | void
   canEdit: boolean
 }
 
@@ -58,13 +66,38 @@ const sectionTitleCls = 'text-sm font-semibold text-foreground mb-3'
 const labelCls = 'text-xs text-muted-foreground'
 const valueCls = 'text-sm text-foreground'
 
-export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, canEdit }: AssetPlanDetailPanelProps) {
+export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, onRevert, canEdit }: AssetPlanDetailPanelProps) {
+  const [revertConfirmOpen, setRevertConfirmOpen] = useState(false)
+  const [reverting, setReverting] = useState(false)
+
+  const isCustomized = !!plan.hasLocalOverrides
+  const canRevert = !!(canEdit && onRevert && plan.hasLocalOverrides && plan.standardPlanId)
+
+  const handleConfirmRevert = async () => {
+    if (!onRevert) return
+    try {
+      setReverting(true)
+      await onRevert(plan.id)
+      setRevertConfirmOpen(false)
+    } finally {
+      setReverting(false)
+    }
+  }
+
   return (
     <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
       <div className="flex items-start justify-between px-6 py-5 bg-gray-50 border-b border-gray-200">
-        <div>
-          <h2 className="text-lg font-black text-gray-900">{plan.name || 'Plano sem nome'}</h2>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-lg font-black text-gray-900">{plan.name || 'Plano sem nome'}</h2>
+            {isCustomized && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider bg-warning-light text-warning border border-warning/30">
+                <Icon name="edit_note" className="text-sm" />
+                Customizado
+              </span>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground mt-0.5">
             {plan.asset?.protheusCode || plan.asset?.tag || ''}{plan.asset?.protheusCode || plan.asset?.tag ? ' - ' : ''}{plan.asset?.name}
           </p>
@@ -82,6 +115,30 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
             onEdit={() => onEdit(plan.id)}
             onDelete={() => onDelete(plan.id)}
           />
+        )}
+
+        {/* Reverter ao padrão (somente quando há customizações e vínculo com padrão) */}
+        {canRevert && (
+          <div className="px-4 pb-3">
+            <div className="flex items-start gap-3 p-3 bg-warning-light border border-warning/30 rounded-[4px]">
+              <Icon name="info" className="text-warning text-lg flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-0.5">Plano customizado</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Este plano foi editado após vir do padrão. Reverter descarta as customizações e recopia o conteúdo atual do plano padrão.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setRevertConfirmOpen(true)}
+                  className="w-full border-warning text-warning hover:bg-warning/10"
+                >
+                  <Icon name="restart_alt" className="text-base mr-2" />
+                  Reverter ao padrão
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Classificação */}
@@ -168,6 +225,19 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
             )}
           </div>
         </div>
+
+        {/* Confirmação de reversão */}
+        <ConfirmDialog
+          isOpen={revertConfirmOpen}
+          onClose={() => setRevertConfirmOpen(false)}
+          onConfirm={handleConfirmRevert}
+          title="Reverter ao padrão?"
+          message="As customizações locais deste plano (campos estruturais, tarefas, etapas e recursos) serão descartadas e substituídas pelo conteúdo atual do plano padrão de origem. Campos operacionais do bem (última manutenção, tolerância, ativo, etc.) são preservados. Esta ação não pode ser desfeita."
+          confirmText="Reverter"
+          cancelText="Cancelar"
+          variant="warning"
+          loading={reverting}
+        />
 
         {/* Tarefas */}
         <div className="p-4">

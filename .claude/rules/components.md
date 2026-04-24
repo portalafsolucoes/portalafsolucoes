@@ -482,6 +482,40 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
   - Botao de impressao individual por linha
 - Os callbacks de impressao chegam como props (`onPrintSingle: (kind, id) => void`, `onPrintBatch: (kind, ids) => void`) para que a pagina dona do painel decida como renderizar os print views
 
+## Dialogs de Auto-vinculo Bem <-> Plano Padrao (OBRIGATORIO)
+Esta feature tem dois dialogs canonicos e um badge de override que aparecem nas telas `/assets`, `/maintenance-plan/standard` e `/maintenance-plan/asset`.
+
+### AssetLinkingDialog (`src/components/assets/AssetLinkingDialog.tsx`)
+Dialog compartilhado pelas duas situacoes — a UI muda o `mode` para inverter a orientacao da lista:
+- `mode="asset-to-standards"`: listagem de planos padrao compativeis abertos a partir do painel de Bem (Situacao 1). Disparado apos `POST /api/assets` ou `PUT /api/assets/[id]` retornar `compatibleStandardPlans` nao vazio
+- `mode="standard-to-assets"`: listagem de bens compativeis abertos a partir do painel de Plano Padrao (Situacao 2). Disparado apos `POST /api/maintenance-plans/standard` ou manualmente via botao `Vincular bens compativeis`
+- Usa `<Modal size="lg">`, busca client-side, checkbox `Selecionar todos`, contagens `elegivel` vs `ja vinculado` e botoes `Pular` / `Vincular (N)` no rodape
+- Itens ja vinculados (`alreadyLinked=true`) aparecem desabilitados com badge `Ja vinculado` para contexto
+- Apos confirmar, chama respectivamente `/api/assets/[id]/apply-standard-plans` ou `/api/maintenance-plans/standard/[id]/apply-to-assets` e fecha o dialog
+
+### PropagateChangesDialog (`src/components/standard-plans/PropagateChangesDialog.tsx`)
+Dialog que aparece **apos salvar edicao de um Plano Padrao** (fluxo de `StandardPlanFormPanel`) quando ha `AssetMaintenancePlan` vinculados elegiveis para receber as alteracoes:
+- Consome o formato `LinkedAssetPlanItem[]` exportado pelo proprio componente; origem dos dados e `GET /api/maintenance-plans/standard/[id]/linked-assets`
+- Apenas itens com `hasLocalOverrides = false` sao selecionaveis (checkbox habilitado); itens com `hasLocalOverrides = true` aparecem **desabilitados** com badge `Customizado` amarelo + linha explicativa `Customizado em DATE por USER — nao recebera propagacao`. Eles existem na lista apenas como contexto visual, nao como candidatos
+- Header com banner cinza (`bg-gray-50 border border-gray-200`) explicando o fluxo e indicando `planLabel` do plano que foi alterado
+- Contagens inline `N elegivel(is) · N customizado(s)` acima da busca
+- Checkbox mestre `Selecionar elegiveis` com estado `indeterminate` para selecao parcial
+- Rodape com `Pular` (fecha sem propagar) e `Propagar (N)` (chama `POST /api/maintenance-plans/standard/[id]/propagate` com ids selecionados)
+- Enquanto `submitting === true`, botoes ficam desabilitados e o label vira `Propagando...`
+- Apos sucesso, o panel de edicao fecha; em caso de skip, o panel fecha mesmo assim (usuario escolheu nao propagar)
+
+### Badge CUSTOMIZADO e botao Reverter ao padrao (AssetPlanDetailPanel)
+- Em `src/components/asset-plans/AssetPlanDetailPanel.tsx`, planos com `hasLocalOverrides = true` exibem no header ao lado do titulo um badge:
+```tsx
+<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider bg-warning-light text-warning border border-warning/30">
+  <Icon name="edit_note" className="text-sm" />
+  Customizado
+</span>
+```
+- Abaixo de `PanelActionButtons`, quando `canEdit && hasLocalOverrides && standardPlanId`, renderiza bloco de alerta ambar (`bg-warning-light/40 border border-warning/30 rounded-[4px] p-3`) com icone `warning`, breve explicacao ("Este plano foi customizado localmente. Reverter recria o plano a partir do padrao, descartando as customizacoes estruturais.") e botao `<Button variant="outline">Reverter ao padrão</Button>`
+- O clique abre um `ConfirmDialog` com `variant="warning"`, titulo `Reverter ao padrão` e mensagem deixando claro que a operacao descarta customizacoes estruturais mas preserva campos operacionais (ativo, tolerancia, area, tipo, sequencia, ultima execucao)
+- A acao chama `POST /api/maintenance-plans/asset/[id]/revert`; em sucesso, recarrega o detalhe e a lista
+
 ## Mapa de Telas e Modais
 | Rota | Titulo | Tipo | Paineis inPage (desktop) | Overlay (mobile + confirmacao) | Produto |
 |------|--------|------|--------------------------|-------------------------------|---------|
@@ -489,7 +523,7 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 | `/login` | Login | Form | - | - | - |
 | `/dashboard` | Dashboard | Stats | - | - | CMMS |
 | `/people-teams` | Pessoas | Listagem split-panel | PersonDetailModal, PersonFormModal | ConfirmDialog | CMMS |
-| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal | ConfirmDialog | CMMS |
+| `/assets` | Ativos | Listagem split-panel | AssetDetailPanel, AssetEditPanel, AssetCreateModal, AssetLinkingDialog (mode=asset-to-standards) | ConfirmDialog | CMMS |
 | `/assets/standard` | Bens Padrao | Listagem split-panel | StandardAssetDetailPanel, StandardAssetFormPanel(inPage) | ConfirmDialog | CMMS |
 | `/work-orders` | Ordens de Servico | Listagem split-panel | WorkOrderDetailModal, WorkOrderEditModal, ExecutionModal, FinalizeWorkOrderModal | ConfirmDialog | CMMS |
 | `/requests` | Solicitacoes | Listagem split-panel | RequestDetailModal(inPage), RequestFormModal(inPage) | ConfirmDialog | CMMS |
@@ -499,8 +533,8 @@ Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 | `/locations` | Localizacoes | Listagem split-panel | LocationDetailPanel, LocationFormPanel | ConfirmDialog | CMMS |
 | `/basic-registrations/[entity]` | Cadastros Basicos | Listagem split-panel | GenericDetailPanel, GenericEditPanel, CalendarModal, ResourceModal, AssetFamilyModal, GenericStepModal | ConfirmDialog | CMMS |
 | `/criticality` | Criticidade | Listagem split-panel | CriticalityDetailPanel (abas + drilldown), CriticalityEditPanel, WorkOrderPrintView / WorkOrdersBatchPrintView, RequestPrintView / RequestsBatchPrintView, RAFPrintView / RAFsBatchPrintView | ConfirmDialog | CMMS |
-| `/maintenance-plan/standard` | Plano Padrao | Listagem split-panel | PlanDetailPanel, PlanFormPanel(inPage) | ConfirmDialog | CMMS |
-| `/maintenance-plan/asset` | Plano por Ativo | Listagem split-panel | AssetPlanDetailPanel, AssetPlanFormPanel(inPage) | ConfirmDialog | CMMS |
+| `/maintenance-plan/standard` | Plano Padrao | Listagem split-panel | PlanDetailPanel, PlanFormPanel(inPage), AssetLinkingDialog (mode=standard-to-assets), PropagateChangesDialog | ConfirmDialog | CMMS |
+| `/maintenance-plan/asset` | Plano por Ativo | Listagem split-panel | AssetPlanDetailPanel (badge Customizado + Reverter ao padrão), AssetPlanFormPanel(inPage) | ConfirmDialog | CMMS |
 | `/planning/plans` | Planejamento | Listagem split-panel | PlanDetailPanel, PlanFormPanel | ConfirmDialog | CMMS |
 | `/planning/schedules` | Programacao | Listagem split-panel | ScheduleDetailPanel, ScheduleFormPanel | ConfirmDialog | CMMS |
 | `/kpi` | KPI | Dashboard | - | - | CMMS |

@@ -29,6 +29,8 @@ interface Asset {
   name: string
   description?: string
   status: string
+  protheusCode?: string
+  tag?: string
   barCode?: string
   acquisitionCost?: number
   area?: string
@@ -170,12 +172,51 @@ export default function AssetsPage() {
     setParentAssetForNew(undefined)
   }
 
-  // Filtro de assets com busca e status
+  // Filtro de assets com busca e status (busca em todas as colunas da tabela)
+  const statusLabels: Record<string, string> = {
+    OPERATIONAL: 'operacional',
+    DOWN: 'parado',
+    IN_REPAIR: 'em reparo',
+    IN_OPERATION: 'em operacao em operação',
+    INACTIVE: 'inativo',
+  }
+  const normalizeSearch = (value: unknown): string => {
+    if (value == null) return ''
+    return String(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  }
+  const formatCreatedAt = (iso: string): string => {
+    try {
+      const d = new Date(iso)
+      const dd = String(d.getDate()).padStart(2, '0')
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const yyyy = d.getFullYear()
+      return `${dd}/${mm}/${yyyy} ${dd}-${mm}-${yyyy} ${yyyy}-${mm}-${dd}`
+    } catch {
+      return ''
+    }
+  }
   const filteredAssets = assets.filter(asset => {
-    const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.description?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || asset.status === statusFilter
-    return matchesSearch && matchesStatus
+    if (!matchesStatus) return false
+    const q = normalizeSearch(searchTerm.trim())
+    if (!q) return true
+    const haystack = [
+      asset.name,
+      asset.description,
+      asset.protheusCode,
+      asset.tag,
+      asset.barCode,
+      asset.parentAsset?.name,
+      asset.parentAsset?.protheusCode,
+      statusLabels[asset.status] || asset.status,
+      asset.assetArea?.name,
+      asset.area,
+      asset.location?.name,
+      formatCreatedAt(asset.createdAt),
+    ]
+      .map(normalizeSearch)
+      .join(' ')
+    return haystack.includes(q)
   })
 
   const showSidePanel = !!(selectedAsset || isCreating)

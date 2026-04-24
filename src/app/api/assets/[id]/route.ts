@@ -177,6 +177,29 @@ export async function PATCH(
       )
     }
 
+    // Validar que parentAssetId não cria ciclo (self ou descendente)
+    const newParentAssetId = parentAssetId ? parentAssetId.trim() : null
+    if (newParentAssetId) {
+      if (newParentAssetId === id) {
+        return NextResponse.json({ error: 'Um ativo não pode ser pai de si mesmo' }, { status: 400 })
+      }
+      const { data: companyAssets } = await supabase
+        .from('Asset')
+        .select('id, parentAssetId')
+        .eq('companyId', session.companyId)
+      const parentMap = new Map<string, string | null>((companyAssets || []).map(a => [a.id, a.parentAssetId]))
+      const visited = new Set<string>()
+      let cursor: string | null = newParentAssetId
+      while (cursor) {
+        if (cursor === id) {
+          return NextResponse.json({ error: 'Ciclo hierárquico detectado: o pai escolhido é descendente deste ativo' }, { status: 400 })
+        }
+        if (visited.has(cursor)) break
+        visited.add(cursor)
+        cursor = parentMap.get(cursor) ?? null
+      }
+    }
+
     // Validar que areaId pertence à mesma unitId
     const newAreaId = areaId ? areaId.trim() : null
     if (newAreaId && unitId) {

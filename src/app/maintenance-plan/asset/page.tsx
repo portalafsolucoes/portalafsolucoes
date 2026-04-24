@@ -109,6 +109,21 @@ export default function AssetMaintenancePlanPage() {
     setEditingId(null)
   }
 
+  const handleRevert = async (planId: string) => {
+    try {
+      const res = await fetch(`/api/maintenance-plans/asset/${planId}/revert`, { method: 'POST' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        alert(json.error || 'Erro ao reverter plano ao padrão')
+        return
+      }
+      await handleSelectPlan(planId)
+      loadData()
+    } catch {
+      alert('Erro de conexão ao reverter plano')
+    }
+  }
+
   const canEdit = role && hasPermission(role as UserRole, 'maintenance-plan', 'create')
 
   const handleSort = (field: SortField) => {
@@ -202,6 +217,7 @@ export default function AssetMaintenancePlanPage() {
         onClose={() => setSelectedPlan(null)}
         onEdit={(planId) => openEdit(planId)}
         onDelete={(planId) => { setSelectedPlan(null); handleDelete(planId) }}
+        onRevert={handleRevert}
         canEdit={!!canEdit}
       />
     )

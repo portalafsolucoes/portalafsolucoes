@@ -20,9 +20,20 @@ export interface ServiceTypeOption extends CodeNamedEntity {
 
 export interface AssetOption extends NamedEntity {
   tag?: string | null
+  protheusCode?: string | null
   parentAssetId?: string | null
   familyId?: string | null
   familyModelId?: string | null
+  // Campos herdáveis por subativo (Localização e Organização + Matriz GUT)
+  unitId?: string | null
+  areaId?: string | null
+  workCenterId?: string | null
+  costCenterId?: string | null
+  positionId?: string | null
+  shiftCode?: string | null
+  gutGravity?: number | null
+  gutUrgency?: number | null
+  gutTendency?: number | null
 }
 
 export interface FamilyModelLink {

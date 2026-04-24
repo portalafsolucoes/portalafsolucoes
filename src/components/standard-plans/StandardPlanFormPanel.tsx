@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
+import { AssetLinkingDialog, type LinkableAsset } from '@/components/standard-plans/AssetLinkingDialog'
+import { PropagateChangesDialog, type LinkedAssetPlanItem } from '@/components/standard-plans/PropagateChangesDialog'
 import type { ApiItemResponse, ApiListResponse } from '@/types/api'
 import type {
   AssetFamilyModelOption,
@@ -139,6 +141,29 @@ export default function StandardPlanFormPanel({
   const [nextSequence, setNextSequence] = useState<number | null>(null)
   const [loadingSeq, setLoadingSeq] = useState(false)
 
+  // Fase 3: Situacao 2 — dialogo de vinculo em lote com bens compativeis
+  //   source='post-save' => ao confirmar/pular, fecha o panel (fluxo de criacao/edicao + salvar)
+  //   source='banner'    => ao confirmar/pular, mantem o panel aberto (edicao continua)
+  const [linkingDialog, setLinkingDialog] = useState<{
+    open: boolean
+    planId: string | null
+    planLabel: string
+    assets: LinkableAsset[]
+    source: 'post-save' | 'banner'
+  }>({ open: false, planId: null, planLabel: '', assets: [], source: 'post-save' })
+  const [linkingSubmitting, setLinkingSubmitting] = useState(false)
+  const [compatibleAssets, setCompatibleAssets] = useState<LinkableAsset[]>([])
+
+  // Fase 5: Propagacao — apos salvar edicao, oferecer replicacao das alteracoes
+  //   para os AssetMaintenancePlan vinculados (nao customizados).
+  const [propagateDialog, setPropagateDialog] = useState<{
+    open: boolean
+    planId: string | null
+    planLabel: string
+    items: LinkedAssetPlanItem[]
+  }>({ open: false, planId: null, planLabel: '', items: [] })
+  const [propagateSubmitting, setPropagateSubmitting] = useState(false)
+
   /* ---------------------------------------------------------------- */
   /*  Click outside para fechar dropdown de etapas                     */
   /* ---------------------------------------------------------------- */
@@ -170,17 +195,30 @@ export default function StandardPlanFormPanel({
   /*  Carregar dependências e dados do plano                           */
   /* ---------------------------------------------------------------- */
 
+  const loadCompatibleAssets = useCallback(async (planId: string) => {
+    try {
+      const res = await fetch(`/api/maintenance-plans/standard/${planId}/compatible-assets`)
+      if (!res.ok) { setCompatibleAssets([]); return }
+      const json = await res.json() as ApiListResponse<LinkableAsset>
+      setCompatibleAssets(json.data || [])
+    } catch {
+      setCompatibleAssets([])
+    }
+  }, [])
+
   useEffect(() => {
     loadDependencies()
     if (editingId) {
       loadPlan(editingId)
+      loadCompatibleAssets(editingId)
     } else {
       setFormData(emptyFormData())
       setTasks([emptyTask()])
       setError('')
       setNextSequence(null)
+      setCompatibleAssets([])
     }
-  }, [editingId])
+  }, [editingId, loadCompatibleAssets])
 
   const loadDependencies = async () => {
     const [famRes, stRes, calRes, modelsRes, stepsRes] = await Promise.all([
@@ -395,10 +433,144 @@ export default function StandardPlanFormPanel({
         })
       }
 
+      // Fase 3: verificar bens compativeis antes de fechar (apenas na criacao).
+      // Na edicao, o banner persistente no topo do form ja oferece o fluxo sob demanda.
+      if (!editingId && planId) {
+        try {
+          const res = await fetch(`/api/maintenance-plans/standard/${planId}/compatible-assets`)
+          if (res.ok) {
+            const json = await res.json() as ApiListResponse<LinkableAsset>
+            const assets = json.data || []
+            if (assets.length > 0) {
+              setLinkingDialog({
+                open: true,
+                planId,
+                planLabel: formData.name || '',
+                assets,
+                source: 'post-save',
+              })
+              setSaving(false)
+              return
+            }
+          }
+        } catch {
+          // silencioso — se a busca falhar, segue o fluxo normal de fechamento
+        }
+      }
+
+      // Fase 5: apos salvar edicao, oferecer propagacao para vinculados nao-customizados.
+      if (editingId && planId) {
+        try {
+          const res = await fetch(`/api/maintenance-plans/standard/${planId}/linked-assets`)
+          if (res.ok) {
+            const json = await res.json() as { data?: { items?: LinkedAssetPlanItem[]; eligible?: LinkedAssetPlanItem[] } }
+            const items = json.data?.items || []
+            const eligible = json.data?.eligible || []
+            if (eligible.length > 0) {
+              setPropagateDialog({
+                open: true,
+                planId,
+                planLabel: formData.name || '',
+                items,
+              })
+              setSaving(false)
+              return
+            }
+          }
+        } catch {
+          // silencioso — nao bloqueia o fluxo de salvar
+        }
+      }
+
       onSuccess()
       onClose()
     } catch { setError('Erro de conexão') }
     setSaving(false)
+  }
+
+  const handleLinkAssets = async (selectedAssetIds: string[]) => {
+    if (!linkingDialog.planId) return
+    const fromBanner = linkingDialog.source === 'banner'
+    setLinkingSubmitting(true)
+    try {
+      const res = await fetch(
+        `/api/maintenance-plans/standard/${linkingDialog.planId}/apply-to-assets`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assetIds: selectedAssetIds }),
+        }
+      )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setError(err.error || 'Erro ao vincular bens ao plano')
+      }
+      // Mesmo com falhas parciais, avancamos: o servidor ja logou e o plano existe.
+      if (editingId) {
+        await loadCompatibleAssets(editingId)
+      }
+    } catch {
+      setError('Erro de conexão ao vincular bens')
+    }
+    setLinkingSubmitting(false)
+    setLinkingDialog({ open: false, planId: null, planLabel: '', assets: [], source: 'post-save' })
+    if (!fromBanner) {
+      onSuccess()
+      onClose()
+    } else {
+      onSuccess()
+    }
+  }
+
+  const dismissLinkingDialog = () => {
+    const fromBanner = linkingDialog.source === 'banner'
+    setLinkingDialog({ open: false, planId: null, planLabel: '', assets: [], source: 'post-save' })
+    if (!fromBanner) {
+      onSuccess()
+      onClose()
+    }
+  }
+
+  const handlePropagateChanges = async (selectedAssetPlanIds: string[]) => {
+    if (!propagateDialog.planId) return
+    setPropagateSubmitting(true)
+    try {
+      const res = await fetch(
+        `/api/maintenance-plans/standard/${propagateDialog.planId}/propagate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assetPlanIds: selectedAssetPlanIds }),
+        }
+      )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setError(err.error || 'Erro ao propagar alterações aos bens vinculados')
+      }
+    } catch {
+      setError('Erro de conexão ao propagar alterações')
+    }
+    setPropagateSubmitting(false)
+    setPropagateDialog({ open: false, planId: null, planLabel: '', items: [] })
+    onSuccess()
+    onClose()
+  }
+
+  const dismissPropagateDialog = () => {
+    setPropagateDialog({ open: false, planId: null, planLabel: '', items: [] })
+    onSuccess()
+    onClose()
+  }
+
+  const openLinkingFromBanner = () => {
+    if (!editingId || compatibleAssets.length === 0) return
+    setLinkingDialog({
+      open: true,
+      planId: editingId,
+      planLabel: formData.name || '',
+      assets: compatibleAssets,
+      source: 'banner',
+    })
   }
 
   /* ---------------------------------------------------------------- */
@@ -424,6 +596,28 @@ export default function StandardPlanFormPanel({
         <div className="flex items-center justify-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant" />
           <p className="ml-3 text-muted-foreground">Carregando plano...</p>
+        </div>
+      )}
+
+      {editingId && compatibleAssets.length > 0 && (
+        <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-[4px]">
+          <Icon name="link" className="text-2xl text-amber-700 flex-shrink-0" />
+          <div className="flex-1 text-sm text-amber-900">
+            <p className="font-medium mb-0.5">
+              Há {compatibleAssets.length} {compatibleAssets.length === 1 ? 'bem compatível' : 'bens compatíveis'} ainda não vinculado{compatibleAssets.length === 1 ? '' : 's'} a este plano.
+            </p>
+            <p className="text-amber-800">
+              Você pode vincular agora em lote — o conteúdo do plano será copiado para cada bem selecionado.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={openLinkingFromBanner}
+            className="bg-white flex-shrink-0"
+          >
+            Ver
+          </Button>
         </div>
       )}
 
@@ -641,33 +835,63 @@ export default function StandardPlanFormPanel({
 
   const title = editingId ? 'Editar Plano Padrão' : 'Novo Plano Padrão'
 
+  const linkingDialogNode = (
+    <AssetLinkingDialog
+      isOpen={linkingDialog.open}
+      onClose={dismissLinkingDialog}
+      onConfirm={handleLinkAssets}
+      assets={linkingDialog.assets}
+      planLabel={linkingDialog.planLabel}
+      submitting={linkingSubmitting}
+    />
+  )
+
+  const propagateDialogNode = (
+    <PropagateChangesDialog
+      isOpen={propagateDialog.open}
+      onClose={dismissPropagateDialog}
+      onConfirm={handlePropagateChanges}
+      items={propagateDialog.items}
+      planLabel={propagateDialog.planLabel}
+      submitting={propagateSubmitting}
+    />
+  )
+
   if (inPage) {
     return (
-      <div className="h-full flex flex-col bg-card border-l border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">{title}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
-            <Icon name="close" className="text-xl" />
-          </button>
-        </div>
-        <form onSubmit={e => { e.preventDefault(); handleSave() }} className="flex flex-1 min-h-0 flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {formBody}
+      <>
+        <div className="h-full flex flex-col bg-card border-l border-border">
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+            <button onClick={onClose} className="p-1 hover:bg-muted rounded transition-colors">
+              <Icon name="close" className="text-xl" />
+            </button>
           </div>
-          {formFooter}
-        </form>
-      </div>
+          <form onSubmit={e => { e.preventDefault(); handleSave() }} className="flex flex-1 min-h-0 flex-col">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {formBody}
+            </div>
+            {formFooter}
+          </form>
+        </div>
+        {linkingDialogNode}
+        {propagateDialogNode}
+      </>
     )
   }
 
   return (
-    <Modal isOpen onClose={onClose} title={title}>
-      <form onSubmit={e => { e.preventDefault(); handleSave() }}>
-        <div className="p-4 space-y-3">
-          {formBody}
-        </div>
-        {formFooter}
-      </form>
-    </Modal>
+    <>
+      <Modal isOpen onClose={onClose} title={title}>
+        <form onSubmit={e => { e.preventDefault(); handleSave() }}>
+          <div className="p-4 space-y-3">
+            {formBody}
+          </div>
+          {formFooter}
+        </form>
+      </Modal>
+      {linkingDialogNode}
+      {propagateDialogNode}
+    </>
   )
 }

@@ -54,6 +54,7 @@ interface AssetCriticality {
   id: string
   name: string
   customId: string | null
+  protheusCode: string | null
   area: string | null
   status: string
   location: { id: string; name: string } | null
@@ -102,6 +103,7 @@ const classificationConfig = {
 
 type SortField =
   | 'status'
+  | 'protheusCode'
   | 'name'
   | 'location'
   | 'gutScore'
@@ -180,7 +182,7 @@ export default function CriticalityPage() {
       setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
     } else {
       setSortBy(field)
-      setSortOrder(field === 'status' || field === 'name' || field === 'location' ? 'asc' : 'desc')
+      setSortOrder(field === 'status' || field === 'name' || field === 'location' || field === 'protheusCode' ? 'asc' : 'desc')
     }
   }
 
@@ -205,20 +207,51 @@ export default function CriticalityPage() {
     setIsEditing(false)
   }
 
+  const classificationLabels: Record<'critical' | 'warning' | 'ok', string> = {
+    critical: 'critico crítico',
+    warning: 'alerta em alerta',
+    ok: 'ok normal',
+  }
+  const statusSearchLabels: Record<string, string> = {
+    OPERATIONAL: 'operacional',
+    DOWN: 'parado down',
+    IN_REPAIR: 'em reparo',
+    IN_OPERATION: 'em operacao em operação',
+    INACTIVE: 'inativo',
+  }
+  const normalize = (value: unknown): string => {
+    if (value == null) return ''
+    return String(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  }
+
   const visibleAssets = assets.filter((asset) => {
-    const search = searchTerm.toLowerCase()
-    return (
-      asset.name.toLowerCase().includes(search) ||
-      (asset.customId || '').toLowerCase().includes(search) ||
-      (asset.location?.name || '').toLowerCase().includes(search) ||
-      (asset.category?.name || '').toLowerCase().includes(search)
-    )
+    const q = normalize(searchTerm.trim())
+    if (!q) return true
+    const haystack = [
+      asset.name,
+      asset.customId,
+      asset.protheusCode,
+      asset.location?.name,
+      asset.category?.name,
+      asset.area,
+      statusSearchLabels[asset.status] || asset.status,
+      classificationLabels[asset.classification],
+      `gut ${asset.gutScore} ${asset.gutGravity}x${asset.gutUrgency}x${asset.gutTendency}`,
+      `ss ${asset.openRequestsCount}`,
+      `os ${asset.openWorkOrdersCount}`,
+      `raf ${asset.rafCount}`,
+      `score ${asset.totalScore}`,
+    ]
+      .map(normalize)
+      .join(' ')
+    return haystack.includes(q)
   })
 
   const sortedAssets = [...visibleAssets].sort((a, b) => {
     const mod = sortOrder === 'asc' ? 1 : -1
     switch (sortBy) {
       case 'status': return a.status.localeCompare(b.status) * mod
+      case 'protheusCode': return (a.protheusCode || '').localeCompare(b.protheusCode || '') * mod
       case 'name': return a.name.localeCompare(b.name) * mod
       case 'location': return (a.location?.name || '').localeCompare(b.location?.name || '') * mod
       case 'gutScore': return (a.gutScore - b.gutScore) * mod
@@ -381,6 +414,12 @@ export default function CriticalityPage() {
                   </button>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <button type="button" onClick={() => toggleSort('protheusCode')} className="flex items-center gap-1">
+                    Código do Bem
+                    <SortIcon field="protheusCode" sortBy={sortBy} sortOrder={sortOrder} />
+                  </button>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   <button type="button" onClick={() => toggleSort('name')} className="flex items-center gap-1">
                     Ativo
                     <SortIcon field="name" sortBy={sortBy} sortOrder={sortOrder} />
@@ -425,7 +464,7 @@ export default function CriticalityPage() {
             <tbody className="bg-card divide-y divide-gray-100">
               {sortedAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-6 py-12 text-center text-muted-foreground">
                     Nenhum ativo encontrado
                   </td>
                 </tr>
@@ -445,6 +484,9 @@ export default function CriticalityPage() {
                           <span className={`w-3 h-3 rounded-full ${config.color}`} />
                           <Icon name={config.icon} className={`text-xl ${config.textColor}`} />
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-foreground">
+                        {asset.protheusCode || '-'}
                       </td>
                       <td className="px-6 py-4">
                         <div>

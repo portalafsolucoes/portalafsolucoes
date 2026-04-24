@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { markAsOverridden } from '@/lib/maintenance-plans/standardSync'
 
 // GET - Detalhe do plano do bem com tarefas, etapas e recursos
 export async function GET(
@@ -100,6 +101,13 @@ export async function PUT(
       .single()
 
     if (error) throw error
+
+    // Fase 4: editar campos estruturais do plano marca como customizado (se vier de padrao).
+    // markAsOverridden e no-op quando standardPlanId e null ou ja esta marcado.
+    if (session.companyId) {
+      await markAsOverridden(id, session.userId, session.companyId)
+    }
+
     return NextResponse.json({ data, message: 'Plano atualizado' })
   } catch (error) {
     console.error('Error:', error)

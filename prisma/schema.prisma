@@ -460,6 +460,7 @@ model User {
   assetTaskLabors            AssetMaintenanceTaskResource[]    @relation("AssetTaskLabor")
   woResourceLabors           WorkOrderResource[]               @relation("WOResourceLabor")
   workOrderRescheduleEntries WorkOrderRescheduleHistory[]      @relation("WorkOrderRescheduleHistoryUser")
+  detachedAssetPlans         AssetMaintenancePlan[]            @relation("AssetMaintenancePlanDetacher")
 
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
@@ -1206,6 +1207,10 @@ model AssetMaintenancePlan {
   considerPlanning    Boolean   @default(true)
   trackingType        String    @default("TIME")
   protheusCode        String?
+  hasLocalOverrides   Boolean   @default(false)
+  detachedAt          DateTime?
+  detachedById        String?
+  detachedBy          User?     @relation("AssetMaintenancePlanDetacher", fields: [detachedById], references: [id])
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -1233,6 +1238,8 @@ model AssetMaintenancePlan {
   @@unique([assetId, serviceTypeId, sequence])
   @@index([companyId])
   @@index([assetId])
+  @@index([standardPlanId])
+  @@index([hasLocalOverrides])
 }
 
 model AssetMaintenanceTask {
