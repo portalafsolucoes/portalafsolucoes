@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -98,6 +99,19 @@ export async function POST(request: NextRequest) {
     if (createError) {
       console.error('Create location error:', createError)
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
+    }
+
+    if (location) {
+      await recordAudit({
+        session,
+        entity: 'Location',
+        entityId: location.id,
+        entityLabel: location.name ?? null,
+        action: 'CREATE',
+        after: location as Record<string, unknown>,
+        companyId: location.companyId ?? session.companyId,
+        unitId: null,
+      })
     }
 
     return NextResponse.json(

@@ -5,6 +5,7 @@ import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recalculateRafStatus } from '@/lib/rafs/recalculateStatus'
 import type { ActionPlanItem } from '@/types/raf'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - Buscar RAF por ID
 export async function GET(
@@ -121,15 +122,17 @@ export async function PUT(
 
     // Recalcular status derivado. Se actionPlan nao veio no body,
     // precisamos buscar o atual para nao perder o tracking.
+    // Sempre busca o estado completo para auditoria abaixo.
+    const { data: prevRaf } = await supabase
+      .from('FailureAnalysisReport')
+      .select('*')
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
     let effectiveActionPlan = body.actionPlan as ActionPlanItem[] | undefined
     if (effectiveActionPlan === undefined) {
-      const { data: current } = await supabase
-        .from('FailureAnalysisReport')
-        .select('actionPlan')
-        .eq('id', id)
-        .eq('companyId', session.companyId)
-        .single()
-      effectiveActionPlan = (current?.actionPlan as ActionPlanItem[] | null) || undefined
+      effectiveActionPlan = (prevRaf?.actionPlan as ActionPlanItem[] | null) || undefined
     }
 
     const { status, finalizedAt, finalizedById } = recalculateRafStatus(
@@ -173,6 +176,20 @@ export async function PUT(
 
     if (error) throw error
 
+    if (prevRaf) {
+      await recordAudit({
+        session,
+        entity: 'FailureAnalysisReport',
+        entityId: id,
+        entityLabel: prevRaf.rafNumber ?? null,
+        action: 'UPDATE',
+        before: prevRaf as Record<string, unknown>,
+        after: raf as Record<string, unknown>,
+        companyId: prevRaf.companyId ?? session.companyId,
+        unitId: prevRaf.unitId ?? session.unitId,
+      })
+    }
+
     return NextResponse.json({ data: raf })
   } catch (error) {
     console.error('Error updating RAF:', error)
@@ -198,6 +215,13 @@ export async function DELETE(
 
     const { id } = await params
 
+    const { data: prev } = await supabase
+      .from('FailureAnalysisReport')
+      .select('*')
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
     const { error } = await supabase
       .from('FailureAnalysisReport')
       .delete()
@@ -205,6 +229,19 @@ export async function DELETE(
       .eq('companyId', session.companyId)
 
     if (error) throw error
+
+    if (prev) {
+      await recordAudit({
+        session,
+        entity: 'FailureAnalysisReport',
+        entityId: id,
+        entityLabel: prev.rafNumber ?? null,
+        action: 'DELETE',
+        before: prev as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: prev.unitId ?? session.unitId,
+      })
+    }
 
     return NextResponse.json({ message: 'RAF deletado com sucesso' })
   } catch (error) {

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function GET(
   _request: NextRequest,
@@ -75,7 +76,7 @@ export async function PUT(
 
     const { data: existing } = await supabase
       .from('Location')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -103,6 +104,18 @@ export async function PUT(
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
+    await recordAudit({
+      session,
+      entity: 'Location',
+      entityId: id,
+      entityLabel: existing.name ?? location?.name ?? null,
+      action: 'UPDATE',
+      before: existing as Record<string, unknown>,
+      after: location as Record<string, unknown>,
+      companyId: existing.companyId ?? session.companyId,
+      unitId: null,
+    })
+
     return NextResponse.json({ data: location, message: 'Location updated successfully' })
   } catch (error) {
     console.error('Update location error:', error)
@@ -129,7 +142,7 @@ export async function DELETE(
 
     const { data: existing } = await supabase
       .from('Location')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -172,6 +185,17 @@ export async function DELETE(
       console.error('Delete location error:', error)
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
+
+    await recordAudit({
+      session,
+      entity: 'Location',
+      entityId: id,
+      entityLabel: existing.name ?? null,
+      action: 'DELETE',
+      before: existing as Record<string, unknown>,
+      companyId: existing.companyId ?? session.companyId,
+      unitId: null,
+    })
 
     return NextResponse.json({ message: 'Location deleted successfully' })
   } catch (error) {

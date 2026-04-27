@@ -65,6 +65,10 @@ const MODULE_UI_META: Record<string, ModuleUiMeta> = {
     icon: 'trending_up',
     description: 'Indicadores de desempenho da manutenção.',
   },
+  audit: {
+    icon: 'history',
+    description: 'Relatório de alterações realizadas no sistema.',
+  },
   gep: {
     icon: 'monitoring',
     description: 'Variáveis e monitoramento de processo.',

@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function GET(
   request: NextRequest,
@@ -131,10 +132,10 @@ export async function PUT(
       )
     }
 
-    // Verificar se existe
+    // Verificar se existe e capturar estado atual para auditoria
     let existingQuery = supabase
       .from('Request')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
     if (canonicalRole === 'MANUTENTOR') existingQuery = existingQuery.eq('createdById', session.id)
@@ -171,6 +172,19 @@ export async function PUT(
       console.error('Update error:', updateError)
       return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
     }
+
+    // Auditoria: registra edicao da SS (diff before/after)
+    await recordAudit({
+      session,
+      entity: 'Request',
+      entityId: id,
+      entityLabel: existingRequest.requestNumber ?? null,
+      action: 'UPDATE',
+      before: existingRequest as Record<string, unknown>,
+      after: updatedRequest as Record<string, unknown>,
+      companyId: existingRequest.companyId ?? session.companyId,
+      unitId: existingRequest.unitId ?? session.unitId,
+    })
 
     // Deletar arquivos antigos e inserir novos
     if (files.length > 0) {
@@ -221,10 +235,10 @@ export async function DELETE(
     }
     const canonicalRole = normalizeUserRole(session)
 
-    // Verificar se existe
+    // Verificar se existe e capturar estado completo para auditoria
     let existingQuery = supabase
       .from('Request')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
     if (canonicalRole === 'MANUTENTOR') existingQuery = existingQuery.eq('createdById', session.id)
@@ -243,6 +257,18 @@ export async function DELETE(
       console.error('Delete error:', deleteError)
       return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
     }
+
+    // Auditoria: registra exclusao da SS
+    await recordAudit({
+      session,
+      entity: 'Request',
+      entityId: id,
+      entityLabel: maintenanceRequest.requestNumber ?? null,
+      action: 'DELETE',
+      before: maintenanceRequest as Record<string, unknown>,
+      companyId: maintenanceRequest.companyId ?? session.companyId,
+      unitId: maintenanceRequest.unitId ?? session.unitId,
+    })
 
     return NextResponse.json({
       message: 'Request deleted successfully'

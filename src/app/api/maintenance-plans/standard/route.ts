@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - Listar planos de manutenção padrão
 export async function GET() {
@@ -89,6 +90,18 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    await recordAudit({
+      session,
+      entity: 'StandardMaintenancePlan',
+      entityId: data.id,
+      entityLabel: data.name ?? null,
+      action: 'CREATE',
+      after: data as Record<string, unknown>,
+      companyId: data.companyId ?? session.companyId,
+      unitId: session.unitId,
+    })
+
     return NextResponse.json({ data, message: 'Plano padrão criado' }, { status: 201 })
   } catch (error) {
     console.error('Error:', error)

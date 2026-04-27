@@ -3,6 +3,7 @@ import { getSession } from '@/lib/session'
 import { requireCompanyScope } from '@/lib/user-roles'
 import { checkApiPermission } from '@/lib/permissions'
 import { propagateStandardChanges } from '@/lib/maintenance-plans/standardSync'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // POST - Propaga o estado atual de um Plano Padrao para um conjunto de
 //   AssetMaintenancePlan vinculados.
@@ -59,6 +60,21 @@ export async function POST(
     const appliedCount = result.applied.length
     const skippedCount = result.skipped.length
     const failedCount = result.failed.length
+
+    if (appliedCount > 0) {
+      await recordAudit({
+        session,
+        entity: 'StandardMaintenancePlan',
+        entityId: standardPlanId,
+        entityLabel: null,
+        action: 'UPDATE',
+        before: { propagated: false },
+        after: { propagated: true, appliedCount },
+        companyId,
+        unitId: session.unitId,
+        metadata: { event: 'PROPAGATED', applied: result.applied, skipped: result.skipped, failed: result.failed },
+      })
+    }
 
     return NextResponse.json(
       {

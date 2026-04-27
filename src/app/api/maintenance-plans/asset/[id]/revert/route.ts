@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { requireCompanyScope } from '@/lib/user-roles'
 import { checkApiPermission } from '@/lib/permissions'
 import { revertToStandard } from '@/lib/maintenance-plans/standardSync'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // POST - Reverte um AssetMaintenancePlan customizado ao estado atual do seu
 //   StandardMaintenancePlan de origem. Sobrescreve campos estruturais e recria
@@ -33,8 +35,14 @@ export async function POST(
       return NextResponse.json({ error: 'id invalido' }, { status: 400 })
     }
 
+    const { data: prev } = await supabase
+      .from('AssetMaintenancePlan')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     try {
-      await revertToStandard(id, companyId, session.userId)
+      await revertToStandard(id, companyId, session.id)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao reverter'
       // Mensagens canonicas do helper mapeiam para 400/404
@@ -45,6 +53,27 @@ export async function POST(
         return NextResponse.json({ error: message }, { status: 404 })
       }
       return NextResponse.json({ error: message }, { status: 500 })
+    }
+
+    const { data: next } = await supabase
+      .from('AssetMaintenancePlan')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (prev && next) {
+      await recordAudit({
+        session,
+        entity: 'AssetMaintenancePlan',
+        entityId: id,
+        entityLabel: prev.name ?? next.name ?? null,
+        action: 'UPDATE',
+        before: prev as Record<string, unknown>,
+        after: next as Record<string, unknown>,
+        companyId: prev.companyId ?? companyId,
+        unitId: session.unitId,
+        metadata: { event: 'REVERTED_TO_STANDARD' },
+      })
     }
 
     return NextResponse.json({ data: { reverted: true }, message: 'Plano revertido ao padrao' })

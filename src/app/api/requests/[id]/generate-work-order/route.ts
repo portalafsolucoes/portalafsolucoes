@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { generateSequentialId } from '@/lib/workOrderUtils'
 import { isAdminRole } from '@/lib/user-roles'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   request: NextRequest,
@@ -109,6 +110,31 @@ export async function POST(
         updatedAt: now
       })
       .eq('id', id)
+
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: workOrder.id,
+      entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+      action: 'CREATE',
+      after: workOrder as Record<string, unknown>,
+      companyId: workOrder.companyId ?? session.companyId,
+      unitId: workOrder.unitId ?? session.unitId,
+      metadata: { event: 'CREATED_FROM_REQUEST', requestId: ss.id, requestNumber: ss.requestNumber ?? null },
+    })
+
+    await recordAudit({
+      session,
+      entity: 'Request',
+      entityId: ss.id,
+      entityLabel: ss.requestNumber ?? null,
+      action: 'UPDATE',
+      before: ss as Record<string, unknown>,
+      after: { ...ss, workOrderId: workOrder.id, convertToWorkOrder: true },
+      companyId: ss.companyId ?? session.companyId,
+      unitId: ss.unitId ?? session.unitId,
+      metadata: { event: 'WORK_ORDER_GENERATED', workOrderId: workOrder.id, workOrderInternalId: workOrder.internalId ?? null, workOrderExternalId: workOrder.externalId ?? null },
+    })
 
     return NextResponse.json({
       message: 'Ordem de servico criada com sucesso',

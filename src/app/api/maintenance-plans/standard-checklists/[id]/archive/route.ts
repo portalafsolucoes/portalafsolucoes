@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { requireCompanyScope } from '@/lib/user-roles'
 import { checkApiPermission } from '@/lib/permissions'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // PUT - alterna isActive do checklist (arquivar/reativar)
 export async function PUT(
@@ -28,7 +29,7 @@ export async function PUT(
 
     const { data: existing } = await supabase
       .from('StandardChecklist')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -39,6 +40,19 @@ export async function PUT(
       .update({ isActive, updatedAt: new Date().toISOString() })
       .eq('id', id)
     if (error) throw error
+
+    await recordAudit({
+      session,
+      entity: 'StandardChecklist',
+      entityId: id,
+      entityLabel: existing.name ?? null,
+      action: 'UPDATE',
+      before: existing as Record<string, unknown>,
+      after: { ...existing, isActive },
+      companyId: existing.companyId ?? session.companyId,
+      unitId: existing.unitId ?? session.unitId,
+      metadata: { event: isActive ? 'REACTIVATED' : 'ARCHIVED' },
+    })
 
     return NextResponse.json({ data: { id, isActive }, message: isActive ? 'Reativado' : 'Arquivado' })
   } catch (error) {

@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { uploadFile } from '@/lib/storage'
 import { recomputeScheduleStatus } from '@/lib/scheduleStatus'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   request: NextRequest,
@@ -16,10 +17,10 @@ export async function POST(
 
     const { id } = await params
 
-    // Verificar se a OS existe e pertence à empresa
+    // Verificar se a OS existe e pertence à empresa (capturando estado completo para auditoria)
     const { data: workOrder, error: findError } = await supabase
       .from('WorkOrder')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -166,6 +167,19 @@ export async function POST(
       .from('File')
       .select('*')
       .eq('workOrderId', id)
+
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: id,
+      entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+      action: 'UPDATE',
+      before: workOrder as Record<string, unknown>,
+      after: updatedWorkOrder as Record<string, unknown>,
+      companyId: workOrder.companyId ?? session.companyId,
+      unitId: workOrder.unitId ?? session.unitId,
+      metadata: { event: 'COMPLETED' },
+    })
 
     return NextResponse.json({
       data: { ...updatedWorkOrder, files: files || [] },

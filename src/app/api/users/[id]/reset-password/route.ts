@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 /**
  * POST /api/users/[id]/reset-password
@@ -90,6 +91,19 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     title: 'Senha redefinida',
     message: `Sua senha foi redefinida por um administrador. Voce precisara troca-la no proximo login.`,
     href: '/change-password',
+  })
+
+  await recordAudit({
+    session,
+    entity: 'User',
+    entityId: id,
+    entityLabel: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email || null,
+    action: 'UPDATE',
+    before: { mustChangePassword: false },
+    after: { mustChangePassword: true },
+    companyId: user.companyId ?? session.companyId,
+    unitId: null,
+    metadata: { event: 'PASSWORD_RESET_BY_ADMIN' },
   })
 
   return NextResponse.json({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   _request: NextRequest,
@@ -22,7 +23,7 @@ export async function POST(
 
     const { data: user, error: findError } = await supabase
       .from('User')
-      .select('id, status, companyId')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -56,6 +57,19 @@ export async function POST(
       .eq('id', id)
 
     if (updateError) throw updateError
+
+    await recordAudit({
+      session,
+      entity: 'User',
+      entityId: id,
+      entityLabel: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email || null,
+      action: 'UPDATE',
+      before: user as Record<string, unknown>,
+      after: { ...user, status: 'ACTIVE', enabled: true, deactivatedAt: null, deactivatedById: null },
+      companyId: user.companyId ?? session.companyId,
+      unitId: user.activeUnitId ?? null,
+      metadata: { event: 'REACTIVATED' },
+    })
 
     return NextResponse.json({ message: 'Usuario reativado com sucesso' })
   } catch (error) {

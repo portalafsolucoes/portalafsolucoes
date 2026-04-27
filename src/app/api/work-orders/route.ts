@@ -7,6 +7,7 @@ import { isOperationalRole } from '@/lib/user-roles'
 import { sanitizeLimit } from '@/lib/pagination'
 import { generateRafNumber } from '@/lib/rafUtils'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number): Date {
@@ -535,6 +536,46 @@ export async function POST(request: NextRequest) {
       } catch (rafError) {
         console.error('Error creating RAF for corrective immediate OS:', rafError)
       }
+    }
+
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: workOrder.id,
+      entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+      action: 'CREATE',
+      after: workOrder as Record<string, unknown>,
+      companyId: workOrder.companyId ?? session.companyId,
+      unitId: workOrder.unitId ?? session.unitId,
+    })
+
+    if (createdRaf) {
+      await recordAudit({
+        session,
+        entity: 'FailureAnalysisReport',
+        entityId: createdRaf.id,
+        entityLabel: createdRaf.rafNumber ?? null,
+        action: 'CREATE',
+        after: createdRaf as Record<string, unknown>,
+        companyId: session.companyId,
+        unitId: session.unitId,
+        metadata: { event: 'CREATED_FROM_CORRECTIVE_IMMEDIATE_WO', workOrderId: workOrder.id },
+      })
+    }
+
+    if (sourceRequest) {
+      await recordAudit({
+        session,
+        entity: 'Request',
+        entityId: sourceRequest.id,
+        entityLabel: null,
+        action: 'UPDATE',
+        before: sourceRequest as unknown as Record<string, unknown>,
+        after: { ...sourceRequest, workOrderId: workOrder.id, convertToWorkOrder: true },
+        companyId: sourceRequest.companyId ?? session.companyId,
+        unitId: session.unitId,
+        metadata: { event: 'WORK_ORDER_GENERATED', workOrderId: workOrder.id },
+      })
     }
 
     return NextResponse.json(

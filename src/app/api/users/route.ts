@@ -7,6 +7,7 @@ import { resolveJobTitleSelection } from '@/lib/job-titles'
 import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
 import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 type UserListRow = Record<string, unknown> & {
   calendar?: {
@@ -259,6 +260,17 @@ export async function POST(request: NextRequest) {
     if (requestedCanonical === 'ADMIN') {
       await ensureAdminUnitAccess(session.companyId, userId)
     }
+
+    await recordAudit({
+      session,
+      entity: 'User',
+      entityId: userId,
+      entityLabel: `${firstName} ${lastName}`.trim() || normalizedEmail,
+      action: 'CREATE',
+      after: { ...user, email: normalizedEmail, firstName, lastName, role: toPersistedUserRole(role), phone: phone || null, jobTitle: resolvedJobTitle, jobTitleId: resolvedJobTitleId, rate: rate || 0, enabled: enabled ?? true, calendarId: calendarId || null, locationId: locationId || null, activeUnitId, unitIds: unitIds || [] } as Record<string, unknown>,
+      companyId: session.companyId,
+      unitId: activeUnitId,
+    })
 
     return NextResponse.json(
       { data: user, message: 'User created successfully' },

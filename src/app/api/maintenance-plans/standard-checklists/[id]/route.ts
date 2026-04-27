@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { requireCompanyScope } from '@/lib/user-roles'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - detalhe do checklist com grupos (familia+modelo) e etapas
 export async function GET(
@@ -102,10 +103,10 @@ export async function PUT(
       }>
     }
 
-    // valida ownership
+    // valida ownership (capturando estado completo para auditoria)
     const { data: existing } = await supabase
       .from('StandardChecklist')
-      .select('id, companyId')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -166,6 +167,18 @@ export async function PUT(
       }
     }
 
+    await recordAudit({
+      session,
+      entity: 'StandardChecklist',
+      entityId: id,
+      entityLabel: existing.name ?? null,
+      action: 'UPDATE',
+      before: existing as Record<string, unknown>,
+      after: { ...existing, ...updatePayload, familyGroups: familyGroups ?? undefined },
+      companyId: existing.companyId ?? session.companyId,
+      unitId: existing.unitId ?? session.unitId,
+    })
+
     return NextResponse.json({ data: { id }, message: 'Check list atualizado' })
   } catch (error) {
     console.error('Error updating standard checklist:', error)
@@ -193,7 +206,7 @@ export async function DELETE(
 
     const { data: existing } = await supabase
       .from('StandardChecklist')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -201,6 +214,18 @@ export async function DELETE(
 
     const { error } = await supabase.from('StandardChecklist').delete().eq('id', id)
     if (error) throw error
+
+    await recordAudit({
+      session,
+      entity: 'StandardChecklist',
+      entityId: id,
+      entityLabel: existing.name ?? null,
+      action: 'DELETE',
+      before: existing as Record<string, unknown>,
+      companyId: existing.companyId ?? session.companyId,
+      unitId: existing.unitId ?? session.unitId,
+    })
+
     return NextResponse.json({ message: 'Check list excluido' })
   } catch (error) {
     console.error('Error deleting standard checklist:', error)

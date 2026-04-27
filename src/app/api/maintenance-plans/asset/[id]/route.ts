@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { markAsOverridden } from '@/lib/maintenance-plans/standardSync'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - Detalhe do plano do bem com tarefas, etapas e recursos
 export async function GET(
@@ -93,6 +94,12 @@ export async function PUT(
     if (!body.calendarId) body.calendarId = null
     if (!body.standardPlanId) body.standardPlanId = null
 
+    const { data: prev } = await supabase
+      .from('AssetMaintenancePlan')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { data, error } = await supabase
       .from('AssetMaintenancePlan')
       .update(body)
@@ -105,7 +112,21 @@ export async function PUT(
     // Fase 4: editar campos estruturais do plano marca como customizado (se vier de padrao).
     // markAsOverridden e no-op quando standardPlanId e null ou ja esta marcado.
     if (session.companyId) {
-      await markAsOverridden(id, session.userId, session.companyId)
+      await markAsOverridden(id, session.id, session.companyId)
+    }
+
+    if (prev) {
+      await recordAudit({
+        session,
+        entity: 'AssetMaintenancePlan',
+        entityId: id,
+        entityLabel: prev.name ?? data?.name ?? null,
+        action: 'UPDATE',
+        before: prev as Record<string, unknown>,
+        after: data as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: session.unitId,
+      })
     }
 
     return NextResponse.json({ data, message: 'Plano atualizado' })
@@ -125,8 +146,28 @@ export async function DELETE(
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     const { id } = await params
 
+    const { data: prev } = await supabase
+      .from('AssetMaintenancePlan')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase.from('AssetMaintenancePlan').delete().eq('id', id)
     if (error) throw error
+
+    if (prev) {
+      await recordAudit({
+        session,
+        entity: 'AssetMaintenancePlan',
+        entityId: id,
+        entityLabel: prev.name ?? null,
+        action: 'DELETE',
+        before: prev as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: session.unitId,
+      })
+    }
+
     return NextResponse.json({ message: 'Plano excluído' })
   } catch (error) {
     console.error('Error:', error)

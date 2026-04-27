@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { recomputeScheduleStatus } from '@/lib/scheduleStatus'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   request: NextRequest,
@@ -121,6 +122,19 @@ export async function POST(
         .in('id', teamIds)
       assignedTeams = teams || []
     }
+
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: id,
+      entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+      action: 'UPDATE',
+      before: workOrder as Record<string, unknown>,
+      after: updatedWorkOrder as Record<string, unknown>,
+      companyId: workOrder.companyId ?? session.companyId,
+      unitId: workOrder.unitId ?? session.unitId,
+      metadata: { event: 'EXECUTED' },
+    })
 
     return NextResponse.json({
       success: true,

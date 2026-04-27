@@ -4,6 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { parseWorkDays, getWeeklyHours } from '@/lib/calendarUtils'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // Entidades em que a coluna "Codigo Protheus" foi removida da UI e passou a ser
 // espelhada a partir do campo "code" (preserva integracao TOTVS e constraint unica).
@@ -318,6 +319,20 @@ export async function POST(
         order: opt.order ?? i,
       }))
       await supabase.from('GenericStepOption').insert(optionsToInsert)
+    }
+
+    if (data) {
+      await recordAudit({
+        session,
+        entity: config.table,
+        entityId: data.id,
+        entityLabel: (data.code || data.name || data.id) as string,
+        action: 'CREATE',
+        after: data as Record<string, unknown>,
+        companyId: data.companyId ?? session.companyId,
+        unitId: data.unitId ?? null,
+        metadata: { basicRegistrationsEntity: entity },
+      })
     }
 
     return NextResponse.json({ data, message: 'Registro criado com sucesso' }, { status: 201 })

@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole, requireCompanyScope } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -154,6 +155,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
+    await recordAudit({
+      session,
+      entity: 'AreaInspection',
+      entityId: id,
+      entityLabel: (inspection as { number?: string }).number ?? null,
+      action: 'UPDATE',
+      before: inspection as Record<string, unknown>,
+      after: { ...(inspection as Record<string, unknown>), ...updates },
+      companyId: (inspection as { companyId?: string }).companyId ?? session.companyId,
+      unitId: (inspection as { unitId?: string }).unitId ?? session.unitId,
+    })
+
     return NextResponse.json({ data: { id }, message: 'Inspeção atualizada' })
   } catch (error) {
     console.error('Put inspection error:', error)
@@ -193,6 +206,17 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       console.error('Delete inspection error:', deleteError)
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
+
+    await recordAudit({
+      session,
+      entity: 'AreaInspection',
+      entityId: id,
+      entityLabel: (inspection as { number?: string }).number ?? null,
+      action: 'DELETE',
+      before: inspection as Record<string, unknown>,
+      companyId: (inspection as { companyId?: string }).companyId ?? session.companyId,
+      unitId: (inspection as { unitId?: string }).unitId ?? session.unitId,
+    })
 
     return NextResponse.json({ data: { id }, message: 'Inspeção removida' })
   } catch (error) {

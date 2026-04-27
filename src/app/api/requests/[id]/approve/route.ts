@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { generateSequentialId } from '@/lib/workOrderUtils'
 import { isAdminRole } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   request: NextRequest,
@@ -30,6 +31,13 @@ export async function POST(
 
     // Se for rejeição
     if (body.approved === false) {
+      const { data: prevReq } = await supabase
+        .from('Request')
+        .select('*')
+        .eq('id', id)
+        .eq('companyId', session.companyId)
+        .single()
+
       const { error } = await supabase
         .from('Request')
         .update({
@@ -39,12 +47,33 @@ export async function POST(
           rejectionReason: rejectionReason || 'Sem justificativa'
         })
         .eq('id', id)
-      
+
       if (error) {
         console.error('Reject error:', error)
         return NextResponse.json({ error: 'Database error' }, { status: 500 })
       }
-      
+
+      if (prevReq) {
+        await recordAudit({
+          session,
+          entity: 'Request',
+          entityId: id,
+          entityLabel: prevReq.requestNumber ?? null,
+          action: 'UPDATE',
+          before: prevReq as Record<string, unknown>,
+          after: {
+            ...prevReq,
+            status: 'REJECTED',
+            teamApprovalStatus: 'REJECTED',
+            approvedById: session.id,
+            rejectionReason: rejectionReason || 'Sem justificativa',
+          },
+          companyId: prevReq.companyId ?? session.companyId,
+          unitId: prevReq.unitId ?? session.unitId,
+          metadata: { event: 'REJECTED' },
+        })
+      }
+
       return NextResponse.json({
         message: 'Solicitação rejeitada com sucesso'
       })
@@ -139,6 +168,38 @@ export async function POST(
         })
         .eq('id', id)
 
+      await recordAudit({
+        session,
+        entity: 'Request',
+        entityId: id,
+        entityLabel: maintenanceRequest.requestNumber ?? null,
+        action: 'UPDATE',
+        before: maintenanceRequest as Record<string, unknown>,
+        after: {
+          ...maintenanceRequest,
+          status: 'APPROVED',
+          teamApprovalStatus: 'APPROVED',
+          approvedById: session.id,
+          workOrderId: workOrder.id,
+          convertToWorkOrder: true,
+        },
+        companyId: maintenanceRequest.companyId ?? session.companyId,
+        unitId: maintenanceRequest.unitId ?? session.unitId,
+        metadata: { event: 'APPROVED_WITH_WO', workOrderId: workOrder.id, workOrderInternalId: workOrder.internalId ?? null, workOrderExternalId: workOrder.externalId ?? null },
+      })
+
+      await recordAudit({
+        session,
+        entity: 'WorkOrder',
+        entityId: workOrder.id,
+        entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+        action: 'CREATE',
+        after: workOrder as Record<string, unknown>,
+        companyId: workOrder.companyId ?? session.companyId,
+        unitId: workOrder.unitId ?? session.unitId,
+        metadata: { event: 'CREATED_FROM_REQUEST', requestId: maintenanceRequest.id, requestNumber: maintenanceRequest.requestNumber ?? null },
+      })
+
       return NextResponse.json({
         message: 'Solicitação aprovada e ordem de serviço criada com sucesso',
         data: {
@@ -159,6 +220,26 @@ export async function POST(
           convertToWorkOrder: false
         })
         .eq('id', id)
+
+      await recordAudit({
+        session,
+        entity: 'Request',
+        entityId: id,
+        entityLabel: maintenanceRequest.requestNumber ?? null,
+        action: 'UPDATE',
+        before: maintenanceRequest as Record<string, unknown>,
+        after: {
+          ...maintenanceRequest,
+          status: 'APPROVED',
+          teamApprovalStatus: 'APPROVED',
+          approvedById: session.id,
+          assignedToId: assignedToId || null,
+          convertToWorkOrder: false,
+        },
+        companyId: maintenanceRequest.companyId ?? session.companyId,
+        unitId: maintenanceRequest.unitId ?? session.unitId,
+        metadata: { event: 'APPROVED' },
+      })
 
       return NextResponse.json({
         message: 'Solicitação aprovada com sucesso'

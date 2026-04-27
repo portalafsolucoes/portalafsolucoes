@@ -385,6 +385,7 @@ model Company {
   areaInspections          AreaInspection[]
   kpiIndicators            KpiIndicator[]
   kpiVariables             KpiVariable[]
+  auditLogs                AuditLog[]                @relation("AuditLogCompany")
 
   // SUPER_ADMINs com esta empresa selecionada como contexto ativo
   activeForUsers User[] @relation("ActiveCompanyUsers")
@@ -482,6 +483,7 @@ model User {
   reopenedInspections        AreaInspection[]                  @relation("AreaInspectionReopener")
   createdInspections         AreaInspection[]                  @relation("AreaInspectionCreator")
   answeredInspectionSteps    AreaInspectionStep[]              @relation("AreaInspectionAnswerer")
+  auditLogs                  AuditLog[]                        @relation("AuditLogUser")
 
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
@@ -579,6 +581,7 @@ model Location {
   workOrderSchedules     WorkOrderSchedule[]
   standardChecklistsAsUnit StandardChecklist[]      @relation("StandardChecklistUnit")
   areaInspectionsAsUnit    AreaInspection[]         @relation("AreaInspectionUnit")
+  auditLogs                AuditLog[]               @relation("AuditLogUnit")
 
   @@index([companyId])
 }
@@ -2516,4 +2519,51 @@ model AreaInspectionStep {
   @@index([inspectionAssetId])
   @@index([genericStepId])
   @@index([answer])
+}
+
+// ============================================
+// AUDITORIA — Onda 0 (fundacao)
+// ============================================
+// AuditLog: log generico de mudancas de entidades de negocio.
+// - companyId: tenant da entidade afetada (NUNCA da sessao quando SUPER_ADMIN cross-tenant atua sobre um tenant)
+// - unitId: unidade da entidade afetada quando aplicavel
+// - userId/userName/userRole: snapshot do autor para sobreviver a archive/delete do User
+// - entity/entityId/entityLabel: identificacao da entidade afetada (sem FK p/ sobreviver a hard delete)
+// - action: CREATE | UPDATE | DELETE
+// - diff: { [field]: { before, after } } — apenas campos da allowlist, segredos sempre fora
+// - metadata: contexto extra opcional (ex: motivo de exclusao, ip, etc.)
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  createdAt    DateTime    @default(now())
+
+  companyId    String?
+  company      Company?    @relation("AuditLogCompany", fields: [companyId], references: [id], onDelete: Cascade)
+
+  unitId       String?
+  unit         Location?   @relation("AuditLogUnit", fields: [unitId], references: [id], onDelete: SetNull)
+
+  userId       String?
+  user         User?       @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  userName     String?
+  userRole     String?
+
+  entity       String
+  entityId     String
+  entityLabel  String?
+  action       AuditAction
+
+  diff         Json?
+  metadata     Json?
+
+  @@index([companyId, unitId, createdAt])
+  @@index([userId])
+  @@index([entity])
+  @@index([entity, entityId])
+  @@index([action])
 }

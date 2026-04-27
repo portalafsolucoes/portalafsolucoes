@@ -88,6 +88,7 @@ export function Sidebar() {
     ]},
     { name: 'Localizações', href: '/locations', icon: 'location_on', module: 'locations' },
     { name: 'KPI - Indicadores', href: '/kpi', icon: 'trending_up', module: 'kpi' },
+    { name: 'Auditoria', href: '/audit', icon: 'history', module: 'audit' },
     { name: 'Configurações', href: '/admin/portal', icon: 'settings', module: 'settings' },
   ]
 

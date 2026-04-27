@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   request: NextRequest,
@@ -78,6 +79,19 @@ export async function POST(
       .eq('id', id)
       .select('*, assignedTo:User!assignedToId(id, firstName, lastName, email), createdBy:User!createdById(id, firstName, lastName, email)')
       .single()
+
+    await recordAudit({
+      session,
+      entity: 'Request',
+      entityId: id,
+      entityLabel: maintenanceRequest.requestNumber ?? null,
+      action: 'UPDATE',
+      before: maintenanceRequest as Record<string, unknown>,
+      after: (updatedRequest ?? { ...maintenanceRequest, executionCompletedAt: new Date().toISOString(), afterPhotoUrl, executionNotes, executionData: executionData || null }) as Record<string, unknown>,
+      companyId: maintenanceRequest.companyId ?? session.companyId,
+      unitId: maintenanceRequest.unitId ?? session.unitId,
+      metadata: { event: 'EXECUTION_COMPLETED' },
+    })
 
     return NextResponse.json({
       message: 'Execução completada com sucesso',

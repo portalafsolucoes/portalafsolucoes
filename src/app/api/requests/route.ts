@@ -5,6 +5,7 @@ import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole } from '@/lib/user-roles'
 import { sanitizeLimit } from '@/lib/pagination'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -235,6 +236,18 @@ export async function POST(request: NextRequest) {
         details: createError?.message || 'No data returned'
       }, { status: 500 })
     }
+
+    // Auditoria: registra criacao da SS
+    await recordAudit({
+      session,
+      entity: 'Request',
+      entityId: maintenanceRequest.id,
+      entityLabel: maintenanceRequest.requestNumber ?? null,
+      action: 'CREATE',
+      after: maintenanceRequest as Record<string, unknown>,
+      companyId: maintenanceRequest.companyId ?? session.companyId,
+      unitId: maintenanceRequest.unitId ?? session.unitId,
+    })
 
     // Insert files separately if provided
     if (files.length > 0 && maintenanceRequest) {

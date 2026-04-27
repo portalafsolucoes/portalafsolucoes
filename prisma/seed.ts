@@ -53,6 +53,7 @@ const PORTAL_MODULES = [
   { slug: 'rafs', name: 'RAF - Análise de Falhas', icon: 'description', order: 11 },
   { slug: 'locations', name: 'Localizações', icon: 'location_on', order: 12 },
   { slug: 'kpi', name: 'KPI - Indicadores', icon: 'trending_up', order: 13 },
+  { slug: 'audit', name: 'Auditoria', icon: 'history', order: 13.5 },
   { slug: 'gep', name: 'GEP - Variáveis de Processo', icon: 'monitoring', order: 14 },
   { slug: 'analytics', name: 'Análises', icon: 'bar_chart', order: 15 },
   { slug: 'settings', name: 'Configurações', icon: 'settings', order: 16 },

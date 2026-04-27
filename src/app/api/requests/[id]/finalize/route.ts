@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // POST - Finalizar uma Solicitação de Serviço
 export async function POST(
@@ -24,7 +25,7 @@ export async function POST(
     // Buscar a SS com dados da OS vinculada
     const { data: ss, error: ssError } = await supabase
       .from('Request')
-      .select('id, status, workOrderId')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -76,6 +77,19 @@ export async function POST(
       console.error('Error finalizing request:', updateError)
       return NextResponse.json({ error: 'Erro ao finalizar solicitação' }, { status: 500 })
     }
+
+    await recordAudit({
+      session,
+      entity: 'Request',
+      entityId: id,
+      entityLabel: ss.requestNumber ?? null,
+      action: 'UPDATE',
+      before: ss as Record<string, unknown>,
+      after: (updated ?? { ...ss, status: 'COMPLETED' }) as Record<string, unknown>,
+      companyId: ss.companyId ?? session.companyId,
+      unitId: ss.unitId ?? session.unitId,
+      metadata: { event: 'FINALIZED' },
+    })
 
     return NextResponse.json({
       data: updated,

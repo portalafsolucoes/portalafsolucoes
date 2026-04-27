@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { requireCompanyScope } from '@/lib/user-roles'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - lista checklists padrao da empresa, com filtros opcionais ?workCenterId= e ?serviceTypeId=
 export async function GET(request: NextRequest) {
@@ -162,6 +163,17 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+
+    await recordAudit({
+      session,
+      entity: 'StandardChecklist',
+      entityId: checklistId,
+      entityLabel: name ?? null,
+      action: 'CREATE',
+      after: { id: checklistId, name, workCenterId, serviceTypeId, unitId: wc.unitId, isActive: isActive !== false, familyGroups: familyGroups || [] },
+      companyId: session.companyId,
+      unitId: wc.unitId,
+    })
 
     return NextResponse.json({ data: { id: checklistId }, message: 'Check list padrao criado' }, { status: 201 })
   } catch (error) {

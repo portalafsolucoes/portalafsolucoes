@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { isLastActiveSuperAdmin } from '@/lib/users/userReferences'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function POST(
   request: NextRequest,
@@ -33,7 +34,7 @@ export async function POST(
 
     const { data: user, error: findError } = await supabase
       .from('User')
-      .select('id, status, role, companyId, firstName, lastName')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -83,6 +84,28 @@ export async function POST(
       .eq('id', id)
 
     if (updateError) throw updateError
+
+    await recordAudit({
+      session,
+      entity: 'User',
+      entityId: id,
+      entityLabel: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email || null,
+      action: 'UPDATE',
+      before: user as Record<string, unknown>,
+      after: {
+        ...user,
+        status: 'ARCHIVED',
+        enabled: false,
+        firstName: 'Usuario',
+        lastName: `Removido #${shortId}`,
+        archivedAt: now,
+        archivedById: session.id,
+        archivalReason: reason,
+      },
+      companyId: user.companyId ?? session.companyId,
+      unitId: user.activeUnitId ?? null,
+      metadata: { event: 'ARCHIVED', reason },
+    })
 
     return NextResponse.json({ message: 'Usuario anonimizado com sucesso' })
   } catch (error) {

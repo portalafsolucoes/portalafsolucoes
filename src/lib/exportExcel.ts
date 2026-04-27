@@ -165,6 +165,67 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
       { key: 'failureDescription', header: 'Descrição da Falha' },
     ],
   },
+  audit: {
+    filename: 'Auditoria',
+    columns: [
+      { key: 'createdAt', header: 'Data/Hora', transform: (v) => {
+        if (!v) return ''
+        try { return new Date(String(v)).toLocaleString('pt-BR') } catch { return String(v) }
+      } },
+      { key: 'userName', header: 'Usuário' },
+      { key: 'userRole', header: 'Perfil' },
+      { key: 'action', header: 'Ação', transform: (v) => {
+        const s = String(v || '')
+        if (s === 'CREATE') return 'Criação'
+        if (s === 'UPDATE') return 'Edição'
+        if (s === 'DELETE') return 'Exclusão'
+        return s
+      } },
+      { key: 'entity', header: 'Entidade', transform: (v) => {
+        const s = String(v || '')
+        const map: Record<string, string> = {
+          Asset: 'Ativo',
+          AssetMaintenancePlan: 'Plano de Manutenção (Ativo)',
+          StandardMaintenancePlan: 'Plano de Manutenção (Padrão)',
+          StandardChecklist: 'Check List Padrão',
+          AreaInspection: 'Inspeção de Área',
+          WorkOrder: 'Ordem de Serviço',
+          Request: 'Solicitação',
+          FailureAnalysisReport: 'RAF',
+          Location: 'Localização',
+          User: 'Usuário',
+          Company: 'Empresa',
+          Calendar: 'Calendário',
+          Area: 'Área',
+          CostCenter: 'Centro de Custo',
+          WorkCenter: 'Centro de Trabalho',
+          AssetFamily: 'Família de Ativos',
+          AssetFamilyModel: 'Modelo de Família',
+          Position: 'Posição',
+          JobTitle: 'Cargo',
+          Characteristic: 'Característica',
+          Resource: 'Recurso',
+          MaintenanceType: 'Tipo de Manutenção',
+          MaintenanceArea: 'Área de Manutenção',
+          ServiceType: 'Tipo de Serviço',
+          GenericTask: 'Tarefa Genérica',
+          GenericStep: 'Etapa Genérica',
+          CounterType: 'Tipo de Contador',
+        }
+        return map[s] ?? s
+      } },
+      { key: 'entityLabel', header: 'Identificador' },
+      { key: 'summary', header: 'Resumo' },
+      { key: 'source', header: 'Fonte', transform: (v) => {
+        const s = String(v || '')
+        if (s === 'audit_log') return 'Auditoria geral'
+        if (s === 'asset_history') return 'Histórico de ativo'
+        if (s === 'wo_reschedule') return 'Reprogramação de OS'
+        if (s === 'company_rejection') return 'Rejeição de empresa'
+        return s
+      } },
+    ],
+  },
   'action-plan-items': {
     filename: 'PA_das_RAFs',
     columns: [

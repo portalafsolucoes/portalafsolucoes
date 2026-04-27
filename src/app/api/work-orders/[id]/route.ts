@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { isOperationalRole } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 export async function GET(
   request: NextRequest,
@@ -108,10 +109,10 @@ export async function PATCH(
 
     const body = normalizeTextPayload(await request.json())
 
-    // Verificar se a OS existe e pertence à empresa
+    // Verificar se a OS existe e pertence à empresa (capturando estado completo para auditoria)
     let existingQuery = supabase
       .from('WorkOrder')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
     if (isOperationalRole(session)) existingQuery = existingQuery.eq('assignedToId', session.id)
@@ -257,6 +258,18 @@ export async function PATCH(
       assignedUserDetails = (users || []) as Array<{ id: string; firstName: string; lastName: string; email: string }>
     }
 
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: id,
+      entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+      action: 'UPDATE',
+      before: workOrder as Record<string, unknown>,
+      after: updatedWorkOrder as Record<string, unknown>,
+      companyId: workOrder.companyId ?? session.companyId,
+      unitId: workOrder.unitId ?? session.unitId,
+    })
+
     return NextResponse.json({
       data: { ...updatedWorkOrder, assignedUsers: assignedUserDetails },
       message: 'Work order updated successfully'
@@ -288,10 +301,10 @@ export async function DELETE(
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
-    // Verificar se a OS existe e pertence à empresa
+    // Verificar se a OS existe e pertence à empresa (capturando estado completo para auditoria)
     const { data: workOrder, error: findError } = await supabase
       .from('WorkOrder')
-      .select('id')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -309,6 +322,17 @@ export async function DELETE(
       .eq('id', id)
 
     if (deleteError) throw deleteError
+
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: id,
+      entityLabel: workOrder.internalId ?? workOrder.externalId ?? null,
+      action: 'DELETE',
+      before: workOrder as Record<string, unknown>,
+      companyId: workOrder.companyId ?? session.companyId,
+      unitId: workOrder.unitId ?? session.unitId,
+    })
 
     return NextResponse.json({
       message: 'Work order deleted successfully'

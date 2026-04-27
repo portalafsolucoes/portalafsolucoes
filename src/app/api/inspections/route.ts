@@ -5,6 +5,7 @@ import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole, requireCompanyScope } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { generateInspectionNumber } from '@/lib/area-inspections/generateNumber'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 type StandardChecklistRow = {
   id: string
@@ -361,6 +362,17 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+
+    await recordAudit({
+      session,
+      entity: 'AreaInspection',
+      entityId: inspectionId,
+      entityLabel: number ?? null,
+      action: 'CREATE',
+      after: { id: inspectionId, number, description, dueDate, status: 'RASCUNHO', standardChecklistId: checklist.id, checklistName: checklist.name, assignedToId, assetCount: compatibleAssets.length, stepCount: stepRows.length },
+      companyId: session.companyId,
+      unitId: session.unitId,
+    })
 
     return NextResponse.json(
       {

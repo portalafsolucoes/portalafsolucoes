@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // Entidades em que a coluna "Codigo Protheus" foi removida da UI e passou a ser
 // espelhada a partir do campo "code". Mantem integracao TOTVS e constraint unica.
@@ -128,6 +129,13 @@ export async function PUT(
     // Atualizar updatedAt
     body.updatedAt = new Date().toISOString()
 
+    const { data: prev } = await supabase
+      .from(table)
+      .select('*')
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
     const { data, error } = await supabase
       .from(table)
       .update(body)
@@ -160,6 +168,21 @@ export async function PUT(
       }
     }
 
+    if (prev && data) {
+      await recordAudit({
+        session,
+        entity: table,
+        entityId: id,
+        entityLabel: (prev.code || prev.name || data.code || data.name || id) as string,
+        action: 'UPDATE',
+        before: prev as Record<string, unknown>,
+        after: data as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: prev.unitId ?? null,
+        metadata: { basicRegistrationsEntity: entity },
+      })
+    }
+
     return NextResponse.json({ data, message: 'Registro atualizado com sucesso' })
   } catch (error) {
     console.error('Error:', error)
@@ -190,6 +213,13 @@ export async function DELETE(
       return NextResponse.json({ error: permError }, { status: 403 })
     }
 
+    const { data: prev } = await supabase
+      .from(table)
+      .select('*')
+      .eq('id', id)
+      .eq('companyId', session.companyId)
+      .single()
+
     const { error } = await supabase
       .from(table)
       .delete()
@@ -204,6 +234,20 @@ export async function DELETE(
         )
       }
       throw error
+    }
+
+    if (prev) {
+      await recordAudit({
+        session,
+        entity: table,
+        entityId: id,
+        entityLabel: (prev.code || prev.name || id) as string,
+        action: 'DELETE',
+        before: prev as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: prev.unitId ?? null,
+        metadata: { basicRegistrationsEntity: entity },
+      })
     }
 
     return NextResponse.json({ message: 'Registro excluído com sucesso' })

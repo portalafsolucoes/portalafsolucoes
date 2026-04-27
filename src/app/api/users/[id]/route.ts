@@ -8,6 +8,7 @@ import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
 import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 import { countUserReferences } from '@/lib/users/userReferences'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -273,6 +274,18 @@ export async function PUT(
       await ensureAdminUnitAccess(session.companyId, id)
     }
 
+    await recordAudit({
+      session,
+      entity: 'User',
+      entityId: id,
+      entityLabel: `${existingUser.firstName ?? ''} ${existingUser.lastName ?? ''}`.trim() || existingUser.email || null,
+      action: 'UPDATE',
+      before: existingUser as Record<string, unknown>,
+      after: user as Record<string, unknown>,
+      companyId: existingUser.companyId ?? session.companyId,
+      unitId: existingUser.activeUnitId ?? null,
+    })
+
     return NextResponse.json(
       { data: user, message: 'User updated successfully' }
     )
@@ -302,10 +315,10 @@ export async function DELETE(
 
     const { id } = await params
 
-    // Verificar se o usuário existe e pertence à empresa
+    // Verificar se o usuário existe e pertence à empresa (capturando estado completo para auditoria)
     const { data: user, error: findError } = await supabase
       .from('User')
-      .select('id, companyId')
+      .select('*')
       .eq('id', id)
       .eq('companyId', session.companyId)
       .single()
@@ -341,6 +354,17 @@ export async function DELETE(
       .eq('id', id)
 
     if (deleteError) throw deleteError
+
+    await recordAudit({
+      session,
+      entity: 'User',
+      entityId: id,
+      entityLabel: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email || null,
+      action: 'DELETE',
+      before: user as Record<string, unknown>,
+      companyId: user.companyId ?? session.companyId,
+      unitId: user.activeUnitId ?? null,
+    })
 
     return NextResponse.json({
       message: 'User deleted successfully'

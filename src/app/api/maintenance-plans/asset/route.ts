@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - Listar planos de manutenção do bem
 export async function GET(request: NextRequest) {
@@ -182,6 +183,20 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    }
+
+    if (data) {
+      await recordAudit({
+        session,
+        entity: 'AssetMaintenancePlan',
+        entityId: data.id,
+        entityLabel: data.name ?? null,
+        action: 'CREATE',
+        after: data as Record<string, unknown>,
+        companyId: data.companyId ?? session.companyId,
+        unitId: session.unitId,
+        metadata: standardPlanId ? { standardPlanId } : null,
+      })
     }
 
     return NextResponse.json({ data, message: 'Plano do bem criado' }, { status: 201 })

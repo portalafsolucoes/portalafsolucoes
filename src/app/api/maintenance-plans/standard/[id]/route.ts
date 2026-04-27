@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // GET - Detalhe do plano padrão com tarefas, etapas e recursos
 export async function GET(
@@ -85,6 +86,12 @@ export async function PUT(
     if (!body.familyModelId) body.familyModelId = null
     if (!body.calendarId) body.calendarId = null
 
+    const { data: prev } = await supabase
+      .from('StandardMaintenancePlan')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { data, error } = await supabase
       .from('StandardMaintenancePlan')
       .update(body)
@@ -93,6 +100,21 @@ export async function PUT(
       .single()
 
     if (error) throw error
+
+    if (prev) {
+      await recordAudit({
+        session,
+        entity: 'StandardMaintenancePlan',
+        entityId: id,
+        entityLabel: prev.name ?? data?.name ?? null,
+        action: 'UPDATE',
+        before: prev as Record<string, unknown>,
+        after: data as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: session.unitId,
+      })
+    }
+
     return NextResponse.json({ data, message: 'Plano atualizado' })
   } catch (error) {
     console.error('Error:', error)
@@ -110,8 +132,28 @@ export async function DELETE(
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     const { id } = await params
 
+    const { data: prev } = await supabase
+      .from('StandardMaintenancePlan')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase.from('StandardMaintenancePlan').delete().eq('id', id)
     if (error) throw error
+
+    if (prev) {
+      await recordAudit({
+        session,
+        entity: 'StandardMaintenancePlan',
+        entityId: id,
+        entityLabel: prev.name ?? null,
+        action: 'DELETE',
+        before: prev as Record<string, unknown>,
+        companyId: prev.companyId ?? session.companyId,
+        unitId: session.unitId,
+      })
+    }
+
     return NextResponse.json({ message: 'Plano excluído' })
   } catch (error) {
     console.error('Error:', error)

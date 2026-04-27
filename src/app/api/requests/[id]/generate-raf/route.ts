@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateRafNumber } from '@/lib/rafUtils'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // POST /api/requests/[id]/generate-raf
 // Cria um RAF vinculado diretamente a uma SS (sem precisar de OS).
@@ -140,6 +141,18 @@ export async function POST(
         { status: 500 }
       )
     }
+
+    await recordAudit({
+      session,
+      entity: 'FailureAnalysisReport',
+      entityId: raf.id,
+      entityLabel: raf.rafNumber ?? null,
+      action: 'CREATE',
+      after: insertPayload as Record<string, unknown>,
+      companyId: session.companyId,
+      unitId: session.unitId,
+      metadata: { event: 'CREATED_FROM_REQUEST', requestId: ss.id, requestNumber: ss.requestNumber ?? null },
+    })
 
     return NextResponse.json(
       { data: raf, message: 'RAF criada com sucesso a partir da solicitacao' },

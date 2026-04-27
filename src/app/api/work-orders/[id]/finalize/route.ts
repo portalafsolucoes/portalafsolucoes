@@ -8,6 +8,7 @@ import {
 } from '@/lib/calendarUtils'
 import { recomputeScheduleStatus } from '@/lib/scheduleStatus'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { recordAudit } from '@/lib/audit/recordAudit'
 
 // POST - Finalizar uma Ordem de Serviço com dados reais de execução
 export async function POST(
@@ -359,6 +360,33 @@ export async function POST(
         },
         workOrderId: id,
         userId: session.id,
+      })
+    }
+
+    await recordAudit({
+      session,
+      entity: 'WorkOrder',
+      entityId: id,
+      entityLabel: wo.internalId ?? wo.externalId ?? null,
+      action: 'UPDATE',
+      before: wo as Record<string, unknown>,
+      after: updatedWo as Record<string, unknown>,
+      companyId: wo.companyId ?? session.companyId,
+      unitId: wo.unitId ?? session.unitId,
+      metadata: { event: 'FINALIZED' },
+    })
+
+    if (correctiveWo) {
+      await recordAudit({
+        session,
+        entity: 'WorkOrder',
+        entityId: correctiveWo.id,
+        entityLabel: correctiveWo.internalId ?? correctiveWo.externalId ?? null,
+        action: 'CREATE',
+        after: correctiveWo as Record<string, unknown>,
+        companyId: correctiveWo.companyId ?? session.companyId,
+        unitId: correctiveWo.unitId ?? session.unitId,
+        metadata: { event: 'CREATED_AS_CORRECTIVE_FROM', sourceWorkOrderId: id },
       })
     }
 
