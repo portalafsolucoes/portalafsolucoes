@@ -9,8 +9,6 @@ import { getProductDefaultPath, getProductHref, PRODUCT_META } from '@/lib/produ
 import type { ProductSlug } from '@/lib/products'
 import { normalizeUserRole } from '@/lib/user-roles'
 
-import { PORTAL_NAME } from '@/lib/branding'
-
 const IMAGES = {
   hero: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80',
   cmms: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
@@ -119,9 +117,6 @@ export default function HubPage() {
               <Icon name="hub" className="text-2xl text-white" />
             </div>
             <div>
-              <h1 className="font-headline text-lg font-extrabold leading-tight text-sidebar tracking-tight">
-                {PORTAL_NAME}
-              </h1>
               <p className="text-[10px] uppercase tracking-[0.2em] text-sidebar/60 font-bold hidden sm:block">
                 Plataforma Integrada
               </p>

@@ -124,7 +124,6 @@ function LoginForm() {
             <Icon name="hub" className="text-3xl text-white" />
           </div>
           <p className="label-uppercase mb-2">Acesso ao Sistema</p>
-          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">{PORTAL_NAME}</h1>
           <p className="text-muted-foreground">{APP_DESCRIPTION}</p>
         </div>
 
