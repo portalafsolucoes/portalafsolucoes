@@ -77,6 +77,7 @@ export function Sidebar() {
       { name: 'Programação de OSs', href: '/planning/schedules' },
     ]},
     { name: 'Ordens de Serviço (OS)', href: '/work-orders', icon: 'construction', module: 'work-orders' },
+    { name: 'Check List', href: '/inspections/checklists', icon: 'fact_check', module: 'area-inspections' },
     { name: 'Solicitações de Serviço', href: '/requests', icon: 'assignment', module: 'requests', subItems: [
       { name: 'Solicitações', href: '/requests', module: 'requests' },
       { name: 'Aprovações', href: '/requests/approvals', module: 'approvals', badge: pendingCount },

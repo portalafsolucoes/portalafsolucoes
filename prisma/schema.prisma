@@ -106,6 +106,18 @@ enum RafStatus {
   FINALIZADA
 }
 
+enum AreaInspectionStatus {
+  RASCUNHO
+  EM_REVISAO
+  FINALIZADO
+}
+
+enum AreaInspectionAnswer {
+  OK
+  NOK
+  NA
+}
+
 enum ProcessSector {
   ENERGIA
   MOAGEM_1
@@ -370,6 +382,7 @@ model Company {
   maintenancePlanExecutions MaintenancePlanExecution[]
   workOrderSchedules       WorkOrderSchedule[]
   standardChecklists       StandardChecklist[]
+  areaInspections          AreaInspection[]
   kpiIndicators            KpiIndicator[]
   kpiVariables             KpiVariable[]
 
@@ -463,6 +476,12 @@ model User {
   workOrderRescheduleEntries WorkOrderRescheduleHistory[]      @relation("WorkOrderRescheduleHistoryUser")
   detachedAssetPlans         AssetMaintenancePlan[]            @relation("AssetMaintenancePlanDetacher")
   createdStandardChecklists  StandardChecklist[]               @relation("StandardChecklistCreator")
+  assignedInspections        AreaInspection[]                  @relation("AreaInspectionAssignee")
+  submittedInspections       AreaInspection[]                  @relation("AreaInspectionSubmitter")
+  finalizedInspections       AreaInspection[]                  @relation("AreaInspectionFinalizer")
+  reopenedInspections        AreaInspection[]                  @relation("AreaInspectionReopener")
+  createdInspections         AreaInspection[]                  @relation("AreaInspectionCreator")
+  answeredInspectionSteps    AreaInspectionStep[]              @relation("AreaInspectionAnswerer")
 
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
@@ -559,6 +578,7 @@ model Location {
   maintenancePlanExecutions MaintenancePlanExecution[]
   workOrderSchedules     WorkOrderSchedule[]
   standardChecklistsAsUnit StandardChecklist[]      @relation("StandardChecklistUnit")
+  areaInspectionsAsUnit    AreaInspection[]         @relation("AreaInspectionUnit")
 
   @@index([companyId])
 }
@@ -913,6 +933,7 @@ model GenericStep {
   assetTaskSteps    AssetMaintenanceTaskStep[]
   options           GenericStepOption[]
   checklistSteps    StandardChecklistStep[]       @relation("ChecklistStepGenericStep")
+  inspectionSteps   AreaInspectionStep[]          @relation("InspectionStepGenericStep")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -1053,6 +1074,7 @@ model Asset {
   characteristicValues   AssetCharacteristicValue[]
   sparePartsList         AssetSparePart[]
   maintenancePlans       AssetMaintenancePlan[]
+  areaInspectionAssets   AreaInspectionAsset[] @relation("InspectionAssetRef")
 
   @@unique([unitId, tag])
   @@unique([unitId, protheusCode])
@@ -1678,6 +1700,11 @@ model Request {
 
   failureAnalysisReport FailureAnalysisReport? @relation("RequestRaf")
 
+  // Inspecao de Area
+  inspectionId String?
+  inspection   AreaInspection? @relation("InspectionRequests", fields: [inspectionId], references: [id], onDelete: SetNull)
+  inspectionStep AreaInspectionStep? @relation("InspectionStepRequest")
+
   files File[]
 
   @@index([companyId])
@@ -1689,6 +1716,7 @@ model Request {
   @@index([createdById])
   @@index([companyId, unitId])
   @@index([maintenanceAreaId])
+  @@index([inspectionId])
 }
 
 // ============================================
@@ -2326,6 +2354,7 @@ model StandardChecklist {
   createdBy   User @relation("StandardChecklistCreator", fields: [createdById], references: [id])
 
   familyGroups StandardChecklistFamilyGroup[]
+  areaInspections AreaInspection[]
 
   @@unique([workCenterId, serviceTypeId])
   @@index([companyId])
@@ -2371,4 +2400,120 @@ model StandardChecklistStep {
 
   @@index([groupId])
   @@index([genericStepId])
+}
+
+// ============================================
+// INSPECAO DE AREA
+// ============================================
+
+model AreaInspection {
+  id          String                @id @default(cuid())
+  number      String                // 6 digitos zerados, sequencia por (companyId, unitId)
+  description String
+  dueDate     DateTime
+  status      AreaInspectionStatus  @default(RASCUNHO)
+
+  // Snapshot do contexto (sobrevive a mudancas no padrao)
+  standardChecklistId String?
+  standardChecklist   StandardChecklist? @relation(fields: [standardChecklistId], references: [id], onDelete: SetNull)
+  checklistName       String
+  workCenterId        String?
+  workCenterName      String
+  serviceTypeId       String?
+  serviceTypeName     String
+
+  // Atribuicao
+  assignedToId String
+  assignedTo   User @relation("AreaInspectionAssignee", fields: [assignedToId], references: [id])
+
+  // Workflow timestamps
+  submittedForReviewAt   DateTime?
+  submittedForReviewById String?
+  submittedForReviewBy   User?     @relation("AreaInspectionSubmitter", fields: [submittedForReviewById], references: [id])
+  finalizedAt            DateTime?
+  finalizedById          String?
+  finalizedBy            User?     @relation("AreaInspectionFinalizer", fields: [finalizedById], references: [id])
+  reopenedAt             DateTime?
+  reopenedById           String?
+  reopenedBy             User?     @relation("AreaInspectionReopener", fields: [reopenedById], references: [id])
+
+  // Tenancy
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  unitId      String
+  unit        Location @relation("AreaInspectionUnit", fields: [unitId], references: [id])
+  createdById String
+  createdBy   User @relation("AreaInspectionCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacoes filhas
+  assets   AreaInspectionAsset[]
+  requests Request[] @relation("InspectionRequests")
+
+  @@unique([companyId, unitId, number])
+  @@index([companyId])
+  @@index([unitId])
+  @@index([status])
+  @@index([assignedToId])
+  @@index([dueDate])
+  @@index([standardChecklistId])
+}
+
+model AreaInspectionAsset {
+  id        String   @id @default(cuid())
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  inspectionId String
+  inspection   AreaInspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  assetId           String?
+  asset             Asset? @relation("InspectionAssetRef", fields: [assetId], references: [id], onDelete: SetNull)
+  // Snapshot
+  assetName         String
+  assetTag          String?
+  assetProtheusCode String?
+  familyId          String?
+  familyModelId     String?
+  familyName        String?
+  familyModelName   String?
+
+  steps AreaInspectionStep[]
+
+  @@index([inspectionId])
+  @@index([assetId])
+}
+
+model AreaInspectionStep {
+  id        String   @id @default(cuid())
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inspectionAssetId String
+  inspectionAsset   AreaInspectionAsset @relation(fields: [inspectionAssetId], references: [id], onDelete: Cascade)
+
+  // Snapshot do GenericStep
+  genericStepId    String?
+  genericStep      GenericStep? @relation("InspectionStepGenericStep", fields: [genericStepId], references: [id], onDelete: SetNull)
+  stepName         String
+  stepProtheusCode String?
+  optionType       String?
+
+  // Resposta
+  answer       AreaInspectionAnswer?
+  notes        String?
+  answeredById String?
+  answeredBy   User? @relation("AreaInspectionAnswerer", fields: [answeredById], references: [id])
+  answeredAt   DateTime?
+
+  // SS gerada (apos finalize quando answer=NOK)
+  requestId String?  @unique
+  request   Request? @relation("InspectionStepRequest", fields: [requestId], references: [id], onDelete: SetNull)
+
+  @@index([inspectionAssetId])
+  @@index([genericStepId])
+  @@index([answer])
 }

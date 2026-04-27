@@ -82,7 +82,7 @@ Cada produto e habilitado por empresa via `CompanyProduct`. A spec completa de p
 
 ## Features do CMMS (Modulos de navegacao)
 
-Hub, Login e Autenticacao, Dashboard, Ordens de Servico (OS), Solicitacoes (SS), Gestao de Ativos, Localizacoes, Pessoas e Equipes, Planos de Manutencao, Planejamento e Programacao, Cadastros Basicos, Criticidade de Ativos, Analise de Falhas (RAF + PA das RAFs), KPI - Indicadores, Painel Administrativo, Perfil do Usuario, Configuracoes do Usuario, Arvore Hierarquica, Relatorios e Analiticos (em desenvolvimento)
+Hub, Login e Autenticacao, Dashboard, Ordens de Servico (OS), Inspecao de Area, Solicitacoes (SS), Gestao de Ativos, Localizacoes, Pessoas e Equipes, Planos de Manutencao, Planejamento e Programacao, Cadastros Basicos, Criticidade de Ativos, Analise de Falhas (RAF + PA das RAFs), KPI - Indicadores, Painel Administrativo, Perfil do Usuario, Configuracoes do Usuario, Arvore Hierarquica, Relatorios e Analiticos (em desenvolvimento)
 
 ## Fluxos Publicos e Self-Service
 - `/register` (publico): auto-signup de empresa com CNPJ via BrasilAPI → cria `Company` em `PENDING_APPROVAL` + primeiro `ADMIN` com e-mail nao verificado
