@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { CHART_COLORS } from './dashboardPalette'
 import { ChartCard } from './ChartCard'
+import { ChartPatterns } from './ChartPatterns'
 
 interface UnitSummary {
   unit: { id: string; name: string; code?: string }
@@ -55,10 +56,11 @@ export function CorporateDashboard() {
   const totalCorrectives = data.units.reduce((s, u) => s + u.workOrders.correctives, 0)
   const totalPreventives = data.units.reduce((s, u) => s + u.workOrders.preventives, 0)
   const totalOther = Math.max(0, data.totals.workOrders - totalCorrectives - totalPreventives)
+  // Monocromatico + patterns para 3 categorias
   const typeBreakdown = [
-    { key: 'PREVENTIVE', label: 'Preventivas', value: totalPreventives, color: CHART_COLORS.success },
-    { key: 'CORRECTIVE', label: 'Corretivas', value: totalCorrectives, color: CHART_COLORS.danger },
-    { key: 'OTHER', label: 'Outras', value: totalOther, color: CHART_COLORS.muted },
+    { key: 'PREVENTIVE', label: 'Preventivas', value: totalPreventives, fill: 'url(#pattern-diagonal)', legendStyle: { backgroundColor: CHART_COLORS.surface, backgroundImage: `repeating-linear-gradient(45deg, ${CHART_COLORS.primary} 0 2px, transparent 2px 6px)` } as React.CSSProperties },
+    { key: 'CORRECTIVE', label: 'Corretivas', value: totalCorrectives, fill: CHART_COLORS.primary, legendStyle: { backgroundColor: CHART_COLORS.primary } as React.CSSProperties },
+    { key: 'OTHER', label: 'Outras', value: totalOther, fill: CHART_COLORS.mutedLight, legendStyle: { backgroundColor: CHART_COLORS.mutedLight } as React.CSSProperties },
   ]
 
   const volumeByUnit = data.units
@@ -96,10 +98,11 @@ export function CorporateDashboard() {
             <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={typeBreakdown} dataKey="value" nameKey="label" innerRadius="55%" outerRadius="85%" stroke="none">
-                    {typeBreakdown.map(r => <Cell key={r.key} fill={r.color} />)}
+                  <ChartPatterns />
+                  <Pie data={typeBreakdown} dataKey="value" nameKey="label" innerRadius="55%" outerRadius="85%" stroke={CHART_COLORS.primary} strokeWidth={0.5}>
+                    {typeBreakdown.map(r => <Cell key={r.key} fill={r.fill} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 4, border: '1px solid #e4e9ea' }} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 4, border: `1px solid ${CHART_COLORS.surface}` }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -108,7 +111,7 @@ export function CorporateDashboard() {
                 const pct = data.totals.workOrders > 0 ? (r.value / data.totals.workOrders) * 100 : 0
                 return (
                   <div key={r.key} className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: r.color }} />
+                    <span className="h-2.5 w-2.5 rounded-full flex-shrink-0 border border-gray-400" style={r.legendStyle} />
                     <span className="text-xs text-muted-foreground flex-1 truncate">{r.label}</span>
                     <span className="text-xs font-semibold text-on-surface">{r.value}</span>
                     <span className="text-[11px] text-muted-foreground w-10 text-right">{pct.toFixed(1)}%</span>
@@ -128,13 +131,14 @@ export function CorporateDashboard() {
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={volumeByUnit} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ebeeef" />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#5a6061' }} interval={0} angle={-15} textAnchor="end" height={50} />
-                <YAxis tick={{ fontSize: 11, fill: '#5a6061' }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 4, border: '1px solid #e4e9ea' }} />
+                <ChartPatterns />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.surface} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: CHART_COLORS.muted }} interval={0} angle={-15} textAnchor="end" height={50} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.muted }} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 4, border: `1px solid ${CHART_COLORS.surface}` }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="preventives" name="Preventivas" stackId="a" fill={CHART_COLORS.success} />
-                <Bar dataKey="correctives" name="Corretivas" stackId="a" fill={CHART_COLORS.danger} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="preventives" name="Preventivas" stackId="a" fill="url(#pattern-diagonal)" stroke={CHART_COLORS.primary} strokeWidth={1} />
+                <Bar dataKey="correctives" name="Corretivas" stackId="a" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

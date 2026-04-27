@@ -20,6 +20,7 @@ export interface ActionPlanRow {
   deadline: string | null
   status: ActionPlanStatus
   overdue: boolean
+  dueSoon: boolean
 
   // Responsavel
   responsibleUserId?: string | null
@@ -32,12 +33,33 @@ export interface ActionPlanRow {
   linkedRequestNumber?: string | null
 }
 
+export type ActionPlanSortKey =
+  | 'rafNumber'
+  | 'actionDescription'
+  | 'responsibleName'
+  | 'rafCreatedAt'
+  | 'occurrenceDate'
+  | 'deadline'
+  | 'linkedWorkOrderNumber'
+  | 'linkedRequestNumber'
+  | 'status'
+  | 'rafStatus'
+
+export type ActionPlanSortDir = 'asc' | 'desc'
+
+export interface ActionPlanSortState {
+  key: ActionPlanSortKey
+  dir: ActionPlanSortDir
+}
+
 interface ActionPlanTableProps {
   rows: ActionPlanRow[]
   loading?: boolean
   onOpenRaf: (rafId: string) => void
   onChangeStatus?: (row: ActionPlanRow, next: ActionPlanStatus) => void
   canEditStatus?: boolean
+  sort?: ActionPlanSortState
+  onSort?: (key: ActionPlanSortKey) => void
   // Selecao para impressao em lote (opcional — fase 5 foca em export Excel)
   selected?: Set<string>
   onToggleSelect?: (rowKey: string) => void
@@ -61,12 +83,52 @@ function rowKey(row: ActionPlanRow): string {
   return `${row.rafId}:${row.actionIndex}`
 }
 
+interface SortableHeaderProps {
+  label: string
+  sortKey: ActionPlanSortKey
+  sort?: ActionPlanSortState
+  onSort?: (key: ActionPlanSortKey) => void
+}
+
+function SortableHeader({ label, sortKey, sort, onSort }: SortableHeaderProps) {
+  if (!onSort) {
+    return (
+      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        {label}
+      </th>
+    )
+  }
+  const active = sort?.key === sortKey
+  const icon = !active
+    ? 'unfold_more'
+    : sort?.dir === 'asc'
+    ? 'arrow_upward'
+    : 'arrow_downward'
+  return (
+    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-foreground transition-colors"
+      >
+        {label}
+        <Icon
+          name={icon}
+          className={`text-sm ${active ? 'text-accent-orange' : 'text-muted-foreground'}`}
+        />
+      </button>
+    </th>
+  )
+}
+
 export function ActionPlanTable({
   rows,
   loading,
   onOpenRaf,
   onChangeStatus,
   canEditStatus = false,
+  sort,
+  onSort,
 }: ActionPlanTableProps) {
   if (loading) {
     return (
@@ -93,36 +155,16 @@ export function ActionPlanTable({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="sticky top-0 bg-secondary z-10">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                RAF
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Acao
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Responsavel
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Criacao
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Ocorrencia
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Prazo
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                OS
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                SS
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status acao
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status RAF
-              </th>
+              <SortableHeader label="RAF" sortKey="rafNumber" sort={sort} onSort={onSort} />
+              <SortableHeader label="Acao" sortKey="actionDescription" sort={sort} onSort={onSort} />
+              <SortableHeader label="Responsavel" sortKey="responsibleName" sort={sort} onSort={onSort} />
+              <SortableHeader label="Criacao" sortKey="rafCreatedAt" sort={sort} onSort={onSort} />
+              <SortableHeader label="Ocorrencia" sortKey="occurrenceDate" sort={sort} onSort={onSort} />
+              <SortableHeader label="Prazo" sortKey="deadline" sort={sort} onSort={onSort} />
+              <SortableHeader label="OS" sortKey="linkedWorkOrderNumber" sort={sort} onSort={onSort} />
+              <SortableHeader label="SS" sortKey="linkedRequestNumber" sort={sort} onSort={onSort} />
+              <SortableHeader label="Status acao" sortKey="status" sort={sort} onSort={onSort} />
+              <SortableHeader label="Status RAF" sortKey="rafStatus" sort={sort} onSort={onSort} />
             </tr>
           </thead>
           <tbody className="bg-card divide-y divide-gray-200">
@@ -156,7 +198,15 @@ export function ActionPlanTable({
                   {formatDate(r.occurrenceDate)}
                 </td>
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
-                  <span className={r.overdue && r.status !== 'COMPLETED' ? 'font-bold text-gray-900' : 'text-foreground'}>
+                  <span
+                    className={
+                      r.overdue && r.status !== 'COMPLETED'
+                        ? 'font-bold text-gray-900 border-l-2 border-gray-900 pl-2'
+                        : r.dueSoon && r.status !== 'COMPLETED'
+                        ? 'font-semibold text-gray-900 border-l-2 border-dashed border-gray-500 pl-2'
+                        : 'text-foreground'
+                    }
+                  >
                     {formatDate(r.deadline)}
                   </span>
                 </td>
@@ -178,7 +228,7 @@ export function ActionPlanTable({
                       <option value="COMPLETED">Concluida</option>
                     </select>
                   ) : (
-                    <ActionPlanStatusBadge status={r.status} overdue={r.overdue} />
+                    <ActionPlanStatusBadge status={r.status} overdue={r.overdue} dueSoon={r.dueSoon} />
                   )}
                 </td>
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
@@ -208,7 +258,7 @@ interface ActionPlanCardsProps {
   canEditStatus?: boolean
 }
 
-// Visualizacao em cards para mobile (isPhone).
+// Visualizacao em cards para mobile (isPhone) e toggle Grade.
 export function ActionPlanCards({ rows, onOpenRaf, onChangeStatus, canEditStatus }: ActionPlanCardsProps) {
   if (rows.length === 0) {
     return (
@@ -218,21 +268,22 @@ export function ActionPlanCards({ rows, onOpenRaf, onChangeStatus, canEditStatus
     )
   }
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       {rows.map((r) => (
         <div
           key={rowKey(r)}
-          className="bg-white border border-gray-200 rounded-[4px] p-3 shadow-sm min-h-[44px]"
+          className="bg-white border border-gray-200 rounded-[4px] p-3 shadow-sm min-h-[44px] cursor-pointer hover:border-gray-400 transition-colors"
+          onClick={() => onOpenRaf(r.rafId)}
         >
           <div className="flex items-start justify-between gap-2">
             <button
               type="button"
-              onClick={() => onOpenRaf(r.rafId)}
+              onClick={(e) => { e.stopPropagation(); onOpenRaf(r.rafId) }}
               className="font-bold text-sm text-gray-900 hover:underline truncate"
             >
               {r.rafNumber}
             </button>
-            <ActionPlanStatusBadge status={r.status} overdue={r.overdue} />
+            <ActionPlanStatusBadge status={r.status} overdue={r.overdue} dueSoon={r.dueSoon} />
           </div>
           <div className="mt-1 text-sm text-foreground line-clamp-2">
             {r.actionDescription || r.subject || '—'}
@@ -257,11 +308,11 @@ export function ActionPlanCards({ rows, onOpenRaf, onChangeStatus, canEditStatus
             )}
           </div>
           {canEditStatus && onChangeStatus && (
-            <div className="mt-2">
+            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
               <select
                 value={r.status}
                 onChange={(e) => onChangeStatus(r, e.target.value as ActionPlanStatus)}
-                className="w-full h-9 px-2 text-sm border border-input rounded-[4px] bg-white"
+                className="w-full min-h-[44px] px-2 text-sm border border-input rounded-[4px] bg-white"
               >
                 <option value="PENDING">Pendente</option>
                 <option value="IN_PROGRESS">Em andamento</option>

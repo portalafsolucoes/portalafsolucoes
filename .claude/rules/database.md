@@ -54,6 +54,14 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - Helper canonico para reverter: `revertToStandard(planId, companyId)` no mesmo arquivo. Reescreve os campos estruturais do plano com o estado atual do padrao, deleta tarefas e recria a partir do padrao, preserva campos operacionais e zera `hasLocalOverrides`/`detachedAt`/`detachedById`
 - Helper canonico de propagacao: `propagateStandardChanges(standardPlanId, assetPlanIds, companyId)` no mesmo arquivo. Processa lote e retorna `{ applied, skipped, failed }`; skipa planos com `hasLocalOverrides = true` (defesa em profundidade), ids sem vinculo ao padrao ou ids fora do tenant
 
+## Check List Padrao (modelos)
+- `StandardChecklist` armazena o template inspecional de uma combinacao `(WorkCenter, ServiceType)`. Campos: `id`, `name`, `isActive` (default `true`), `workCenterId`, `serviceTypeId`, `unitId`, `companyId`, `createdById`, `createdAt`, `updatedAt`
+- Constraint UNIQUE por `(workCenterId, serviceTypeId)` no banco — a API retorna `409` em duplicata. Indices secundarios em `companyId`, `unitId`, `createdById`
+- `StandardChecklistFamilyGroup` agrupa as etapas por `(assetFamilyId, familyModelId)` dentro do checklist. Campos: `id`, `order`, `checklistId`, `assetFamilyId`, `familyModelId`, `createdAt`, `updatedAt`. Cascade delete em relacao a `StandardChecklist`
+- `StandardChecklistStep` referencia `GenericStep` (catalogo central de etapas reusado entre planos de manutencao e checklists). Campos: `id`, `order`, `groupId`, `genericStepId`, `createdAt`. Cascade delete em relacao a `StandardChecklistFamilyGroup`
+- Migration canonica: `prisma/migrations/20260424180000_add_standard_checklists/migration.sql`. Cria as 3 tabelas + indices + cascade FKs
+- Hard delete e o padrao para a entidade (DELETE da rota apaga tudo via cascade); `isActive = false` representa **arquivamento** sem perda de dados (rota separada `/archive`). O fluxo permite alternar entre estados arquivado/ativo a qualquer momento
+
 ## Convencoes de Schema
 - O sistema deve trabalhar com papeis canonicos de produto: `SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`, `REQUESTER` e `VIEW_ONLY`
 - Se enums ou registros legados ainda usarem papeis antigos, a aplicacao deve mapear esses valores antes de decidir acesso

@@ -45,6 +45,7 @@ const PORTAL_MODULES = [
   { slug: 'basic-registrations', name: 'Cadastros Básicos', icon: 'tune', order: 4 },
   { slug: 'assets', name: 'Ativos', icon: 'inventory_2', order: 5 },
   { slug: 'maintenance-plan', name: 'Plano de Manutenção', icon: 'event_upcoming', order: 6 },
+  { slug: 'standard-checklists', name: 'Check Lists Padrão', icon: 'checklist', order: 6.5 },
   { slug: 'planning', name: 'Planejamento e Programação', icon: 'date_range', order: 7 },
   { slug: 'work-orders', name: 'Ordens de Serviço', icon: 'construction', order: 8 },
   { slug: 'requests', name: 'Solicitações de Serviço', icon: 'assignment', order: 9 },

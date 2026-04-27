@@ -2,10 +2,12 @@
 
 import type { ActionPlanStatus } from '@/types/raf'
 
-type VisualStatus = ActionPlanStatus | 'OVERDUE'
+type VisualStatus = ActionPlanStatus | 'OVERDUE' | 'DUE_SOON'
 
 // Mapeamento monocromatico para o status de acao do PA das RAFs.
 // Usa apenas simbolos e tons de cinza/preto para caber no padrao visual do produto.
+// Hierarquia visual: OVERDUE (preto solido, borda grossa) > DUE_SOON (cinza medio, borda tracejada)
+// > IN_PROGRESS (cinza claro) > PENDING (branco) > COMPLETED (preto com check).
 const STATUS_CONFIG: Record<VisualStatus, { symbol: string; label: string; className: string }> = {
   PENDING: {
     symbol: '○',
@@ -22,6 +24,11 @@ const STATUS_CONFIG: Record<VisualStatus, { symbol: string; label: string; class
     label: 'Concluida',
     className: 'bg-gray-900 text-white border border-gray-900',
   },
+  DUE_SOON: {
+    symbol: '◔',
+    label: 'A vencer',
+    className: 'bg-white text-gray-900 border border-dashed border-gray-700 font-semibold',
+  },
   OVERDUE: {
     symbol: '●',
     label: 'Atrasada',
@@ -32,6 +39,7 @@ const STATUS_CONFIG: Record<VisualStatus, { symbol: string; label: string; class
 interface ActionPlanStatusBadgeProps {
   status: ActionPlanStatus
   overdue?: boolean
+  dueSoon?: boolean
   size?: 'sm' | 'md'
   withLabel?: boolean
 }
@@ -39,10 +47,16 @@ interface ActionPlanStatusBadgeProps {
 export function ActionPlanStatusBadge({
   status,
   overdue = false,
+  dueSoon = false,
   size = 'sm',
   withLabel = true,
 }: ActionPlanStatusBadgeProps) {
-  const key: VisualStatus = overdue && status !== 'COMPLETED' ? 'OVERDUE' : status
+  // Precedencia: COMPLETED mantem o proprio badge; OVERDUE > DUE_SOON > status bruto.
+  let key: VisualStatus = status
+  if (status !== 'COMPLETED') {
+    if (overdue) key = 'OVERDUE'
+    else if (dueSoon) key = 'DUE_SOON'
+  }
   const cfg = STATUS_CONFIG[key]
 
   const sizing =

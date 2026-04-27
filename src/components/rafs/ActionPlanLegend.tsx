@@ -10,6 +10,7 @@ export function ActionPlanLegend() {
       <ActionPlanStatusBadge status="PENDING" />
       <ActionPlanStatusBadge status="IN_PROGRESS" />
       <ActionPlanStatusBadge status="COMPLETED" />
+      <ActionPlanStatusBadge status="PENDING" dueSoon />
       <ActionPlanStatusBadge status="PENDING" overdue />
     </div>
   )

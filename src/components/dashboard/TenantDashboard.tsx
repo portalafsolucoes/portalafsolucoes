@@ -31,7 +31,7 @@ interface OverviewResponse {
   gutBuckets: { critical: number; high: number; medium: number; low: number }
   alerts: {
     overdueWos: number; rescheduledWos: number; pendingRequests: number
-    overdueRafActions: number; downAssets: number; openRafs: number; finalizedRafs: number
+    overdueRafActions: number; dueSoonRafActions: number; downAssets: number; openRafs: number; finalizedRafs: number
   }
   requestsBreakdown: { total: number; pending: number; approved: number; rejected: number; completed: number }
   assets: { total: number; operational: number; down: number }

@@ -19,7 +19,10 @@ export function KPICard({ label, value, unit, delta, deltaInvert = false, icon, 
   // Para KPIs onde "mais baixo e melhor" (ex: MTTR, taxa reprog), invertemos a cor
   const improved = deltaInvert ? isNegative : isPositive
   const worsened = deltaInvert ? isPositive : isNegative
-  const deltaColor = improved ? 'text-success' : worsened ? 'text-danger' : 'text-muted-foreground'
+  // Monocromatico: semantica carregada pelo icone (trending_up/down) + peso da fonte
+  // Escuro (foreground) = mudanca relevante; cinza medio = neutro
+  const deltaColor = improved || worsened ? 'text-foreground' : 'text-muted-foreground'
+  const deltaWeight = improved || worsened ? 'font-black' : 'font-bold'
   const deltaIcon = showDelta && delta! > 0 ? 'trending_up' : showDelta && delta! < 0 ? 'trending_down' : 'trending_flat'
 
   return (
@@ -40,7 +43,7 @@ export function KPICard({ label, value, unit, delta, deltaInvert = false, icon, 
       </div>
       <div className="flex items-center gap-2">
         {showDelta ? (
-          <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${deltaColor}`}>
+          <span className={`inline-flex items-center gap-0.5 text-[11px] ${deltaWeight} ${deltaColor}`}>
             <Icon name={deltaIcon} className="text-xs" />
             {delta! > 0 ? '+' : ''}{delta!.toFixed(1)}%
           </span>

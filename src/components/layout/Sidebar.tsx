@@ -70,6 +70,7 @@ export function Sidebar() {
     { name: 'Cadastro de Manutenção', href: '/maintenance-plan', icon: 'event_upcoming', module: 'maintenance-plan', subItems: [
       { name: 'Manutenção Padrão', href: '/maintenance-plan/standard' },
       { name: 'Manutenção do Bem', href: '/maintenance-plan/asset' },
+      { name: 'Check List Padrão', href: '/maintenance-plan/standard-checklists', module: 'standard-checklists' },
     ]},
     { name: 'Planejamento e Programação', href: '/planning', icon: 'date_range', module: 'planning', subItems: [
       { name: 'Plano de Manutenção', href: '/planning/plans' },

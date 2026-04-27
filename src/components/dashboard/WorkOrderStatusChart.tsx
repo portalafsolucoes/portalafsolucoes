@@ -24,11 +24,11 @@ export function WorkOrderStatusChart({ data }: { data: StatusDatum[] }) {
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={ordered} layout="vertical" margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ebeeef" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#5a6061' }} />
-            <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: '#5a6061' }} width={110} />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={CHART_COLORS.surface} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: CHART_COLORS.muted }} />
+            <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: CHART_COLORS.muted }} width={110} />
             <Tooltip
-              contentStyle={{ fontSize: 12, borderRadius: 4, border: '1px solid #e4e9ea' }}
+              contentStyle={{ fontSize: 12, borderRadius: 4, border: `1px solid ${CHART_COLORS.surface}` }}
               formatter={(value: number) => [value, 'OS']}
               labelFormatter={() => ''}
             />

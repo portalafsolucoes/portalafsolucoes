@@ -369,6 +369,7 @@ model Company {
   assetMaintenancePlans    AssetMaintenancePlan[]
   maintenancePlanExecutions MaintenancePlanExecution[]
   workOrderSchedules       WorkOrderSchedule[]
+  standardChecklists       StandardChecklist[]
   kpiIndicators            KpiIndicator[]
   kpiVariables             KpiVariable[]
 
@@ -461,6 +462,7 @@ model User {
   woResourceLabors           WorkOrderResource[]               @relation("WOResourceLabor")
   workOrderRescheduleEntries WorkOrderRescheduleHistory[]      @relation("WorkOrderRescheduleHistoryUser")
   detachedAssetPlans         AssetMaintenancePlan[]            @relation("AssetMaintenancePlanDetacher")
+  createdStandardChecklists  StandardChecklist[]               @relation("StandardChecklistCreator")
 
   calendarId String?
   calendar   Calendar? @relation("UserCalendar", fields: [calendarId], references: [id])
@@ -556,6 +558,7 @@ model Location {
   rafs                   FailureAnalysisReport[]
   maintenancePlanExecutions MaintenancePlanExecution[]
   workOrderSchedules     WorkOrderSchedule[]
+  standardChecklistsAsUnit StandardChecklist[]      @relation("StandardChecklistUnit")
 
   @@index([companyId])
 }
@@ -644,7 +647,8 @@ model WorkCenter {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  assets Asset[]
+  assets             Asset[]
+  standardChecklists StandardChecklist[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -667,6 +671,7 @@ model AssetFamily {
   assets                   Asset[]
   standardMaintenancePlans StandardMaintenancePlan[]
   standardAssets           StandardAsset[]
+  checklistFamilyGroups    StandardChecklistFamilyGroup[] @relation("ChecklistFamilyGroupFamily")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -686,6 +691,7 @@ model AssetFamilyModel {
   familyMappings           AssetFamilyModelMapping[]
   assets                   Asset[]
   standardMaintenancePlans StandardMaintenancePlan[]
+  checklistFamilyGroups    StandardChecklistFamilyGroup[] @relation("ChecklistFamilyGroupModel")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -868,6 +874,7 @@ model ServiceType {
   standardMaintenancePlans StandardMaintenancePlan[]
   assetMaintenancePlans    AssetMaintenancePlan[]
   workOrders               WorkOrder[]
+  standardChecklists       StandardChecklist[]
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -905,6 +912,7 @@ model GenericStep {
   standardTaskSteps StandardMaintenanceTaskStep[]
   assetTaskSteps    AssetMaintenanceTaskStep[]
   options           GenericStepOption[]
+  checklistSteps    StandardChecklistStep[]       @relation("ChecklistStepGenericStep")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -2289,4 +2297,78 @@ model StandardAssetCharacteristic {
 
   @@unique([standardAssetId, characteristicId])
   @@index([standardAssetId])
+}
+
+// ============================================
+// CHECK LIST PADRÃO
+// ============================================
+
+model StandardChecklist {
+  id        String   @id @default(cuid())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workCenterId String
+  workCenter   WorkCenter @relation(fields: [workCenterId], references: [id], onDelete: Cascade)
+
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+
+  unitId String
+  unit   Location @relation("StandardChecklistUnit", fields: [unitId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User @relation("StandardChecklistCreator", fields: [createdById], references: [id])
+
+  familyGroups StandardChecklistFamilyGroup[]
+
+  @@unique([workCenterId, serviceTypeId])
+  @@index([companyId])
+  @@index([unitId])
+  @@index([workCenterId])
+  @@index([serviceTypeId])
+  @@index([createdById])
+}
+
+model StandardChecklistFamilyGroup {
+  id        String   @id @default(cuid())
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  checklistId String
+  checklist   StandardChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  assetFamilyId String
+  assetFamily   AssetFamily @relation("ChecklistFamilyGroupFamily", fields: [assetFamilyId], references: [id])
+
+  familyModelId String
+  familyModel   AssetFamilyModel @relation("ChecklistFamilyGroupModel", fields: [familyModelId], references: [id])
+
+  steps StandardChecklistStep[]
+
+  @@unique([checklistId, assetFamilyId, familyModelId])
+  @@index([checklistId])
+  @@index([assetFamilyId])
+  @@index([familyModelId])
+}
+
+model StandardChecklistStep {
+  id        String   @id @default(cuid())
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  groupId String
+  group   StandardChecklistFamilyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  genericStepId String
+  genericStep   GenericStep @relation("ChecklistStepGenericStep", fields: [genericStepId], references: [id])
+
+  @@index([groupId])
+  @@index([genericStepId])
 }

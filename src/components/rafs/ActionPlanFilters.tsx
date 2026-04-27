@@ -3,7 +3,7 @@
 import { Icon } from '@/components/ui/Icon'
 import type { ActionPlanStatus, RafStatusValue } from '@/types/raf'
 
-export type ActionStatusFilter = ActionPlanStatus | 'ALL' | 'OVERDUE'
+export type ActionStatusFilter = ActionPlanStatus | 'ALL' | 'OVERDUE' | 'DUE_SOON'
 export type RafStatusFilter = RafStatusValue | 'ALL'
 
 export interface ActionPlanFiltersState {
@@ -55,6 +55,7 @@ export function ActionPlanFilters({ value, onChange, responsibles }: ActionPlanF
         <option value="PENDING">Pendente</option>
         <option value="IN_PROGRESS">Em andamento</option>
         <option value="COMPLETED">Concluida</option>
+        <option value="DUE_SOON">A vencer (7d)</option>
         <option value="OVERDUE">Atrasadas</option>
       </select>
 

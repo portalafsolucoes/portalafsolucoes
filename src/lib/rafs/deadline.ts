@@ -49,3 +49,25 @@ export function isOverdue(
   const t = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   return date.getTime() < t.getTime()
 }
+
+// Janela padrao de alerta "a vencer" (em dias).
+export const DUE_SOON_WINDOW_DAYS = 7
+
+// Uma acao esta "a vencer" quando hoje <= deadline <= hoje + windowDays
+// E status nao COMPLETED E a acao nao esta vencida.
+// Acoes sem prazo NAO sao consideradas a vencer.
+export function isDueSoon(
+  deadline: string | null | undefined,
+  status: string | null | undefined,
+  today: Date = new Date(),
+  windowDays: number = DUE_SOON_WINDOW_DAYS
+): boolean {
+  if (status === 'COMPLETED') return false
+  const date = parseDeadline(deadline)
+  if (!date) return false
+  const t = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  if (date.getTime() < t.getTime()) return false
+  const limit = new Date(t)
+  limit.setDate(limit.getDate() + windowDays)
+  return date.getTime() <= limit.getTime()
+}

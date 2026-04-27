@@ -262,6 +262,17 @@ Regras complementares:
 - **Override e reversao**: editar estruturalmente um `AssetMaintenancePlan` que veio de padrao (via `PUT /api/maintenance-plans/asset/[id]` ou `POST /api/maintenance-plans/asset/[id]/tasks`) marca `hasLocalOverrides = true`, preenche `detachedAt` e `detachedById`. O painel de detalhe exibe badge `CUSTOMIZADO` e botao `Reverter ao padrao` que chama `POST /api/maintenance-plans/asset/[id]/revert` — essa rota sobrescreve campos estruturais e recria tasks/steps/resources, preservando campos operacionais (ativo, ultima manutencao, tolerancia, area/tipo de manutencao, sequence do ativo) e zerando as flags de override.
 - **Propagacao**: apos salvar edicao de um plano padrao, se houver `AssetMaintenancePlan` vinculados elegiveis (sem override), o sistema abre o dialogo `PropagateChangesDialog`. O usuario escolhe quais planos recebem a propagacao; planos customizados aparecem listados como referencia mas com checkbox desabilitado (precisam usar "Reverter" explicitamente). A acao chama `POST /api/maintenance-plans/standard/[id]/propagate` e retorna `applied`/`skipped`/`failed`.
 
+#### 9.2 Check List Padrao
+Sub-feature do grupo `Cadastro de Manutencao` (rota `/maintenance-plan/standard-checklists`, slug `standard-checklists`) que permite cadastrar **modelos de inspecao** que serao posteriormente usados para emitir checklists individuais para tecnicos em campo.
+- **Escopo organizacional**: 1 checklist por par `(WorkCenter, ServiceType)`. A combinacao e UNIQUE no banco — duplicata retorna `409`. Dentro do checklist, as etapas sao agrupadas por `(familia + modelo)` do bem para suportar WCs com bens heterogeneos
+- **Estrutura logica**: `StandardChecklist` (cabecalho) → `StandardChecklistFamilyGroup[]` (um grupo por par familia+modelo) → `StandardChecklistStep[]` (etapas ordenadas, cada uma referenciando um `GenericStep` do catalogo de Cadastros Basicos)
+- **Acesso**: `SUPER_ADMIN`, `ADMIN` e `PLANEJADOR` tem matriz completa `{ view, create, edit, delete }`. `MANUTENTOR` nao tem acesso (sem item no menu, rotas retornam `403`)
+- **Auto-deteccao**: ao selecionar um WC em modo de criacao, o formulario chama `GET /api/work-centers/[id]/family-models` e popula automaticamente um grupo para cada par `(familia, modelo)` presente em bens nao-arquivados do WC. O usuario pode disparar a re-sincronizacao manualmente via botao `Detectar familias do WC`. Em modo de edicao, a deteccao automatica nao roda (preserva grupos ja salvos)
+- **Notificacao de cobertura ausente**: ao criar ou editar um Bem com `workCenterId + familyId + familyModelId`, o servidor verifica se ha algum `StandardChecklist` ativo no WC sem grupo cobrindo o par. Em caso afirmativo, enfileira `Notification` para o `createdById` do checklist informando que ha um novo par familia+modelo a ser mapeado. Side-effect silencioso — nunca quebra o salvamento do bem
+- **Lifecycle**: hard delete via `DELETE` (cascade apaga grupos e etapas) e arquivamento via `PUT /archive` (alterna `isActive` sem perder dados). Os dois fluxos sao independentes — arquivado pode ser reativado a qualquer momento
+- **Migration canonica**: `prisma/migrations/20260424180000_add_standard_checklists/migration.sql`
+- Fases futuras (em chats separados) cobrirao a **emissao** dos checklists individuais a partir desses templates, vinculando-os a OS/SS especificas
+
 ### 10. Planejamento
 - Gera OS preventivas em lote por periodo e filtros
 - Programacao agenda OS em um periodo e confirma datas planejadas
@@ -351,14 +362,16 @@ Interacao:
 - A tela consolida **todas as acoes** de todas as RAFs do escopo empresa+unidade em uma unica tabela (uma linha por acao)
 - Dashboard com 4 KPIs no topo: `RAFs abertas`, `RAFs finalizadas`, `Acoes no prazo`, `Acoes atrasadas`
 - `Acoes atrasadas` = `actionPlan[i].status != COMPLETED && deadline < hoje` (parser aceita ISO e `dd/mm/yyyy`); acoes sem prazo sao contadas como `no prazo` para nao inflar urgencia visual
-- Filtros disponiveis: busca livre (RAF, acao, responsavel), status da acao (`Pendente`, `Em andamento`, `Concluida`, `Atrasadas`), status da RAF (`Abertas`, `Finalizadas`), responsavel (lista derivada dos dados carregados, incluindo opcao "Sem responsavel")
-- Colunas: RAF (link para o detalhe), Acao, Responsavel, Data criacao (da RAF), Data ocorrencia, Prazo, OS, SS, Status da acao, Status da RAF
+- Alerta de `A vencer (7d)` = `actionPlan[i].status != COMPLETED && hoje <= deadline <= hoje+7dias`. Helper canonico `isDueSoon(deadline, status, today, windowDays=7)` em `src/lib/rafs/deadline.ts`, janela padrao em `DUE_SOON_WINDOW_DAYS = 7`. Acoes sem prazo NAO sao consideradas a vencer
+- Filtros disponiveis: busca livre (RAF, acao, responsavel), status da acao (`Pendente`, `Em andamento`, `Concluida`, `A vencer (7d)`, `Atrasadas`), status da RAF (`Abertas`, `Finalizadas`), responsavel (lista derivada dos dados carregados, incluindo opcao "Sem responsavel")
+- Colunas: RAF (link para o detalhe), Acao, Responsavel, Data criacao (da RAF), Data ocorrencia, Prazo, OS, SS, Status da acao, Status da RAF. **Todas as colunas sao ordenaveis** via clique no cabecalho (icones `unfold_more` inativo, `arrow_upward`/`arrow_downward` quando ativo, destaque em `text-accent-orange`); cada clique alterna `asc`/`desc`. Ordenacao default: `Prazo ASC` (acoes mais urgentes no topo). NULLS LAST em todos os campos opcionais
+- Destaque visual da coluna `Prazo`: valores **vencidos** ficam em `font-bold` com borda esquerda solida preta; valores **a vencer (7d)** ficam em `font-semibold` com borda esquerda tracejada cinza. Concluidas nao recebem destaque (COMPLETED tem precedencia no badge)
 - O status da acao pode ser editado **inline** pelos perfis com permissao de `edit` ou `create` em `rafs` (`SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `LIMITED_TECHNICIAN`); a alteracao dispara `PUT /api/rafs/[id]` com o `actionPlan` atualizado e a API recalcula `status`/`finalizedAt` server-side
 - O painel lateral direito abre o `RAFViewModal` inline quando o usuario clica no numero da RAF
-- Mobile exibe cards empilhados (isPhone) com os campos principais e seletor de status em linha
-- Exportacao para Excel (`.xlsx`) via `ExportButton` com config `action-plan-items` — uma linha por acao, colunas: RAF, Acao, Responsavel, Data criacao, Data ocorrencia, Prazo, OS, Status OS, SS, Status SS, Status da acao, Status da RAF
+- Mobile (`isPhone`) exibe cards em grade responsiva (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) com os campos principais e seletor de status em linha (`min-h-[44px]` para touch target). O card inteiro e clicavel para abrir a RAF; o seletor usa `stopPropagation` para nao conflitar
+- Exportacao para Excel (`.xlsx`) via `ExportButton` com config `action-plan-items` — uma linha por acao, colunas: RAF, Acao, Responsavel, Data criacao, Data ocorrencia, Prazo, OS, Status OS, SS, Status SS, Status da acao (com rotulos `Concluida`, `Em andamento`, `Atrasada`, `A vencer`, `Pendente`), Status da RAF. A exportacao respeita a ordem visivel na tela (ordenacao atual aplicada)
 - Os 4 KPIs sao fornecidos pelo endpoint `GET /api/rafs/action-plan/stats` (respeita `companyId` e `unitId` via `requireCompanyScope`); a pagina usa a fonte canonica do endpoint e uma derivacao local como fallback imediato
-- Paleta monocromatica: pretos, brancos e tons de cinza. `OVERDUE` recebe borda preta em negrito e simbolo `●`; `COMPLETED` recebe fundo preto com simbolo `✓`; `IN_PROGRESS` usa cinza medio com `◐`; `PENDING` usa fundo branco com `○`
+- Paleta monocromatica: pretos, brancos e tons de cinza. `OVERDUE` recebe borda preta em negrito e simbolo `●`; `DUE_SOON` recebe borda tracejada cinza-700 e simbolo `◔`; `COMPLETED` recebe fundo preto com simbolo `✓`; `IN_PROGRESS` usa cinza medio com `◐`; `PENDING` usa fundo branco com `○`. Precedencia de exibicao no badge: `COMPLETED` > `OVERDUE` > `DUE_SOON` > status bruto
 
 ### 14. KPI
 Indicadores principais:

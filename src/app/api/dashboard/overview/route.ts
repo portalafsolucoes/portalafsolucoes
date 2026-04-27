@@ -450,9 +450,13 @@ export async function GET(request: NextRequest) {
     ).length
     const rescheduledWos = allWos.filter(w => (w.rescheduleCount || 0) >= 2 && !['COMPLETE', 'CANCELLED'].includes(w.status)).length
 
-    // RAF: ações com prazo vencido
+    // RAF: ações com prazo vencido e a vencer (janela de 7 dias a partir de hoje)
     const todayYmd = now.toISOString().slice(0, 10)
+    const dueSoonLimit = new Date(now)
+    dueSoonLimit.setDate(dueSoonLimit.getDate() + 7)
+    const dueSoonYmd = dueSoonLimit.toISOString().slice(0, 10)
     let overdueRafActions = 0
+    let dueSoonRafActions = 0
     let openRafs = 0
     let finalizedRafs = 0
     for (const raf of rafs) {
@@ -469,7 +473,9 @@ export async function GET(request: NextRequest) {
           const [d, m, y] = dl.split('/')
           ymd = `${y}-${m}-${d}`
         }
-        if (ymd && ymd < todayYmd) overdueRafActions++
+        if (!ymd) continue
+        if (ymd < todayYmd) overdueRafActions++
+        else if (ymd <= dueSoonYmd) dueSoonRafActions++
       }
     }
 
@@ -480,6 +486,7 @@ export async function GET(request: NextRequest) {
       rescheduledWos,
       pendingRequests: pendingRequestsCount,
       overdueRafActions,
+      dueSoonRafActions,
       downAssets,
       openRafs,
       finalizedRafs,

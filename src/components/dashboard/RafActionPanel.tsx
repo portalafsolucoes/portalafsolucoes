@@ -30,12 +30,12 @@ export function RafActionPanel({ data }: { data: RafActionData }) {
           <p className="text-2xl font-black text-on-surface">{pctFinalized.toFixed(1)}%</p>
         </div>
       </div>
-      <div className="flex items-center justify-between p-3 rounded-[4px] border border-dashed border-danger/40 bg-danger-light">
+      <div className="flex items-center justify-between p-3 rounded-[4px] border border-dashed border-gray-400 bg-gray-100">
         <div className="flex items-center gap-2">
-          <Icon name="flag" className="text-base text-danger" />
+          <Icon name="flag" className="text-base text-foreground" />
           <span className="text-sm font-semibold text-on-surface">Ações com prazo vencido</span>
         </div>
-        <span className="text-xl font-black text-danger">{data.overdueRafActions}</span>
+        <span className="text-xl font-black text-foreground">{data.overdueRafActions}</span>
       </div>
       <div className="mt-3 flex items-center justify-end">
         <Link href="/rafs/action-plan" className="text-xs font-semibold text-primary-graphite hover:underline inline-flex items-center gap-1">

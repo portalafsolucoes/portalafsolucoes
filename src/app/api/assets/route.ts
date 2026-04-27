@@ -5,6 +5,7 @@ import { checkApiPermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/storage'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
 import { sanitizeLimit } from '@/lib/pagination'
+import { notifyMissingFamilyModel } from '@/lib/standard-checklists/notifyMissingFamilyModel'
 
 export async function GET(request: NextRequest) {
   try {
@@ -411,6 +412,19 @@ export async function POST(request: NextRequest) {
     }
 
     await Promise.all(attachmentPromises)
+
+    // Side-effect: notifica criadores de checklists padrao do WC quando o
+    // par (familia, modelo) ainda nao esta mapeado. Falha silenciosa.
+    if (asset.workCenterId && asset.familyId && asset.familyModelId) {
+      void notifyMissingFamilyModel({
+        assetId: asset.id,
+        assetName: asset.name,
+        workCenterId: asset.workCenterId,
+        assetFamilyId: asset.familyId,
+        familyModelId: asset.familyModelId,
+        companyId: session.companyId,
+      })
+    }
 
     // Buscar asset com arquivos
     const { data: assetWithFiles } = await supabase

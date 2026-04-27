@@ -11,7 +11,7 @@ import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
-import { isOverdue, toIsoDeadline } from '@/lib/rafs/deadline'
+import { isDueSoon, isOverdue, toIsoDeadline } from '@/lib/rafs/deadline'
 import type {
   ActionPlanItem,
   ActionPlanStatus,
@@ -21,6 +21,8 @@ import {
   ActionPlanTable,
   ActionPlanCards,
   type ActionPlanRow,
+  type ActionPlanSortKey,
+  type ActionPlanSortState,
 } from '@/components/rafs/ActionPlanTable'
 import { ActionPlanDashboardCards } from '@/components/rafs/ActionPlanDashboardCards'
 import {
@@ -75,6 +77,17 @@ export default function ActionPlanPage() {
     rafStatus: 'ALL',
     responsibleId: 'ALL',
   })
+
+  // Ordenacao client-side. Default: Prazo ASC (mais urgente primeiro).
+  const [sort, setSort] = useState<ActionPlanSortState>({ key: 'deadline', dir: 'asc' })
+
+  const handleSort = useCallback((key: ActionPlanSortKey) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+        : { key, dir: 'asc' }
+    )
+  }, [])
 
   const hasAccess = !!user && hasPermission(user, 'rafs', 'view')
   const canEditStatus =
@@ -149,6 +162,7 @@ export default function ActionPlanPage() {
           deadline: deadlineIso,
           status,
           overdue: isOverdue(a?.deadline, status, now),
+          dueSoon: isDueSoon(a?.deadline, status, now),
           responsibleUserId: a?.responsibleUserId ?? null,
           responsibleName: a?.responsibleName ?? null,
           linkedWorkOrderId: a?.linkedWorkOrderId ?? raf.workOrder?.id ?? null,
@@ -173,6 +187,8 @@ export default function ActionPlanPage() {
       if (filters.actionStatus !== 'ALL') {
         if (filters.actionStatus === 'OVERDUE') {
           if (!r.overdue || r.status === 'COMPLETED') return false
+        } else if (filters.actionStatus === 'DUE_SOON') {
+          if (!r.dueSoon || r.status === 'COMPLETED') return false
         } else if (r.status !== filters.actionStatus) {
           return false
         }
@@ -186,6 +202,58 @@ export default function ActionPlanPage() {
       return true
     })
   }, [allRows, filters])
+
+  // Ordenacao client-side. NULLS LAST em todos os campos opcionais.
+  const sortedRows = useMemo(() => {
+    const STATUS_ORDER: Record<ActionPlanStatus, number> = {
+      PENDING: 0,
+      IN_PROGRESS: 1,
+      COMPLETED: 2,
+    }
+    const RAF_STATUS_ORDER: Record<RafStatusValue, number> = {
+      ABERTA: 0,
+      FINALIZADA: 1,
+    }
+
+    const getValue = (r: ActionPlanRow, key: ActionPlanSortKey): string | number | null => {
+      switch (key) {
+        case 'rafNumber':
+          return r.rafNumber || null
+        case 'actionDescription':
+          return (r.actionDescription || r.subject || '').toLowerCase() || null
+        case 'responsibleName':
+          return (r.responsibleName || '').toLowerCase() || null
+        case 'rafCreatedAt':
+          return r.rafCreatedAt ? new Date(r.rafCreatedAt).getTime() : null
+        case 'occurrenceDate':
+          return r.occurrenceDate ? new Date(r.occurrenceDate).getTime() : null
+        case 'deadline':
+          return r.deadline ? new Date(r.deadline).getTime() : null
+        case 'linkedWorkOrderNumber':
+          return r.linkedWorkOrderNumber || null
+        case 'linkedRequestNumber':
+          return r.linkedRequestNumber || null
+        case 'status':
+          return STATUS_ORDER[r.status] ?? 99
+        case 'rafStatus':
+          return RAF_STATUS_ORDER[r.rafStatus] ?? 99
+        default:
+          return null
+      }
+    }
+
+    const dirFactor = sort.dir === 'asc' ? 1 : -1
+    return [...rows].sort((a, b) => {
+      const av = getValue(a, sort.key)
+      const bv = getValue(b, sort.key)
+      if (av === null && bv === null) return 0
+      if (av === null) return 1 // nulls last
+      if (bv === null) return -1
+      if (av < bv) return -1 * dirFactor
+      if (av > bv) return 1 * dirFactor
+      return 0
+    })
+  }, [rows, sort])
 
   // Stats locais (o endpoint /stats e a fonte canonica, mas derivar daqui evita round-trip)
   const stats = useMemo(
@@ -249,9 +317,9 @@ export default function ActionPlanPage() {
     [rafs, loadRafs]
   )
 
-  // Dados formatados para export.
+  // Dados formatados para export (respeita ordem visivel na tela).
   const exportData = useMemo(() => {
-    return rows.map((r) => ({
+    return sortedRows.map((r) => ({
       rafNumber: r.rafNumber,
       actionDescription: r.actionDescription || r.subject,
       responsibleName: r.responsibleName || '',
@@ -271,10 +339,12 @@ export default function ActionPlanPage() {
           ? 'Em andamento'
           : r.overdue
           ? 'Atrasada'
+          : r.dueSoon
+          ? 'A vencer'
           : 'Pendente',
       rafStatus: r.rafStatus === 'FINALIZADA' ? 'Finalizada' : 'Aberta',
     }))
-  }, [rows, rafs])
+  }, [sortedRows, rafs])
 
   if (authLoading || !user) {
     return (
@@ -289,6 +359,62 @@ export default function ActionPlanPage() {
   if (!hasAccess) return null
 
   const showSidePanel = !!selectedRafId
+
+  // No celular, permitir scroll natural da pagina inteira (AppShell cuida do overflow-y).
+  // No desktop/tablet, manter layout fixo com scroll interno na area da lista.
+  if (isPhone) {
+    return (
+      <PageContainer variant="full" className="p-0 h-auto min-h-full">
+        <div className="border-b border-border px-4 py-3 flex-shrink-0">
+          <PageHeader
+            title="PA das RAFs"
+            description="Plano de acao consolidado das Analises de Falha"
+            className="mb-0"
+            actions={
+              <ExportButton
+                entity="action-plan-items"
+                data={exportData as unknown as Record<string, unknown>[]}
+              />
+            }
+          />
+        </div>
+
+        <div className="px-4 py-3 flex flex-col gap-3 border-b border-border bg-card">
+          <ActionPlanDashboardCards stats={stats} loading={loading} />
+          <div className="flex flex-col gap-2">
+            <ActionPlanFilters value={filters} onChange={setFilters} responsibles={responsibles} />
+            <ActionPlanLegend />
+          </div>
+        </div>
+
+        <div className="border-t border-border bg-card p-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-on-surface-variant"></div>
+                <p className="mt-2 text-muted-foreground">Carregando...</p>
+              </div>
+            </div>
+          ) : (
+            <ActionPlanCards
+              rows={sortedRows}
+              onOpenRaf={(id) => setSelectedRafId(id)}
+              onChangeStatus={canEditStatus ? changeStatus : undefined}
+              canEditStatus={canEditStatus}
+            />
+          )}
+        </div>
+
+        {showSidePanel && (
+          <RAFViewModal
+            isOpen={true}
+            onClose={() => setSelectedRafId(null)}
+            raf={selectedRafDetail as never}
+          />
+        )}
+      </PageContainer>
+    )
+  }
 
   return (
     <PageContainer variant="full" className="overflow-hidden p-0">
@@ -327,23 +453,14 @@ export default function ActionPlanPage() {
                 </div>
               ) : (
                 <div className="h-full flex flex-col overflow-hidden">
-                  {isPhone ? (
-                    <div className="overflow-auto flex-1 p-4">
-                      <ActionPlanCards
-                        rows={rows}
-                        onOpenRaf={(id) => setSelectedRafId(id)}
-                        onChangeStatus={canEditStatus ? changeStatus : undefined}
-                        canEditStatus={canEditStatus}
-                      />
-                    </div>
-                  ) : (
-                    <ActionPlanTable
-                      rows={rows}
-                      onOpenRaf={(id) => setSelectedRafId(id)}
-                      onChangeStatus={canEditStatus ? changeStatus : undefined}
-                      canEditStatus={canEditStatus}
-                    />
-                  )}
+                  <ActionPlanTable
+                    rows={sortedRows}
+                    onOpenRaf={(id) => setSelectedRafId(id)}
+                    onChangeStatus={canEditStatus ? changeStatus : undefined}
+                    canEditStatus={canEditStatus}
+                    sort={sort}
+                    onSort={handleSort}
+                  />
                 </div>
               )
             }

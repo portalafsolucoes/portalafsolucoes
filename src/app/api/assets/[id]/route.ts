@@ -4,6 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/storage'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
+import { notifyMissingFamilyModel } from '@/lib/standard-checklists/notifyMissingFamilyModel'
 
 export async function GET(
   request: NextRequest,
@@ -361,6 +362,19 @@ export async function PATCH(
           })
         }
       }
+    }
+
+    // Side-effect: notifica criadores de checklists padrao do WC quando o
+    // par (familia, modelo) ainda nao esta mapeado. Falha silenciosa.
+    if (updatedAsset.workCenterId && updatedAsset.familyId && updatedAsset.familyModelId) {
+      void notifyMissingFamilyModel({
+        assetId: updatedAsset.id,
+        assetName: updatedAsset.name,
+        workCenterId: updatedAsset.workCenterId,
+        assetFamilyId: updatedAsset.familyId,
+        familyModelId: updatedAsset.familyModelId,
+        companyId: session.companyId,
+      })
     }
 
     // Buscar arquivos atualizados
