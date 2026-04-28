@@ -39,7 +39,7 @@ export default function NewWorkOrderPage() {
   const loadData = async () => {
     try {
       const [assetsRes, locationsRes, usersRes, teamsRes] = await Promise.all([
-        fetch('/api/assets'),
+        fetch('/api/assets?summary=true&all=true'),
         fetch('/api/locations'),
         fetch('/api/users'),
         fetch('/api/teams')

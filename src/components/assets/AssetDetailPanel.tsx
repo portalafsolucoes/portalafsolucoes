@@ -166,7 +166,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   useEffect(() => {
     if (activeTab !== 'open-wo') return
     setLoadingWOs(true)
-    fetch(`/api/work-orders?assetId=${asset.id}&limit=100`)
+    fetch(`/api/work-orders?assetId=${asset.id}&all=true`)
       .then(res => res.json())
       .then(result => {
         const openStatuses = ['PENDING', 'RELEASED', 'IN_PROGRESS', 'ON_HOLD']
@@ -181,7 +181,7 @@ export function AssetDetailPanel({ asset, onClose, onEdit, onDelete, workOrders 
   useEffect(() => {
     if (activeTab !== 'open-ss') return
     setLoadingSSs(true)
-    fetch(`/api/requests?assetId=${asset.id}&limit=100`)
+    fetch(`/api/requests?assetId=${asset.id}&all=true`)
       .then(res => res.json())
       .then(result => {
         const openStatuses = ['PENDING', 'APPROVED']

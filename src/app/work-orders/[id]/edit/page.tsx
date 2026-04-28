@@ -48,7 +48,7 @@ export default function EditWorkOrderPage() {
     try {
       const [woRes, assetsRes, locationsRes, usersRes, teamsRes] = await Promise.all([
         fetch(`/api/work-orders/${params.id}`),
-        fetch('/api/assets'),
+        fetch('/api/assets?summary=true&all=true'),
         fetch('/api/locations'),
         fetch('/api/users'),
         fetch('/api/teams')

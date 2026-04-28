@@ -70,7 +70,7 @@ export default function TreePage() {
 
   const loadAssets = async () => {
     try {
-      const res = await fetch('/api/assets?summary=true')
+      const res = await fetch('/api/assets?summary=true&all=true')
       const data = await res.json()
       setAssets(data.data || [])
     } catch (error) {

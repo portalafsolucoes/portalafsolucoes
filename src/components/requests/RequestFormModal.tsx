@@ -239,7 +239,7 @@ export function RequestFormModal({ isOpen, onClose, onSuccess, request, inPage =
 
   const loadAssetHierarchy = async (assetId: string) => {
     try {
-      const res = await fetch(`/api/assets?summary=true&limit=500`)
+      const res = await fetch(`/api/assets?summary=true&all=true`)
       const data = await res.json()
       const allAssets: AssetOption[] = data.data || []
 

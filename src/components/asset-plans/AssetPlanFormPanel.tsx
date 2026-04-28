@@ -298,7 +298,7 @@ export default function AssetPlanFormPanel({
   const loadDependencies = async () => {
     const [stRes, assRes, calRes, stepsRes, famRes, modelsRes] = await Promise.all([
       fetch('/api/basic-registrations/service-types'),
-      fetch('/api/assets?limit=1000'),
+      fetch('/api/assets?all=true'),
       fetch('/api/basic-registrations/calendars'),
       fetch('/api/basic-registrations/generic-steps'),
       fetch('/api/basic-registrations/asset-families'),

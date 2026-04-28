@@ -3,7 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { normalizeUserRole } from '@/lib/user-roles'
-import { sanitizeLimit } from '@/lib/pagination'
+import { parseListParams, rangeFromParams } from '@/lib/pagination'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
 
@@ -17,9 +17,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const summary = searchParams.get('summary') === 'true'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = sanitizeLimit(searchParams.get('limit'))
-    const skip = (page - 1) * limit
+    const listParams = parseListParams(searchParams)
+    const [rangeFrom, rangeTo] = rangeFromParams(listParams)
     const canonicalRole = normalizeUserRole(session)
     const idsParam = searchParams.get('ids')
 
@@ -98,7 +97,7 @@ export async function GET(request: NextRequest) {
       )
       .eq('companyId', session.companyId)
       .order('createdAt', { ascending: false })
-      .range(skip, skip + limit - 1)
+      .range(rangeFrom, rangeTo)
 
     // Filtrar por unidade ativa da session
     const unitIdParam = searchParams.get('unitId')
@@ -121,12 +120,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: requests || [],
-      pagination: summary ? undefined : {
-        page,
-        limit,
-        total: total || 0,
-        totalPages: Math.ceil((total || 0) / limit)
-      }
+      pagination: summary
+        ? undefined
+        : listParams.mode === 'all'
+        ? {
+            page: 1,
+            limit: (requests || []).length,
+            total: total ?? (requests || []).length,
+            totalPages: 1
+          }
+        : {
+            page: listParams.page,
+            limit: listParams.limit,
+            total: total || 0,
+            totalPages: Math.ceil((total || 0) / listParams.limit)
+          }
     })
   } catch (error) {
     console.error('Get requests error:', error)

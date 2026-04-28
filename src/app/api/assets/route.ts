@@ -4,7 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/storage'
 import { createAssetHistoryEvent } from '@/lib/assetHistory'
-import { sanitizeLimit } from '@/lib/pagination'
+import { parseListParams, rangeFromParams } from '@/lib/pagination'
 import { notifyMissingFamilyModel } from '@/lib/standard-checklists/notifyMissingFamilyModel'
 
 export async function GET(request: NextRequest) {
@@ -23,9 +23,8 @@ export async function GET(request: NextRequest) {
     const locationId = searchParams.get('locationId')
     const status = searchParams.get('status')
     const summary = searchParams.get('summary') === 'true'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = sanitizeLimit(searchParams.get('limit'))
-    const skip = (page - 1) * limit
+    const listParams = parseListParams(searchParams)
+    const [rangeFrom, rangeTo] = rangeFromParams(listParams)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query: any = supabase
@@ -39,7 +38,7 @@ export async function GET(request: NextRequest) {
       .eq('companyId', session.companyId)
       .eq('archived', false)
       .order('createdAt', { ascending: false })
-      .range(skip, skip + limit - 1)
+      .range(rangeFrom, rangeTo)
 
     const unitIdParam = searchParams.get('unitId')
     // Inventário de ativos é corporativo por empresa; só filtra por unidade se solicitado explicitamente.
@@ -124,12 +123,20 @@ export async function GET(request: NextRequest) {
         ? { data: enrichedAssets }
         : {
             data: enrichedAssets,
-            pagination: {
-              page,
-              limit,
-              total: total || 0,
-              totalPages: Math.ceil((total || 0) / limit)
-            }
+            pagination:
+              listParams.mode === 'all'
+                ? {
+                    page: 1,
+                    limit: enrichedAssets.length,
+                    total: total ?? enrichedAssets.length,
+                    totalPages: 1
+                  }
+                : {
+                    page: listParams.page,
+                    limit: listParams.limit,
+                    total: total || 0,
+                    totalPages: Math.ceil((total || 0) / listParams.limit)
+                  }
           }
     )
   } catch (error) {

@@ -77,7 +77,7 @@ export default function NewAssetPage() {
       const [locationsRes, usersRes, assetsRes] = await Promise.all([
         fetch('/api/locations'),
         fetch('/api/users'),
-        fetch('/api/assets')
+        fetch('/api/assets?summary=true&all=true')
       ])
 
       const [locationsData, usersData, assetsData] = await Promise.all([

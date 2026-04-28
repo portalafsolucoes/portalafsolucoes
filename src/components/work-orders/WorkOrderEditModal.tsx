@@ -109,7 +109,7 @@ export function WorkOrderEditModal({
     try {
       const [woRes, assetsRes, locationsRes, teamsRes, resRes, areasRes, stRes] = await Promise.all([
         fetch(`/api/work-orders/${workOrderId}`),
-        fetch('/api/assets?summary=true'),
+        fetch('/api/assets?summary=true&all=true'),
         fetch('/api/locations'),
         fetch('/api/teams'),
         fetch(`/api/work-orders/${workOrderId}/resources`),

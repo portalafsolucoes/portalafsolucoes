@@ -34,7 +34,7 @@ export default function NewRequestPage() {
   const loadData = async () => {
     try {
       const [assetsRes, locationsRes, teamsRes] = await Promise.all([
-        fetch('/api/assets'),
+        fetch('/api/assets?summary=true&all=true'),
         fetch('/api/locations'),
         fetch('/api/teams')
       ])

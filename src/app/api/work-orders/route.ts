@@ -4,7 +4,7 @@ import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, isValidExternalId, getPriorityFromGut } from '@/lib/workOrderUtils'
 import { isOperationalRole } from '@/lib/user-roles'
-import { sanitizeLimit } from '@/lib/pagination'
+import { parseListParams, rangeFromParams } from '@/lib/pagination'
 import { generateRafNumber } from '@/lib/rafUtils'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
@@ -53,9 +53,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const systemStatus = searchParams.get('systemStatus')
     const assetId = searchParams.get('assetId')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = sanitizeLimit(searchParams.get('limit'))
-    const skip = (page - 1) * limit
+    const listParams = parseListParams(searchParams)
+    const [rangeFrom, rangeTo] = rangeFromParams(listParams)
     const summary = searchParams.get('summary') === 'true'
     const idsParam = searchParams.get('ids')
 
@@ -147,7 +146,7 @@ export async function GET(request: NextRequest) {
       .eq('companyId', session.companyId)
       .eq('archived', false)
       .order('createdAt', { ascending: false })
-      .range(skip, skip + limit - 1)
+      .range(rangeFrom, rangeTo)
 
     // Filtrar por unidade ativa da session
     const unitIdParam = searchParams.get('unitId')
@@ -171,12 +170,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: workOrders,
-      pagination: summary ? undefined : {
-        page,
-        limit,
-        total: total || 0,
-        totalPages: Math.ceil((total || 0) / limit)
-      }
+      pagination: summary
+        ? undefined
+        : listParams.mode === 'all'
+        ? {
+            page: 1,
+            limit: (workOrders || []).length,
+            total: total ?? (workOrders || []).length,
+            totalPages: 1
+          }
+        : {
+            page: listParams.page,
+            limit: listParams.limit,
+            total: total || 0,
+            totalPages: Math.ceil((total || 0) / listParams.limit)
+          }
     })
   } catch (error) {
     console.error('Get work orders error:', error)

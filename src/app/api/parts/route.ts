@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { parseListParams, rangeFromParams } from '@/lib/pagination'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,24 +14,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('categoryId')
     const lowStock = searchParams.get('lowStock') === 'true'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const skip = (page - 1) * limit
-
-    const where: Record<string, unknown> = {
-      companyId: session.companyId
-    }
-
-    if (categoryId) {
-      where.categoryId = categoryId
-    }
+    const listParams = parseListParams(searchParams)
+    const [rangeFrom, rangeTo] = rangeFromParams(listParams)
 
     let query = supabase
       .from('Part')
       .select('*, category:Category(*)', { count: 'exact' })
       .eq('companyId', session.companyId)
       .order('name', { ascending: true })
-      .range(skip, skip + limit - 1)
+      .range(rangeFrom, rangeTo)
 
     if (categoryId) query = query.eq('categoryId', categoryId)
     if (lowStock) query = query.lte('quantity', supabase.rpc('get_min_quantity'))
@@ -44,12 +36,20 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: parts || [],
-      pagination: {
-        page,
-        limit,
-        total: total || 0,
-        totalPages: Math.ceil((total || 0) / limit)
-      }
+      pagination:
+        listParams.mode === 'all'
+          ? {
+              page: 1,
+              limit: (parts || []).length,
+              total: total ?? (parts || []).length,
+              totalPages: 1
+            }
+          : {
+              page: listParams.page,
+              limit: listParams.limit,
+              total: total || 0,
+              totalPages: Math.ceil((total || 0) / listParams.limit)
+            }
     })
   } catch (error) {
     console.error('Get parts error:', error)

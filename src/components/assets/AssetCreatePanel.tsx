@@ -203,7 +203,7 @@ export function AssetCreatePanel({ onClose, onSuccess, parentAsset }: AssetCreat
   const loadData = async () => {
     try {
       const [assetsRes, familiesRes, familyModelsRes, costCentersRes, workCentersRes, positionsRes, areasRes, characteristicsRes, calendarsRes] = await Promise.all([
-        fetch('/api/assets'),
+        fetch('/api/assets?summary=true&all=true'),
         fetch('/api/basic-registrations/asset-families'),
         fetch('/api/basic-registrations/asset-family-models'),
         fetch('/api/basic-registrations/cost-centers'),

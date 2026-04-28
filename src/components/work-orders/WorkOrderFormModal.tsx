@@ -171,7 +171,7 @@ export function WorkOrderFormModal({
     if (!isOpen || !initialValues?.assetId) return
     const fetchAsset = async () => {
       try {
-        const res = await fetch(`/api/assets?summary=true&limit=500`)
+        const res = await fetch(`/api/assets?summary=true&all=true`)
         const data = await res.json()
         const allAssets: AssetItem[] = data.data || []
         const a = allAssets.find(x => x.id === initialValues.assetId)
