@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .from('Asset')
       .select(
         summary
-          ? 'id, name, description, status, area, areaId, workCenterId, unitId, locationId, categoryId, parentAssetId, protheusCode, tag, createdAt, updatedAt'
+          ? 'id, name, description, status, area, areaId, workCenterId, costCenterId, positionId, shiftCode, gutGravity, gutUrgency, gutTendency, unitId, locationId, categoryId, parentAssetId, protheusCode, tag, createdAt, updatedAt'
           : '*',
         summary ? undefined : { count: 'exact' }
       )
