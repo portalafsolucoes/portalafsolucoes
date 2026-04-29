@@ -64,16 +64,19 @@ function AssetTreeNode({ asset, level, onSelect, selectedId, onAddSubAsset }: As
   }, [showContextMenu])
 
   const getIcon = () => {
-    // Nível 0 (raiz) - Cubo 3D azul (principal)
-    if (level === 0) {
-      return <Icon name="inventory_2" className="text-base text-primary" />
+    // assetDepth = 0 (Pai), 1 (Filho), 2 (Neto), 3 (Bisneto), 4+ fallback
+    // O AssetTreeNode entra em level=2 porque a arvore tem 2 agrupadores acima (Area + Centro de Trabalho)
+    const assetDepth = level - 2
+    if (assetDepth <= 0) {
+      return <Icon name="precision_manufacturing" className="text-base text-gray-900" />
     }
-    // Nível 1 (filhos diretos) - Múltiplos cubos laranja
-    if (level === 1) {
-      return <Icon name="widgets" className="text-base text-orange-500" />
+    if (assetDepth === 1) {
+      return <Icon name="settings" className="text-base text-gray-700" />
     }
-    // Nível 2+ (netos em diante) - Componente cinza
-    return <Icon name="memory" className="text-base text-muted-foreground" />
+    if (assetDepth === 2) {
+      return <Icon name="memory" className="text-base text-gray-500" />
+    }
+    return <Icon name="bolt" className="text-base text-gray-400" />
   }
 
   const getStatusIndicator = () => {
