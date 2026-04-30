@@ -1,0 +1,4 @@
+linha,cod_protheus,descricao,status,http_status,mensagem,created_id
+2,ABR002,ABRIR PORTAS DE INSPECAO,DRY_RUN,,simulacao — sem POST,
+3,ABR003,ABRIR PORTAS DE INSPECAO INFERIORES,DRY_RUN,,simulacao — sem POST,
+4,ABR004,ABRIR TAMPA PRINCIPAL DA UNIDADE HIDRÁULICA,DRY_RUN,,simulacao — sem POST,

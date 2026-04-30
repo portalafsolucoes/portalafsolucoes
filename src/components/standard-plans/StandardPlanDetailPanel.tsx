@@ -36,6 +36,7 @@ interface StandardPlanDetailPanelProps {
   plan: StandardPlanDetail
   onClose: () => void
   onEdit: (planId: string) => void
+  onCopy: (planId: string) => void
   onDelete: (planId: string) => void
   canEdit: boolean
 }
@@ -44,7 +45,7 @@ const sectionTitleCls = 'text-sm font-semibold text-foreground mb-3'
 const labelCls = 'text-xs text-muted-foreground'
 const valueCls = 'text-sm text-foreground'
 
-export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onDelete, canEdit }: StandardPlanDetailPanelProps) {
+export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onCopy, onDelete, canEdit }: StandardPlanDetailPanelProps) {
   return (
     <div className="h-full flex flex-col bg-card border-l border-gray-300 shadow-[-15px_0_30px_rgba(0,0,0,0.05)]">
       {/* Header */}
@@ -67,6 +68,7 @@ export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onDelet
         {canEdit && (
           <PanelActionButtons
             onEdit={() => onEdit(plan.id)}
+            onCopy={() => onCopy(plan.id)}
             onDelete={() => onDelete(plan.id)}
           />
         )}

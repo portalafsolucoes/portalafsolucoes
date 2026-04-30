@@ -41,8 +41,9 @@ export default function StandardMaintenancePlanPage() {
   // --- painel de criação/edição ---
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [copyingFromId, setCopyingFromId] = useState<string | null>(null)
 
-  const showSidePanel = !!(selectedPlan !== null || isCreating || editingId !== null)
+  const showSidePanel = !!(selectedPlan !== null || isCreating || editingId !== null || copyingFromId !== null)
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -65,6 +66,7 @@ export default function StandardMaintenancePlanPage() {
   const handleSelectPlan = async (planId: string) => {
     setIsCreating(false)
     setEditingId(null)
+    setCopyingFromId(null)
     setLoadingDetail(true)
     try {
       const res = await fetch(`/api/maintenance-plans/standard/${planId}`)
@@ -77,13 +79,22 @@ export default function StandardMaintenancePlanPage() {
   const openCreate = () => {
     setSelectedPlan(null)
     setEditingId(null)
+    setCopyingFromId(null)
     setIsCreating(true)
   }
 
   const openEdit = (planId: string) => {
     setSelectedPlan(null)
     setIsCreating(false)
+    setCopyingFromId(null)
     setEditingId(planId)
+  }
+
+  const openCopy = (planId: string) => {
+    setSelectedPlan(null)
+    setIsCreating(false)
+    setEditingId(null)
+    setCopyingFromId(planId)
   }
 
   const handleDelete = async (id: string) => {
@@ -98,6 +109,7 @@ export default function StandardMaintenancePlanPage() {
     setSelectedPlan(null)
     setIsCreating(false)
     setEditingId(null)
+    setCopyingFromId(null)
   }
 
   const canEdit = role && hasPermission(role as UserRole, 'maintenance-plan', 'create')
@@ -177,6 +189,14 @@ export default function StandardMaintenancePlanPage() {
       onClose={() => setEditingId(null)}
       onSuccess={() => { setEditingId(null); loadData() }}
     />
+  ) : copyingFromId ? (
+    <StandardPlanFormPanel
+      inPage
+      editingId={null}
+      copyFromId={copyingFromId}
+      onClose={() => setCopyingFromId(null)}
+      onSuccess={() => { setCopyingFromId(null); loadData() }}
+    />
   ) : selectedPlan ? (
     loadingDetail ? (
       <div className="h-full flex items-center justify-center bg-card border-l border-border">
@@ -190,6 +210,7 @@ export default function StandardMaintenancePlanPage() {
         plan={selectedPlan}
         onClose={() => setSelectedPlan(null)}
         onEdit={(planId) => openEdit(planId)}
+        onCopy={(planId) => openCopy(planId)}
         onDelete={(planId) => { setSelectedPlan(null); handleDelete(planId) }}
         canEdit={!!canEdit}
       />

@@ -107,6 +107,7 @@ const selectCls = inputCls
 
 interface StandardPlanFormPanelProps {
   editingId?: string | null
+  copyFromId?: string | null
   inPage?: boolean
   onClose: () => void
   onSuccess: () => void
@@ -118,6 +119,7 @@ interface StandardPlanFormPanelProps {
 
 export default function StandardPlanFormPanel({
   editingId = null,
+  copyFromId = null,
   inPage = false,
   onClose,
   onSuccess,
@@ -211,6 +213,12 @@ export default function StandardPlanFormPanel({
     if (editingId) {
       loadPlan(editingId)
       loadCompatibleAssets(editingId)
+    } else if (copyFromId) {
+      setFormData(emptyFormData())
+      setError('')
+      setNextSequence(null)
+      setCompatibleAssets([])
+      loadPlanForCopy(copyFromId)
     } else {
       setFormData(emptyFormData())
       setTasks([emptyTask()])
@@ -218,7 +226,8 @@ export default function StandardPlanFormPanel({
       setNextSequence(null)
       setCompatibleAssets([])
     }
-  }, [editingId, loadCompatibleAssets])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId, copyFromId, loadCompatibleAssets])
 
   const loadDependencies = async () => {
     const [famRes, stRes, calRes, modelsRes, stepsRes] = await Promise.all([
@@ -269,6 +278,41 @@ export default function StandardPlanFormPanel({
       if (plan.tasks && plan.tasks.length > 0) {
         setTasks(plan.tasks.map((t) => ({
           key: t.id || crypto.randomUUID(),
+          description: t.description || '',
+          executionTime: t.executionTime ?? '',
+          steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order, optionType: s.optionType || 'NONE' })),
+          resources: (t.resources || []).map((r) => ({
+            resourceType: (r.resourceType || 'MATERIAL') as TaskResourceItem['resourceType'],
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            quantity: r.resourceCount ?? r.quantity ?? 1,
+            hours: r.hours ?? 0,
+            unit: r.unit || 'UN',
+          })),
+        })))
+      } else {
+        setTasks([emptyTask()])
+      }
+    } catch { setError('Erro de conexão ao carregar plano') }
+    setLoadingPlan(false)
+  }
+
+  const loadPlanForCopy = async (planId: string) => {
+    setLoadingPlan(true)
+    try {
+      const res = await fetch(`/api/maintenance-plans/standard/${planId}`)
+      const json = await res.json() as ApiItemResponse<StandardPlanResponse>
+      if (!res.ok) { setError(json.error || 'Erro ao carregar plano'); setLoadingPlan(false); return }
+      const plan = json.data
+      if (!plan) {
+        setError('Plano não encontrado')
+        setLoadingPlan(false)
+        return
+      }
+      if (plan.tasks && plan.tasks.length > 0) {
+        setTasks(plan.tasks.map((t) => ({
+          key: crypto.randomUUID(),
           description: t.description || '',
           executionTime: t.executionTime ?? '',
           steps: (t.steps || []).map((s) => ({ stepId: s.stepId, order: s.order, optionType: s.optionType || 'NONE' })),
@@ -833,7 +877,7 @@ export default function StandardPlanFormPanel({
     </div>
   )
 
-  const title = editingId ? 'Editar Plano Padrão' : 'Novo Plano Padrão'
+  const title = editingId ? 'Editar Plano Padrão' : copyFromId ? 'Copiar Plano Padrão' : 'Novo Plano Padrão'
 
   const linkingDialogNode = (
     <AssetLinkingDialog

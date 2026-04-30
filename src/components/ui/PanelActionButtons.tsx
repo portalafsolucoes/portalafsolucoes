@@ -4,6 +4,7 @@ import { Icon } from '@/components/ui/Icon'
 
 interface PanelActionButtonsProps {
   onEdit?: () => void
+  onCopy?: () => void
   onPrint?: () => void
   onGenerateWorkOrder?: () => void
   onGenerateRaf?: () => void
@@ -11,8 +12,8 @@ interface PanelActionButtonsProps {
   onDelete?: () => void
 }
 
-export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGenerateRaf, onFinalize, onDelete }: PanelActionButtonsProps) {
-  if (!onEdit && !onPrint && !onGenerateWorkOrder && !onGenerateRaf && !onFinalize && !onDelete) {
+export function PanelActionButtons({ onEdit, onCopy, onPrint, onGenerateWorkOrder, onGenerateRaf, onFinalize, onDelete }: PanelActionButtonsProps) {
+  if (!onEdit && !onCopy && !onPrint && !onGenerateWorkOrder && !onGenerateRaf && !onFinalize && !onDelete) {
     return null
   }
 
@@ -26,6 +27,16 @@ export function PanelActionButtons({ onEdit, onPrint, onGenerateWorkOrder, onGen
         >
           <Icon name="edit" className="text-base" />
           Editar
+        </button>
+      )}
+      {onCopy && (
+        <button
+          type="button"
+          onClick={onCopy}
+          className="bg-gray-700 text-white hover:bg-gray-600 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[4px] min-h-[44px] transition-colors"
+        >
+          <Icon name="content_copy" className="text-base" />
+          Copiar
         </button>
       )}
       {onPrint && (
