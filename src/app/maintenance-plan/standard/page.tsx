@@ -247,7 +247,9 @@ export default function StandardMaintenancePlanPage() {
       </div>
     </div>
   ) : (
-    <div className="flex-1 overflow-auto">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="h-full flex flex-col bg-card overflow-hidden">
+        <div className="flex-1 overflow-auto min-h-0">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="sticky top-0 bg-secondary z-10">
           <tr>
@@ -322,6 +324,8 @@ export default function StandardMaintenancePlanPage() {
           ))}
         </tbody>
       </table>
+        </div>
+      </div>
     </div>
   )
 
