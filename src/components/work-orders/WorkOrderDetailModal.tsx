@@ -8,6 +8,8 @@ import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import { formatDate, formatDateTime, getPriorityColor, getStatusColor } from '@/lib/utils'
+import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
+import { formatHours } from '@/lib/units/time'
 
 interface BasicUser {
   id: string
@@ -85,6 +87,8 @@ interface WOTask {
   completed: boolean
   order: number
   executionTime?: number | null
+  plannedStart?: string | null
+  plannedEnd?: string | null
   steps?: TaskStep[] | string | null
 }
 
@@ -149,6 +153,7 @@ interface WorkOrderDetailModalProps {
   onDelete: (workOrderId: string) => void
   onPrint?: (workOrder: WorkOrderDetail) => void
   onFinalize?: (workOrder: WorkOrderDetail) => void
+  onCopy?: (workOrder: WorkOrderDetail) => void
   currentUserId?: string
   inPage?: boolean
 }
@@ -254,16 +259,6 @@ function isImageFile(file: WorkOrderFile): boolean {
   return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'].some(ext => lowerName.endsWith(ext))
 }
 
-function parseTaskSteps(steps: TaskStep[] | string | null | undefined): TaskStep[] {
-  if (!steps) return []
-  if (Array.isArray(steps)) return steps
-  try {
-    return JSON.parse(steps)
-  } catch {
-    return []
-  }
-}
-
 export function WorkOrderDetailModal({
   isOpen,
   onClose,
@@ -272,6 +267,7 @@ export function WorkOrderDetailModal({
   onDelete,
   onPrint,
   onFinalize,
+  onCopy,
   currentUserId,
   inPage = false,
 }: WorkOrderDetailModalProps) {
@@ -377,6 +373,12 @@ export function WorkOrderDetailModal({
     onClose()
   }
 
+  const handleCopy = () => {
+    if (!workOrder || !onCopy) return
+    onCopy(workOrder)
+    onClose()
+  }
+
   const sourceRequestImages = useMemo(
     () => workOrder?.sourceRequest?.files?.filter(isImageFile) ?? [],
     [workOrder?.sourceRequest?.files]
@@ -458,6 +460,7 @@ export function WorkOrderDetailModal({
       {!isOnlyExecutor && (
         <PanelActionButtons
           onEdit={handleEdit}
+          onCopy={onCopy ? handleCopy : undefined}
           onPrint={onPrint ? handlePrint : undefined}
           onFinalize={onFinalize ? handleFinalize : undefined}
           onDelete={handleDelete}
@@ -522,7 +525,7 @@ export function WorkOrderDetailModal({
               />
             )}
             {workOrder.estimatedDuration != null && workOrder.estimatedDuration > 0 && (
-              <DetailField label="Tempo de Execucao" value={`${workOrder.estimatedDuration} min`} />
+              <DetailField label="Tempo de Execucao" value={formatHours(workOrder.estimatedDuration)} />
             )}
             {workOrder.maintenanceArea && (
               <DetailField label="Area de Manutencao" value={workOrder.maintenanceArea.code ? `${workOrder.maintenanceArea.code} - ${workOrder.maintenanceArea.name}` : workOrder.maintenanceArea.name} />
@@ -625,13 +628,19 @@ export function WorkOrderDetailModal({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-[13px] font-semibold text-gray-900">{task.label}</p>
-                        {task.executionTime && (
+                        {task.executionTime != null && (
                           <span className="flex items-center gap-1 text-[11px] text-gray-500">
                             <Icon name="schedule" className="text-sm" />
-                            {task.executionTime} min
+                            {formatHours(task.executionTime)}
                           </span>
                         )}
                       </div>
+                      {(task.plannedStart || task.plannedEnd) && (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
+                          <Icon name="event" className="text-sm" />
+                          Previsao: {task.plannedStart ? new Date(task.plannedStart).toLocaleString('pt-BR') : '-'} → {task.plannedEnd ? new Date(task.plannedEnd).toLocaleString('pt-BR') : '-'}
+                        </p>
+                      )}
                       {task.notes && (
                         <p className="mt-1 text-xs text-gray-500">{task.notes}</p>
                       )}
@@ -826,7 +835,7 @@ export function WorkOrderDetailModal({
                   <DetailField label="Concluida em" value={formatDateTime(workOrder.completedOn)} />
                 )}
                 {typeof workOrder.actualDuration === 'number' && (
-                  <DetailField label="Duracao" value={`${workOrder.actualDuration} min`} />
+                  <DetailField label="Duracao" value={formatHours(workOrder.actualDuration)} />
                 )}
               </div>
             )}

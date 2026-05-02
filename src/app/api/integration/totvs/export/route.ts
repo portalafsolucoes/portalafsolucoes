@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { isAdminRole } from '@/lib/user-roles'
+import { convertHoursRowToProtheusMinutes } from '@/lib/integration/totvs/timeAdapter'
 
 /**
  * API de Exportação para formato TOTVS/Protheus
@@ -63,10 +64,20 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query.order('createdAt', { ascending: true })
     if (error) throw error
 
+    // Adapter de borda: a integracao TOTVS continua trafegando tempo em MINUTOS Int.
+    // Internamente o portal armazena em horas decimais; convertemos no payload de saida
+    // para preservar o contrato externo. Se algum consumidor nao quiser conversao,
+    // pode-se adicionar futuramente um query param explicito (ex: ?unit=hours).
+    const exportedRows = Array.isArray(data)
+      ? (data as unknown as Array<Record<string, unknown>>).map((row) =>
+          convertHoursRowToProtheusMinutes(row, config.table),
+        )
+      : []
+
     return NextResponse.json({
       entity,
-      count: data?.length || 0,
-      data: data || [],
+      count: exportedRows.length,
+      data: exportedRows,
       exportedAt: new Date().toISOString(),
       format: 'portal-cmm',
     })

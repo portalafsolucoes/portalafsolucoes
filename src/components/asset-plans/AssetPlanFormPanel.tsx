@@ -804,9 +804,9 @@ export default function AssetPlanFormPanel({
                     placeholder="Ex: Inspecionar correia transportadora" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Tempo Execução (min)</label>
-                  <input type="number" value={task.executionTime} onChange={e => updateTask(task.key, { executionTime: e.target.value === '' ? '' : Number(e.target.value) })}
-                    placeholder="Ex: 60" className={inputCls} />
+                  <label className={labelCls}>Tempo Execução (h)</label>
+                  <input type="number" step="0.25" min="0" inputMode="decimal" value={task.executionTime} onChange={e => updateTask(task.key, { executionTime: e.target.value === '' ? '' : Number(e.target.value) })}
+                    placeholder="Ex: 1,5" className={inputCls} />
                 </div>
               </div>
               <div>

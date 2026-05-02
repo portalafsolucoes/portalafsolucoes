@@ -1,4 +1,5 @@
 import { supabase, generateId } from '@/lib/supabase'
+import { toDecimalHours } from '@/lib/units/time'
 
 /**
  * Copia recursos do plano de manutenção do ativo (AssetMaintenanceTaskResource)
@@ -46,11 +47,12 @@ export async function copyPlanResourcesToWorkOrder(
     }) => {
       const type = r.resourceType || 'MATERIAL'
       const isPersonOrTool = type === 'SPECIALTY' || type === 'LABOR' || type === 'TOOL'
-      const execTime = execTimeByTask.get(r.taskId) ?? null
+      const execTime = toDecimalHours(execTimeByTask.get(r.taskId) ?? null)
 
-      // Para recursos de pessoa/ferramenta, derivar hours do executionTime da tarefa (min → h)
+      // Para recursos de pessoa/ferramenta, derivar hours do executionTime da tarefa
+      // (executionTime ja esta em horas decimais — sem conversao de unidade aqui)
       const derivedHours = isPersonOrTool && execTime
-        ? execTime / 60
+        ? execTime
         : (r.hours ?? null)
 
       return {
@@ -139,7 +141,7 @@ export async function copyPlanTasksToWorkOrder(
         notes: null,
         completed: false,
         order: task.order,
-        executionTime: task.executionTime || null,
+        executionTime: toDecimalHours(task.executionTime),
         steps: steps.length > 0 ? JSON.stringify(steps) : null,
         workOrderId,
         createdAt: now,
@@ -183,7 +185,7 @@ export async function copyWorkOrderTasks(
       notes: t.notes || null,
       completed: false,
       order: t.order,
-      executionTime: t.executionTime || null,
+      executionTime: toDecimalHours(t.executionTime),
       steps: t.steps || null,
       workOrderId: targetWorkOrderId,
       createdAt: now,

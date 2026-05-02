@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Location } from '@/types'
 import { CANONICAL_ROLE_OPTIONS, normalizeUserRole } from '@/lib/user-roles'
 import { useAuth } from '@/hooks/useAuth'
+import { isSyntheticEmail } from '@/lib/users/syntheticEmail'
 
 interface PersonFormModalProps {
   isOpen: boolean
@@ -104,6 +105,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
     : CANONICAL_ROLE_OPTIONS
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [originalEmailIsSynthetic, setOriginalEmailIsSynthetic] = useState(false)
   const [locations, setLocations] = useState<Location[]>([])
   const [units, setUnits] = useState<UnitOption[]>([])
   const [calendars, setCalendars] = useState<CalendarOption[]>([])
@@ -138,6 +140,7 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
       enabled: true,
       unitIds: [],
     })
+    setOriginalEmailIsSynthetic(false)
   }
 
   const fetchUser = useCallback(async () => {
@@ -158,10 +161,12 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
           }
         } catch { /* ignore - non-admin won't have access */ }
 
+        const isSynth = isSyntheticEmail(user.email)
+        setOriginalEmailIsSynthetic(isSynth)
         setFormData({
           firstName: user.firstName,
           lastName: user.lastName,
-          email: user.email,
+          email: isSynth ? '' : user.email,
           password: '',
           phone: user.phone || '',
           jobTitleId: user.jobTitleId || '',
@@ -243,24 +248,41 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.firstName || !formData.lastName || !formData.email) {
-      alert('Por favor, preencha todos os campos obrigatórios')
+    if (!formData.firstName || !formData.lastName) {
+      alert('Por favor, preencha nome e sobrenome')
       return
     }
 
-    if (!userId && !formData.password) {
-      alert('A senha é obrigatória para novos usuários')
-      return
-    }
+    const isManutentorRole = formData.role === 'MANUTENTOR'
+    const isPromotingFromSynthetic = originalEmailIsSynthetic && !isManutentorRole
 
-    if (!isValidUserEmail(formData.email)) {
-      alert('Informe um email válido com domínio completo, por exemplo nome@empresa.com')
-      return
-    }
+    // MANUTENTOR e cadastro operacional: pode ser criado sem email/senha (servidor gera valores sinteticos).
+    // Promocao de MANUTENTOR sintetico para outro papel exige email/senha reais.
+    if (!isManutentorRole) {
+      if (!formData.email) {
+        alert(isPromotingFromSynthetic
+          ? 'Defina um email real para promover este usuário'
+          : 'Por favor, preencha o email')
+        return
+      }
 
-    if (formData.password && formData.email.trim().toLowerCase() === formData.password.trim().toLowerCase()) {
-      alert('Email e senha não podem ser iguais')
-      return
+      if (!isValidUserEmail(formData.email)) {
+        alert('Informe um email válido com domínio completo, por exemplo nome@empresa.com')
+        return
+      }
+
+      const requiresNewPassword = !userId || isPromotingFromSynthetic
+      if (requiresNewPassword && !formData.password) {
+        alert(isPromotingFromSynthetic
+          ? 'Defina uma senha para promover este usuário'
+          : 'A senha é obrigatória para novos usuários')
+        return
+      }
+
+      if (formData.password && formData.email.trim().toLowerCase() === formData.password.trim().toLowerCase()) {
+        alert('Email e senha não podem ser iguais')
+        return
+      }
     }
 
     try {
@@ -393,37 +415,48 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="email-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
-                    Email <span className="text-accent-orange">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email-in-page"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
-                  />
+              {formData.role === 'MANUTENTOR' ? (
+                <p className="text-[12px] text-gray-500 italic">
+                  Manutentor pode ser cadastrado sem email/senha. Se precisar dar acesso de login depois, altere o papel ou use Resetar senha no painel.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="email-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                      Email <span className="text-accent-orange">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      id="email-in-page"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      placeholder={originalEmailIsSynthetic ? 'Defina um email real' : ''}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                      {originalEmailIsSynthetic
+                        ? 'Senha'
+                        : userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'}
+                      {(!userId || originalEmailIsSynthetic) && <span className="text-accent-orange"> *</span>}
+                    </label>
+                    <input
+                      type="password"
+                      id="password-in-page"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required={!userId || originalEmailIsSynthetic}
+                      minLength={6}
+                      placeholder={originalEmailIsSynthetic ? 'Defina uma senha' : ''}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="password-in-page" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
-                    {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-accent-orange">*</span>}
-                  </label>
-                  <input
-                    type="password"
-                    id="password-in-page"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required={!userId}
-                    minLength={6}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
-                  />
-                </div>
-              </div>
+              )}
             </PanelSection>
 
             <PanelSection title="Função e Acesso">
@@ -640,37 +673,48 @@ export function PersonFormModal({ isOpen, onClose, userId, onSuccess, inPage = f
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="email" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Email <span className="text-accent-orange">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
-                />
+            {formData.role === 'MANUTENTOR' ? (
+              <p className="text-[12px] text-gray-500 italic">
+                Manutentor pode ser cadastrado sem email/senha. Se precisar dar acesso de login depois, altere o papel ou use Resetar senha no painel.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="email" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    Email <span className="text-accent-orange">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    placeholder={originalEmailIsSynthetic ? 'Defina um email real' : ''}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                    {originalEmailIsSynthetic
+                      ? 'Senha'
+                      : userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'}
+                    {(!userId || originalEmailIsSynthetic) && <span className="text-accent-orange"> *</span>}
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required={!userId || originalEmailIsSynthetic}
+                    minLength={6}
+                    placeholder={originalEmailIsSynthetic ? 'Defina uma senha' : ''}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="password" className="block text-[11px] font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  {userId ? 'Nova Senha (deixe em branco para manter)' : 'Senha'} {!userId && <span className="text-accent-orange">*</span>}
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required={!userId}
-                  minLength={6}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-[13px] font-medium text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-sm transition-shadow"
-                />
-              </div>
-            </div>
+            )}
           </ModalSection>
 
           <ModalSection title="Função e Acesso">

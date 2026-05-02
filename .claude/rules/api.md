@@ -4,6 +4,14 @@ globs: src/app/api/**,src/actions/**
 
 # API Routes e Server Actions
 
+## Unidade Canonica de Tempo (HORAS DECIMAIS)
+- APIs internas trafegam duracao em **horas decimais** (numero com ate 2 casas). Nunca em minutos
+- Em `POST`/`PUT` que aceitem campos de tempo (`estimatedDuration`, `actualDuration`, `executionTime`, `duration` de Labor), normalizar com `toDecimalHours(value)` de `@/lib/units/time` antes de persistir
+- Em calculo derivado de timestamps, usar `diffHours(start, end)` em vez de `(end - start) / 60000` ou `/ 3600000` espalhados
+- KPI/Dashboard: `Number(wo.actualDuration)` direto (ja em horas). Sem `/60` em handler de negocio. Decimals do Supabase podem chegar como string — sempre passar por `Number()` ou `toDecimalHours`
+- Borda TOTVS/Protheus: `src/app/api/integration/totvs/export/route.ts` aplica `convertHoursRowToProtheusMinutes(row, table)` no payload de saida para preservar o contrato em **minutos Int** com integradores externos. `src/app/api/integration/totvs/sync/route.ts` ainda nao recebe campos de tempo — quando receber, converter na entrada via `protheusMinutesToHours(value)` antes de persistir
+- Toda nova rota que receba/exponha duracao deve seguir essa convencao. Adapter de tempo NAO deve ser duplicado em handlers — usar exclusivamente `src/lib/integration/<sistema>/timeAdapter.ts`
+
 ## Tenancy e Escopo de Papeis (SUPER_ADMIN vs ADMIN)
 - `SUPER_ADMIN` e staff Portal AF Solucoes: `companyId` e `NULL` no banco (`''` na sessao). Opera cross-tenant (rotas `/api/admin/**`). NAO pode executar operacoes de negocio CMMS sem um tenant explicito.
 - `ADMIN` e administrador da empresa cliente: `companyId` obrigatorio; tem acesso automatico a TODAS as unidades raiz (Location sem `parentId`) via `UserUnit` (invariante mantido por `src/lib/admin-scope.ts`).
@@ -70,6 +78,13 @@ globs: src/app/api/**,src/actions/**
 - APIs de usuario devem normalizar email e rejeitar payloads com email sem dominio completo ou com email igual a senha
 - APIs de `Pessoas` devem aceitar e persistir os campos editaveis do modal de pessoa: nome, sobrenome, email, senha opcional na edicao, telefone, cargo (`jobTitle`), papel (`role`), taxa/hora, localizacao, calendario, unidades de acesso e status
 
+## Filtros de `GET /api/users` (papel canonico e lifecycle)
+- `?role=` aplica `IN` literal sobre a coluna `User.role` (valores legados do enum). Mantido para compat (usado por `/people-teams` e por testes); novos consumidores **nao** devem usar
+- `?canonicalRole=` aceita um ou mais Papeis canonicos (`SUPER_ADMIN`, `ADMIN`, `PLANEJADOR`, `MANUTENTOR`) e e expandido server-side para o conjunto de valores legados via `expandCanonicalToPersisted` em `src/lib/user-roles.ts`. E a forma **preferida** quando o cliente quer pessoas por Papel funcional (ex: dropdown "Atribuir Tecnico" usa `?canonicalRole=MANUTENTOR`); evita que clientes precisem conhecer os valores legados (`MECANICO`/`ELETRICISTA`/`OPERADOR`/`CONSTRUTOR_CIVIL`)
+- Valores invalidos em `canonicalRole` sao silenciosamente descartados; se nenhum canonico valido sobrar, a query retorna lista vazia (sem `400`)
+- `?status=` aceita um ou mais valores do enum `UserStatus` (`ACTIVE`, `INACTIVE`, `ARCHIVED`, `REJECTED_USER`) e e a forma **preferida** de filtrar por lifecycle. `?enabled=true|false` continua funcionando apenas por compat — quando `status` esta presente, `enabled` e ignorado
+- Combinar `canonicalRole` e `role` no mesmo request e permitido (ambos aplicam restricoes em `User.role`); o resultado e a interseccao
+
 ## Sincronizacao de Documentacao
 - Toda mudanca de contrato, permissao, validacao ou comportamento de rota/action deve atualizar a secao funcional correspondente em `docs/SPEC.md`
 - Toda mudanca que altere autenticacao, sessao, autorizacao, isolamento, upload sensivel, exportacao, logs de erro, segredos, headers ou hardening deve atualizar `docs/SEGURANCA.md`
@@ -96,6 +111,18 @@ globs: src/app/api/**,src/actions/**
 - A API de listagem de OS (`GET /api/work-orders` com `summary=true`) deve expor `rescheduleCount` e `rescheduledDate` para alimentar o badge `Reprogramada Nx` e a coluna `Atraso Original`
 - A API de detalhe (`GET /api/work-orders/[id]`) deve incluir a colecao `rescheduleHistory` com `previousDate`, `newDate`, `wasOverdue`, `createdAt` e dados do usuario que reprogramou
 - O endpoint `GET /api/kpi` deve expor `process.reschedulingRate` calculado como `% de OSs com rescheduleCount > 0` sobre o total no periodo; este KPI e independente do `pmc` (que continua medindo cumprimento puro do plano)
+
+## Janela Planejada por Tarefa (plannedStart / plannedEnd em `Task`)
+- `POST /api/work-orders` e `PATCH /api/work-orders/[id]` aceitam `plannedStart` (ISO datetime) e `plannedEnd` (ISO datetime) por tarefa no array `tasks`. Helper canonico de validacao: `normalizeTaskWindow(task)` definido em ambos handlers — rejeita `400` quando apenas um dos dois esta preenchido ou quando `plannedEnd < plannedStart`
+- Quando ambos estiverem preenchidos, o servidor recalcula `executionTime = diffHours(plannedStart, plannedEnd)` antes de persistir, ignorando o valor que veio do cliente. Quando ao menos um estiver vazio, o `executionTime` enviado pelo cliente e preservado (passando por `toDecimalHours`)
+- Os campos sao opcionais por tarefa. Tasks legadas seguem com `plannedStart` e `plannedEnd` `NULL`; nada quebra
+- O `GET /api/work-orders/[id]` retorna `tasks:Task(*)` — os novos campos chegam automaticamente via select estrela. O modo batch (`GET /api/work-orders?ids=`) tambem ja inclui via select estrela em `Task`. O `summary=true` da listagem nao retorna tasks e segue inalterado
+
+## Geracao de OS a partir de Plano com `Periodo = Unica`
+- Plano com `period = 'UNICA'` so deve gerar OS pelo fluxo manual em `/work-orders` quando o usuario seleciona o plano no dropdown `Plano de Manutencao do Bem`
+- `POST /api/planning/plans` (criacao do Plano de Planejamento, batch que projeta ciclos por `lastMaintenanceDate + maintenanceTime`) deve pular `AssetMaintenancePlan` cujo `period` (case-insensitive) seja `UNICA` antes do loop de geracao
+- `POST /api/planning/plans/[id]/generate-pending` (geracao manual em lote a partir de selecao de bens) deve pular igualmente planos com `period = 'UNICA'`. Esses planos so saem pelo formulario individual de OS
+- Plano com `period = 'REPETITIVA'` continua sendo a unica origem valida para o batch de Planejamento
 
 ## RAF (Relatorio de Analise de Falha)
 - `Aprovacoes` continua exclusivo de `SUPER_ADMIN` e `ADMIN`

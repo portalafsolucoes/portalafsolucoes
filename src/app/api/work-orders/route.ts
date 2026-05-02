@@ -3,11 +3,40 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession, getEffectiveUnitId } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
 import { generateSequentialId, isValidExternalId, getPriorityFromGut } from '@/lib/workOrderUtils'
-import { isOperationalRole } from '@/lib/user-roles'
+import { isOperationalRole, normalizeUserRole } from '@/lib/user-roles'
 import { parseListParams, rangeFromParams } from '@/lib/pagination'
 import { generateRafNumber } from '@/lib/rafUtils'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
+import { toDecimalHours, diffHours } from '@/lib/units/time'
+
+// Normaliza janela planejada por tarefa e deriva executionTime quando ambos
+// timestamps existirem. Retorna 400-friendly errors via campo `error`.
+function normalizeTaskWindow(task: {
+  plannedStart?: string | Date | null
+  plannedEnd?: string | Date | null
+  executionTime?: number | string | null
+}): { plannedStart: string | null; plannedEnd: string | null; executionTime: number | null; error?: string } {
+  const psRaw = task.plannedStart ?? null
+  const peRaw = task.plannedEnd ?? null
+  const ps = psRaw ? new Date(psRaw) : null
+  const pe = peRaw ? new Date(peRaw) : null
+  if (ps && Number.isNaN(ps.getTime())) return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Data/hora de inicio invalida' }
+  if (pe && Number.isNaN(pe.getTime())) return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Data/hora de fim invalida' }
+  if ((ps && !pe) || (!ps && pe)) {
+    return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Preencha ambos os campos de previsao (inicio e fim) ou nenhum' }
+  }
+  if (ps && pe && pe.getTime() < ps.getTime()) {
+    return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Fim previsto deve ser posterior ao inicio previsto' }
+  }
+  let executionTime = toDecimalHours(task.executionTime ?? null)
+  if (ps && pe) executionTime = diffHours(ps, pe)
+  return {
+    plannedStart: ps ? ps.toISOString() : null,
+    plannedEnd: pe ? pe.toISOString() : null,
+    executionTime,
+  }
+}
 
 // Função para calcular próxima data de execução
 function calculateNextExecutionDate(frequency: string, value: number): Date {
@@ -130,6 +159,7 @@ export async function GET(request: NextRequest) {
             assetMaintenancePlanId,
             asset:Asset(name, tag, protheusCode),
             location:Location!locationId(name),
+            serviceType:ServiceType(id, code, name),
             maintenancePlanExec:MaintenancePlanExecution(planNumber, trackingType),
             assetMaintenancePlan:AssetMaintenancePlan(trackingType, maintenanceTime, timeUnit)
           `
@@ -330,15 +360,21 @@ export async function POST(request: NextRequest) {
       _validUserIds = existingUsers?.map((user: { id: string }) => user.id) || []
     }
 
-    // Validar assignedToId (técnico específico)
+    // Validar assignedToId (técnico específico) — exige papel canonico MANUTENTOR
     let validAssignedToId: string | undefined = undefined
     if (cleanAssignedToId) {
       const { data: assignedUser } = await supabase
         .from('User')
-        .select('id')
+        .select('id, role')
         .eq('id', cleanAssignedToId)
         .eq('companyId', session.companyId)
         .single()
+      if (assignedUser && normalizeUserRole(assignedUser.role) !== 'MANUTENTOR') {
+        return NextResponse.json(
+          { error: 'Apenas pessoas com papel Manutentor podem ser executantes de OS' },
+          { status: 400 }
+        )
+      }
       validAssignedToId = assignedUser?.id
     }
 
@@ -440,7 +476,7 @@ export async function POST(request: NextRequest) {
         maintenanceFrequency: maintenanceFrequency || null,
         frequencyValue: frequencyValue ? parseInt(frequencyValue) : null,
         nextExecutionDate: nextExecutionDate ? nextExecutionDate.toISOString() : null,
-        estimatedDuration: estimatedDuration ? Number(estimatedDuration) : null,
+        estimatedDuration: toDecimalHours(estimatedDuration),
         sourceRequestId: sourceRequest?.id || null,
         createdAt: now,
         updatedAt: now
@@ -467,29 +503,65 @@ export async function POST(request: NextRequest) {
 
     // Criar tasks se fornecidas
     if (tasks && tasks.length > 0) {
-      const taskInserts = tasks.map((task: {
+      type IncomingTask = {
         label: string
         notes?: string | null
         order?: number
-        executionTime?: number | null
+        executionTime?: number | string | null
+        plannedStart?: string | Date | null
+        plannedEnd?: string | Date | null
         steps?: unknown
-      }, index: number) => ({
-        id: generateId(),
-        label: task.label,
-        notes: task.notes || null,
-        order: task.order ?? index,
-        executionTime: task.executionTime || null,
-        steps: task.steps || null,
-        workOrderId: workOrder.id,
-        createdAt: now,
-        updatedAt: now
-      }))
+      }
+      const incomingTasks = tasks as IncomingTask[]
+      const taskInserts: Record<string, unknown>[] = []
+      for (let index = 0; index < incomingTasks.length; index++) {
+        const task = incomingTasks[index]
+        const window = normalizeTaskWindow(task)
+        if (window.error) {
+          return NextResponse.json(
+            { error: `Tarefa ${index + 1}: ${window.error}` },
+            { status: 400 }
+          )
+        }
+        taskInserts.push({
+          id: generateId(),
+          label: task.label,
+          notes: task.notes || null,
+          order: task.order ?? index,
+          executionTime: window.executionTime,
+          plannedStart: window.plannedStart,
+          plannedEnd: window.plannedEnd,
+          steps: task.steps || null,
+          workOrderId: workOrder.id,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
       await supabase.from('Task').insert(taskInserts).select()
     }
 
     // Criar recursos se fornecidos
     const { resources } = body
     if (Array.isArray(resources) && resources.length > 0) {
+      // Validar que toda Mao de Obra (LABOR) referencia um usuario MANUTENTOR
+      const laborUserIds = resources
+        .filter((r: { resourceType?: string; userId?: string | null }) => r.resourceType === 'LABOR' && !!r.userId)
+        .map((r: { userId?: string | null }) => r.userId as string)
+      if (laborUserIds.length > 0) {
+        const { data: laborUsers } = await supabase
+          .from('User')
+          .select('id, role')
+          .in('id', laborUserIds)
+          .eq('companyId', session.companyId)
+        const invalid = (laborUsers || []).find(u => normalizeUserRole(u.role) !== 'MANUTENTOR')
+        if (invalid) {
+          return NextResponse.json(
+            { error: 'Apenas pessoas com papel Manutentor podem ser alocadas como Mao de Obra' },
+            { status: 400 }
+          )
+        }
+      }
+
       const resourceInserts = resources.map((r: {
         resourceType: string
         resourceId?: string | null

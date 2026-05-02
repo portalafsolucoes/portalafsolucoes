@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { formatHours } from '@/lib/units/time'
 
 export interface IncorporationStandardPlan {
   id: string
@@ -228,9 +229,9 @@ export function StandardPlansIncorporationDialog({
                                   {task.order}
                                 </span>
                                 <span className="flex-1">{task.description}</span>
-                                {task.executionTime ? (
+                                {task.executionTime != null ? (
                                   <span className="text-[10px] text-muted-foreground">
-                                    {task.executionTime} min
+                                    {formatHours(task.executionTime)}
                                   </span>
                                 ) : null}
                               </div>

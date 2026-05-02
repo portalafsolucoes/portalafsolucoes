@@ -95,10 +95,10 @@ export async function POST(
       }
     }
 
-    // Calcular duração real em minutos
+    // Calcular duracao real em horas decimais (2 casas)
     const start = new Date(startTime)
     const end = new Date(endTime)
-    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
+    const durationHours = Math.round(((end.getTime() - start.getTime()) / 3_600_000) * 100) / 100
 
     // Salvar apenas as observações do técnico (sem horários/anexos)
     const fullNotes = observations
@@ -110,7 +110,7 @@ export async function POST(
         status: 'COMPLETE',
         completedOn: end.toISOString(),
         completedById: session.id,
-        actualDuration: durationMinutes,
+        actualDuration: durationHours,
         executionNotes: fullNotes,
         beforePhotoUrl: finalBeforePhotoUrl,
         afterPhotoUrl: finalAfterPhotoUrl

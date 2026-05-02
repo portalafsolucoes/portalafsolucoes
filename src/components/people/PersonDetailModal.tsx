@@ -8,6 +8,7 @@ import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { getRoleLabel } from '@/lib/rbac'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { UserDangerActions } from '@/components/people/UserDangerActions'
+import { displayUserEmail } from '@/lib/users/syntheticEmail'
 
 interface PersonDetailModalProps {
   isOpen: boolean
@@ -181,7 +182,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-1">
                   <div>
                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Email</p>
-                    <p className="text-[13px] font-medium text-gray-900">{user.email}</p>
+                    <p className="text-[13px] font-medium text-gray-900">{displayUserEmail(user.email) || <span className="text-gray-400 italic">sem email</span>}</p>
                   </div>
                   <div>
                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Taxa por Hora</p>
@@ -323,7 +324,7 @@ export function PersonDetailModal({ isOpen, onClose, userId, onEdit, onDelete, i
                 <Icon name="mail" className="text-xl text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="text-foreground">{user.email}</p>
+                  <p className="text-foreground">{displayUserEmail(user.email) || <span className="text-muted-foreground italic">sem email</span>}</p>
                 </div>
               </div>
               {user.phone && (

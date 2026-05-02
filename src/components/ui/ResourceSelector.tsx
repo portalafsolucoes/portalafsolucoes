@@ -88,7 +88,8 @@ export function ResourceSelector({ resources, onChange, className }: ResourceSel
     try {
       const [jtRes, usersRes, resRes] = await Promise.all([
         fetch('/api/basic-registrations/job-titles'),
-        fetch('/api/users?enabled=true&brief=resource'),
+        // Mao de Obra (LABOR) so aceita pessoas cadastradas como MANUTENTOR
+        fetch('/api/users?enabled=true&brief=resource&role=MANUTENTOR'),
         fetch('/api/basic-registrations/resources'),
       ])
       const [jtData, usersData, resData] = await Promise.all([

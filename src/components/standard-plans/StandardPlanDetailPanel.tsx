@@ -2,6 +2,7 @@
 
 import { Icon } from '@/components/ui/Icon'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
+import { formatHours } from '@/lib/units/time'
 
 export interface StandardPlanDetail {
   id: string
@@ -137,7 +138,7 @@ export default function StandardPlanDetailPanel({ plan, onClose, onEdit, onCopy,
                     {task.executionTime != null && (
                       <span className="text-xs text-muted-foreground">
                         <Icon name="schedule" className="text-xs mr-0.5 align-middle" />
-                        {task.executionTime} min
+                        {formatHours(task.executionTime)}
                       </span>
                     )}
                   </div>

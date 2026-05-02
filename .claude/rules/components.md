@@ -4,6 +4,23 @@ globs: src/components/**,src/app/**/page.tsx
 
 # Componentes e Paginas
 
+## Unidade Canonica de Tempo (HORAS DECIMAIS)
+- Inputs de duracao usam `<input type="number" step="0.25" min="0" inputMode="decimal" placeholder="Ex: 1,5" />` e label terminada em `(h)` (ex: `Tempo Execucao (h)`)
+- Granularidade: `step="0.25"` cobre 15 / 30 / 45 min e horas inteiras. Nao usar `step="1"` (perde 15min) ou `step="0.01"` (granularidade falsa)
+- Exibicao: usar `formatHours(value)` de `@/lib/units/time` em todo lugar — produz `"2.50 h"` para numero ou `"-"` para `null`/`undefined`. Nao concatenar `min`, `min.`, `hh:mm` ou outros formatos
+- Em prints (`WorkOrderPrintView`, `WorkOrdersBatchPrintView`) e detail panels, usar a mesma `formatHours()` para ficar consistente entre tela e PDF
+- Em listas/tabelas que ordenam por duracao, ordenar pelo numero bruto (em horas), nao pelo texto formatado
+- Ao reconstruir timestamps a partir de duracao (ex: `WorkOrderExecuteModal` calculando `startTime` a partir de `endTime - actualDuration`), multiplicar por `3_600_000` (ms por hora). Nao usar mais `* 60000`
+
+## Janela Planejada por Tarefa em OS (OBRIGATORIO)
+- O `WorkOrderFormModal` (criacao e edicao de OS) expoe dois `<input type="datetime-local">` por tarefa: `Inicio Previsto` e `Fim Previsto`
+- Quando ambos estiverem preenchidos, o `Tempo Execucao (h)` da tarefa fica `readOnly` com fundo `bg-muted` e o valor exibido vira `diffHours(plannedStart, plannedEnd)` (badge `(calculado)` ao lado do label). Quando ao menos um estiver vazio, o `Tempo Execucao (h)` volta a ser editavel manualmente — o usuario pode digitar sem precisar usar a janela de previsao
+- Visibilidade: os campos aparecem em OS individual criada manualmente (`/work-orders` sem plano selecionado) e quando o plano selecionado no dropdown `Plano de Manutencao do Bem` tiver `period = 'UNICA'`. Ficam **escondidos** quando o plano selecionado for `period = 'REPETITIVA'` (planos repetitivos nao recebem janela planejada por OS — a frequencia define o ciclo)
+- Validacao client-side antes do submit: ambos preenchidos ou ambos vazios; `fim >= inicio`. Mensagens inline ao lado do campo `Fim Previsto` mostram a duracao prevista (`formatHours(diffHours(...))`) ou erro `Fim deve ser posterior ao inicio`
+- O dropdown `Plano de Manutencao do Bem` deve sufixar o rotulo do plano com ` (Unica)` ou ` (Repetitiva)` conforme `plan.period`, para o usuario antever o comportamento dos campos
+- O componente `WorkOrderDetailModal` e os prints (`WorkOrderPrintView` + `WorkOrdersBatchPrintView`) devem renderizar a linha `Previsao: <inicio> → <fim>` por tarefa quando qualquer um dos dois estiver preenchido, usando `new Date(value).toLocaleString('pt-BR')`
+- O fluxo `Copiar OS` (em `/work-orders/page.tsx`) propaga `plannedStart`/`plannedEnd` da OS de origem para os `initialValues` do form, junto com `executionTime`
+
 ## Texto em MAIUSCULAS (padrao do sistema)
 - O `<Input>` de `@/components/ui/Input` aplica `text-transform: uppercase` por default (classe `uppercase`); o banco recebe o valor ja normalizado via `normalizeTextPayload` no servidor
 - Passar `preserveCase` em inputs onde o case importa:

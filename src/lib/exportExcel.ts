@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { displayUserEmail } from '@/lib/users/syntheticEmail'
 
 interface ExportColumn {
   key: string
@@ -148,7 +149,7 @@ export const EXPORT_CONFIGS: Record<string, { columns: ExportColumn[]; filename:
     columns: [
       { key: 'firstName', header: 'Nome' },
       { key: 'lastName', header: 'Sobrenome' },
-      { key: 'email', header: 'Email' },
+      { key: 'email', header: 'Email', transform: (v) => displayUserEmail(typeof v === 'string' ? v : null) },
       { key: 'role', header: 'Perfil' },
       { key: 'jobTitle', header: 'Cargo' },
       { key: 'phone', header: 'Telefone' },

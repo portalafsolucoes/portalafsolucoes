@@ -28,7 +28,7 @@ export async function GET(
 
     const { data: members, error: membersError } = await supabase
       .from('TeamMember')
-      .select('*, user:User!userId(id, firstName, lastName, email, jobTitle)')
+      .select('*, user:User!userId(id, firstName, lastName, email, jobTitle, role)')
       .eq('teamId', id)
 
     if (membersError) throw membersError

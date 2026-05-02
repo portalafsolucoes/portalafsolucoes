@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
+import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
+import { formatHours } from '@/lib/units/time'
 
 interface AssetRef {
   name: string
@@ -34,6 +36,8 @@ interface BatchPrintWO {
     completed: boolean
     order: number
     executionTime?: number | null
+    plannedStart?: string | null
+    plannedEnd?: string | null
     steps?: unknown
   }[]
   woResources?: {
@@ -96,25 +100,6 @@ function getResourceTypeLabel(type: string): string {
   }
 }
 
-interface TaskStep {
-  stepId?: string
-  stepName: string
-  optionType: string
-  options?: { id?: string; label: string; order: number }[]
-}
-
-function parseTaskSteps(steps: unknown): TaskStep[] {
-  if (!steps) return []
-  if (Array.isArray(steps)) return steps as TaskStep[]
-  if (typeof steps === 'string') {
-    try {
-      return JSON.parse(steps)
-    } catch {
-      return []
-    }
-  }
-  return []
-}
 
 export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose }: Props) {
   const { user } = useAuth()
@@ -314,7 +299,7 @@ export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose 
                   {wo.estimatedDuration != null && wo.estimatedDuration > 0 && (
                     <div>
                       <p className="text-[9px] font-bold text-gray-500 uppercase">Tempo Estimado</p>
-                      <p className="font-medium">{wo.estimatedDuration} min</p>
+                      <p className="font-medium">{formatHours(wo.estimatedDuration)}</p>
                     </div>
                   )}
                   {scheduledDate && (
@@ -376,10 +361,15 @@ export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose 
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold text-[11px]">{task.label}</span>
-                                {task.executionTime && (
-                                  <span className="text-[9px] text-gray-500">({task.executionTime} min)</span>
+                                {task.executionTime != null && (
+                                  <span className="text-[9px] text-gray-500">({formatHours(task.executionTime)})</span>
                                 )}
                               </div>
+                              {(task.plannedStart || task.plannedEnd) && (
+                                <p className="text-[9px] text-gray-600 mt-0.5">
+                                  Previsao: {task.plannedStart ? new Date(task.plannedStart).toLocaleString('pt-BR') : '-'} → {task.plannedEnd ? new Date(task.plannedEnd).toLocaleString('pt-BR') : '-'}
+                                </p>
+                              )}
                               {task.notes && (
                                 <p className="text-[9px] text-gray-500 mt-0.5">{task.notes}</p>
                               )}

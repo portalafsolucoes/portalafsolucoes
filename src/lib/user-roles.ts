@@ -67,6 +67,42 @@ export function normalizeUserRole(input: RoleContext | string | null | undefined
   return normalizeUserRole((input.role || '').toString())
 }
 
+/**
+ * Expande Papeis canonicos para o conjunto de valores legados persistidos no enum
+ * `UserRole` do banco. Usar em filtros server-side (ex.: `GET /api/users?canonicalRole=`)
+ * para evitar que clientes precisem conhecer os mapeamentos legados.
+ *
+ * Mapeamento espelha `normalizeUserRole`:
+ *   SUPER_ADMIN -> ['SUPER_ADMIN']
+ *   ADMIN       -> ['GESTOR']
+ *   PLANEJADOR  -> ['PLANEJADOR']
+ *   MANUTENTOR  -> ['MANUTENTOR','MECANICO','ELETRICISTA','OPERADOR','CONSTRUTOR_CIVIL']
+ */
+export function expandCanonicalToPersisted(canonicals: CanonicalUserRole[]): LegacyUserRole[] {
+  const out = new Set<LegacyUserRole>()
+  for (const c of canonicals) {
+    switch (c) {
+      case 'SUPER_ADMIN':
+        out.add('SUPER_ADMIN')
+        break
+      case 'ADMIN':
+        out.add('GESTOR')
+        break
+      case 'PLANEJADOR':
+        out.add('PLANEJADOR')
+        break
+      case 'MANUTENTOR':
+        out.add('MANUTENTOR')
+        out.add('MECANICO')
+        out.add('ELETRICISTA')
+        out.add('OPERADOR')
+        out.add('CONSTRUTOR_CIVIL')
+        break
+    }
+  }
+  return Array.from(out)
+}
+
 export function toPersistedUserRole(input: RoleContext | string | null | undefined): LegacyUserRole {
   if (typeof input === 'string') {
     const value = input.trim().toUpperCase()

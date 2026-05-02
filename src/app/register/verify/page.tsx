@@ -18,7 +18,6 @@ export default function RegisterVerifyPage() {
 }
 
 function RegisterVerifyContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 

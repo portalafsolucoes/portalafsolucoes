@@ -1,10 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { checkApiPermission } from '@/lib/permissions'
-import { isOperationalRole } from '@/lib/user-roles'
+import { isOperationalRole, normalizeUserRole } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
+import { toDecimalHours, diffHours } from '@/lib/units/time'
+
+// Mesmo helper do POST: valida janela planejada e deriva executionTime
+// quando ambos os timestamps existirem.
+function normalizeTaskWindow(task: {
+  plannedStart?: string | Date | null
+  plannedEnd?: string | Date | null
+  executionTime?: number | string | null
+}): { plannedStart: string | null; plannedEnd: string | null; executionTime: number | null; error?: string } {
+  const psRaw = task.plannedStart ?? null
+  const peRaw = task.plannedEnd ?? null
+  const ps = psRaw ? new Date(psRaw) : null
+  const pe = peRaw ? new Date(peRaw) : null
+  if (ps && Number.isNaN(ps.getTime())) return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Data/hora de inicio invalida' }
+  if (pe && Number.isNaN(pe.getTime())) return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Data/hora de fim invalida' }
+  if ((ps && !pe) || (!ps && pe)) {
+    return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Preencha ambos os campos de previsao (inicio e fim) ou nenhum' }
+  }
+  if (ps && pe && pe.getTime() < ps.getTime()) {
+    return { plannedStart: null, plannedEnd: null, executionTime: null, error: 'Fim previsto deve ser posterior ao inicio previsto' }
+  }
+  let executionTime = toDecimalHours(task.executionTime ?? null)
+  if (ps && pe) executionTime = diffHours(ps, pe)
+  return {
+    plannedStart: ps ? ps.toISOString() : null,
+    plannedEnd: pe ? pe.toISOString() : null,
+    executionTime,
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -128,7 +157,7 @@ export async function PATCH(
     // Validar relacoes em paralelo
     const [assignedResult, assetResult, locationResult, categoryResult] = await Promise.all([
       body.assignedToId
-        ? supabase.from('User').select('id').eq('id', body.assignedToId).eq('companyId', session.companyId).single()
+        ? supabase.from('User').select('id, role').eq('id', body.assignedToId).eq('companyId', session.companyId).single()
         : Promise.resolve({ data: null }),
       body.assetId
         ? supabase.from('Asset').select('id').eq('id', body.assetId).eq('companyId', session.companyId).single()
@@ -140,6 +169,13 @@ export async function PATCH(
         ? supabase.from('WorkOrderCategory').select('id').eq('id', body.categoryId).eq('companyId', session.companyId).single()
         : Promise.resolve({ data: null }),
     ])
+
+    if (assignedResult.data && normalizeUserRole((assignedResult.data as { role?: string | null }).role) !== 'MANUTENTOR') {
+      return NextResponse.json(
+        { error: 'Apenas pessoas com papel Manutentor podem ser executantes de OS' },
+        { status: 400 }
+      )
+    }
 
     const validAssignedToId = assignedResult.data ? body.assignedToId : null
     const validAssetId = assetResult.data ? body.assetId : null
@@ -168,15 +204,33 @@ export async function PATCH(
       validUserIds = (users || []).map((u: { id: string }) => u.id)
     }
 
+    // Calcular dueDate com tolerancia (mesmo padrao do POST)
+    let finalDueDate: string | null = body.dueDate ? new Date(body.dueDate).toISOString() : null
+    if (finalDueDate && body.toleranceDays && Number(body.toleranceDays) > 0) {
+      const d = new Date(finalDueDate)
+      d.setDate(d.getDate() + Number(body.toleranceDays))
+      finalDueDate = d.toISOString()
+    }
+
+    // Sincronizar title com a primeira tarefa quando tasks vier no payload
+    // (mesma convencao do POST: title = primeira tarefa)
+    let effectiveTitle: unknown = body.title
+    if (Array.isArray(body.tasks) && body.tasks.length > 0) {
+      const firstTaskLabel = (body.tasks[0] as { label?: string }).label
+      if (firstTaskLabel && firstTaskLabel.trim()) {
+        effectiveTitle = firstTaskLabel
+      }
+    }
+
     // Preparar dados de atualização
     const updateData: Record<string, unknown> = {
-      title: body.title,
+      title: effectiveTitle,
       description: body.description,
       type: body.type,
       osType: body.osType !== undefined ? (body.osType || null) : undefined,
       priority: body.priority,
       status: body.status,
-      dueDate: body.dueDate ? new Date(body.dueDate).toISOString() : null,
+      dueDate: finalDueDate,
       completedOn: body.completedOn ? new Date(body.completedOn).toISOString() : null,
       assetId: validAssetId,
       locationId: validLocationId,
@@ -187,7 +241,7 @@ export async function PATCH(
       maintenanceFrequency: body.maintenanceFrequency || null,
       frequencyValue: body.frequencyValue ? parseInt(body.frequencyValue) : null,
       externalId: body.externalId || null,
-      estimatedDuration: body.estimatedDuration != null ? Number(body.estimatedDuration) : undefined
+      estimatedDuration: body.estimatedDuration !== undefined ? toDecimalHours(body.estimatedDuration) : undefined
     }
 
     // Atualizar a work order
@@ -205,6 +259,98 @@ export async function PATCH(
       .single()
 
     if (updateError) throw updateError
+
+    // Sync de tasks/etapas: quando o body traz `tasks`, substituimos integralmente
+    // o conjunto atual (delete + insert). Etapas viajam como array nativo dentro de
+    // cada task (campo `steps` Json?) — nao stringificar para nao corromper chaves.
+    if (Array.isArray(body.tasks)) {
+      type IncomingTask = {
+        label?: string
+        notes?: string | null
+        order?: number
+        executionTime?: number | string | null
+        plannedStart?: string | Date | null
+        plannedEnd?: string | Date | null
+        steps?: unknown
+      }
+      const incomingTasks = body.tasks as IncomingTask[]
+      const validTasks = incomingTasks.filter((t) => t && typeof t.label === 'string' && t.label.trim())
+
+      // Validar janela planejada antes de qualquer DELETE para nao deixar a OS
+      // com tasks inconsistentes em caso de payload invalido.
+      const taskWindows = validTasks.map((task) => normalizeTaskWindow(task))
+      for (let i = 0; i < taskWindows.length; i++) {
+        const w = taskWindows[i]
+        if (w.error) {
+          return NextResponse.json(
+            { error: `Tarefa ${i + 1}: ${w.error}` },
+            { status: 400 }
+          )
+        }
+      }
+
+      const { error: deleteTasksError } = await supabase
+        .from('Task')
+        .delete()
+        .eq('workOrderId', id)
+      if (deleteTasksError) throw deleteTasksError
+
+      if (validTasks.length > 0) {
+        const nowIso = new Date().toISOString()
+        const taskInserts = validTasks.map((task, index) => ({
+          id: generateId(),
+          label: task.label as string,
+          notes: task.notes || null,
+          order: task.order ?? index,
+          executionTime: taskWindows[index].executionTime,
+          plannedStart: taskWindows[index].plannedStart,
+          plannedEnd: taskWindows[index].plannedEnd,
+          steps: task.steps || null,
+          workOrderId: id,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        }))
+        const { error: insertTasksError } = await supabase.from('Task').insert(taskInserts)
+        if (insertTasksError) throw insertTasksError
+      }
+    }
+
+    // Sync de recursos (woResources): mesmo padrao — quando `resources` esta no body,
+    // substituimos integralmente para refletir o estado do formulario.
+    if (Array.isArray(body.resources)) {
+      type IncomingResource = {
+        resourceType?: string
+        resourceId?: string | null
+        jobTitleId?: string | null
+        userId?: string | null
+        quantity?: number | null
+        hours?: number | null
+        unit?: string | null
+      }
+      const incomingResources = body.resources as IncomingResource[]
+
+      const { error: deleteResError } = await supabase
+        .from('WorkOrderResource')
+        .delete()
+        .eq('workOrderId', id)
+      if (deleteResError) throw deleteResError
+
+      if (incomingResources.length > 0) {
+        const resourceInserts = incomingResources.map((r) => ({
+          id: generateId(),
+          workOrderId: id,
+          resourceType: r.resourceType || 'MATERIAL',
+          resourceId: r.resourceId || null,
+          jobTitleId: r.jobTitleId || null,
+          userId: r.userId || null,
+          quantity: r.quantity ?? null,
+          hours: r.hours ?? null,
+          unit: r.unit || null,
+        }))
+        const { error: insertResError } = await supabase.from('WorkOrderResource').insert(resourceInserts)
+        if (insertResError) throw insertResError
+      }
+    }
 
     // Processar equipes na tabela de junção
     if (body.assignedTeamIds !== undefined) {

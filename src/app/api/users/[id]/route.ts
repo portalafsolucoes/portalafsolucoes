@@ -9,6 +9,7 @@ import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 import { countUserReferences } from '@/lib/users/userReferences'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
+import { isSyntheticEmail } from '@/lib/users/syntheticEmail'
 
 type UserUpdateData = Record<string, unknown> & {
   password?: string
@@ -103,7 +104,8 @@ export async function PUT(
 
     const { id } = await params
     const body = normalizeTextPayload(await request.json())
-    const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, locationId, calendarId, unitIds } = body
+    let { email } = body
+    const { password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, locationId, calendarId, unitIds } = body
 
     // Apenas staff Portal AF pode atribuir SUPER_ADMIN. ADMIN da empresa cliente nunca pode promover ninguém a SUPER_ADMIN.
     const requestedCanonical = normalizeUserRole(role)
@@ -111,7 +113,6 @@ export async function PUT(
     if (requestedCanonical === 'SUPER_ADMIN' && sessionCanonical !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Apenas staff Portal AF pode atribuir SUPER_ADMIN' }, { status: 403 })
     }
-    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 
     // Verificar se o usuário existe e pertence à empresa
     const { data: existingUser, error: findError } = await supabase
@@ -124,6 +125,32 @@ export async function PUT(
     if (findError || !existingUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    // Promocao de MANUTENTOR sintetico: ao mudar o papel para algo diferente de MANUTENTOR,
+    // exigir email e senha reais no payload (o email sintetico @noemail.local nao serve para login).
+    const wasSyntheticEmail = isSyntheticEmail(existingUser.email)
+    const willBeManutentor = requestedCanonical === 'MANUTENTOR'
+    if (wasSyntheticEmail && !willBeManutentor) {
+      if (!email || isSyntheticEmail(email)) {
+        return NextResponse.json(
+          { error: 'Promover este usuario exige definir um email real' },
+          { status: 400 }
+        )
+      }
+      if (!password) {
+        return NextResponse.json(
+          { error: 'Promover este usuario exige definir uma senha' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // MANUTENTOR sintetico mantendo o papel: aceitar email vazio no payload e preservar o existente.
+    if (willBeManutentor && wasSyntheticEmail && !email) {
+      email = existingUser.email
+    }
+
+    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : undefined
 
     // PLANEJADOR so pode editar usuarios PLANEJADOR ou MANUTENTOR e manter o papel dentro desse mesmo conjunto
     if (sessionCanonical === 'PLANEJADOR') {

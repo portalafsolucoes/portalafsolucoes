@@ -147,6 +147,10 @@ export async function POST(request: NextRequest) {
       // Verificar se o ativo pertence à unidade
       if (ap.asset?.unitId !== unitId) continue
 
+      // Planos com periodo Unica nao entram no batch — sao gerados via fluxo manual
+      // em /work-orders ao escolher o plano no dropdown "Plano de Manutencao do Bem".
+      if (String(ap.period || '').toUpperCase() === 'UNICA') continue
+
       // Aplicar filtros do Asset
       if (costCenterSet && !costCenterSet.has(ap.asset?.costCenterId)) continue
       if (workCenterSet && !workCenterSet.has(ap.asset?.workCenterId)) continue

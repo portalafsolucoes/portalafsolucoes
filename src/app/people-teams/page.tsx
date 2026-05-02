@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
 import { hasPermission } from '@/lib/permissions'
 import { CANONICAL_ROLE_OPTIONS, getDefaultCmmsPath, getRoleDisplayName, normalizeUserRole } from '@/lib/user-roles'
+import { displayUserEmail } from '@/lib/users/syntheticEmail'
 
 // Lazy load: modais so carregam quando necessario
 const PersonDetailModal = dynamic(() => import('@/components/people/PersonDetailModal').then(m => ({ default: m.PersonDetailModal })), { ssr: false })
@@ -554,7 +555,7 @@ export default function PeopleTeamsPage() {
                                       </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                      <div className="text-sm text-foreground">{user.email}</div>
+                                      <div className="text-sm text-foreground">{displayUserEmail(user.email) || '-'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                       <div className="text-sm text-foreground">{user.jobTitle || '-'}</div>

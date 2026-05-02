@@ -198,6 +198,7 @@ Regras complementares:
 - A `dueDate` original e preservada como referencia do prazo planejado; a `rescheduledDate` reflete apenas a ultima nova data
 - A listagem de OS exibe a coluna `Atraso Original` (mostra a `dueDate` original quando houve reprogramacao) e um badge `Reprogramada Nx` ao lado do status, sinalizando OSs que ja foram adiadas mesmo que estejam atualmente dentro do prazo
 - O painel de detalhe da OS exibe a secao `Historico de Reprogramacao` com a lista cronologica das reprogramacoes registradas, sempre que `rescheduleCount > 0`
+- Cada tarefa da OS pode ter `Inicio Previsto` e `Fim Previsto` (datetime). Quando ambos estiverem preenchidos, o `Tempo Execucao (h)` da tarefa fica readonly e e derivado automaticamente por `diffHours(start, end)` no servidor; quando ao menos um estiver vazio, o `Tempo Execucao (h)` permanece editavel manualmente. Os campos aparecem em OS individual criada manualmente em `/work-orders` e em OS criada a partir de plano com `Periodo = Unica`; sao escondidos quando o plano selecionado for `Periodo = Repetitiva`. Validacao: ambos preenchidos ou ambos vazios; `fim >= inicio`. Plano `Periodo = Unica` so pode gerar OS pelo fluxo manual em `/work-orders` (o batch de Planejamento ignora planos Unica)
 
 ### 5. Solicitacoes de Servico (SS)
 - Qualquer usuario logado pode abrir solicitacao

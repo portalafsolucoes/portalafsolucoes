@@ -66,7 +66,7 @@ export function ApprovalModal({ request, onClose, onSuccess, inPage = false }: A
   const loadTechnicians = useCallback(async () => {
     setLoadingTechs(true)
     try {
-      const res = await fetch('/api/users?role=MANUTENTOR,MECANICO,ELETRICISTA,OPERADOR,CONSTRUTOR_CIVIL&enabled=true')
+      const res = await fetch('/api/users?canonicalRole=MANUTENTOR&status=ACTIVE')
       const data = await res.json()
       setTechnicians(data.data || [])
     } catch {

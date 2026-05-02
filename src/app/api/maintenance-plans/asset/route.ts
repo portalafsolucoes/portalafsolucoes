@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
+import { toDecimalHours } from '@/lib/units/time'
 
 // GET - Listar planos de manutenção do bem
 export async function GET(request: NextRequest) {
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
               taskCode: stdTask.taskCode,
               description: stdTask.description,
               order: stdTask.order,
-              executionTime: stdTask.executionTime,
+              executionTime: toDecimalHours(stdTask.executionTime),
               isActive: true,
             })
             .select()

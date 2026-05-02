@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { markAsOverridden } from '@/lib/maintenance-plans/standardSync'
+import { toDecimalHours } from '@/lib/units/time'
 
 // GET - Listar tarefas com etapas (incluindo optionType e options)
 export async function GET(
@@ -92,7 +93,7 @@ export async function POST(
           taskCode: task.taskCode || i,
           description: task.description,
           order: task.order || i,
-          executionTime: task.executionTime || null,
+          executionTime: toDecimalHours(task.executionTime ?? null),
           isActive: true,
         })
         .select()
@@ -145,7 +146,7 @@ export async function POST(
     // Fase 4: editar tasks/steps/resources marca o plano como customizado
     // (se vier de padrao). No-op quando standardPlanId e null ou ja esta marcado.
     if (session.companyId) {
-      await markAsOverridden(planId, session.userId, session.companyId)
+      await markAsOverridden(planId, session.id, session.companyId)
     }
 
     return NextResponse.json({ message: 'Tarefas salvas com sucesso' })

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     let repairCount = 0
     for (const wo of completedCorrectives) {
       if (wo.actualDuration) {
-        totalRepairTime += wo.actualDuration / 60 // converter minutos para horas
+        totalRepairTime += Number(wo.actualDuration) // ja esta em horas decimais
         repairCount++
       } else if (wo.realMaintenanceStart && wo.realMaintenanceEnd) {
         const start = new Date(wo.realMaintenanceStart).getTime()
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     // Backlog (semanas): tempo estimado para concluir pendentes com equipe atual
     let pendingHours = 0
     for (const wo of pending) {
-      pendingHours += (wo.actualDuration || 120) / 60 // default 2h se não estimado
+      pendingHours += Number(wo.actualDuration ?? 2) // default 2h quando nao estimado
     }
     // Assumir equipe com 40h/semana disponível
     const backlogWeeks = Math.round(pendingHours / 40 * 10) / 10

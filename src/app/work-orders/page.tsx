@@ -17,6 +17,9 @@ import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { hasPermission } from '@/lib/permissions'
 import { getDefaultCmmsPath } from '@/lib/user-roles'
+import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
+import type { WorkOrderFormInitialValues, WorkOrderFormInitialTask } from '@/components/work-orders/WorkOrderFormModal'
+import type { TaskResourceItem } from '@/components/ui/ResourceSelector'
 
 // Lazy load: modais so carregam quando necessario
 const WorkOrderDetailModal = dynamic(() => import('@/components/work-orders/WorkOrderDetailModal').then(m => ({ default: m.WorkOrderDetailModal })), { ssr: false })
@@ -47,13 +50,14 @@ interface WorkOrder {
   assetMaintenancePlanId?: string | null
   asset?: { id: string; name: string; tag?: string; protheusCode?: string; locationId?: string | null }
   location?: { name: string }
+  serviceType?: { id: string; code: string; name: string } | null
   maintenancePlanExec?: { planNumber: number; trackingType?: string }
   assetMaintenancePlan?: { trackingType?: string; maintenanceTime?: number; timeUnit?: string }
   raf?: { id: string } | null
   createdAt: string
 }
 
-type SortField = 'displayId' | 'planNumber' | 'title' | 'status' | 'priority' | 'protheusCode' | 'assetName' | 'dueDate' | 'createdAt'
+type SortField = 'displayId' | 'planNumber' | 'serviceType' | 'title' | 'status' | 'priority' | 'protheusCode' | 'assetName' | 'dueDate' | 'createdAt'
 type SortDirection = 'asc' | 'desc'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -98,7 +102,7 @@ export default function WorkOrdersPage() {
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [workOrderToFinalize, setWorkOrderToFinalize] = useState<WorkOrder | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [createInitialValues, setCreateInitialValues] = useState<import('@/components/work-orders/WorkOrderFormModal').WorkOrderFormInitialValues | undefined>(undefined)
+  const [createInitialValues, setCreateInitialValues] = useState<WorkOrderFormInitialValues | undefined>(undefined)
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [workOrderToPrint, setWorkOrderToPrint] = useState<WorkOrder | null>(null)
   const [sortField, setSortField] = useState<SortField>('displayId')
@@ -157,6 +161,99 @@ export default function WorkOrdersPage() {
     setSelectedWorkOrderId('')
     setWorkOrderToFinalize(workOrder as unknown as WorkOrder)
     setShowFinalizeModal(true)
+  }
+
+  const handleCopy = async (workOrder: { id: string }) => {
+    try {
+      const res = await fetch(`/api/work-orders/${workOrder.id}`)
+      if (!res.ok) {
+        alert('Erro ao carregar OS para copia')
+        return
+      }
+      const json = await res.json()
+      const wo = json.data
+      if (!wo) return
+
+      type WoTaskApi = {
+        label?: string | null
+        description?: string | null
+        order?: number | null
+        executionTime?: number | null
+        plannedStart?: string | null
+        plannedEnd?: string | null
+        steps?: unknown
+      }
+      const woTasks = ((wo.tasks as WoTaskApi[]) || [])
+        .slice()
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      const tasks: WorkOrderFormInitialTask[] = woTasks
+        .map(t => ({
+          description: t.label || t.description || '',
+          executionTime: t.executionTime ?? null,
+          plannedStart: t.plannedStart ?? null,
+          plannedEnd: t.plannedEnd ?? null,
+          steps: parseTaskSteps(t.steps).map((s, idx) => ({
+            stepId: s.stepId || '',
+            order: idx,
+            optionType: s.optionType || 'NONE',
+          })),
+        }))
+        .filter(t => t.description)
+
+      type WoResApi = {
+        resourceType: string
+        resource?: { id: string } | null
+        jobTitle?: { id: string } | null
+        user?: { id: string } | null
+        quantity?: number | null
+        hours?: number | null
+        unit?: string | null
+      }
+      const woRes = (wo.woResources as WoResApi[]) || []
+      const resources: TaskResourceItem[] = woRes.map(r => ({
+        resourceType: r.resourceType as TaskResourceItem['resourceType'],
+        resourceId: r.resource?.id || null,
+        jobTitleId: r.jobTitle?.id || null,
+        userId: r.user?.id || null,
+        quantity: r.quantity ?? null,
+        hours: r.hours ?? null,
+        unit: r.unit || null,
+      }))
+
+      type AssignedTeam = { id: string; name: string }
+      const teams = (wo.assignedTeams as AssignedTeam[]) || []
+      const assignedTeamIds = teams.map(t => t.id)
+
+      // Limpar outros paineis e abrir o de criacao com os valores pre-preenchidos.
+      // Nao copiamos: externalId/internalId (auto-gerados), assetMaintenancePlanId,
+      // maintenancePlanExec, sourceRequestId, status, dueDate (a nova OS define o
+      // proprio prazo). O type/subTipo originais sao preservados para edicao.
+      setSelectedWorkOrderId('')
+      setShowEditModal(false)
+      setEditingWorkOrderId('')
+      setShowExecuteModal(false)
+      setWorkOrderToExecute(null)
+      setShowFinalizeModal(false)
+      setWorkOrderToFinalize(null)
+      setCreateInitialValues({
+        description: wo.description || '',
+        type: wo.type || 'CORRECTIVE',
+        osType: wo.osType || '',
+        priority: wo.priority || 'NONE',
+        assetId: wo.assetId || undefined,
+        locationId: wo.locationId || undefined,
+        maintenanceAreaId: wo.maintenanceAreaId || '',
+        serviceTypeId: wo.serviceTypeId || '',
+        tasks,
+        resources,
+        assignedTeamIds,
+        assignedToId: wo.assignedToId || '',
+      })
+      setShowCreateModal(true)
+    } catch (error) {
+      console.error('Error copying work order:', error)
+      alert('Erro ao conectar ao servidor')
+    }
   }
 
   const openDeleteDialog = (workOrderId: string) => {
@@ -246,6 +343,14 @@ export default function WorkOrdersPage() {
       }
       case 'planNumber':
         return ((a.maintenancePlanExec?.planNumber || 0) - (b.maintenancePlanExec?.planNumber || 0)) * modifier
+      case 'serviceType': {
+        const codeA = a.serviceType?.code || ''
+        const codeB = b.serviceType?.code || ''
+        if (!codeA && !codeB) return 0
+        if (!codeA) return 1
+        if (!codeB) return -1
+        return codeA.localeCompare(codeB) * modifier
+      }
       case 'title':
         return a.title.localeCompare(b.title) * modifier
       case 'status':
@@ -326,6 +431,7 @@ export default function WorkOrdersPage() {
       onDelete={openDeleteDialog}
       onPrint={handlePrint}
       onFinalize={handleFinalize}
+      onCopy={handleCopy}
       currentUserId={currentUser?.id}
       inPage
     />
@@ -479,6 +585,12 @@ export default function WorkOrdersPage() {
                                 <span className="truncate max-w-[100px] md:max-w-none">Local: {wo.location.name}</span>
                               </span>
                             )}
+                            {wo.serviceType?.code && (
+                              <span className="flex items-center gap-1 md:gap-1.5" title={wo.serviceType.name || ''}>
+                                <Icon name="build_circle" className="text-sm md:text-base" />
+                                <span className="whitespace-nowrap">Tipo: {wo.serviceType.code}</span>
+                              </span>
+                            )}
                             <span className="flex items-center gap-1 md:gap-1.5">
                               <Icon name="calendar_today" className="text-sm md:text-base" />
                               <span className="whitespace-nowrap">{formatDate(wo.createdAt)}</span>
@@ -505,6 +617,12 @@ export default function WorkOrdersPage() {
                             <button type="button" onClick={() => handleSort('planNumber')} className="flex items-center gap-1">
                               <span>Plano</span>
                               {renderSortIcon('planNumber')}
+                            </button>
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            <button type="button" onClick={() => handleSort('serviceType')} className="flex items-center gap-1">
+                              <span>Tipo de Serviço</span>
+                              {renderSortIcon('serviceType')}
                             </button>
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -564,6 +682,11 @@ export default function WorkOrdersPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 {wo.maintenancePlanExec ? `#${wo.maintenancePlanExec.planNumber}` : '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                {wo.serviceType?.code ? (
+                                  <span title={wo.serviceType.name || ''}>{wo.serviceType.code}</span>
+                                ) : '-'}
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-sm font-medium text-foreground max-w-xs truncate">{wo.title}</div>

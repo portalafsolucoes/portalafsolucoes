@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
 import { useAuth } from '@/hooks/useAuth'
+import { toUpperNoAccent } from '@/lib/textNormalizer'
+import { normalizeUserRole } from '@/lib/user-roles'
+import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
+import { diffHours, formatHours } from '@/lib/units/time'
 
 /* ------------------------------------------------------------------ */
 /*  Tipos                                                              */
@@ -29,7 +33,17 @@ interface TaskRow {
   key: string
   description: string
   executionTime: number | ''
+  plannedStart: string // datetime-local string ('YYYY-MM-DDTHH:mm') or ''
+  plannedEnd: string
   steps: TaskStep[]
+}
+
+export interface WorkOrderFormInitialTask {
+  description: string
+  executionTime?: number | null
+  plannedStart?: string | null
+  plannedEnd?: string | null
+  steps: { stepId: string; order: number; optionType: string }[]
 }
 
 export interface WorkOrderFormInitialValues {
@@ -40,6 +54,12 @@ export interface WorkOrderFormInitialValues {
   assetId?: string
   locationId?: string
   dueDate?: string
+  maintenanceAreaId?: string
+  serviceTypeId?: string
+  tasks?: WorkOrderFormInitialTask[]
+  resources?: TaskResourceItem[]
+  assignedTeamIds?: string[]
+  assignedToId?: string
 }
 
 interface WorkOrderFormModalProps {
@@ -49,6 +69,8 @@ interface WorkOrderFormModalProps {
   inPage?: boolean
   initialValues?: WorkOrderFormInitialValues
   sourceRequestId?: string | null
+  mode?: 'create' | 'edit'
+  workOrderId?: string
 }
 
 /* ------------------------------------------------------------------ */
@@ -59,8 +81,20 @@ const emptyTask = (): TaskRow => ({
   key: crypto.randomUUID(),
   description: '',
   executionTime: '',
+  plannedStart: '',
+  plannedEnd: '',
   steps: [],
 })
+
+// Converte ISO/Date em string compativel com <input type="datetime-local"> ('YYYY-MM-DDTHH:mm')
+// preservando o horario local do usuario (sem deslocamento de fuso).
+function toDatetimeLocal(value: string | Date | null | undefined): string {
+  if (!value) return ''
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 const labelCls = 'block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1'
 const inputCls = 'w-full px-3 py-2 text-sm border border-input rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring'
@@ -77,12 +111,18 @@ export function WorkOrderFormModal({
   inPage = false,
   initialValues,
   sourceRequestId,
+  mode = 'create',
+  workOrderId,
 }: WorkOrderFormModalProps) {
   const { unitId } = useAuth()
+  const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(false)
+  const [isFromPlan, setIsFromPlan] = useState(false)
+  const [editStatus, setEditStatus] = useState('PENDING')
+  const [hydrating, setHydrating] = useState(false)
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
   const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
-  const [teamMembers, setTeamMembers] = useState<{ user: { id: string; firstName: string; lastName: string } }[]>([])
+  const [teamMembers, setTeamMembers] = useState<{ user: { id: string; firstName: string; lastName: string; role?: string | null } }[]>([])
   const [woResources, setWoResources] = useState<TaskResourceItem[]>([])
   const [maintenanceAreas, setMaintenanceAreas] = useState<{ id: string; name: string; code?: string }[]>([])
   const [serviceTypes, setServiceTypes] = useState<{ id: string; code: string; name: string; maintenanceAreaId: string; maintenanceType?: { id: string; name: string; characteristic?: string | null } | null }[]>([])
@@ -96,7 +136,9 @@ export function WorkOrderFormModal({
   const [tasks, setTasks] = useState<TaskRow[]>([emptyTask()])
   const [stepSearch, setStepSearch] = useState<Record<string, string>>({})
   const [stepDropdownOpen, setStepDropdownOpen] = useState<Record<string, boolean>>({})
-  const stepDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [stepDropdownPos, setStepDropdownPos] = useState<Record<string, { top: number; left: number; width: number }>>({})
+  const stepInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const stepPortalRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   // Asset autocomplete (padrão RequestFormModal)
   const [assetCodeSearch, setAssetCodeSearch] = useState('')
@@ -113,9 +155,20 @@ export function WorkOrderFormModal({
   const assetSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Planos de manutenção do bem encontrados
-  const [availablePlans, setAvailablePlans] = useState<{ id: string; name: string | null; sequence: number; serviceType?: { code: string; name: string } | null }[]>([])
+  const [availablePlans, setAvailablePlans] = useState<{ id: string; name: string | null; sequence: number; period: string | null; serviceType?: { code: string; name: string } | null }[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<string>('')
   const [loadingPlans, setLoadingPlans] = useState(false)
+
+  // Periodo do plano atualmente selecionado (UNICA | REPETITIVA | null).
+  // Quando o plano for REPETITIVA os campos de previsao por tarefa sao escondidos
+  // (decisao registrada na sessao 2026-05-01: planos repetitivos nao recebem
+  // janela planejada por OS, ja que a frequencia define o ciclo).
+  const selectedPlanPeriod = (() => {
+    if (!selectedPlanId) return null
+    const plan = availablePlans.find(p => p.id === selectedPlanId)
+    return plan ? String(plan.period || '').toUpperCase() : null
+  })()
+  const showPlannedWindowFields = selectedPlanPeriod !== 'REPETITIVA'
 
   const [formData, setFormData] = useState({
     description: '',
@@ -135,24 +188,30 @@ export function WorkOrderFormModal({
 
   useEffect(() => {
     if (isOpen) {
+      if (!isEdit) resetForm()
       loadData()
-      resetForm()
+      if (isEdit && workOrderId) {
+        hydrateFromWorkOrder(workOrderId)
+      }
     }
-    // loadData/resetForm are stable within a single open cycle; intentional
+    // loadData/resetForm/hydrate are stable within a single open cycle; intentional
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [isOpen, isEdit, workOrderId])
 
-  // Auto-preenche locationId quando unitId carrega
+  // Auto-preenche locationId quando unitId carrega (apenas em modo criacao)
   useEffect(() => {
+    if (isEdit) return
     if (unitId && !formData.assetId) {
       setFormData(prev => ({ ...prev, locationId: unitId }))
     }
     // Intentionally reacting only to unitId; formData.assetId presence is a snapshot check
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unitId])
+  }, [unitId, isEdit])
 
-  // Aplica initialValues (ex.: vindos da finalização de OS para abrir uma corretiva)
+  // Aplica initialValues (ex.: vindos da finalização de OS para abrir uma corretiva,
+  // ou do botão "Copiar OS" no painel de detalhe)
   useEffect(() => {
+    if (isEdit) return
     if (!isOpen || !initialValues) return
     setFormData(prev => ({
       ...prev,
@@ -163,11 +222,35 @@ export function WorkOrderFormModal({
       assetId: initialValues.assetId ?? prev.assetId,
       locationId: initialValues.locationId ?? prev.locationId,
       dueDate: initialValues.dueDate ?? prev.dueDate,
+      maintenanceAreaId: initialValues.maintenanceAreaId ?? prev.maintenanceAreaId,
+      serviceTypeId: initialValues.serviceTypeId ?? prev.serviceTypeId,
+      assignedTeamIds: initialValues.assignedTeamIds ?? prev.assignedTeamIds,
+      assignedToId: initialValues.assignedToId ?? prev.assignedToId,
     }))
-  }, [isOpen, initialValues])
+
+    if (initialValues.tasks && initialValues.tasks.length > 0) {
+      setTasks(initialValues.tasks.map(t => ({
+        key: crypto.randomUUID(),
+        description: t.description,
+        executionTime: t.executionTime ?? '',
+        plannedStart: toDatetimeLocal(t.plannedStart ?? null),
+        plannedEnd: toDatetimeLocal(t.plannedEnd ?? null),
+        steps: t.steps,
+      })))
+    }
+
+    if (initialValues.resources && initialValues.resources.length > 0) {
+      setWoResources(initialValues.resources)
+    }
+
+    if (initialValues.assignedTeamIds && initialValues.assignedTeamIds[0]) {
+      loadTeamMembers(initialValues.assignedTeamIds[0])
+    }
+  }, [isOpen, initialValues, isEdit])
 
   // Quando o assetId vier de initialValues, busca o ativo na API para preencher autocomplete
   useEffect(() => {
+    if (isEdit) return
     if (!isOpen || !initialValues?.assetId) return
     const fetchAsset = async () => {
       try {
@@ -185,7 +268,7 @@ export function WorkOrderFormModal({
       }
     }
     fetchAsset()
-  }, [isOpen, initialValues?.assetId])
+  }, [isOpen, initialValues?.assetId, isEdit])
 
   const resetForm = () => {
     setFormData({
@@ -208,6 +291,7 @@ export function WorkOrderFormModal({
     setTasks([emptyTask()])
     setStepSearch({})
     setStepDropdownOpen({})
+    setStepDropdownPos({})
     setAssetCodeSearch('')
     setAssetNameSearch('')
     setSelectedAsset(null)
@@ -220,30 +304,29 @@ export function WorkOrderFormModal({
 
   const loadData = async () => {
     try {
-      const [locationsRes, teamsRes, areasRes, stRes, stepsRes, nextIdRes] = await Promise.all([
+      const baseFetches = [
         fetch('/api/locations'),
         fetch('/api/teams'),
         fetch('/api/basic-registrations/maintenance-areas'),
         fetch('/api/basic-registrations/service-types'),
         fetch('/api/basic-registrations/generic-steps'),
-        fetch('/api/work-orders/next-id'),
-      ])
+      ]
+      const allFetches = isEdit
+        ? baseFetches
+        : [...baseFetches, fetch('/api/work-orders/next-id')]
 
-      const [locationsData, teamsData, areasData, stData, stepsData, nextIdData] = await Promise.all([
-        locationsRes.json(),
-        teamsRes.json(),
-        areasRes.json(),
-        stRes.json(),
-        stepsRes.json(),
-        nextIdRes.json(),
-      ])
+      const responses = await Promise.all(allFetches)
+      const [locationsRes, teamsRes, areasRes, stRes, stepsRes, nextIdRes] = responses
+      const datas = await Promise.all(responses.map(r => r.json()))
+      const [locationsData, teamsData, areasData, stData, stepsData, nextIdData] = datas
+      void locationsRes; void teamsRes; void areasRes; void stRes; void stepsRes; void nextIdRes
 
       setLocations(locationsData.data || [])
       setTeams(teamsData.data || [])
       setMaintenanceAreas(areasData.data || [])
       setAllServiceTypes(stData.data || [])
       setGenericSteps(stepsData.data || [])
-      if (nextIdData.data) {
+      if (!isEdit && nextIdData?.data) {
         setNextExternalId(nextIdData.data)
         setFormData(prev => ({ ...prev, externalId: nextIdData.data }))
       }
@@ -261,6 +344,127 @@ export function WorkOrderFormModal({
       }
     } catch (error) {
       console.error('Error loading team members:', error)
+    }
+  }
+
+  /* ---- Hidratacao em modo edicao ---- */
+
+  const hydrateFromWorkOrder = async (woId: string) => {
+    setHydrating(true)
+    try {
+      const [woRes, resRes] = await Promise.all([
+        fetch(`/api/work-orders/${woId}`),
+        fetch(`/api/work-orders/${woId}/resources`),
+      ])
+      if (!woRes.ok) {
+        console.error('Erro ao carregar OS para edicao')
+        return
+      }
+      const woJson = await woRes.json()
+      const wo = woJson.data
+      if (!wo) return
+
+      const fromPlan = !!(wo.assetMaintenancePlan || wo.assetMaintenancePlanId || wo.maintenancePlanExec)
+      setIsFromPlan(fromPlan)
+      setEditStatus(wo.status || 'PENDING')
+
+      // Hidratar formData
+      setFormData(prev => ({
+        ...prev,
+        description: wo.description || '',
+        type: wo.type || 'CORRECTIVE',
+        osType: wo.osType || '',
+        priority: wo.priority || 'NONE',
+        dueDate: wo.dueDate ? String(wo.dueDate).split('T')[0] : '',
+        assetId: wo.assetId || '',
+        locationId: wo.locationId || prev.locationId,
+        assignedTeamIds: Array.isArray(wo.assignedTeams) ? wo.assignedTeams.map((t: { id: string }) => t.id) : [],
+        assignedToId: wo.assignedToId || '',
+        externalId: wo.externalId || wo.internalId || '',
+        maintenanceAreaId: wo.maintenanceAreaId || '',
+        serviceTypeId: wo.serviceTypeId || '',
+        // tolerancia nao e persistida; em edicao comeca em 0 (sem ajuste extra)
+        toleranceDays: '',
+      }))
+
+      // Mostrar internalId/externalId no campo readonly de identificacao
+      setNextExternalId(wo.internalId || wo.externalId || '')
+
+      // Asset selecionado (autocomplete)
+      if (wo.asset) {
+        setSelectedAsset({
+          id: wo.asset.id,
+          name: wo.asset.name,
+          protheusCode: wo.asset.protheusCode || null,
+          tag: wo.asset.tag || null,
+          locationId: wo.asset.locationId || null,
+          parentAssetId: wo.asset.parentAssetId || null,
+          parentAsset: wo.asset.parentAsset || null,
+        })
+        setAssetCodeSearch(wo.asset.protheusCode || wo.asset.tag || '')
+        setAssetNameSearch(wo.asset.name || '')
+      }
+
+      // Equipe (usa primeira atribuida) -> carrega membros
+      if (Array.isArray(wo.assignedTeams) && wo.assignedTeams.length > 0) {
+        loadTeamMembers(wo.assignedTeams[0].id)
+      }
+
+      // Tarefas + etapas (usa o helper canonico para tolerar legado UPPERCASE)
+      type WoTaskApi = {
+        id?: string
+        label?: string
+        description?: string
+        order?: number
+        executionTime?: number | null
+        plannedStart?: string | null
+        plannedEnd?: string | null
+        steps?: unknown
+      }
+      const woTasks = (wo.tasks as WoTaskApi[] | undefined) || []
+      const sortedWoTasks = [...woTasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      const hydratedTasks: TaskRow[] = sortedWoTasks.map(t => ({
+        key: crypto.randomUUID(),
+        description: t.label || t.description || '',
+        executionTime: t.executionTime ?? '',
+        plannedStart: toDatetimeLocal(t.plannedStart ?? null),
+        plannedEnd: toDatetimeLocal(t.plannedEnd ?? null),
+        steps: parseTaskSteps(t.steps).map((s, idx) => ({
+          stepId: s.stepId || '',
+          order: idx,
+          optionType: s.optionType || 'NONE',
+        })),
+      }))
+      setTasks(hydratedTasks.length > 0 ? hydratedTasks : [emptyTask()])
+
+      // Recursos
+      if (resRes.ok) {
+        const resJson = await resRes.json()
+        type WoResApi = {
+          resourceType: string
+          resource?: { id: string } | null
+          jobTitle?: { id: string } | null
+          user?: { id: string } | null
+          quantity?: number | null
+          hours?: number | null
+          unit?: string | null
+        }
+        const list: WoResApi[] = resJson.data || []
+        const mapped: TaskResourceItem[] = list.map(r => ({
+          resourceType: r.resourceType as TaskResourceItem['resourceType'],
+          resourceId: r.resource?.id || null,
+          jobTitleId: r.jobTitle?.id || null,
+          userId: r.user?.id || null,
+          quantity: r.quantity ?? null,
+          hours: r.hours ?? null,
+          unit: r.unit || null,
+        }))
+        setWoResources(mapped)
+      }
+    } catch (error) {
+      console.error('Erro ao hidratar OS para edicao:', error)
+    } finally {
+      setHydrating(false)
     }
   }
 
@@ -338,6 +542,17 @@ export function WorkOrderFormModal({
 
   /* ---- Tasks & steps ---- */
 
+  const updateStepDropdownPosition = useCallback((taskKey: string) => {
+    const input = stepInputRefs.current[taskKey]
+    if (input) {
+      const rect = input.getBoundingClientRect()
+      setStepDropdownPos(prev => ({
+        ...prev,
+        [taskKey]: { top: rect.bottom + 4, left: rect.left, width: rect.width },
+      }))
+    }
+  }, [])
+
   const addTask = () => setTasks(prev => [...prev, emptyTask()])
 
   const removeTask = (key: string) => setTasks(prev => prev.filter(t => t.key !== key))
@@ -397,25 +612,49 @@ export function WorkOrderFormModal({
     }
 
     // Filtrar por característica (Preventiva/Corretiva) conforme o tipo de OS
+    // Comparação case/acento-insensitiva: o servidor persiste em UPPER sem acento
+    // (normalizeTextPayload), então o valor real no banco é 'CORRETIVA'/'PREVENTIVA'.
+    const isCorrective = (st: { maintenanceType?: { characteristic?: string | null } | null }) =>
+      toUpperNoAccent(st.maintenanceType?.characteristic ?? null) === 'CORRETIVA'
+
     if (formData.type === 'PREVENTIVE' || formData.type === 'PREDICTIVE') {
-      filtered = filtered.filter(st => st.maintenanceType?.characteristic !== 'Corretiva')
+      filtered = filtered.filter(st => !isCorrective(st))
     } else if (formData.type === 'CORRECTIVE') {
-      filtered = filtered.filter(st => st.maintenanceType?.characteristic === 'Corretiva')
+      filtered = filtered.filter(st => isCorrective(st))
+    }
+
+    // Em edicao, manter o tipo de servico atual na lista mesmo se a regra de
+    // caracteristica nao casar (legado pode ter combinacoes inconsistentes)
+    if (isEdit && formData.serviceTypeId) {
+      const current = allServiceTypes.find(st => st.id === formData.serviceTypeId)
+      if (current && !filtered.some(st => st.id === current.id)) {
+        filtered = [current, ...filtered]
+      }
     }
 
     setServiceTypes(filtered)
 
-    // Limpar serviceTypeId se o selecionado não está mais na lista filtrada
-    if (formData.serviceTypeId && !filtered.some(st => st.id === formData.serviceTypeId)) {
+    // Limpar serviceTypeId se o selecionado não está mais na lista filtrada (apenas criacao).
+    // Aguardar allServiceTypes carregar antes de avaliar — evita zerar o id pre-preenchido
+    // por initialValues (fluxo "Copiar OS") durante o load inicial.
+    if (
+      !isEdit &&
+      allServiceTypes.length > 0 &&
+      formData.serviceTypeId &&
+      !filtered.some(st => st.id === formData.serviceTypeId)
+    ) {
       setFormData(prev => ({ ...prev, serviceTypeId: '' }))
     }
     // formData.serviceTypeId is a snapshot-check dependency, intentional
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.maintenanceAreaId, formData.type, allServiceTypes])
+  }, [formData.maintenanceAreaId, formData.type, allServiceTypes, isEdit])
 
   /* ---- Search matching AssetMaintenancePlans when classification is filled ---- */
 
   useEffect(() => {
+    // Em edicao, o pre-preenchimento por plano nao deve disparar (a OS ja existe)
+    if (isEdit) return
+
     // Limpar planos quando campos de classificação mudam
     setAvailablePlans([])
     setSelectedPlanId('')
@@ -436,6 +675,7 @@ export function WorkOrderFormModal({
           id: string
           name: string
           sequence?: number | null
+          period?: string | null
           serviceTypeId?: string | null
           serviceType?: { id: string; name: string; code: string } | null
           isActive?: boolean
@@ -447,6 +687,7 @@ export function WorkOrderFormModal({
           id: p.id,
           name: p.name,
           sequence: p.sequence ?? 0,
+          period: p.period ?? null,
           serviceType: p.serviceType ? { code: p.serviceType.code, name: p.serviceType.name } : null,
         })))
       } catch (error) {
@@ -457,7 +698,7 @@ export function WorkOrderFormModal({
     }
 
     fetchPlans()
-  }, [formData.type, formData.assetId, formData.serviceTypeId])
+  }, [formData.type, formData.assetId, formData.serviceTypeId, isEdit])
 
   /* ---- Pre-fill from selected plan ---- */
 
@@ -496,6 +737,9 @@ export function WorkOrderFormModal({
         key: crypto.randomUUID(),
         description: pt.description || '',
         executionTime: pt.executionTime ?? '',
+        // Plano nao armazena janela planejada — comeca vazio para o usuario preencher na OS.
+        plannedStart: '',
+        plannedEnd: '',
         steps: (pt.steps || [])
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
           .map((s) => ({
@@ -559,16 +803,34 @@ export function WorkOrderFormModal({
   // Close step dropdowns on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      const target = e.target as Node
       for (const key of Object.keys(stepDropdownOpen)) {
-        const ref = stepDropdownRefs.current[key]
-        if (ref && !ref.contains(e.target as Node)) {
-          setStepDropdownOpen(prev => ({ ...prev, [key]: false }))
-        }
+        if (!stepDropdownOpen[key]) continue
+        const inputRef = stepInputRefs.current[key]
+        const portalRef = stepPortalRefs.current[key]
+        if (inputRef?.contains(target)) continue
+        if (portalRef?.contains(target)) continue
+        setStepDropdownOpen(prev => ({ ...prev, [key]: false }))
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [stepDropdownOpen])
+
+  // Reposicionar dropdown de etapas em scroll/resize enquanto estiver aberto
+  useEffect(() => {
+    const openKeys = Object.keys(stepDropdownOpen).filter(k => stepDropdownOpen[k])
+    if (openKeys.length === 0) return
+    const updateAll = () => {
+      openKeys.forEach(key => updateStepDropdownPosition(key))
+    }
+    window.addEventListener('scroll', updateAll, true)
+    window.addEventListener('resize', updateAll)
+    return () => {
+      window.removeEventListener('scroll', updateAll, true)
+      window.removeEventListener('resize', updateAll)
+    }
+  }, [stepDropdownOpen, updateStepDropdownPosition])
 
   /* ---- Submit ---- */
 
@@ -582,51 +844,91 @@ export function WorkOrderFormModal({
       return
     }
 
+    // Validar janela planejada por tarefa (espelha a regra do servidor)
+    if (showPlannedWindowFields) {
+      for (let i = 0; i < validTasks.length; i++) {
+        const t = validTasks[i]
+        const hasStart = !!t.plannedStart
+        const hasEnd = !!t.plannedEnd
+        if (hasStart !== hasEnd) {
+          alert(`Tarefa ${i + 1}: preencha ambos os campos de previsao (inicio e fim) ou nenhum.`)
+          return
+        }
+        if (hasStart && hasEnd && new Date(t.plannedEnd) < new Date(t.plannedStart)) {
+          alert(`Tarefa ${i + 1}: fim previsto deve ser posterior ao inicio previsto.`)
+          return
+        }
+      }
+    }
+
     setLoading(true)
 
     try {
       const title = validTasks[0].description
+      // Quando os campos de previsao estao escondidos (plano Repetitiva), nao
+      // enviamos plannedStart/plannedEnd para evitar persistir valores stale
+      // que poderiam ter ficado em estado anterior.
+      const includePlannedWindow = showPlannedWindowFields
+      const tasksPayload = validTasks.map((t, idx) => ({
+        label: t.description,
+        executionTime: t.executionTime === '' ? null : t.executionTime,
+        plannedStart: includePlannedWindow && t.plannedStart ? new Date(t.plannedStart).toISOString() : null,
+        plannedEnd: includePlannedWindow && t.plannedEnd ? new Date(t.plannedEnd).toISOString() : null,
+        order: idx,
+        steps: t.steps.length > 0
+          ? t.steps.map(s => {
+              const gs = genericSteps.find(g => g.id === s.stepId)
+              return {
+                stepId: s.stepId,
+                stepName: gs?.name || '',
+                optionType: s.optionType || 'NONE',
+                options: [],
+              }
+            })
+          : null,
+      }))
+      const resourcesPayload = woResources.map(r => ({
+        resourceType: r.resourceType,
+        resourceId: r.resourceId || null,
+        jobTitleId: r.jobTitleId || null,
+        userId: r.userId || null,
+        quantity: r.quantity ?? null,
+        hours: r.hours ?? null,
+        unit: r.unit || null,
+      }))
 
-      const res = await fetch('/api/work-orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          title,
-          sourceRequestId: sourceRequestId || undefined,
-          resources: woResources.map(r => ({
-            resourceType: r.resourceType,
-            resourceId: r.resourceId || null,
-            jobTitleId: r.jobTitleId || null,
-            userId: r.userId || null,
-            quantity: r.quantity ?? null,
-            hours: r.hours ?? null,
-            unit: r.unit || null,
-          })),
-          tasks: validTasks.map((t, idx) => ({
-            label: t.description,
-            executionTime: t.executionTime || null,
-            order: idx,
-            steps: t.steps.length > 0
-              ? JSON.stringify(t.steps.map(s => {
-                  const gs = genericSteps.find(g => g.id === s.stepId)
-                  return {
-                    stepId: s.stepId,
-                    stepName: gs?.name || '',
-                    optionType: s.optionType || 'NONE',
-                    options: [],
-                  }
-                }))
-              : null,
-          })),
+      let res: Response
+      if (isEdit && workOrderId) {
+        res = await fetch(`/api/work-orders/${workOrderId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            title,
+            status: editStatus,
+            tasks: tasksPayload,
+            resources: resourcesPayload,
+          })
         })
-      })
+      } else {
+        res = await fetch('/api/work-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            title,
+            sourceRequestId: sourceRequestId || undefined,
+            resources: resourcesPayload,
+            tasks: tasksPayload,
+          })
+        })
+      }
 
       if (res.ok) {
         onSuccess()
         onClose()
       } else {
-        alert('Erro ao criar ordem de servico')
+        alert(isEdit ? 'Erro ao atualizar ordem de servico' : 'Erro ao criar ordem de servico')
       }
     } catch {
       alert('Erro ao conectar ao servidor')
@@ -638,9 +940,36 @@ export function WorkOrderFormModal({
   /* ---- Render ---- */
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nova Ordem de Servico" size="wide" inPage={inPage}>
+    <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Editar Ordem de Servico' : 'Nova Ordem de Servico'} size="wide" inPage={inPage}>
       <form onSubmit={handleSubmit}>
         <div className="p-4 space-y-3">
+
+          {isEdit && isFromPlan && (
+            <div className="bg-warning-light/40 border border-warning/30 rounded-[4px] p-3 flex items-start gap-2 text-[12px] text-foreground">
+              <Icon name="info" className="text-base text-warning mt-0.5" />
+              <div>
+                <p className="font-bold uppercase tracking-wide text-[11px]">OS originada de um Plano de Manutencao</p>
+                <p className="mt-0.5 text-muted-foreground">
+                  Tipo, Sub-tipo, Ativo, Area, Tipo de Servico, Prioridade, Vencimento e Tolerancia ficam bloqueados.
+                  Voce pode editar Tarefas, Etapas, Recursos, Atribuicao e Status.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isEdit && (editStatus === 'COMPLETE' || editStatus === 'IN_PROGRESS') && (
+            <div className="bg-warning-light/40 border border-warning/30 rounded-[4px] p-3 flex items-start gap-2 text-[12px] text-foreground">
+              <Icon name="warning" className="text-base text-warning mt-0.5" />
+              <div>
+                <p className="font-bold uppercase tracking-wide text-[11px]">
+                  Esta OS ja esta {editStatus === 'COMPLETE' ? 'finalizada' : 'em progresso'}
+                </p>
+                <p className="mt-0.5 text-muted-foreground">
+                  Alteracoes nas Tarefas/Etapas atualizam o planejado, mas nao retroagem no execucao registrado.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* ============ 1. IDENTIFICAÇÃO ============ */}
           <ModalSection title="Identificacao">
@@ -685,9 +1014,9 @@ export function WorkOrderFormModal({
                     className={`w-full pl-10 pr-10 py-2 text-sm border rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring ${
                       selectedAsset ? 'border-green-300 bg-green-50' : 'border-input'
                     }`}
-                    readOnly={!!selectedAsset}
+                    readOnly={!!selectedAsset || isFromPlan}
                   />
-                  {selectedAsset && (
+                  {selectedAsset && !isFromPlan && (
                     <button type="button" onClick={clearAsset}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                       <Icon name="close" className="text-base" />
@@ -722,7 +1051,7 @@ export function WorkOrderFormModal({
                     className={`w-full pl-10 pr-10 py-2 text-sm border rounded-[4px] focus:outline-none focus:ring-2 focus:ring-ring ${
                       selectedAsset ? 'border-green-300 bg-green-50' : 'border-input'
                     }`}
-                    readOnly={!!selectedAsset}
+                    readOnly={!!selectedAsset || isFromPlan}
                   />
                   {loadingAssets && activeSearchField === 'name' && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -816,6 +1145,7 @@ export function WorkOrderFormModal({
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value, osType: '' })}
                   className={selectCls}
+                  disabled={isFromPlan}
                 >
                   <option value="CORRECTIVE">Corretiva</option>
                   <option value="PREVENTIVE">Preventiva</option>
@@ -830,6 +1160,7 @@ export function WorkOrderFormModal({
                     value={formData.osType}
                     onChange={(e) => setFormData({ ...formData, osType: e.target.value })}
                     className={selectCls}
+                    disabled={isFromPlan}
                   >
                     <option value="">Selecione</option>
                     <option value="CORRECTIVE_PLANNED">Corretiva Planejada</option>
@@ -849,6 +1180,7 @@ export function WorkOrderFormModal({
                     value={formData.osType}
                     onChange={(e) => setFormData({ ...formData, osType: e.target.value })}
                     className={selectCls}
+                    disabled={isFromPlan}
                   >
                     <option value="">Selecione</option>
                     <option value="PREVENTIVE_MANUAL">Preventiva Manual</option>
@@ -861,6 +1193,7 @@ export function WorkOrderFormModal({
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                   className={selectCls}
+                  disabled={isFromPlan}
                 >
                   <option value="NONE">Nenhuma</option>
                   <option value="LOW">Baixa</option>
@@ -869,12 +1202,30 @@ export function WorkOrderFormModal({
                   <option value="CRITICAL">Critica</option>
                 </select>
               </div>
+              {isEdit && (
+                <div>
+                  <label className={labelCls}>Status</label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                    className={selectCls}
+                  >
+                    <option value="PENDING">Pendente</option>
+                    <option value="RELEASED">Liberada</option>
+                    <option value="IN_PROGRESS">Em Progresso</option>
+                    <option value="ON_HOLD">Em Espera</option>
+                    <option value="COMPLETE">Completa</option>
+                    <option value="REPROGRAMMED">Reprogramada</option>
+                  </select>
+                </div>
+              )}
               <div>
                 <label className={labelCls}>Area de Manutencao</label>
                 <select
                   value={formData.maintenanceAreaId}
                   onChange={(e) => setFormData({ ...formData, maintenanceAreaId: e.target.value, serviceTypeId: '' })}
                   className={selectCls}
+                  disabled={isFromPlan}
                 >
                   <option value="">Selecione</option>
                   {maintenanceAreas.map((area) => (
@@ -890,6 +1241,7 @@ export function WorkOrderFormModal({
                   value={formData.serviceTypeId}
                   onChange={(e) => setFormData({ ...formData, serviceTypeId: e.target.value })}
                   className={selectCls}
+                  disabled={isFromPlan}
                 >
                   <option value="">Selecione</option>
                   {serviceTypes.map((st) => (
@@ -906,6 +1258,7 @@ export function WorkOrderFormModal({
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                   className={inputCls}
+                  disabled={isFromPlan}
                 />
               </div>
               <div>
@@ -917,7 +1270,13 @@ export function WorkOrderFormModal({
                   onChange={(e) => setFormData({ ...formData, toleranceDays: e.target.value })}
                   placeholder="Ex: 2"
                   className={inputCls}
+                  disabled={isFromPlan}
                 />
+                {isEdit && !isFromPlan && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Em edicao, a tolerancia ajusta a data de vencimento ao salvar.
+                  </p>
+                )}
               </div>
             </div>
           </ModalSection>
@@ -947,12 +1306,20 @@ export function WorkOrderFormModal({
                       className={selectCls}
                     >
                       <option value="">Nenhum (preencher manualmente)</option>
-                      {availablePlans.map((plan) => (
-                        <option key={plan.id} value={plan.id}>
-                          {plan.name || `Plano #${plan.sequence}`}
-                          {plan.serviceType ? ` — ${plan.serviceType.code} - ${plan.serviceType.name}` : ''}
-                        </option>
-                      ))}
+                      {availablePlans.map((plan) => {
+                        const periodLabel = String(plan.period || '').toUpperCase() === 'UNICA'
+                          ? ' (Unica)'
+                          : String(plan.period || '').toUpperCase() === 'REPETITIVA'
+                            ? ' (Repetitiva)'
+                            : ''
+                        return (
+                          <option key={plan.id} value={plan.id}>
+                            {plan.name || `Plano #${plan.sequence}`}
+                            {plan.serviceType ? ` — ${plan.serviceType.code} - ${plan.serviceType.name}` : ''}
+                            {periodLabel}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                   {selectedPlanId && (
@@ -1009,16 +1376,61 @@ export function WorkOrderFormModal({
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Tempo Execucao (min)</label>
-                      <input
-                        type="number"
-                        value={task.executionTime}
-                        onChange={e => updateTask(task.key, { executionTime: e.target.value === '' ? '' : Number(e.target.value) })}
-                        placeholder="Ex: 60"
-                        className={inputCls}
-                      />
+                      {(() => {
+                        const isDerived = showPlannedWindowFields && !!task.plannedStart && !!task.plannedEnd
+                        return (
+                          <>
+                            <label className={labelCls}>
+                              Tempo Execucao (h)
+                              {isDerived && (
+                                <span className="ml-1 normal-case font-normal text-[10px] text-muted-foreground">(calculado)</span>
+                              )}
+                            </label>
+                            <input
+                              type="number"
+                              step="0.25"
+                              min="0"
+                              inputMode="decimal"
+                              value={isDerived ? diffHours(task.plannedStart, task.plannedEnd) : task.executionTime}
+                              readOnly={isDerived}
+                              onChange={e => updateTask(task.key, { executionTime: e.target.value === '' ? '' : Number(e.target.value) })}
+                              placeholder="Ex: 1,5"
+                              className={`${inputCls}${isDerived ? ' bg-muted text-muted-foreground cursor-not-allowed' : ''}`}
+                            />
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
+                  {showPlannedWindowFields && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Inicio Previsto</label>
+                        <input
+                          type="datetime-local"
+                          value={task.plannedStart}
+                          onChange={e => updateTask(task.key, { plannedStart: e.target.value })}
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Fim Previsto</label>
+                        <input
+                          type="datetime-local"
+                          value={task.plannedEnd}
+                          onChange={e => updateTask(task.key, { plannedEnd: e.target.value })}
+                          min={task.plannedStart || undefined}
+                          className={inputCls}
+                        />
+                        {task.plannedStart && task.plannedEnd && new Date(task.plannedEnd) < new Date(task.plannedStart) && (
+                          <p className="mt-1 text-[11px] text-danger">Fim deve ser posterior ao inicio.</p>
+                        )}
+                        {task.plannedStart && task.plannedEnd && new Date(task.plannedEnd) >= new Date(task.plannedStart) && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">Duracao prevista: {formatHours(diffHours(task.plannedStart, task.plannedEnd))}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {/* Etapas */}
                   <div>
                     <label className={labelCls}>Etapas</label>
@@ -1057,31 +1469,42 @@ export function WorkOrderFormModal({
                         })}
                       </div>
                     )}
-                    <div className="relative" ref={el => { stepDropdownRefs.current[task.key] = el }}>
+                    <div className="relative">
                       <input
+                        ref={el => { stepInputRefs.current[task.key] = el }}
                         type="text"
                         value={stepSearch[task.key] || ''}
                         onChange={e => {
                           setStepSearch(prev => ({ ...prev, [task.key]: e.target.value }))
                           setStepDropdownOpen(prev => ({ ...prev, [task.key]: true }))
+                          updateStepDropdownPosition(task.key)
                         }}
-                        onFocus={() => setStepDropdownOpen(prev => ({ ...prev, [task.key]: true }))}
+                        onFocus={() => {
+                          setStepDropdownOpen(prev => ({ ...prev, [task.key]: true }))
+                          updateStepDropdownPosition(task.key)
+                        }}
                         placeholder="+ Adicionar etapa..."
                         className={selectCls}
                       />
                       <Icon name="expand_more" className="absolute right-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none" />
-                      {stepDropdownOpen[task.key] && (() => {
+                      {stepDropdownOpen[task.key] && stepDropdownPos[task.key] && typeof document !== 'undefined' && (() => {
                         const query = (stepSearch[task.key] || '').toLowerCase()
                         const available = genericSteps
                           .filter((gs) => !task.steps.some(s => s.stepId === gs.id))
                           .filter((gs) => !query || gs.name.toLowerCase().includes(query))
-                        return available.length > 0 ? (
-                          <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-input rounded-[4px] shadow-lg">
+                        if (available.length === 0) return null
+                        const pos = stepDropdownPos[task.key]
+                        return createPortal(
+                          <div
+                            ref={el => { stepPortalRefs.current[task.key] = el }}
+                            className="fixed bg-card border border-input rounded-[4px] shadow-lg max-h-[420px] overflow-y-auto"
+                            style={{ top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
+                          >
                             {available.map((gs) => (
                               <button
                                 key={gs.id}
                                 type="button"
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors border-b border-gray-100 last:border-b-0"
                                 onClick={() => {
                                   addStepToTask(task.key, gs.id)
                                   setStepSearch(prev => ({ ...prev, [task.key]: '' }))
@@ -1091,8 +1514,9 @@ export function WorkOrderFormModal({
                                 {gs.name}
                               </button>
                             ))}
-                          </div>
-                        ) : null
+                          </div>,
+                          document.body
+                        )
                       })()}
                     </div>
                   </div>
@@ -1141,21 +1565,37 @@ export function WorkOrderFormModal({
               </div>
               <div>
                 <label className={labelCls}>Executante (Opcional)</label>
-                <select
-                  value={formData.assignedToId}
-                  onChange={(e) => setFormData({ ...formData, assignedToId: e.target.value })}
-                  className={selectCls}
-                  disabled={teamMembers.length === 0}
-                >
-                  <option value="">
-                    {teamMembers.length === 0 ? 'Selecione uma equipe primeiro' : 'Nenhum (lider atribuira)'}
-                  </option>
-                  {teamMembers.map((member) => (
-                    <option key={member.user.id} value={member.user.id}>
-                      {member.user.firstName} {member.user.lastName}
-                    </option>
-                  ))}
-                </select>
+                {(() => {
+                  const manutentorMembers = teamMembers.filter(m => normalizeUserRole(m.user.role) === 'MANUTENTOR')
+                  return (
+                    <>
+                      <select
+                        value={formData.assignedToId}
+                        onChange={(e) => setFormData({ ...formData, assignedToId: e.target.value })}
+                        className={selectCls}
+                        disabled={manutentorMembers.length === 0}
+                      >
+                        <option value="">
+                          {teamMembers.length === 0
+                            ? 'Selecione uma equipe primeiro'
+                            : manutentorMembers.length === 0
+                              ? 'Equipe sem manutentor'
+                              : 'Nenhum (lider atribuira)'}
+                        </option>
+                        {manutentorMembers.map((member) => (
+                          <option key={member.user.id} value={member.user.id}>
+                            {member.user.firstName} {member.user.lastName}
+                          </option>
+                        ))}
+                      </select>
+                      {teamMembers.length > 0 && manutentorMembers.length === 0 && (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Apenas pessoas com papel Manutentor podem ser executantes.
+                        </p>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             </div>
           </ModalSection>
@@ -1166,9 +1606,9 @@ export function WorkOrderFormModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="flex-1">
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading} className="flex-1">
+          <Button type="submit" disabled={loading || hydrating} className="flex-1">
             <Icon name="save" className="text-base mr-2" />
-            {loading ? 'Salvando...' : 'Salvar'}
+            {loading ? 'Salvando...' : isEdit ? 'Salvar Alteracoes' : 'Salvar'}
           </Button>
         </div>
       </form>

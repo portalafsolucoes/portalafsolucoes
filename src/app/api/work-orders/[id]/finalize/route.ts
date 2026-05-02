@@ -85,15 +85,16 @@ export async function POST(
 
     // Calcular custos reais
     let laborCost = 0
-    let totalDuration = 0
+    let totalHours = 0
     if (executionResources && Array.isArray(executionResources)) {
       for (const r of executionResources) {
         if (r.hours) {
           laborCost += (r.hours || 0) * (r.hourlyRate || 0)
-          totalDuration += (r.hours || 0) * 60 // converter para minutos
+          totalHours += r.hours || 0
         }
       }
     }
+    const totalHoursRounded = Math.round(totalHours * 100) / 100
 
     // =========================================================================
     // VALIDAÇÃO DE CALENDÁRIO — Verificar disponibilidade dos recursos
@@ -188,7 +189,7 @@ export async function POST(
       executionSteps: executionSteps || null,
       generateCorrectiveOS: generateCorrectiveOS || false,
       laborCost,
-      actualDuration: totalDuration > 0 ? Math.round(totalDuration) : null,
+      actualDuration: totalHoursRounded > 0 ? totalHoursRounded : null,
       updatedAt: new Date().toISOString(),
     }
 
@@ -354,7 +355,7 @@ export async function POST(
         metadata: {
           workOrderId: id,
           laborCost,
-          duration: totalDuration,
+          duration: totalHoursRounded,
           calendarWarnings: calendarWarnings.length > 0 ? calendarWarnings : undefined,
           calendarDetails: calendarDetails.length > 0 ? calendarDetails : undefined,
         },

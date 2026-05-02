@@ -249,7 +249,7 @@ export async function GET(request: NextRequest) {
       let repairCount = 0
       for (const wo of completedCorr) {
         if (wo.actualDuration) {
-          totalRepair += wo.actualDuration / 60
+          totalRepair += Number(wo.actualDuration) // ja esta em horas decimais
           repairCount++
         } else if (wo.realMaintenanceStart && wo.realMaintenanceEnd) {
           totalRepair += diffHours(wo.realMaintenanceStart, wo.realMaintenanceEnd)
@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
 
       // Backlog em horas
       let backlogHours = 0
-      for (const wo of pending) backlogHours += (wo.actualDuration || 120) / 60
+      for (const wo of pending) backlogHours += Number(wo.actualDuration ?? 2) // default 2h
       const backlogWeeks = Math.round((backlogHours / 40) * 10) / 10
 
       // Custo total
@@ -330,7 +330,7 @@ export async function GET(request: NextRequest) {
           b.mtbfCount++
         }
         if (w.actualDuration) {
-          b.mttrSum += w.actualDuration / 60
+          b.mttrSum += Number(w.actualDuration) // ja esta em horas decimais
           b.mttrCount++
         } else if (w.realMaintenanceStart && w.realMaintenanceEnd) {
           b.mttrSum += diffHours(w.realMaintenanceStart, w.realMaintenanceEnd)

@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { formatHours } from '@/lib/units/time'
 
 export interface AssetPlanDetail {
   id: string
@@ -253,7 +254,7 @@ export default function AssetPlanDetailPanel({ plan, onClose, onEdit, onDelete, 
                     {task.executionTime != null && (
                       <span className="text-xs text-muted-foreground">
                         <Icon name="schedule" className="text-xs mr-0.5 align-middle" />
-                        {task.executionTime} min
+                        {formatHours(task.executionTime)}
                       </span>
                     )}
                   </div>

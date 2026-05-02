@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
           standardPlanId,
           assetId,
           companyId,
-          session.userId
+          session.id
         )
         created.push({ standardPlanId, assetMaintenancePlanId: result.assetMaintenancePlanId })
       } catch (err) {

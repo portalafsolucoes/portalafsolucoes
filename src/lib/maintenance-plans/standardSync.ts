@@ -15,6 +15,7 @@
 //     (preserva standardPlanId para suportar "Reverter ao padrao").
 
 import { supabase, generateId } from '@/lib/supabase'
+import { toDecimalHours } from '@/lib/units/time'
 
 // =============================================================================
 // TIPOS
@@ -554,7 +555,7 @@ export async function applyStandardToAsset(
           taskCode: stdTask.taskCode,
           description: stdTask.description,
           order: stdTask.order,
-          executionTime: stdTask.executionTime,
+          executionTime: toDecimalHours(stdTask.executionTime),
           isActive: true,
         })
       if (taskError) {
@@ -771,7 +772,7 @@ export async function revertToStandard(
           taskCode: stdTask.taskCode,
           description: stdTask.description,
           order: stdTask.order,
-          executionTime: stdTask.executionTime,
+          executionTime: toDecimalHours(stdTask.executionTime),
           isActive: true,
         })
       if (taskError) {
@@ -1007,7 +1008,7 @@ export async function propagateStandardChanges(
             taskCode: stdTask.taskCode,
             description: stdTask.description,
             order: stdTask.order,
-            executionTime: stdTask.executionTime,
+            executionTime: toDecimalHours(stdTask.executionTime as number | string | null | undefined),
             isActive: true,
           })
         if (taskError) {

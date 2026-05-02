@@ -56,6 +56,10 @@ export async function POST(
     for (const ap of (assetPlans || [])) {
       if (ap.asset?.unitId !== plan.unitId) continue
 
+      // Planos com periodo Unica nao entram no batch — sao gerados via fluxo manual
+      // em /work-orders ao escolher o plano no dropdown "Plano de Manutencao do Bem".
+      if (String(ap.period || '').toUpperCase() === 'UNICA') continue
+
       const plannedDate = planStart
       const externalId = await generateSequentialId()
 

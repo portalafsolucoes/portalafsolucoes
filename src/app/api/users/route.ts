@@ -4,10 +4,16 @@ import { getSession } from '@/lib/session'
 import { hashPassword, normalizeEmail, validateEmail, validatePassword } from '@/lib/auth'
 import { checkApiPermission } from '@/lib/permissions'
 import { resolveJobTitleSelection } from '@/lib/job-titles'
-import { normalizeUserRole, toPersistedUserRole } from '@/lib/user-roles'
+import {
+  normalizeUserRole,
+  toPersistedUserRole,
+  expandCanonicalToPersisted,
+  type CanonicalUserRole,
+} from '@/lib/user-roles'
 import { ensureAdminUnitAccess } from '@/lib/admin-scope'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
+import { generateSyntheticEmail, generateSyntheticPassword } from '@/lib/users/syntheticEmail'
 
 type UserListRow = Record<string, unknown> & {
   calendar?: {
@@ -29,7 +35,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const roleParam = searchParams.get('role')
+    const canonicalRoleParam = searchParams.get('canonicalRole')
     const enabled = searchParams.get('enabled')
+    const statusParam = searchParams.get('status')
     const brief = searchParams.get('brief')
 
     const isBrief = brief === 'true' || brief === 'resource'
@@ -53,15 +61,39 @@ export async function GET(request: NextRequest) {
       .order('firstName', { ascending: true })
 
     if (roleParam) {
-      const roles = roleParam.split(',').map(r => r.trim())
+      const roles = roleParam.split(',').map(r => r.trim()).filter(Boolean)
       if (roles.length === 1) {
         query = query.eq('role', roles[0])
-      } else {
+      } else if (roles.length > 1) {
         query = query.in('role', roles)
       }
     }
 
-    if (enabled !== null) {
+    if (canonicalRoleParam) {
+      const VALID_CANONICALS = new Set<CanonicalUserRole>(['SUPER_ADMIN', 'ADMIN', 'PLANEJADOR', 'MANUTENTOR'])
+      const canonicals = canonicalRoleParam
+        .split(',')
+        .map(s => s.trim().toUpperCase())
+        .filter((s): s is CanonicalUserRole => VALID_CANONICALS.has(s as CanonicalUserRole))
+      const persisted = expandCanonicalToPersisted(canonicals)
+      if (persisted.length > 0) {
+        query = query.in('role', persisted)
+      } else {
+        // canonicalRole informado mas nenhum valor canonico valido: retorna lista vazia
+        query = query.eq('id', '__no_match__')
+      }
+    }
+
+    // status (UserStatus enum) e a forma canonica de filtrar por lifecycle.
+    // enabled=true mantido apenas por compat com chamadas legadas.
+    if (statusParam) {
+      const statuses = statusParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length === 1) {
+        query = query.eq('status', statuses[0])
+      } else if (statuses.length > 1) {
+        query = query.in('status', statuses)
+      }
+    } else if (enabled !== null) {
       query = query.eq('enabled', enabled === 'true')
     }
 
@@ -103,8 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = normalizeTextPayload(await request.json())
-    const { email, password, firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId, unitIds } = body
-    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
+    let { email, password } = body
+    const { firstName, lastName, role, phone, jobTitle, jobTitleId, rate, enabled, calendarId, locationId, unitIds } = body
 
     // Apenas staff Portal AF pode criar usuário SUPER_ADMIN. ADMIN da empresa cliente não pode.
     const requestedCanonical = normalizeUserRole(role)
@@ -116,6 +148,15 @@ export async function POST(request: NextRequest) {
     if (sessionCanonical === 'PLANEJADOR' && requestedCanonical !== 'PLANEJADOR' && requestedCanonical !== 'MANUTENTOR') {
       return NextResponse.json({ error: 'Planejador so pode cadastrar Planejadores ou Manutentores' }, { status: 403 })
     }
+
+    // MANUTENTOR e cadastro operacional: pode ser criado sem email/senha.
+    // O servidor gera valores sinteticos com dominio reservado @noemail.local — o usuario nao consegue logar.
+    if (requestedCanonical === 'MANUTENTOR') {
+      if (!email) email = generateSyntheticEmail()
+      if (!password) password = generateSyntheticPassword()
+    }
+
+    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : ''
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(

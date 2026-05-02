@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { normalizeUserRole } from '@/lib/user-roles'
 
 // GET - Listar recursos da OS
 export async function GET(
@@ -68,6 +69,25 @@ export async function PUT(
 
     if (!Array.isArray(resources)) {
       return NextResponse.json({ error: 'resources deve ser um array' }, { status: 400 })
+    }
+
+    // Validar que toda Mao de Obra (LABOR) referencia um usuario MANUTENTOR
+    const laborUserIds = resources
+      .filter((r: { resourceType?: string; userId?: string | null }) => r.resourceType === 'LABOR' && !!r.userId)
+      .map((r: { userId?: string | null }) => r.userId as string)
+    if (laborUserIds.length > 0) {
+      const { data: laborUsers } = await supabase
+        .from('User')
+        .select('id, role')
+        .in('id', laborUserIds)
+        .eq('companyId', session.companyId)
+      const invalid = (laborUsers || []).find(u => normalizeUserRole(u.role) !== 'MANUTENTOR')
+      if (invalid) {
+        return NextResponse.json(
+          { error: 'Apenas pessoas com papel Manutentor podem ser alocadas como Mao de Obra' },
+          { status: 400 }
+        )
+      }
     }
 
     // Deletar recursos existentes

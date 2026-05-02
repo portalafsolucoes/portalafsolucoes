@@ -54,7 +54,7 @@ export async function POST(
           standardPlanId,
           assetId,
           companyId,
-          session.userId
+          session.id
         )
         created.push({ assetId, assetMaintenancePlanId: result.assetMaintenancePlanId })
       } catch (err) {

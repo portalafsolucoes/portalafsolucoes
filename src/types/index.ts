@@ -66,7 +66,7 @@ export interface WorkOrder {
   status: WorkOrderStatus
   dueDate?: Date
   completedOn?: Date
-  estimatedDuration?: number
+  estimatedDuration?: number // horas decimais (Decimal(10,2))
   archived: boolean
   feedback?: string
   osType?: OsType

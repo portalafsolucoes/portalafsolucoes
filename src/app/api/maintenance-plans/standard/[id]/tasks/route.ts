@@ -3,6 +3,7 @@ import { supabase, generateId } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { parseWorkDays, getWeeklyHours, getWeeklySummary } from '@/lib/calendarUtils'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
+import { toDecimalHours } from '@/lib/units/time'
 
 // GET - Listar tarefas com etapas, recursos e info de calendário
 export async function GET(
@@ -126,7 +127,7 @@ export async function POST(
           taskCode: task.taskCode || i,
           description: task.description,
           order: task.order || i,
-          executionTime: task.executionTime || null,
+          executionTime: toDecimalHours(task.executionTime ?? null),
         })
         .select()
         .single()

@@ -4,6 +4,20 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 
 # Banco, Schema e Supabase
 
+## Unidade Canonica de Tempo (HORAS DECIMAIS)
+- Toda duracao no banco e em APIs internas e armazenada como **horas decimais com 2 casas (`Decimal(10, 2)`)**. Granularidade default no input: `step="0.25"` (0,25 h = 15 min, 0,5 h = 30 min, 0,75 h = 45 min, 1,5 h = 1h30min)
+- Colunas afetadas (todas em horas): `WorkOrder.estimatedDuration`, `WorkOrder.actualDuration`, `Task.executionTime`, `StandardMaintenanceTask.executionTime`, `AssetMaintenanceTask.executionTime`, `Labor.duration`
+- `StandardMaintenancePlan.maintenanceTime` e `AssetMaintenancePlan.maintenanceTime` (com `timeUnit`) sao **periodicidade do plano**, nao duracao de execucao — permanecem como `Int` e nao entram nesta regra
+- `AssetDowntime.duration` continua `Int?` (modelo dormente sem codigo dependente). Quando a feature for ativada, decidir a unidade no contexto
+- Conversao para sistemas externos (TOTVS/Protheus, ERPs) acontece **exclusivamente na borda**, em `src/lib/integration/<sistema>/timeAdapter.ts`. Handlers de negocio nunca veem minutos
+- Helpers canonicos em `src/lib/units/time.ts`:
+  - `toDecimalHours(value)` — normaliza string/number/null para `number | null` em horas com 2 casas (rejeita negativos)
+  - `formatHours(hours)` — formata para exibicao (`"2.50 h"` ou `-`)
+  - `minutesToHours` / `hoursToMinutes` — usar **apenas** em adapters de borda; nao em handlers de negocio
+  - `diffHours(start, end)` — diferenca entre dois timestamps em horas decimais (substitui `(end - start) / 60000`)
+- Migration canonica: `prisma/migrations/20260501234507_time_fields_to_decimal_hours/migration.sql` com `ALTER TYPE ... USING ROUND(value::numeric / 60.0, 2)` em transacao unica
+- Regra: nao reintroduzir minutos em colunas de duracao. Ao adicionar nova coluna de tempo, usar `Decimal(10, 2)` e horas decimais
+
 ## Padronizacao Textual (MAIUSCULAS sem acento)
 - Todo texto de negocio persistido no banco deve estar em **MAIUSCULAS e sem acento**
 - A normalizacao acontece no servidor via `normalizeTextPayload` (de `@/lib/textNormalizer`) antes do insert/update
@@ -38,6 +52,8 @@ globs: prisma/**,src/lib/db/**,src/actions/**
 - `WorkOrder` suporta numero interno `MAN-XXXXXX`, numero externo do ERP/TOTVS, checklist, custos, tempos, recursos e fotos antes/depois
 - `WorkOrder.rescheduleCount` e contador denormalizado de quantas vezes a OS foi reprogramada estando atrasada; usado para badge na listagem e KPI sem precisar agregar a tabela de historico
 - `WorkOrderRescheduleHistory` armazena auditoria granular de cada reprogramacao (data anterior, nova data, status anterior, flag `wasOverdue`, motivo opcional, usuario, timestamp); cascade delete em relacao a `WorkOrder`
+- `Task.plannedStart` e `Task.plannedEnd` (`DateTime?`, sem fuso) sao a janela planejada por tarefa exposta no formulario de OS em `/work-orders`. Quando ambos estiverem preenchidos, o `Task.executionTime` e derivado por `diffHours(plannedStart, plannedEnd)` e gravado pelo servidor; nao existe trigger SQL — a derivacao mora no helper `normalizeTaskWindow` dos handlers `POST /api/work-orders` e `PATCH /api/work-orders/[id]`. Migration: `prisma/migrations/20260502000000_add_planned_start_end_to_task/migration.sql`
+- `AssetMaintenanceTask` e `StandardMaintenanceTask` **nao** ganham os mesmos campos: a janela planejada vive apenas na OS, nao no plano. Plano com `period = 'UNICA'` so produz OS pelo fluxo manual em `/work-orders` (o batch de Planejamento ignora `UNICA`)
 - `RAF` deve ter numero unico
 - `FailureAnalysisReport.status` usa o enum `RafStatus { ABERTA, FINALIZADA }` (default `ABERTA`); `finalizedAt` e `finalizedById` (FK `User.id` opcional) registram quem e quando finalizou. O valor e sempre **derivado** pela aplicacao via `recalculateRafStatus` em `src/lib/rafs/recalculateStatus.ts` — nao existe trigger SQL
 - `FailureAnalysisReport.actionPlan` (JSONB) persiste `ActionPlanItem[]` no shape v2: `{ item, subject, deadline, actionDescription, status: 'PENDING'|'IN_PROGRESS'|'COMPLETED', linkedWorkOrderId?, linkedWorkOrderNumber?, responsibleUserId?, responsibleName?, completedAt? }`. Nao normalizar o campo (descricao livre) alem do que `normalizeTextPayload` ja faz via preservacao de `description`/`notes`

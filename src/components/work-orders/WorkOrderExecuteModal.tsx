@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { ImageViewerModal } from '@/components/ui/ImageViewerModal'
 import { Icon } from '@/components/ui/Icon'
+import { formatHours } from '@/lib/units/time'
 
 interface WorkOrderExecuteModalProps {
   workOrder: {
@@ -290,7 +291,7 @@ export function WorkOrderExecuteModal({
         // Se já foi completada, usar dados de completedOn para horários
         if (details.completedOn && details.actualDuration) {
           const endTime = new Date(details.completedOn)
-          const startTime = new Date(endTime.getTime() - details.actualDuration * 60000)
+          const startTime = new Date(endTime.getTime() - Number(details.actualDuration) * 3_600_000)
           setStartTime(startTime.toISOString().slice(0, 16))
           setEndTime(endTime.toISOString().slice(0, 16))
         }
@@ -663,7 +664,7 @@ export function WorkOrderExecuteModal({
                       <div>
                         <label className="block text-xs font-semibold text-foreground mb-1">Início:</label>
                         <p className="text-sm text-foreground bg-card p-2 rounded border">
-                          {new Date(new Date(workOrderDetails.completedOn).getTime() - workOrderDetails.actualDuration * 60000).toLocaleString('pt-BR', {
+                          {new Date(new Date(workOrderDetails.completedOn).getTime() - Number(workOrderDetails.actualDuration) * 3_600_000).toLocaleString('pt-BR', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',
@@ -687,7 +688,7 @@ export function WorkOrderExecuteModal({
                       <div>
                         <label className="block text-xs font-semibold text-foreground mb-1">Duração:</label>
                         <p className="text-sm text-foreground bg-card p-2 rounded border font-semibold">
-                          {workOrderDetails.actualDuration} min
+                          {formatHours(workOrderDetails.actualDuration)}
                         </p>
                       </div>
                     </div>
