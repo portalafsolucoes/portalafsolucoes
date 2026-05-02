@@ -9,6 +9,13 @@ import { generateRafNumber } from '@/lib/rafUtils'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
 import { toDecimalHours, diffHours } from '@/lib/units/time'
+import {
+  isTaskResourcesAllowed,
+  validateTaskResources,
+  validateLaborUsers,
+  insertTaskResources,
+  type TaskResourcePayload,
+} from '@/lib/workOrders/taskResources'
 
 // Normaliza janela planejada por tarefa e deriva executionTime quando ambos
 // timestamps existirem. Retorna 400-friendly errors via campo `error`.
@@ -115,7 +122,14 @@ export async function GET(request: NextRequest) {
           createdBy:User!createdById(id, firstName, lastName, email),
           maintenancePlanExec:MaintenancePlanExecution(planNumber, trackingType),
           assetMaintenancePlan:AssetMaintenancePlan(trackingType, maintenanceTime, timeUnit),
-          tasks:Task(id, label, notes, completed, order, executionTime, steps),
+          tasks:Task(
+            id, label, notes, completed, order, executionTime, plannedStart, plannedEnd, steps,
+            resources:TaskResource(
+              id, resourceType, hours, quantity,
+              user:User(id, firstName, lastName),
+              jobTitle:JobTitle(id, name)
+            )
+          ),
           woResources:WorkOrderResource(
             id, resourceType, quantity, hours, unit,
             resource:Resource(id, name),
@@ -511,15 +525,41 @@ export async function POST(request: NextRequest) {
         plannedStart?: string | Date | null
         plannedEnd?: string | Date | null
         steps?: unknown
+        resources?: TaskResourcePayload[]
       }
       const incomingTasks = tasks as IncomingTask[]
+
+      // Gating de mao de obra/especialidade por tarefa: so e permitido em
+      // OSs manuais ou originadas de plano UNICA. Se houver `resources` em
+      // qualquer task e o gating for false, rejeitar 400.
+      const planId = (body as { assetMaintenancePlanId?: string | null }).assetMaintenancePlanId || null
+      const allowsTaskResources = await isTaskResourcesAllowed(planId, session.companyId)
+      const hasAnyTaskResources = incomingTasks.some(
+        (t) => Array.isArray(t.resources) && t.resources.length > 0,
+      )
+      if (hasAnyTaskResources && !allowsTaskResources) {
+        return NextResponse.json(
+          { error: 'Mao de obra por tarefa so e permitida em OSs manuais ou de plano UNICA' },
+          { status: 400 }
+        )
+      }
+
       const taskInserts: Record<string, unknown>[] = []
+      const taskResourcesByIndex: TaskResourcePayload[][] = []
       for (let index = 0; index < incomingTasks.length; index++) {
         const task = incomingTasks[index]
         const window = normalizeTaskWindow(task)
         if (window.error) {
           return NextResponse.json(
             { error: `Tarefa ${index + 1}: ${window.error}` },
+            { status: 400 }
+          )
+        }
+        const taskResources = Array.isArray(task.resources) ? task.resources : []
+        const shapeError = validateTaskResources(taskResources)
+        if (shapeError) {
+          return NextResponse.json(
+            { error: `Tarefa ${index + 1}: ${shapeError}` },
             { status: 400 }
           )
         }
@@ -536,8 +576,25 @@ export async function POST(request: NextRequest) {
           createdAt: now,
           updatedAt: now,
         })
+        taskResourcesByIndex.push(taskResources)
       }
+
+      // Validar usuarios LABOR (papel canonico MANUTENTOR) em todas as tasks
+      const allLaborResources = taskResourcesByIndex.flat()
+      const laborError = await validateLaborUsers(allLaborResources, session.companyId)
+      if (laborError) {
+        return NextResponse.json({ error: laborError }, { status: 400 })
+      }
+
       await supabase.from('Task').insert(taskInserts).select()
+
+      // Persistir TaskResource por tarefa
+      for (let index = 0; index < taskInserts.length; index++) {
+        const resources = taskResourcesByIndex[index]
+        if (resources.length === 0) continue
+        const taskId = taskInserts[index].id as string
+        await insertTaskResources(taskId, resources)
+      }
     }
 
     // Criar recursos se fornecidos

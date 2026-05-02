@@ -474,6 +474,7 @@ model User {
   standardTaskLabors         StandardMaintenanceTaskResource[] @relation("StandardTaskLabor")
   assetTaskLabors            AssetMaintenanceTaskResource[]    @relation("AssetTaskLabor")
   woResourceLabors           WorkOrderResource[]               @relation("WOResourceLabor")
+  taskResourceLabors         TaskResource[]                    @relation("TaskResourceLabor")
   workOrderRescheduleEntries WorkOrderRescheduleHistory[]      @relation("WorkOrderRescheduleHistoryUser")
   detachedAssetPlans         AssetMaintenancePlan[]            @relation("AssetMaintenancePlanDetacher")
   createdStandardChecklists  StandardChecklist[]               @relation("StandardChecklistCreator")
@@ -768,6 +769,7 @@ model JobTitle {
   standardTaskResources StandardMaintenanceTaskResource[] @relation("StandardTaskJobTitle")
   assetTaskResources    AssetMaintenanceTaskResource[]    @relation("AssetTaskJobTitle")
   woResources           WorkOrderResource[]               @relation("WOResourceJobTitle")
+  taskResources         TaskResource[]                    @relation("TaskResourceJobTitle")
 
   @@unique([companyId, name])
   @@unique([companyId, protheusCode])
@@ -1584,7 +1586,29 @@ model Task {
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
+  resources   TaskResource[]
+
   @@index([workOrderId])
+}
+
+model TaskResource {
+  id           String  @id @default(cuid())
+  resourceType String  // LABOR | SPECIALTY
+  hours        Decimal? @db.Decimal(10, 2)
+  quantity     Float?
+
+  taskId String
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User? @relation("TaskResourceLabor", fields: [userId], references: [id])
+
+  jobTitleId String?
+  jobTitle   JobTitle? @relation("TaskResourceJobTitle", fields: [jobTitleId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([jobTitleId])
 }
 
 model Labor {

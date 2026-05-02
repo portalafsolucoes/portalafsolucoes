@@ -118,6 +118,13 @@ globs: src/app/api/**,src/actions/**
 - Os campos sao opcionais por tarefa. Tasks legadas seguem com `plannedStart` e `plannedEnd` `NULL`; nada quebra
 - O `GET /api/work-orders/[id]` retorna `tasks:Task(*)` — os novos campos chegam automaticamente via select estrela. O modo batch (`GET /api/work-orders?ids=`) tambem ja inclui via select estrela em `Task`. O `summary=true` da listagem nao retorna tasks e segue inalterado
 
+## Mao de Obra / Especialidade por Tarefa (`tasks[].resources[]`)
+- `POST /api/work-orders` e `PATCH /api/work-orders/[id]` aceitam um array opcional `resources` por tarefa, com items `{ resourceType: 'LABOR' | 'SPECIALTY', userId?, jobTitleId?, hours?, quantity? }`. Helpers canonicos em `src/lib/workOrders/taskResources.ts`: `isTaskResourcesAllowed`, `validateTaskResources`, `validateLaborUsers`, `insertTaskResources`
+- Gating: o servidor consulta `assetMaintenancePlanId` da OS (do body em POST, do registro existente em PATCH). Se o plano tiver `period = 'REPETITIVA'`, qualquer task com `resources` nao-vazio resulta em `400` com mensagem clara. OS manual (`assetMaintenancePlanId = null`) e OS de plano `UNICA` aceitam normalmente
+- `LABOR` exige `userId` e `userId` precisa ter papel canonico `MANUTENTOR` na empresa ativa (mesma matriz de `assignedToId`); falha com `400` caso contrario. `SPECIALTY` exige `jobTitleId`. Outros tipos (`MATERIAL`, `TOOL`) sao rejeitados com `400` — eles continuam vivendo em `WorkOrderResource` a nivel OS
+- `GET /api/work-orders/[id]` e `?ids=` retornam `tasks(*, resources:TaskResource(id, resourceType, hours, quantity, user:User(id, firstName, lastName), jobTitle:JobTitle(id, name)))`. O modo `summary=true` nao retorna tasks e segue inalterado
+- Em PATCH, o sync de tasks ja faz delete + insert: as tarefas antigas somem (cascade SQL apaga as `TaskResource` antigas) e as novas tarefas recebem os `resources` do body fresh. Nao e necessario delete manual de `TaskResource`
+
 ## Geracao de OS a partir de Plano com `Periodo = Unica`
 - Plano com `period = 'UNICA'` so deve gerar OS pelo fluxo manual em `/work-orders` quando o usuario seleciona o plano no dropdown `Plano de Manutencao do Bem`
 - `POST /api/planning/plans` (criacao do Plano de Planejamento, batch que projeta ciclos por `lastMaintenanceDate + maintenanceTime`) deve pular `AssetMaintenancePlan` cujo `period` (case-insensitive) seja `UNICA` antes do loop de geracao

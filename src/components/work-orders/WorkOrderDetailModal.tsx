@@ -80,6 +80,15 @@ interface TaskStep {
   options?: { id?: string; label: string; order: number }[]
 }
 
+interface WOTaskResource {
+  id: string
+  resourceType: string
+  hours?: number | null
+  quantity?: number | null
+  user?: { id: string; firstName: string; lastName: string } | null
+  jobTitle?: { id: string; name: string } | null
+}
+
 interface WOTask {
   id: string
   label: string
@@ -90,6 +99,7 @@ interface WOTask {
   plannedStart?: string | null
   plannedEnd?: string | null
   steps?: TaskStep[] | string | null
+  resources?: WOTaskResource[]
 }
 
 interface RescheduleHistoryEntry {
@@ -646,6 +656,32 @@ export function WorkOrderDetailModal({
                       )}
                     </div>
                   </div>
+
+                  {Array.isArray(task.resources) && task.resources.length > 0 && (
+                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-2.5">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Mao de Obra / Especialidade</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {task.resources.map((r) => {
+                          const name = r.resourceType === 'LABOR'
+                            ? (r.user ? `${r.user.firstName} ${r.user.lastName}` : 'Manutentor')
+                            : (r.jobTitle?.name || 'Especialidade')
+                          const typeLabel = r.resourceType === 'LABOR' ? 'Manutentor' : 'Especialidade'
+                          return (
+                            <span
+                              key={r.id}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm"
+                            >
+                              <span className="text-[9px] font-bold uppercase tracking-wide text-gray-500">{typeLabel}:</span>
+                              {name}
+                              {r.hours != null && r.hours > 0 && (
+                                <span className="text-[10px] text-gray-500">({formatHours(r.hours)})</span>
+                              )}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {steps.length > 0 && (
                     <div className="border-t border-gray-100 bg-gray-50 px-4 py-2.5">

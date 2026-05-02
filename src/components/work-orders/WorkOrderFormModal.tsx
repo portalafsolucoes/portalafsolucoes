@@ -36,6 +36,9 @@ interface TaskRow {
   plannedStart: string // datetime-local string ('YYYY-MM-DDTHH:mm') or ''
   plannedEnd: string
   steps: TaskStep[]
+  // Mao de obra / Especialidade por tarefa. So aparece em OSs manuais ou
+  // de plano UNICA — gating equivalente ao da janela planejada.
+  resources: TaskResourceItem[]
 }
 
 export interface WorkOrderFormInitialTask {
@@ -44,6 +47,7 @@ export interface WorkOrderFormInitialTask {
   plannedStart?: string | null
   plannedEnd?: string | null
   steps: { stepId: string; order: number; optionType: string }[]
+  resources?: TaskResourceItem[]
 }
 
 export interface WorkOrderFormInitialValues {
@@ -84,6 +88,7 @@ const emptyTask = (): TaskRow => ({
   plannedStart: '',
   plannedEnd: '',
   steps: [],
+  resources: [],
 })
 
 // Converte ISO/Date em string compativel com <input type="datetime-local"> ('YYYY-MM-DDTHH:mm')
@@ -236,6 +241,7 @@ export function WorkOrderFormModal({
         plannedStart: toDatetimeLocal(t.plannedStart ?? null),
         plannedEnd: toDatetimeLocal(t.plannedEnd ?? null),
         steps: t.steps,
+        resources: t.resources ?? [],
       })))
     }
 
@@ -420,6 +426,13 @@ export function WorkOrderFormModal({
         plannedStart?: string | null
         plannedEnd?: string | null
         steps?: unknown
+        resources?: Array<{
+          resourceType: string
+          hours?: number | null
+          quantity?: number | null
+          user?: { id: string } | null
+          jobTitle?: { id: string } | null
+        }>
       }
       const woTasks = (wo.tasks as WoTaskApi[] | undefined) || []
       const sortedWoTasks = [...woTasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
@@ -434,6 +447,15 @@ export function WorkOrderFormModal({
           order: idx,
           optionType: s.optionType || 'NONE',
         })),
+        resources: Array.isArray(t.resources)
+          ? t.resources.map(r => ({
+              resourceType: r.resourceType as TaskResourceItem['resourceType'],
+              userId: r.user?.id || null,
+              jobTitleId: r.jobTitle?.id || null,
+              hours: r.hours ?? null,
+              quantity: r.quantity ?? null,
+            }))
+          : [],
       }))
       setTasks(hydratedTasks.length > 0 ? hydratedTasks : [emptyTask()])
 
@@ -747,6 +769,9 @@ export function WorkOrderFormModal({
             order: s.order ?? 0,
             optionType: s.step?.optionType || 'NONE',
           })),
+        // Plano nao armazena mao de obra por tarefa — comeca vazio. Em OSs
+        // de plano UNICA, o planejador adiciona ao editar a OS.
+        resources: [],
       }))
 
       setTasks(prefilled.length > 0 ? prefilled : [emptyTask()])
@@ -869,6 +894,10 @@ export function WorkOrderFormModal({
       // enviamos plannedStart/plannedEnd para evitar persistir valores stale
       // que poderiam ter ficado em estado anterior.
       const includePlannedWindow = showPlannedWindowFields
+      // Mao de obra/Especialidade por tarefa so e enviada em OSs manuais
+      // ou de plano UNICA. Repetitiva nao recebe — mesmo gating da janela
+      // planejada. Enviamos array vazio caso o gating nao permita, para
+      // que um eventual estado em memoria nao escape ao servidor.
       const tasksPayload = validTasks.map((t, idx) => ({
         label: t.description,
         executionTime: t.executionTime === '' ? null : t.executionTime,
@@ -886,6 +915,17 @@ export function WorkOrderFormModal({
               }
             })
           : null,
+        resources: includePlannedWindow
+          ? (t.resources || [])
+              .filter(r => r.resourceType === 'LABOR' || r.resourceType === 'SPECIALTY')
+              .map(r => ({
+                resourceType: r.resourceType,
+                userId: r.userId || null,
+                jobTitleId: r.jobTitleId || null,
+                hours: r.hours ?? null,
+                quantity: r.quantity ?? null,
+              }))
+          : [],
       }))
       const resourcesPayload = woResources.map(r => ({
         resourceType: r.resourceType,
@@ -1430,6 +1470,16 @@ export function WorkOrderFormModal({
                         )}
                       </div>
                     </div>
+                  )}
+                  {/* Mao de Obra / Especialidade por tarefa
+                      So aparece em OSs manuais ou de plano UNICA (mesmo gating da janela). */}
+                  {showPlannedWindowFields && (
+                    <ResourceSelector
+                      label="Mao de Obra / Especialidade"
+                      allowedTypes={['LABOR', 'SPECIALTY']}
+                      resources={task.resources}
+                      onChange={(next) => updateTask(task.key, { resources: next })}
+                    />
                   )}
                   {/* Etapas */}
                   <div>

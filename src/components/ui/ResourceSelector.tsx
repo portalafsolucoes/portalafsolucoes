@@ -62,13 +62,20 @@ interface ResourceSelectorProps {
   onChange: (resources: TaskResourceItem[]) => void
   /** Classes CSS adicionais no container */
   className?: string
+  /** Tipos permitidos (default: todos). Em recursos por tarefa, usar ['LABOR', 'SPECIALTY']. */
+  allowedTypes?: ResourceType[]
+  /** Texto do label do bloco (default: 'Recursos'). */
+  label?: string
 }
 
 /* ------------------------------------------------------------------ */
 /*  Componente                                                          */
 /* ------------------------------------------------------------------ */
 
-export function ResourceSelector({ resources, onChange, className }: ResourceSelectorProps) {
+export function ResourceSelector({ resources, onChange, className, allowedTypes, label }: ResourceSelectorProps) {
+  const visibleTypes: ResourceType[] = allowedTypes && allowedTypes.length > 0
+    ? allowedTypes
+    : ['SPECIALTY', 'LABOR', 'MATERIAL', 'TOOL']
   const { user } = useAuth()
   const companyId = user?.companyId
 
@@ -204,7 +211,7 @@ export function ResourceSelector({ resources, onChange, className }: ResourceSel
   return (
     <div className={className}>
       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1 block">
-        Recursos
+        {label || 'Recursos'}
       </label>
 
       {/* Lista de recursos adicionados */}
@@ -279,10 +286,10 @@ export function ResourceSelector({ resources, onChange, className }: ResourceSel
           className={selectCls + ' flex-1'}
         >
           <option value="">+ Tipo de recurso...</option>
-          <option value="SPECIALTY">Especialidade</option>
-          <option value="LABOR">Mão de Obra</option>
-          <option value="MATERIAL">Material</option>
-          <option value="TOOL">Ferramenta</option>
+          {visibleTypes.includes('SPECIALTY') && <option value="SPECIALTY">Especialidade</option>}
+          {visibleTypes.includes('LABOR') && <option value="LABOR">Mão de Obra</option>}
+          {visibleTypes.includes('MATERIAL') && <option value="MATERIAL">Material</option>}
+          {visibleTypes.includes('TOOL') && <option value="TOOL">Ferramenta</option>}
         </select>
 
         {addType && (

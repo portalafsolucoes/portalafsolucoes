@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
@@ -11,7 +11,40 @@ interface AssetChain {
   parentAsset?: AssetChain | null
 }
 
-interface PrintWorkOrder {
+interface PrintTaskResource {
+  id: string
+  resourceType: string
+  hours?: number | null
+  quantity?: number | null
+  user?: { id: string; firstName: string; lastName: string } | null
+  jobTitle?: { id: string; name: string } | null
+}
+
+interface PrintTask {
+  id: string
+  label: string
+  notes?: string | null
+  completed: boolean
+  order: number
+  executionTime?: number | null
+  plannedStart?: string | null
+  plannedEnd?: string | null
+  steps?: unknown
+  resources?: PrintTaskResource[]
+}
+
+interface PrintWoResource {
+  id: string
+  resourceType: string
+  quantity?: number | null
+  hours?: number | null
+  unit?: string | null
+  resource?: { id: string; name: string } | null
+  jobTitle?: { id: string; name: string } | null
+  user?: { id: string; firstName: string; lastName: string } | null
+}
+
+export interface PrintWorkOrder {
   id: string
   title: string
   description?: string | null
@@ -33,32 +66,18 @@ interface PrintWorkOrder {
   assetMaintenancePlanId?: string | null
   assetMaintenancePlan?: { name?: string | null; sequence: number } | null
   maintenancePlanExec?: { planNumber: number } | null
-  tasks?: {
-    id: string
-    label: string
-    notes?: string | null
-    completed: boolean
-    order: number
-    executionTime?: number | null
-    plannedStart?: string | null
-    plannedEnd?: string | null
-    steps?: unknown
-  }[]
-  woResources?: {
-    id: string
-    resourceType: string
-    quantity?: number | null
-    hours?: number | null
-    unit?: string | null
-    resource?: { id: string; name: string } | null
-    jobTitle?: { id: string; name: string } | null
-    user?: { id: string; firstName: string; lastName: string } | null
-  }[]
+  tasks?: PrintTask[]
+  woResources?: PrintWoResource[]
+  serviceType?: { id: string; name: string; code: string } | null
 }
 
 interface WorkOrderPrintViewProps {
   workOrderId: string
   onClose: () => void
+  // Modo embedded: usado pelo BatchPrintView para renderizar so a folha A4,
+  // sem overlay/toolbar/wrapper de carregamento.
+  data?: PrintWorkOrder | null
+  embedded?: boolean
 }
 
 function getTypeLabel(type?: string | null): string {
@@ -92,43 +111,398 @@ function getStatusLabel(status: string): string {
   }
 }
 
-function getResourceTypeLabel(type: string): string {
-  switch (type) {
-    case 'MATERIAL': return 'MATERIAL'
-    case 'TOOL': return 'FERRAMENTA'
-    case 'LABOR': return 'MAO DE OBRA'
-    case 'SPECIALTY': return 'ESPECIALIDADE'
-    default: return type
+// Folha A4 — layout fiel ao modelo, com paginacao multi-pagina via @page A4.
+// O conteudo flui livremente no DOM e o navegador quebra em paginas conforme
+// necessario. break-inside: avoid em cada card de tarefa evita corte de tarefa.
+export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
+  workOrder: PrintWorkOrder
+  companyLogo: string | null
+  companyName: string
+}) {
+  const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
+  const planNumber = workOrder.maintenancePlanExec?.planNumber ?? null
+  const sortedTasks = [...(workOrder.tasks || [])].sort((a, b) => a.order - b.order)
+
+  // Recursos a nivel OS — o print exibe apenas Materiais e Ferramentas em
+  // duas tabelas lado a lado (modelo). LABOR/SPECIALTY a nivel OS, se ainda
+  // existirem em registros legados, NAO entram aqui — mao de obra mora dentro
+  // de cada tarefa via TaskResource.
+  const woRes = workOrder.woResources || []
+  const materials = woRes.filter(r => r.resourceType === 'MATERIAL')
+  const tools = woRes.filter(r => r.resourceType === 'TOOL')
+
+  // Hierarquia do ativo
+  const assetChain: string[] = []
+  if (workOrder.asset) {
+    let current = workOrder.asset.parentAsset
+    while (current) {
+      assetChain.unshift(current.name)
+      current = current.parentAsset
+    }
   }
+
+  // Garante numero minimo de linhas para o executante anotar a mao
+  const padArray = <T,>(arr: T[], min: number, empty: T): T[] => {
+    if (arr.length >= min) return arr
+    return [...arr, ...Array.from({ length: min - arr.length }, () => empty)]
+  }
+  const materialsRows = padArray<PrintWoResource | null>(materials, 6, null)
+  const toolsRows = padArray<PrintWoResource | null>(tools, 6, null)
+
+  return (
+    <div className="wo-print-sheet bg-white text-[10px] text-gray-900 leading-snug">
+      {/* === CABECALHO === */}
+      <div className="wo-print-header grid grid-cols-[45mm_1fr_38mm] gap-2 border-2 border-gray-900 mb-1">
+        {/* Logo + Nº Plano + Nº OS (lado esquerdo, espelhando o modelo) */}
+        <div className="border-r-2 border-gray-900 px-2 py-1 flex flex-col items-center justify-center text-center">
+          {companyLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={companyLogo}
+              alt={companyName}
+              className="max-h-[12mm] max-w-[42mm] object-contain"
+            />
+          ) : (
+            <span className="text-[10px] font-bold">{companyName}</span>
+          )}
+          {planNumber && (
+            <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wide">
+              Plano #{planNumber}
+            </p>
+          )}
+        </div>
+
+        {/* Centro: Controle de execucao (apenas 2 caixas: Inicio, Fim) */}
+        <div className="px-2 py-1 flex flex-col">
+          <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600 text-center mb-0.5">
+            Controle de Execucao
+          </p>
+          <div className="grid grid-cols-2 gap-2 flex-1">
+            <div className="border border-gray-400 px-2 py-1 flex flex-col">
+              <p className="text-[7px] font-bold uppercase text-gray-500">Data e Horario Inicio</p>
+              <p className="text-[10px] mt-auto font-mono">____/____/______&nbsp;&nbsp;____:____</p>
+            </div>
+            <div className="border border-gray-400 px-2 py-1 flex flex-col">
+              <p className="text-[7px] font-bold uppercase text-gray-500">Data e Horario Fim</p>
+              <p className="text-[10px] mt-auto font-mono">____/____/______&nbsp;&nbsp;____:____</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Direita: Numero da OS */}
+        <div className="border-l-2 border-gray-900 px-2 py-1 text-center flex flex-col items-center justify-center">
+          <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600">Ordem de Servico</p>
+          <p className="text-2xl font-black leading-none mt-0.5">{displayId}</p>
+          <p className="text-[8px] uppercase mt-0.5 text-gray-700">{getTypeLabel(workOrder.type)}</p>
+        </div>
+      </div>
+
+      {/* === ATIVO E LOCALIZACAO === */}
+      <table className="w-full border-collapse mb-1 wo-print-block">
+        <thead>
+          <tr>
+            <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
+              Ativo e Localizacao
+            </th>
+          </tr>
+          <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
+            <th className="border border-gray-900 px-2 py-0.5 text-left w-[35%]">Ativo</th>
+            <th className="border border-gray-900 px-2 py-0.5 text-left">Hierarquia</th>
+            <th className="border border-gray-900 px-2 py-0.5 text-left w-[25%]">Localizacao</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="border border-gray-900 px-2 py-1 align-top">{workOrder.asset?.name || '-'}</td>
+            <td className="border border-gray-900 px-2 py-1 align-top">
+              {assetChain.length > 0 ? assetChain.join(' > ') : '-'}
+            </td>
+            <td className="border border-gray-900 px-2 py-1 align-top">{workOrder.location?.name || '-'}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* === RESUMO DA OS === */}
+      <table className="w-full border-collapse mb-1 wo-print-block">
+        <thead>
+          <tr>
+            <th colSpan={5} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
+              Resumo da O.S.
+            </th>
+          </tr>
+          <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
+            <th className="border border-gray-900 px-2 py-0.5 text-left">Status</th>
+            <th className="border border-gray-900 px-2 py-0.5 text-left">Prioridade</th>
+            <th className="border border-gray-900 px-2 py-0.5 text-left">Tipo de Servico</th>
+            <th className="border border-gray-900 px-2 py-0.5 text-left">Criado em</th>
+            <th className="border border-gray-900 px-2 py-0.5 text-left">Vencimento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="border border-gray-900 px-2 py-1">{getStatusLabel(workOrder.status)}</td>
+            <td className="border border-gray-900 px-2 py-1">{getPriorityLabel(workOrder.priority)}</td>
+            <td className="border border-gray-900 px-2 py-1">
+              {workOrder.serviceType
+                ? `${workOrder.serviceType.code} - ${workOrder.serviceType.name}`
+                : getTypeLabel(workOrder.type)}
+            </td>
+            <td className="border border-gray-900 px-2 py-1">
+              {workOrder.createdAt ? formatDateTime(workOrder.createdAt) : '-'}
+            </td>
+            <td className="border border-gray-900 px-2 py-1">
+              {workOrder.dueDate ? formatDate(workOrder.dueDate) : '-'}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* === DESCRICAO === */}
+      <div className="border border-gray-900 mb-1 wo-print-block">
+        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+          Descricao
+        </p>
+        <div className="px-2 py-1 min-h-[14mm]">
+          {/* whitespace-pre-line preserva quebras de linha do textarea */}
+          <p className="whitespace-pre-line text-[10px]">
+            {workOrder.description || ' '}
+          </p>
+        </div>
+      </div>
+
+      {/* === TAREFAS === */}
+      {sortedTasks.length > 0 && (
+        <div className="mb-1">
+          <div className="border border-gray-900 grid grid-cols-[1fr_25mm] bg-gray-100">
+            <p className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border-r border-gray-900">
+              Tarefas
+            </p>
+            <p className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-center">
+              Duracao Total Prevista
+            </p>
+          </div>
+          <div className="border border-t-0 border-gray-900 grid grid-cols-[1fr_25mm]">
+            <p className="px-2 py-0.5 text-[10px] border-r border-gray-900">
+              Total: {sortedTasks.length} {sortedTasks.length === 1 ? 'tarefa' : 'tarefas'}
+            </p>
+            <p className="px-2 py-0.5 text-[10px] text-center font-bold">
+              {formatHours(workOrder.estimatedDuration)}
+            </p>
+          </div>
+
+          {sortedTasks.map((task, taskIdx) => {
+            const steps = parseTaskSteps(task.steps)
+            const taskResources = task.resources || []
+            const laborNames = taskResources
+              .map((r) => {
+                if (r.resourceType === 'LABOR' && r.user) {
+                  return `${r.user.firstName} ${r.user.lastName}`
+                }
+                if (r.resourceType === 'SPECIALTY' && r.jobTitle) {
+                  return r.jobTitle.name
+                }
+                return null
+              })
+              .filter(Boolean) as string[]
+
+            return (
+              <div key={task.id} className="wo-task-card border border-t-0 border-gray-900">
+                {/* Header da tarefa: titulo + data inicio + data fim */}
+                <div className="grid grid-cols-[1fr_30mm_30mm] border-b border-gray-900">
+                  <div className="px-2 py-1 border-r border-gray-900 bg-gray-50">
+                    <span className="text-[10px] font-bold uppercase">
+                      Tarefa {taskIdx + 1} - {task.label}
+                    </span>
+                  </div>
+                  <div className="px-2 py-1 border-r border-gray-900 text-center">
+                    <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Inicio</p>
+                    <p className="text-[10px] mt-0.5 font-mono">
+                      {task.plannedStart
+                        ? new Date(task.plannedStart).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                        : '__/__/____  __:__'}
+                    </p>
+                  </div>
+                  <div className="px-2 py-1 text-center">
+                    <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Fim</p>
+                    <p className="text-[10px] mt-0.5 font-mono">
+                      {task.plannedEnd
+                        ? new Date(task.plannedEnd).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                        : '__/__/____  __:__'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Linha 2: Manutentor/Especialidade + Duracao da tarefa */}
+                <div className="grid grid-cols-[1fr_60mm] border-b border-gray-900">
+                  <div className="px-2 py-1 border-r border-gray-900">
+                    <span className="text-[7px] font-bold uppercase text-gray-500">Manutentor / Especialidade</span>
+                    <p className="text-[10px] mt-0.5 min-h-[4mm]">
+                      {laborNames.length > 0 ? laborNames.join(' · ') : ' '}
+                    </p>
+                  </div>
+                  <div className="px-2 py-1 text-center">
+                    <p className="text-[7px] font-bold uppercase text-gray-500">Duracao da Tarefa</p>
+                    <p className="text-[10px] mt-0.5 font-bold">
+                      {formatHours(task.executionTime)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Etapas + Resposta */}
+                {steps.length > 0 ? (
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-500">
+                        <th className="px-2 py-0.5 text-left bg-gray-50 w-[7mm]">&nbsp;</th>
+                        <th className="px-2 py-0.5 text-left bg-gray-50">Etapas</th>
+                        <th className="px-2 py-0.5 text-left bg-gray-50 w-[55mm] border-l border-gray-300">Resposta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {steps.map((step, stepIdx) => (
+                        <tr key={step.stepId || stepIdx} className="wo-step-row">
+                          <td className="border-t border-gray-300 px-2 py-1 text-center align-middle">
+                            <span className="inline-block w-3 h-3 border border-gray-700"></span>
+                          </td>
+                          <td className="border-t border-gray-300 px-2 py-1 text-[10px] align-middle">
+                            {step.stepName}
+                          </td>
+                          <td className="border-t border-l border-gray-300 px-2 py-1 align-middle">
+                            <span className="block w-full border-b border-gray-400 min-h-[5mm]">&nbsp;</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="px-2 py-1 text-[9px] text-gray-500 italic">
+                    Sem etapas detalhadas para esta tarefa.
+                  </div>
+                )}
+                {task.notes && (
+                  <p className="px-2 py-1 text-[9px] text-gray-500 border-t border-gray-300">
+                    Nota: {task.notes}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* === RECURSOS - MATERIAIS / FERRAMENTAS lado a lado === */}
+      <div className="grid grid-cols-2 gap-2 mb-1 wo-print-block">
+        {/* Materiais */}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
+                Recursos - Materiais
+              </th>
+            </tr>
+            <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
+              <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
+              <th className="border border-gray-900 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
+              <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
+            </tr>
+          </thead>
+          <tbody>
+            {materialsRows.map((r, idx) => (
+              <tr key={r?.id || `mat-${idx}`}>
+                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
+                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.unit || ' '}</td>
+                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Ferramentas */}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
+                Recursos - Ferramentas
+              </th>
+            </tr>
+            <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
+              <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
+              <th className="border border-gray-900 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
+              <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
+            </tr>
+          </thead>
+          <tbody>
+            {toolsRows.map((r, idx) => (
+              <tr key={r?.id || `tool-${idx}`}>
+                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
+                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.unit || ' '}</td>
+                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* === OBSERVACOES === */}
+      <div className="border border-gray-900 mb-2 wo-print-block">
+        <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 flex items-baseline gap-2">
+          <span className="text-[9px] font-bold uppercase tracking-wider">Observacoes</span>
+          <span className="text-[8px] italic text-gray-600">Area de livre preenchimento do manutentor</span>
+        </div>
+        <div className="px-2 py-2 space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="border-b border-gray-400">&nbsp;</div>
+          ))}
+        </div>
+      </div>
+
+      {/* === ASSINATURA UNICA (EXECUTANTE) === */}
+      <div className="flex justify-end mt-6 wo-print-signature">
+        <div className="w-[80mm] text-center">
+          <div className="border-t border-gray-900 pt-0.5">
+            <p className="text-[9px] font-bold uppercase tracking-wider">Executante</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-
-export function WorkOrderPrintView({ workOrderId, onClose }: WorkOrderPrintViewProps) {
+export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = false }: WorkOrderPrintViewProps) {
   const { user } = useAuth()
-  const [workOrder, setWorkOrder] = useState<PrintWorkOrder | null>(null)
-  const [loading, setLoading] = useState(true)
-  const printRef = useRef<HTMLDivElement>(null)
+  const [workOrder, setWorkOrder] = useState<PrintWorkOrder | null>(data ?? null)
+  const [loading, setLoading] = useState(!data)
   const companyLogo = user?.company?.logo || null
   const companyName = user?.company?.name || 'Empresa'
 
   useEffect(() => {
+    if (data) {
+      setWorkOrder(data)
+      setLoading(false)
+      return
+    }
     const load = async () => {
       try {
         const res = await fetch(`/api/work-orders/${workOrderId}`)
         if (res.ok) {
-          const { data } = await res.json()
-          setWorkOrder(data)
+          const { data: woData } = await res.json()
+          setWorkOrder(woData)
         }
       } catch {
-        // silently fail
+        // silent fail
       }
       setLoading(false)
     }
     void load()
-  }, [workOrderId])
+  }, [workOrderId, data])
 
   const handlePrint = () => {
     window.print()
+  }
+
+  if (embedded) {
+    if (!workOrder) return null
+    return <WorkOrderPrintSheet workOrder={workOrder} companyLogo={companyLogo} companyName={companyName} />
   }
 
   if (loading) {
@@ -154,30 +528,59 @@ export function WorkOrderPrintView({ workOrderId, onClose }: WorkOrderPrintViewP
   }
 
   const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
-  const sortedTasks = [...(workOrder.tasks || [])].sort((a, b) => a.order - b.order)
-
-  const groupedResources: Record<string, typeof workOrder.woResources> = {}
-  for (const r of (workOrder.woResources || [])) {
-    const type = r.resourceType || 'MATERIAL'
-    if (!groupedResources[type]) groupedResources[type] = []
-    groupedResources[type]!.push(r)
-  }
-
-  // Build asset hierarchy chain
-  const assetChain: string[] = []
-  if (workOrder.asset) {
-    let current = workOrder.asset.parentAsset
-    while (current) {
-      assetChain.unshift(current.name)
-      current = current.parentAsset
-    }
-    assetChain.push(workOrder.asset.name)
-  }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto">
-      {/* Toolbar - hidden on print */}
-      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+    <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto wo-print-overlay">
+      {/* Estilos de impressao A4 — paginacao multi-pagina, margens minimas,
+          e neutralizacao do overlay/toolbar para fluxo limpo. */}
+      <style>{`
+        @page {
+          size: A4 portrait;
+          margin: 6mm 8mm;
+        }
+        @media print {
+          html, body {
+            background: white !important;
+          }
+          .wo-print-overlay {
+            position: static !important;
+            background: white !important;
+            overflow: visible !important;
+          }
+          .wo-print-toolbar { display: none !important; }
+          .wo-print-page-wrapper {
+            padding: 0 !important;
+            display: block !important;
+          }
+          .wo-print-sheet {
+            width: 100% !important;
+            min-height: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+          .wo-task-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          .wo-step-row {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          .wo-print-block {
+            break-inside: avoid-page;
+          }
+          .wo-print-signature {
+            break-before: avoid;
+            page-break-before: avoid;
+          }
+          thead {
+            display: table-header-group;
+          }
+        }
+      `}</style>
+
+      {/* Toolbar (escondida na impressao) */}
+      <div className="wo-print-toolbar print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">Visualizacao de Impressao - OS {displayId}</h2>
         <div className="flex items-center gap-3">
           <button
@@ -196,293 +599,10 @@ export function WorkOrderPrintView({ workOrderId, onClose }: WorkOrderPrintViewP
         </div>
       </div>
 
-      {/* A4 Page */}
-      <div className="flex justify-center py-8 print:py-0 print:block">
-        <div
-          ref={printRef}
-          className="bg-white w-[210mm] min-h-[297mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed"
-        >
-          {/* === CABEÇALHO === */}
-          <div className="flex items-start justify-between border-b-2 border-gray-900 pb-3 mb-4">
-            {/* Logo */}
-            <div className="flex-shrink-0 w-[45mm]">
-              {companyLogo ? (
-                <div className="bg-gray-600 rounded px-3 py-2 inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={companyLogo}
-                    alt={companyName}
-                    className="max-h-[14mm] max-w-[40mm] object-contain object-left"
-                  />
-                </div>
-              ) : (
-                <span className="text-sm font-bold text-gray-900">{companyName}</span>
-              )}
-            </div>
-
-            {/* Campos de Data/Hora */}
-            <div className="flex-1 px-4">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500 mb-1 text-center">Controle de Execucao</p>
-              <div className="grid grid-cols-4 gap-2">
-                <div className="border border-gray-400 rounded px-2 py-1.5">
-                  <p className="text-[8px] font-bold uppercase text-gray-500">Data Inicio</p>
-                  <p className="text-[10px] mt-0.5">____/____/______</p>
-                </div>
-                <div className="border border-gray-400 rounded px-2 py-1.5">
-                  <p className="text-[8px] font-bold uppercase text-gray-500">Hora Inicio</p>
-                  <p className="text-[10px] mt-0.5">______:______</p>
-                </div>
-                <div className="border border-gray-400 rounded px-2 py-1.5">
-                  <p className="text-[8px] font-bold uppercase text-gray-500">Data Fim</p>
-                  <p className="text-[10px] mt-0.5">____/____/______</p>
-                </div>
-                <div className="border border-gray-400 rounded px-2 py-1.5">
-                  <p className="text-[8px] font-bold uppercase text-gray-500">Hora Fim</p>
-                  <p className="text-[10px] mt-0.5">______:______</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Número da OS */}
-            <div className="flex-shrink-0 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">Ordem de Servico</p>
-              <p className="text-xl font-black text-gray-900 mt-0.5">{displayId}</p>
-              <p className="text-[9px] text-gray-500">{getTypeLabel(workOrder.type)}</p>
-            </div>
-          </div>
-
-          {/* === 1. RESUMO DA OS === */}
-          <div className="mb-3">
-            <div className="bg-gray-100 border border-gray-300 px-2 py-1 mb-2">
-              <span className="font-bold text-[10px] uppercase tracking-wider">Resumo da OS</span>
-            </div>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-2 px-1">
-              <div>
-                <p className="text-[9px] font-bold text-gray-500 uppercase">Status</p>
-                <p className="font-medium">{getStatusLabel(workOrder.status)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-gray-500 uppercase">Prioridade</p>
-                <p className="font-medium">{getPriorityLabel(workOrder.priority)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-gray-500 uppercase">Tipo</p>
-                <p className="font-medium">{getTypeLabel(workOrder.type)}</p>
-              </div>
-              {workOrder.createdAt && (
-                <div>
-                  <p className="text-[9px] font-bold text-gray-500 uppercase">Criado em</p>
-                  <p className="font-medium">{formatDateTime(workOrder.createdAt)}</p>
-                </div>
-              )}
-              {workOrder.dueDate && (
-                <div>
-                  <p className="text-[9px] font-bold text-gray-500 uppercase">Vencimento</p>
-                  <p className="font-medium">{formatDate(workOrder.dueDate)}</p>
-                </div>
-              )}
-              {workOrder.estimatedDuration != null && workOrder.estimatedDuration > 0 && (
-                <div>
-                  <p className="text-[9px] font-bold text-gray-500 uppercase">Tempo Estimado</p>
-                  <p className="font-medium">{formatHours(workOrder.estimatedDuration)}</p>
-                </div>
-              )}
-            </div>
-            {workOrder.description && (
-              <div className="mt-2 px-1">
-                <p className="text-[9px] font-bold text-gray-500 uppercase">Descricao</p>
-                <p className="font-medium">{workOrder.description}</p>
-              </div>
-            )}
-          </div>
-
-          {/* === 2. ATIVO E LOCALIZAÇÃO === */}
-          {(workOrder.asset || workOrder.location) && (
-            <div className="mb-3">
-              <div className="bg-gray-100 border border-gray-300 px-2 py-1 mb-2">
-                <span className="font-bold text-[10px] uppercase tracking-wider">Ativo e Localizacao</span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-1">
-                {workOrder.asset && (
-                  <div>
-                    <p className="text-[9px] font-bold text-gray-500 uppercase">Ativo</p>
-                    <p className="font-medium">{workOrder.asset.name}</p>
-                  </div>
-                )}
-                {workOrder.location && (
-                  <div>
-                    <p className="text-[9px] font-bold text-gray-500 uppercase">Localizacao</p>
-                    <p className="font-medium">{workOrder.location.name}</p>
-                  </div>
-                )}
-              </div>
-              {assetChain.length > 1 && (
-                <div className="mt-1 px-1 text-[9px] text-gray-500">
-                  Hierarquia: {assetChain.join(' > ')}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* === 3. PLANO DE ORIGEM === */}
-          {workOrder.assetMaintenancePlanId && (
-            <div className="mb-3">
-              <div className="bg-gray-100 border border-gray-300 px-2 py-1 mb-2">
-                <span className="font-bold text-[10px] uppercase tracking-wider">Plano de Origem</span>
-              </div>
-              <div className="grid grid-cols-3 gap-x-4 gap-y-2 px-1">
-                {workOrder.assetMaintenancePlan?.name && (
-                  <div className="col-span-2">
-                    <p className="text-[9px] font-bold text-gray-500 uppercase">Nome da Manutencao</p>
-                    <p className="font-medium">{workOrder.assetMaintenancePlan.name}</p>
-                  </div>
-                )}
-                {workOrder.maintenancePlanExec?.planNumber && (
-                  <div>
-                    <p className="text-[9px] font-bold text-gray-500 uppercase">Plano de Execucao</p>
-                    <p className="font-medium">Plano #{workOrder.maintenancePlanExec.planNumber}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* === 4. TAREFAS === */}
-          {sortedTasks.length > 0 && (
-            <div className="mb-3">
-              <div className="bg-gray-100 border border-gray-300 px-2 py-1 mb-2">
-                <span className="font-bold text-[10px] uppercase tracking-wider">Tarefas ({sortedTasks.length})</span>
-              </div>
-              <div className="space-y-2">
-                {sortedTasks.map((task, taskIdx) => {
-                  const steps = parseTaskSteps(task.steps)
-                  return (
-                    <div key={task.id} className="border border-gray-200 rounded px-2 py-1.5">
-                      <div className="flex items-start gap-2">
-                        <span className="text-[10px] font-bold text-gray-400 mt-0.5">{taskIdx + 1}.</span>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-[11px]">{task.label}</span>
-                            {task.executionTime != null && (
-                              <span className="text-[9px] text-gray-500">({formatHours(task.executionTime)})</span>
-                            )}
-                          </div>
-                          {(task.plannedStart || task.plannedEnd) && (
-                            <p className="text-[9px] text-gray-600 mt-0.5">
-                              Previsao: {task.plannedStart ? new Date(task.plannedStart).toLocaleString('pt-BR') : '-'} → {task.plannedEnd ? new Date(task.plannedEnd).toLocaleString('pt-BR') : '-'}
-                            </p>
-                          )}
-                          {task.notes && (
-                            <p className="text-[9px] text-gray-500 mt-0.5">{task.notes}</p>
-                          )}
-
-                          {/* Etapas com tipo evidenciado + campo em branco */}
-                          {steps.length > 0 && (
-                            <div className="mt-1.5 space-y-1">
-                              <p className="text-[8px] font-bold text-gray-500 uppercase">Etapas:</p>
-                              {steps.map((step, stepIdx) => (
-                                <div key={step.stepId || stepIdx} className="flex items-start gap-2 border-b border-gray-100 pb-1">
-                                  <span className="w-4 h-4 border border-gray-400 rounded-sm flex-shrink-0 mt-0.5"></span>
-                                  <div className="flex-1">
-                                    <span className="text-[10px]">{step.stepName}</span>
-                                    {step.optionType && step.optionType !== 'NONE' && (
-                                      <span className="ml-1 text-[8px] font-bold px-1 py-0.5 rounded bg-gray-200 text-gray-700 uppercase">
-                                        {step.optionType === 'RESPONSE' ? 'Resposta' : 'Opcao'}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {/* Campo em branco para preenchimento manual */}
-                                  <div className="flex-shrink-0 w-[35mm] border-b border-gray-400 ml-2">
-                                    <span className="text-[7px] text-gray-400">
-                                      {step.optionType === 'RESPONSE' ? 'Valor:' : step.optionType === 'OPTION' ? 'Opcao:' : ''}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* === 5. RECURSOS === */}
-          {Object.keys(groupedResources).length > 0 && (
-            <div className="mb-3">
-              <div className="bg-gray-100 border border-gray-300 px-2 py-1 mb-2">
-                <span className="font-bold text-[10px] uppercase tracking-wider">Recursos</span>
-              </div>
-              {Object.entries(groupedResources).map(([type, resources]) => {
-                const isLabor = type === 'LABOR' || type === 'SPECIALTY'
-                return (
-                  <div key={type} className="mb-2">
-                    <p className="text-[9px] font-bold text-gray-500 uppercase mb-1 px-1">{getResourceTypeLabel(type)}</p>
-                    <table className="w-full text-[10px]">
-                      <thead>
-                        <tr className="border-b border-gray-300">
-                          <th className="text-left py-0.5 px-1 font-bold text-gray-500 uppercase text-[8px]">Nome</th>
-                          <th className="text-center py-0.5 px-1 font-bold text-gray-500 uppercase text-[8px]">Qtd</th>
-                          {isLabor ? (
-                            <th className="text-center py-0.5 px-1 font-bold text-gray-500 uppercase text-[8px]">Horas</th>
-                          ) : (
-                            <th className="text-center py-0.5 px-1 font-bold text-gray-500 uppercase text-[8px]">Unidade</th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {resources!.map((r) => {
-                          const name = r.resource?.name
-                            || r.jobTitle?.name
-                            || (r.user ? `${r.user.firstName} ${r.user.lastName}` : 'Recurso')
-                          return (
-                            <tr key={r.id} className="border-b border-gray-100">
-                              <td className="py-0.5 px-1">{name}</td>
-                              <td className="py-0.5 px-1 text-center">{r.quantity || '-'}</td>
-                              {isLabor ? (
-                                <td className="py-0.5 px-1 text-center">{r.hours || '-'}</td>
-                              ) : (
-                                <td className="py-0.5 px-1 text-center">{r.unit || 'un'}</td>
-                              )}
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* === OBSERVAÇÕES (linhas em branco) === */}
-          <div className="mt-6">
-            <div className="bg-gray-100 border border-gray-300 px-2 py-1 mb-3">
-              <span className="font-bold text-[10px] uppercase tracking-wider">Observacoes</span>
-            </div>
-            <div className="space-y-4 px-1">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="border-b border-gray-300 pb-1"></div>
-              ))}
-            </div>
-          </div>
-
-          {/* === ASSINATURAS === */}
-          <div className="mt-8 grid grid-cols-2 gap-8 px-4">
-            <div className="text-center">
-              <div className="border-t border-gray-900 pt-1 mt-8">
-                <p className="text-[9px] font-bold uppercase text-gray-500">Executante</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="border-t border-gray-900 pt-1 mt-8">
-                <p className="text-[9px] font-bold uppercase text-gray-500">Responsavel</p>
-              </div>
-            </div>
-          </div>
+      {/* Folha A4 */}
+      <div className="wo-print-page-wrapper flex justify-center py-6">
+        <div className="bg-white w-[210mm] shadow-lg p-[6mm]">
+          <WorkOrderPrintSheet workOrder={workOrder} companyLogo={companyLogo} companyName={companyName} />
         </div>
       </div>
     </div>

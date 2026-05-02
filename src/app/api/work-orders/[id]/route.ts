@@ -6,6 +6,13 @@ import { isOperationalRole, normalizeUserRole } from '@/lib/user-roles'
 import { normalizeTextPayload } from '@/lib/textNormalizer'
 import { recordAudit } from '@/lib/audit/recordAudit'
 import { toDecimalHours, diffHours } from '@/lib/units/time'
+import {
+  isTaskResourcesAllowed,
+  validateTaskResources,
+  validateLaborUsers,
+  insertTaskResources,
+  type TaskResourcePayload,
+} from '@/lib/workOrders/taskResources'
 
 // Mesmo helper do POST: valida janela planejada e deriva executionTime
 // quando ambos os timestamps existirem.
@@ -60,7 +67,14 @@ export async function GET(
         createdBy:User!createdById(id, firstName, lastName, email, image),
         completedBy:User!completedById(id, firstName, lastName, email),
         assignedTo:User!assignedToId(id, firstName, lastName),
-        tasks:Task(*),
+        tasks:Task(
+          *,
+          resources:TaskResource(
+            id, resourceType, hours, quantity,
+            user:User(id, firstName, lastName),
+            jobTitle:JobTitle(id, name)
+          )
+        ),
         woResources:WorkOrderResource(id, resourceType, quantity, hours, unit, resource:Resource(id, name), jobTitle:JobTitle(id, name), user:User(id, firstName, lastName)),
         files:File(*),
         sourceRequest:Request(
@@ -272,6 +286,7 @@ export async function PATCH(
         plannedStart?: string | Date | null
         plannedEnd?: string | Date | null
         steps?: unknown
+        resources?: TaskResourcePayload[]
       }
       const incomingTasks = body.tasks as IncomingTask[]
       const validTasks = incomingTasks.filter((t) => t && typeof t.label === 'string' && t.label.trim())
@@ -287,6 +302,35 @@ export async function PATCH(
             { status: 400 }
           )
         }
+      }
+
+      // Gating de mao de obra por tarefa: usa o assetMaintenancePlanId
+      // ja persistido na OS (ou null para OSs manuais).
+      const planId = (workOrder as { assetMaintenancePlanId?: string | null }).assetMaintenancePlanId || null
+      const allowsTaskResources = await isTaskResourcesAllowed(planId, session.companyId)
+      const taskResourcesByIndex: TaskResourcePayload[][] = validTasks.map((t) =>
+        Array.isArray(t.resources) ? t.resources : []
+      )
+      const hasAnyTaskResources = taskResourcesByIndex.some((r) => r.length > 0)
+      if (hasAnyTaskResources && !allowsTaskResources) {
+        return NextResponse.json(
+          { error: 'Mao de obra por tarefa so e permitida em OSs manuais ou de plano UNICA' },
+          { status: 400 }
+        )
+      }
+      for (let i = 0; i < taskResourcesByIndex.length; i++) {
+        const shapeError = validateTaskResources(taskResourcesByIndex[i])
+        if (shapeError) {
+          return NextResponse.json(
+            { error: `Tarefa ${i + 1}: ${shapeError}` },
+            { status: 400 }
+          )
+        }
+      }
+      const allLaborResources = taskResourcesByIndex.flat()
+      const laborError = await validateLaborUsers(allLaborResources, session.companyId)
+      if (laborError) {
+        return NextResponse.json({ error: laborError }, { status: 400 })
       }
 
       const { error: deleteTasksError } = await supabase
@@ -312,6 +356,13 @@ export async function PATCH(
         }))
         const { error: insertTasksError } = await supabase.from('Task').insert(taskInserts)
         if (insertTasksError) throw insertTasksError
+
+        // Persistir TaskResource por tarefa
+        for (let index = 0; index < taskInserts.length; index++) {
+          const resources = taskResourcesByIndex[index]
+          if (resources.length === 0) continue
+          await insertTaskResources(taskInserts[index].id, resources)
+        }
       }
     }
 
