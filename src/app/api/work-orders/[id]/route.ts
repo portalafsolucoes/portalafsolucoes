@@ -75,7 +75,7 @@ export async function GET(
             jobTitle:JobTitle(id, name)
           )
         ),
-        woResources:WorkOrderResource(id, resourceType, quantity, hours, unit, resource:Resource(id, name), jobTitle:JobTitle(id, name), user:User(id, firstName, lastName)),
+        woResources:WorkOrderResource(id, resourceType, quantity, hours, unit, taskId, resource:Resource(id, name), jobTitle:JobTitle(id, name), user:User(id, firstName, lastName)),
         files:File(*),
         sourceRequest:Request(
           *,
@@ -226,6 +226,10 @@ export async function PATCH(
       finalDueDate = d.toISOString()
     }
 
+    // taskInserts e exposto fora do bloco de sync de tasks para permitir que o
+    // sync de recursos (woResources) abaixo resolva `taskOrder -> taskId`.
+    let taskInsertsForResources: { id: string }[] = []
+
     // Sincronizar title com a primeira tarefa quando tasks vier no payload
     // (mesma convencao do POST: title = primeira tarefa)
     let effectiveTitle: unknown = body.title
@@ -363,7 +367,21 @@ export async function PATCH(
           if (resources.length === 0) continue
           await insertTaskResources(taskInserts[index].id, resources)
         }
+
+        // Expoe ids gerados para o sync de recursos abaixo
+        taskInsertsForResources = taskInserts.map((t) => ({ id: t.id }))
       }
+    }
+
+    // Quando o body NAO traz `tasks`, mas traz `resources` com `taskOrder`,
+    // ainda precisamos resolver para tasks ja existentes na OS (na ordem atual).
+    if (!Array.isArray(body.tasks) && Array.isArray(body.resources)) {
+      const { data: existingTasks } = await supabase
+        .from('Task')
+        .select('id, order')
+        .eq('workOrderId', id)
+        .order('order', { ascending: true })
+      taskInsertsForResources = (existingTasks || []).map((t) => ({ id: t.id as string }))
     }
 
     // Sync de recursos (woResources): mesmo padrao — quando `resources` esta no body,
@@ -377,6 +395,8 @@ export async function PATCH(
         quantity?: number | null
         hours?: number | null
         unit?: string | null
+        taskOrder?: number | null
+        taskId?: string | null
       }
       const incomingResources = body.resources as IncomingResource[]
 
@@ -387,17 +407,32 @@ export async function PATCH(
       if (deleteResError) throw deleteResError
 
       if (incomingResources.length > 0) {
-        const resourceInserts = incomingResources.map((r) => ({
-          id: generateId(),
-          workOrderId: id,
-          resourceType: r.resourceType || 'MATERIAL',
-          resourceId: r.resourceId || null,
-          jobTitleId: r.jobTitleId || null,
-          userId: r.userId || null,
-          quantity: r.quantity ?? null,
-          hours: r.hours ?? null,
-          unit: r.unit || null,
-        }))
+        const resourceInserts = incomingResources.map((r) => {
+          // Resolucao de taskId: 1) taskId explicito, 2) taskOrder (posicao)
+          let resolvedTaskId: string | null = null
+          if (r.taskId) {
+            const match = taskInsertsForResources.find((t) => t.id === r.taskId)
+            if (match) resolvedTaskId = r.taskId
+          } else if (
+            typeof r.taskOrder === 'number' &&
+            r.taskOrder >= 0 &&
+            r.taskOrder < taskInsertsForResources.length
+          ) {
+            resolvedTaskId = taskInsertsForResources[r.taskOrder].id
+          }
+          return {
+            id: generateId(),
+            workOrderId: id,
+            resourceType: r.resourceType || 'MATERIAL',
+            resourceId: r.resourceId || null,
+            jobTitleId: r.jobTitleId || null,
+            userId: r.userId || null,
+            quantity: r.quantity ?? null,
+            hours: r.hours ?? null,
+            unit: r.unit || null,
+            taskId: resolvedTaskId,
+          }
+        })
         const { error: insertResError } = await supabase.from('WorkOrderResource').insert(resourceInserts)
         if (insertResError) throw insertResError
       }

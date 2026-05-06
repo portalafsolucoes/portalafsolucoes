@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
 import { formatHours } from '@/lib/units/time'
+import { PrintPortal } from '@/components/print/PrintPortal'
 
 interface AssetChain {
   name: string
@@ -39,6 +40,7 @@ interface PrintWoResource {
   quantity?: number | null
   hours?: number | null
   unit?: string | null
+  taskId?: string | null
   resource?: { id: string; name: string } | null
   jobTitle?: { id: string; name: string } | null
   user?: { id: string; firstName: string; lastName: string } | null
@@ -74,20 +76,8 @@ export interface PrintWorkOrder {
 interface WorkOrderPrintViewProps {
   workOrderId: string
   onClose: () => void
-  // Modo embedded: usado pelo BatchPrintView para renderizar so a folha A4,
-  // sem overlay/toolbar/wrapper de carregamento.
   data?: PrintWorkOrder | null
   embedded?: boolean
-}
-
-function getTypeLabel(type?: string | null): string {
-  switch (type) {
-    case 'PREVENTIVE': return 'PREVENTIVA'
-    case 'CORRECTIVE': return 'CORRETIVA'
-    case 'PREDICTIVE': return 'PREDITIVA'
-    case 'REACTIVE': return 'REATIVA'
-    default: return type || '-'
-  }
 }
 
 function getPriorityLabel(priority: string): string {
@@ -111,9 +101,10 @@ function getStatusLabel(status: string): string {
   }
 }
 
-// Folha A4 — layout fiel ao modelo, com paginacao multi-pagina via @page A4.
-// O conteudo flui livremente no DOM e o navegador quebra em paginas conforme
-// necessario. break-inside: avoid em cada card de tarefa evita corte de tarefa.
+// Folha A4 — layout fiel ao MODELO DE OS_REV1.pdf, com paginacao multi-pagina
+// via @page A4. O conteudo flui livremente no DOM e o navegador quebra em
+// paginas conforme necessario. break-inside: avoid em cada card de tarefa
+// evita corte de tarefa no meio.
 export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
   workOrder: PrintWorkOrder
   companyLogo: string | null
@@ -122,14 +113,25 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
   const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
   const planNumber = workOrder.maintenancePlanExec?.planNumber ?? null
   const sortedTasks = [...(workOrder.tasks || [])].sort((a, b) => a.order - b.order)
+  const firstTaskId = sortedTasks[0]?.id ?? null
 
-  // Recursos a nivel OS — o print exibe apenas Materiais e Ferramentas em
-  // duas tabelas lado a lado (modelo). LABOR/SPECIALTY a nivel OS, se ainda
-  // existirem em registros legados, NAO entram aqui — mao de obra mora dentro
-  // de cada tarefa via TaskResource.
+  // Recursos a nivel OS (WorkOrderResource) — agrupados por tarefa via taskId.
+  // Linhas com taskId === null (legado, antes da migracao) caem na primeira
+  // tarefa. LABOR/SPECIALTY a nivel OS NAO entram aqui — mao de obra mora
+  // dentro de cada tarefa via TaskResource (campo task.resources).
   const woRes = workOrder.woResources || []
-  const materials = woRes.filter(r => r.resourceType === 'MATERIAL')
-  const tools = woRes.filter(r => r.resourceType === 'TOOL')
+  const resourcesByTask = (taskId: string): { materials: PrintWoResource[]; tools: PrintWoResource[] } => {
+    const matches = woRes.filter((r) => {
+      if (r.resourceType !== 'MATERIAL' && r.resourceType !== 'TOOL') return false
+      if (r.taskId) return r.taskId === taskId
+      // Legado: linhas sem taskId vao para a primeira tarefa
+      return taskId === firstTaskId
+    })
+    return {
+      materials: matches.filter((r) => r.resourceType === 'MATERIAL'),
+      tools: matches.filter((r) => r.resourceType === 'TOOL'),
+    }
+  }
 
   // Hierarquia do ativo
   const assetChain: string[] = []
@@ -141,68 +143,66 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
     }
   }
 
-  // Garante numero minimo de linhas para o executante anotar a mao
-  const padArray = <T,>(arr: T[], min: number, empty: T): T[] => {
-    if (arr.length >= min) return arr
-    return [...arr, ...Array.from({ length: min - arr.length }, () => empty)]
-  }
-  const materialsRows = padArray<PrintWoResource | null>(materials, 6, null)
-  const toolsRows = padArray<PrintWoResource | null>(tools, 6, null)
-
   return (
     <div className="wo-print-sheet bg-white text-[10px] text-gray-900 leading-snug">
-      {/* === CABECALHO === */}
-      <div className="wo-print-header grid grid-cols-[45mm_1fr_38mm] gap-2 border-2 border-gray-900 mb-1">
-        {/* Logo + Nº Plano + Nº OS (lado esquerdo, espelhando o modelo) */}
-        <div className="border-r-2 border-gray-900 px-2 py-1 flex flex-col items-center justify-center text-center">
-          {companyLogo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={companyLogo}
-              alt={companyName}
-              className="max-h-[12mm] max-w-[42mm] object-contain"
-            />
-          ) : (
-            <span className="text-[10px] font-bold">{companyName}</span>
-          )}
-          {planNumber && (
-            <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wide">
-              Plano #{planNumber}
-            </p>
-          )}
-        </div>
-
-        {/* Centro: Controle de execucao (apenas 2 caixas: Inicio, Fim) */}
-        <div className="px-2 py-1 flex flex-col">
-          <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600 text-center mb-0.5">
-            Controle de Execucao
-          </p>
-          <div className="grid grid-cols-2 gap-2 flex-1">
-            <div className="border border-gray-400 px-2 py-1 flex flex-col">
-              <p className="text-[7px] font-bold uppercase text-gray-500">Data e Horario Inicio</p>
-              <p className="text-[10px] mt-auto font-mono">____/____/______&nbsp;&nbsp;____:____</p>
+      {/* === CABECALHO — fiel ao modelo (PDF):
+          [LOGO + Nº OS + Nº Plano | INÍCIO | FIM]
+          LOGO ocupa metade superior da coluna esquerda; Nº OS e Nº Plano
+          ocupam a metade inferior em duas sub-colunas. */}
+      <div className="grid grid-cols-[60mm_1fr_1fr] border-2 border-gray-900 mb-1 print-block-keep">
+        {/* Coluna esquerda: logo + Nº OS + Nº Plano */}
+        <div className="border-r-2 border-gray-900 flex flex-col">
+          <div className="border-b border-gray-900 flex items-center justify-center px-2 py-2 min-h-[14mm]">
+            {companyLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={companyLogo}
+                alt={companyName}
+                className="max-h-[12mm] max-w-[50mm] object-contain"
+              />
+            ) : (
+              <span className="text-[10px] font-bold uppercase tracking-wider">{companyName}</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="px-2 py-1 border-r border-gray-900">
+              <p className="text-[7px] font-bold uppercase tracking-wide text-gray-500">Nº OS</p>
+              <p className="text-[10px] font-bold mt-0.5">{displayId}</p>
             </div>
-            <div className="border border-gray-400 px-2 py-1 flex flex-col">
-              <p className="text-[7px] font-bold uppercase text-gray-500">Data e Horario Fim</p>
-              <p className="text-[10px] mt-auto font-mono">____/____/______&nbsp;&nbsp;____:____</p>
+            <div className="px-2 py-1">
+              <p className="text-[7px] font-bold uppercase tracking-wide text-gray-500">Nº Plano</p>
+              <p className="text-[10px] mt-0.5">{planNumber ?? '-'}</p>
             </div>
           </div>
         </div>
 
-        {/* Direita: Numero da OS */}
-        <div className="border-l-2 border-gray-900 px-2 py-1 text-center flex flex-col items-center justify-center">
-          <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600">Ordem de Servico</p>
-          <p className="text-2xl font-black leading-none mt-0.5">{displayId}</p>
-          <p className="text-[8px] uppercase mt-0.5 text-gray-700">{getTypeLabel(workOrder.type)}</p>
+        {/* Coluna central: INÍCIO */}
+        <div className="border-r-2 border-gray-900 flex flex-col">
+          <div className="border-b border-gray-900 px-2 py-1 text-center bg-gray-50">
+            <p className="text-[10px] font-bold uppercase tracking-wider">Inicio</p>
+          </div>
+          <div className="flex-1 flex items-center justify-center px-2 py-2">
+            <p className="font-mono text-[10px]">____/____/______&nbsp;&nbsp;____:____</p>
+          </div>
+        </div>
+
+        {/* Coluna direita: FIM */}
+        <div className="flex flex-col">
+          <div className="border-b border-gray-900 px-2 py-1 text-center bg-gray-50">
+            <p className="text-[10px] font-bold uppercase tracking-wider">Fim</p>
+          </div>
+          <div className="flex-1 flex items-center justify-center px-2 py-2">
+            <p className="font-mono text-[10px]">____/____/______&nbsp;&nbsp;____:____</p>
+          </div>
         </div>
       </div>
 
-      {/* === ATIVO E LOCALIZACAO === */}
-      <table className="w-full border-collapse mb-1 wo-print-block">
+      {/* === IDENTIFICACAO DO ATIVO === */}
+      <table className="w-full border-collapse mb-1 print-block-keep">
         <thead>
           <tr>
-            <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
-              Ativo e Localizacao
+            <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+              Identificacao do Ativo
             </th>
           </tr>
           <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
@@ -223,11 +223,11 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
       </table>
 
       {/* === RESUMO DA OS === */}
-      <table className="w-full border-collapse mb-1 wo-print-block">
+      <table className="w-full border-collapse mb-1 print-block-keep">
         <thead>
           <tr>
-            <th colSpan={5} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
-              Resumo da O.S.
+            <th colSpan={5} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+              Resumo da OS
             </th>
           </tr>
           <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
@@ -245,7 +245,7 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
             <td className="border border-gray-900 px-2 py-1">
               {workOrder.serviceType
                 ? `${workOrder.serviceType.code} - ${workOrder.serviceType.name}`
-                : getTypeLabel(workOrder.type)}
+                : '-'}
             </td>
             <td className="border border-gray-900 px-2 py-1">
               {workOrder.createdAt ? formatDateTime(workOrder.createdAt) : '-'}
@@ -258,206 +258,210 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
       </table>
 
       {/* === DESCRICAO === */}
-      <div className="border border-gray-900 mb-1 wo-print-block">
-        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+      <div className="border border-gray-900 mb-2 print-block-keep">
+        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
           Descricao
         </p>
         <div className="px-2 py-1 min-h-[14mm]">
-          {/* whitespace-pre-line preserva quebras de linha do textarea */}
           <p className="whitespace-pre-line text-[10px]">
-            {workOrder.description || ' '}
+            {workOrder.description || ' '}
           </p>
         </div>
       </div>
 
       {/* === TAREFAS === */}
-      {sortedTasks.length > 0 && (
-        <div className="mb-1">
-          <div className="border border-gray-900 grid grid-cols-[1fr_25mm] bg-gray-100">
-            <p className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border-r border-gray-900">
-              Tarefas
-            </p>
-            <p className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-center">
-              Duracao Total Prevista
-            </p>
-          </div>
-          <div className="border border-t-0 border-gray-900 grid grid-cols-[1fr_25mm]">
-            <p className="px-2 py-0.5 text-[10px] border-r border-gray-900">
-              Total: {sortedTasks.length} {sortedTasks.length === 1 ? 'tarefa' : 'tarefas'}
-            </p>
-            <p className="px-2 py-0.5 text-[10px] text-center font-bold">
-              {formatHours(workOrder.estimatedDuration)}
-            </p>
-          </div>
+      {sortedTasks.map((task, taskIdx) => {
+        const steps = parseTaskSteps(task.steps)
+        const taskResources = task.resources || []
+        const laborNames = taskResources
+          .map((r) => {
+            if (r.resourceType === 'LABOR' && r.user) {
+              return `${r.user.firstName} ${r.user.lastName}`
+            }
+            if (r.resourceType === 'SPECIALTY' && r.jobTitle) {
+              return r.jobTitle.name
+            }
+            return null
+          })
+          .filter(Boolean) as string[]
 
-          {sortedTasks.map((task, taskIdx) => {
-            const steps = parseTaskSteps(task.steps)
-            const taskResources = task.resources || []
-            const laborNames = taskResources
-              .map((r) => {
-                if (r.resourceType === 'LABOR' && r.user) {
-                  return `${r.user.firstName} ${r.user.lastName}`
-                }
-                if (r.resourceType === 'SPECIALTY' && r.jobTitle) {
-                  return r.jobTitle.name
-                }
-                return null
-              })
-              .filter(Boolean) as string[]
+        const { materials: taskMaterials, tools: taskTools } = resourcesByTask(task.id)
+        const hasResources = taskMaterials.length > 0 || taskTools.length > 0
 
-            return (
-              <div key={task.id} className="wo-task-card border border-t-0 border-gray-900">
-                {/* Header da tarefa: titulo + data inicio + data fim */}
-                <div className="grid grid-cols-[1fr_30mm_30mm] border-b border-gray-900">
-                  <div className="px-2 py-1 border-r border-gray-900 bg-gray-50">
-                    <span className="text-[10px] font-bold uppercase">
-                      Tarefa {taskIdx + 1} - {task.label}
-                    </span>
-                  </div>
-                  <div className="px-2 py-1 border-r border-gray-900 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Inicio</p>
-                    <p className="text-[10px] mt-0.5 font-mono">
-                      {task.plannedStart
-                        ? new Date(task.plannedStart).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
-                        : '__/__/____  __:__'}
-                    </p>
-                  </div>
-                  <div className="px-2 py-1 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Fim</p>
-                    <p className="text-[10px] mt-0.5 font-mono">
-                      {task.plannedEnd
-                        ? new Date(task.plannedEnd).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
-                        : '__/__/____  __:__'}
-                    </p>
-                  </div>
-                </div>
+        return (
+          <div key={task.id} className="wo-task-card print-break-avoid border border-gray-900 mb-2">
+            {/* Titulo da tarefa */}
+            <div className="bg-gray-100 border-b border-gray-900 px-2 py-1 text-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider">
+                Tarefa {taskIdx + 1} - {task.label}
+              </span>
+            </div>
 
-                {/* Linha 2: Manutentor/Especialidade + Duracao da tarefa */}
-                <div className="grid grid-cols-[1fr_60mm] border-b border-gray-900">
-                  <div className="px-2 py-1 border-r border-gray-900">
-                    <span className="text-[7px] font-bold uppercase text-gray-500">Manutentor / Especialidade</span>
-                    <p className="text-[10px] mt-0.5 min-h-[4mm]">
-                      {laborNames.length > 0 ? laborNames.join(' · ') : ' '}
-                    </p>
-                  </div>
-                  <div className="px-2 py-1 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Duracao da Tarefa</p>
-                    <p className="text-[10px] mt-0.5 font-bold">
-                      {formatHours(task.executionTime)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Etapas + Resposta */}
-                {steps.length > 0 ? (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-500">
-                        <th className="px-2 py-0.5 text-left bg-gray-50 w-[7mm]">&nbsp;</th>
-                        <th className="px-2 py-0.5 text-left bg-gray-50">Etapas</th>
-                        <th className="px-2 py-0.5 text-left bg-gray-50 w-[55mm] border-l border-gray-300">Resposta</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {steps.map((step, stepIdx) => (
-                        <tr key={step.stepId || stepIdx} className="wo-step-row">
-                          <td className="border-t border-gray-300 px-2 py-1 text-center align-middle">
-                            <span className="inline-block w-3 h-3 border border-gray-700"></span>
-                          </td>
-                          <td className="border-t border-gray-300 px-2 py-1 text-[10px] align-middle">
-                            {step.stepName}
-                          </td>
-                          <td className="border-t border-l border-gray-300 px-2 py-1 align-middle">
-                            <span className="block w-full border-b border-gray-400 min-h-[5mm]">&nbsp;</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            {/* Cabecalho da tarefa em UMA linha (modelo): Manutentor | Duracao | Inicio | Fim */}
+            <div className="grid grid-cols-[1fr_24mm_36mm_36mm] border-b border-gray-900">
+              <div className="px-2 py-1 border-r border-gray-900">
+                <p className="text-[7px] font-bold uppercase tracking-wide text-gray-500">
+                  Nome do Manutentor ou Especialidade
+                </p>
+                {laborNames.length > 0 ? (
+                  // Uma linha por manutentor/especialidade (modelo)
+                  laborNames.map((name, i) => (
+                    <p key={i} className="text-[10px] mt-0.5 leading-tight">{name}</p>
+                  ))
                 ) : (
-                  <div className="px-2 py-1 text-[9px] text-gray-500 italic">
-                    Sem etapas detalhadas para esta tarefa.
-                  </div>
-                )}
-                {task.notes && (
-                  <p className="px-2 py-1 text-[9px] text-gray-500 border-t border-gray-300">
-                    Nota: {task.notes}
-                  </p>
+                  <p className="text-[10px] mt-0.5">&nbsp;</p>
                 )}
               </div>
-            )
-          })}
-        </div>
-      )}
+              <div className="px-2 py-1 border-r border-gray-900 text-center">
+                <p className="text-[7px] font-bold uppercase tracking-wide text-gray-500">Duracao Tarefa</p>
+                <p className="text-[10px] mt-0.5 font-bold">{formatHours(task.executionTime)}</p>
+              </div>
+              <div className="px-2 py-1 border-r border-gray-900 text-center">
+                <p className="text-[7px] font-bold uppercase tracking-wide text-gray-500">Data e Hora Inicio</p>
+                <p className="text-[10px] mt-0.5 font-mono">
+                  {task.plannedStart
+                    ? new Date(task.plannedStart).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                    : '__/__/____  __:__'}
+                </p>
+              </div>
+              <div className="px-2 py-1 text-center">
+                <p className="text-[7px] font-bold uppercase tracking-wide text-gray-500">Data e Hora Fim</p>
+                <p className="text-[10px] mt-0.5 font-mono">
+                  {task.plannedEnd
+                    ? new Date(task.plannedEnd).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                    : '__/__/____  __:__'}
+                </p>
+              </div>
+            </div>
 
-      {/* === RECURSOS - MATERIAIS / FERRAMENTAS lado a lado === */}
-      <div className="grid grid-cols-2 gap-2 mb-1 wo-print-block">
-        {/* Materiais */}
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
-                Recursos - Materiais
-              </th>
-            </tr>
-            <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materialsRows.map((r, idx) => (
-              <tr key={r?.id || `mat-${idx}`}>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.unit || ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            {/* Etapas + Resposta (com checkbox conforme modelo) */}
+            {steps.length > 0 ? (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-500 bg-gray-50">
+                    <th className="px-2 py-0.5 text-left w-[7mm]">&nbsp;</th>
+                    <th className="px-2 py-0.5 text-left">Etapas</th>
+                    <th className="px-2 py-0.5 text-left w-[55mm] border-l border-gray-300">Resposta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {steps.map((step, stepIdx) => (
+                    <tr key={step.stepId || stepIdx} className="print-break-avoid">
+                      <td className="border-t border-gray-300 px-2 py-1 text-center align-middle">
+                        <span className="inline-block w-3 h-3 border border-gray-700"></span>
+                      </td>
+                      <td className="border-t border-gray-300 px-2 py-1 text-[10px] align-middle">
+                        {step.stepName}
+                      </td>
+                      <td className="border-t border-l border-gray-300 px-2 py-1 align-middle">
+                        <span className="block w-full border-b border-gray-400 min-h-[5mm]">&nbsp;</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-2 py-1 text-[9px] text-gray-500 italic">
+                Sem etapas detalhadas para esta tarefa.
+              </div>
+            )}
 
-        {/* Ferramentas */}
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
-                Recursos - Ferramentas
-              </th>
-            </tr>
-            <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
-            </tr>
-          </thead>
-          <tbody>
-            {toolsRows.map((r, idx) => (
-              <tr key={r?.id || `tool-${idx}`}>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.unit || ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            {task.notes && (
+              <p className="px-2 py-1 text-[9px] text-gray-500 border-t border-gray-300">
+                Nota: {task.notes}
+              </p>
+            )}
+
+            {/* RECURSOS TAREFA N — exibe apenas quando ha materiais ou ferramentas */}
+            {hasResources && (
+              <div className="border-t border-gray-900">
+                <div className="bg-gray-100 border-b border-gray-900 px-2 py-1 text-center">
+                  <span className="text-[9px] font-bold uppercase tracking-wider">
+                    Recursos Tarefa {taskIdx + 1}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2">
+                  {/* Materiais — 3 colunas (Qtd, Unidade, Nome) */}
+                  <div className="border-r border-gray-900">
+                    <div className="bg-gray-50 border-b border-gray-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                      Materiais
+                    </div>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600 bg-gray-50">
+                          <th className="border-b border-r border-gray-300 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
+                          <th className="border-b border-r border-gray-300 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
+                          <th className="border-b border-gray-300 px-1 py-0.5 text-left">Nome</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {taskMaterials.length > 0 ? (
+                          taskMaterials.map((r) => (
+                            <tr key={r.id}>
+                              <td className="border-b border-r border-gray-300 px-1 py-0.5 text-[10px]">{r.quantity ?? ' '}</td>
+                              <td className="border-b border-r border-gray-300 px-1 py-0.5 text-[10px]">{r.unit || ' '}</td>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.resource?.name || ' '}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={3} className="px-2 py-1 text-[9px] text-gray-400 italic text-center">-</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Ferramentas — 2 colunas (Qtd, Nome) — modelo NAO tem unidade */}
+                  <div>
+                    <div className="bg-gray-50 border-b border-gray-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                      Ferramentas
+                    </div>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600 bg-gray-50">
+                          <th className="border-b border-r border-gray-300 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
+                          <th className="border-b border-gray-300 px-1 py-0.5 text-left">Nome</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {taskTools.length > 0 ? (
+                          taskTools.map((r) => (
+                            <tr key={r.id}>
+                              <td className="border-b border-r border-gray-300 px-1 py-0.5 text-[10px]">{r.quantity ?? ' '}</td>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.resource?.name || ' '}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={2} className="px-2 py-1 text-[9px] text-gray-400 italic text-center">-</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
 
       {/* === OBSERVACOES === */}
-      <div className="border border-gray-900 mb-2 wo-print-block">
-        <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 flex items-baseline gap-2">
+      <div className="border border-gray-900 mb-3 print-block-keep">
+        <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center">
           <span className="text-[9px] font-bold uppercase tracking-wider">Observacoes</span>
-          <span className="text-[8px] italic text-gray-600">Area de livre preenchimento do manutentor</span>
         </div>
         <div className="px-2 py-2 space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {/* 9 linhas em branco (modelo) para preenchimento manual */}
+          {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="border-b border-gray-400">&nbsp;</div>
           ))}
         </div>
       </div>
 
       {/* === ASSINATURA UNICA (EXECUTANTE) === */}
-      <div className="flex justify-end mt-6 wo-print-signature">
+      <div className="flex justify-end mt-4 print-break-avoid">
         <div className="w-[80mm] text-center">
           <div className="border-t border-gray-900 pt-0.5">
             <p className="text-[9px] font-bold uppercase tracking-wider">Executante</p>
@@ -507,80 +511,36 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-gray-600">Carregando...</p>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-600">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
   if (!workOrder) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Erro ao carregar ordem de servico.</p>
-          <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-gray-600">Erro ao carregar ordem de servico.</p>
+            <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
   const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto wo-print-overlay">
-      {/* Estilos de impressao A4 — paginacao multi-pagina, margens minimas,
-          e neutralizacao do overlay/toolbar para fluxo limpo. */}
-      <style>{`
-        @page {
-          size: A4 portrait;
-          margin: 6mm 8mm;
-        }
-        @media print {
-          html, body {
-            background: white !important;
-          }
-          .wo-print-overlay {
-            position: static !important;
-            background: white !important;
-            overflow: visible !important;
-          }
-          .wo-print-toolbar { display: none !important; }
-          .wo-print-page-wrapper {
-            padding: 0 !important;
-            display: block !important;
-          }
-          .wo-print-sheet {
-            width: 100% !important;
-            min-height: 0 !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-          }
-          .wo-task-card {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .wo-step-row {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .wo-print-block {
-            break-inside: avoid-page;
-          }
-          .wo-print-signature {
-            break-before: avoid;
-            page-break-before: avoid;
-          }
-          thead {
-            display: table-header-group;
-          }
-        }
-      `}</style>
-
+    <PrintPortal>
       {/* Toolbar (escondida na impressao) */}
-      <div className="wo-print-toolbar print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+      <div className="print-portal-toolbar sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">Visualizacao de Impressao - OS {displayId}</h2>
         <div className="flex items-center gap-3">
           <button
@@ -600,11 +560,11 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
       </div>
 
       {/* Folha A4 */}
-      <div className="wo-print-page-wrapper flex justify-center py-6">
-        <div className="bg-white w-[210mm] shadow-lg p-[6mm]">
+      <div className="print-portal-pages flex justify-center py-6">
+        <div className="print-portal-page bg-white w-[210mm] shadow-lg p-[6mm]">
           <WorkOrderPrintSheet workOrder={workOrder} companyLogo={companyLogo} companyName={companyName} />
         </div>
       </div>
-    </div>
+    </PrintPortal>
   )
 }

@@ -125,6 +125,19 @@ globs: src/app/api/**,src/actions/**
 - `GET /api/work-orders/[id]` e `?ids=` retornam `tasks(*, resources:TaskResource(id, resourceType, hours, quantity, user:User(id, firstName, lastName), jobTitle:JobTitle(id, name)))`. O modo `summary=true` nao retorna tasks e segue inalterado
 - Em PATCH, o sync de tasks ja faz delete + insert: as tarefas antigas somem (cascade SQL apaga as `TaskResource` antigas) e as novas tarefas recebem os `resources` do body fresh. Nao e necessario delete manual de `TaskResource`
 
+## Materiais e Ferramentas por Tarefa (`woResources[].taskOrder` / `taskId`)
+- `POST /api/work-orders`, `PATCH /api/work-orders/[id]` e `PUT /api/work-orders/[id]/resources` aceitam vinculo opcional de cada item de `woResources` (incluindo `MATERIAL` e `TOOL`) a uma tarefa especifica via dois mecanismos:
+  - `taskOrder` (numero, 0-indexed): posicao da tarefa no payload `tasks[]` ou na lista de tarefas existentes da OS, ordenadas por `order`. Forma preferida em POST porque o cliente nao conhece os IDs gerados server-side
+  - `taskId` (string): UUID server-side da tarefa. Forma preferida em PATCH/PUT quando o cliente ja conhece os IDs. O servidor valida que o `taskId` pertence ao conjunto de tarefas (recem-criadas ou existentes) da OS; ids fora do escopo sao silenciosamente descartados (linha persistida com `taskId = NULL`)
+- Resolucao server-side: `taskId` explicito tem precedencia; quando ausente, o handler resolve `taskOrder` para `taskInserts[taskOrder].id` (POST) ou para o id da N-esima tarefa existente ordenada por `order` (PATCH/PUT). `taskOrder` fora do range vira `taskId = NULL`
+- A coluna persistida e `WorkOrderResource.taskId` (`ON DELETE SET NULL`). Linhas legadas pre-migration `20260506180000_add_task_id_to_wo_resource` sobrevivem com `taskId = NULL` e o print/UI as colocam na primeira tarefa por fallback
+- O semantico do vinculo se aplica primariamente a `MATERIAL` e `TOOL` (que alimentam o bloco "RECURSOS TAREFA N" no print fiel ao modelo). `LABOR`/`SPECIALTY` a nivel OS aceitam o campo, mas o print continua lendo manutentor e especialidade exclusivamente de `TaskResource`
+- `GET /api/work-orders` (modo batch `?ids=`), `GET /api/work-orders/[id]` e `GET /api/work-orders/[id]/resources` retornam `taskId` em cada item de `woResources` para sustentar a renderizacao por tarefa
+- Helpers de copia em `src/lib/woResourceCopy.ts` PRESERVAM `taskId` via remapeamento por `order`:
+  - `copyPlanResourcesToWorkOrder(planId, workOrderId)`: le `AssetMaintenanceTask(id, order)` do plano, le `Task(id, order)` da OS recem-criada (apos `copyPlanTasksToWorkOrder`), e mapeia `AssetMaintenanceTask.id -> order -> Task.id` para popular `WorkOrderResource.taskId`. Usado em `POST /api/planning/plans`, `POST /api/planning/plans/[id]/generate-pending` e na geracao manual de OS individual a partir de plano UNICA
+  - `copyWorkOrderResources(sourceWoId, targetWoId)`: le `Task(id, order)` da OS-fonte e da OS-alvo, mapeia `sourceTaskId -> order -> targetTaskId` para preservar a vinculacao por tarefa em OSs recorrentes geradas pelo cron (`/api/cron/generate-preventive-maintenance`)
+  - Em ambos, recursos sem `taskId` (legado) continuam com `taskId = NULL` e o print os exibe na primeira tarefa por fallback
+
 ## Geracao de OS a partir de Plano com `Periodo = Unica`
 - Plano com `period = 'UNICA'` so deve gerar OS pelo fluxo manual em `/work-orders` quando o usuario seleciona o plano no dropdown `Plano de Manutencao do Bem`
 - `POST /api/planning/plans` (criacao do Plano de Planejamento, batch que projeta ciclos por `lastMaintenanceDate + maintenanceTime`) deve pular `AssetMaintenancePlan` cujo `period` (case-insensitive) seja `UNICA` antes do loop de geracao

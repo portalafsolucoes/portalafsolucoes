@@ -1587,6 +1587,7 @@ model Task {
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   resources   TaskResource[]
+  woResources WorkOrderResource[] @relation("WOResourceTask")
 
   @@index([workOrderId])
 }
@@ -1654,6 +1655,12 @@ model WorkOrderResource {
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
+  // Vinculo opcional a uma tarefa especifica da OS. MATERIAL/TOOL costumam
+  // ser preenchidos via UI (formulario por tarefa). Linhas legadas com
+  // taskId = NULL caem no print da primeira tarefa.
+  taskId String?
+  task   Task? @relation("WOResourceTask", fields: [taskId], references: [id], onDelete: SetNull)
+
   resourceId String?
   resource   Resource? @relation("WOResource", fields: [resourceId], references: [id])
 
@@ -1664,6 +1671,7 @@ model WorkOrderResource {
   user   User? @relation("WOResourceLabor", fields: [userId], references: [id])
 
   @@index([workOrderId])
+  @@index([taskId])
   @@index([resourceId])
   @@index([jobTitleId])
   @@index([userId])

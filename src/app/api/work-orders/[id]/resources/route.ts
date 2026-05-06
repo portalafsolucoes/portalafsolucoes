@@ -28,7 +28,7 @@ export async function GET(
     const { data: resources, error } = await supabase
       .from('WorkOrderResource')
       .select(`
-        id, resourceType, quantity, hours, unit,
+        id, resourceType, quantity, hours, unit, taskId,
         resource:Resource(id, name, type, unit, unitCost),
         jobTitle:JobTitle(id, name),
         user:User(id, firstName, lastName, jobTitle, rate)
@@ -93,6 +93,14 @@ export async function PUT(
     // Deletar recursos existentes
     await supabase.from('WorkOrderResource').delete().eq('workOrderId', workOrderId)
 
+    // Buscar tasks da OS para resolver taskOrder -> taskId
+    const { data: existingTasks } = await supabase
+      .from('Task')
+      .select('id, order')
+      .eq('workOrderId', workOrderId)
+      .order('order', { ascending: true })
+    const taskIdsByOrder = (existingTasks || []).map((t) => t.id as string)
+
     // Inserir novos
     if (resources.length > 0) {
       const toInsert = resources.map((r: {
@@ -103,17 +111,28 @@ export async function PUT(
         quantity?: number | null
         hours?: number | null
         unit?: string | null
-      }) => ({
-        id: generateId(),
-        workOrderId,
-        resourceType: r.resourceType,
-        resourceId: r.resourceId || null,
-        jobTitleId: r.jobTitleId || null,
-        userId: r.userId || null,
-        quantity: r.quantity ?? null,
-        hours: r.hours ?? null,
-        unit: r.unit || null,
-      }))
+        taskOrder?: number | null
+        taskId?: string | null
+      }) => {
+        let resolvedTaskId: string | null = null
+        if (r.taskId && taskIdsByOrder.includes(r.taskId)) {
+          resolvedTaskId = r.taskId
+        } else if (typeof r.taskOrder === 'number' && r.taskOrder >= 0 && r.taskOrder < taskIdsByOrder.length) {
+          resolvedTaskId = taskIdsByOrder[r.taskOrder]
+        }
+        return {
+          id: generateId(),
+          workOrderId,
+          resourceType: r.resourceType,
+          resourceId: r.resourceId || null,
+          jobTitleId: r.jobTitleId || null,
+          userId: r.userId || null,
+          quantity: r.quantity ?? null,
+          hours: r.hours ?? null,
+          unit: r.unit || null,
+          taskId: resolvedTaskId,
+        }
+      })
       const { error: insertError } = await supabase.from('WorkOrderResource').insert(toInsert)
       if (insertError) throw insertError
     }

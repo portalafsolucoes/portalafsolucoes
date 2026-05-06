@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
+import { PrintPortal } from '@/components/print/PrintPortal'
 
 interface PrintRequest {
   id: string
@@ -99,23 +100,27 @@ export function RequestPrintView({ requestId, onClose }: RequestPrintViewProps) 
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-gray-600">Carregando...</p>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-600">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
   if (!request) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Erro ao carregar solicitacao.</p>
-          <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-gray-600">Erro ao carregar solicitacao.</p>
+            <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
@@ -128,9 +133,8 @@ export function RequestPrintView({ requestId, onClose }: RequestPrintViewProps) 
   const documentFiles = (request.files || []).filter(f => !imageFiles.includes(f))
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto">
-      {/* Toolbar - hidden on print */}
-      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+    <PrintPortal>
+      <div className="print-portal-toolbar sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">Visualizacao de Impressao - Solicitacao de Servico</h2>
         <div className="flex items-center gap-3">
           <button
@@ -149,11 +153,10 @@ export function RequestPrintView({ requestId, onClose }: RequestPrintViewProps) 
         </div>
       </div>
 
-      {/* A4 Page */}
-      <div className="flex justify-center py-8 print:py-0 print:block">
+      <div className="print-portal-pages flex justify-center py-8">
         <div
           ref={printRef}
-          className="bg-white w-[210mm] min-h-[297mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed"
+          className="print-portal-page bg-white w-[210mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed"
         >
           {/* === CABECALHO === */}
           <div className="flex items-start justify-between border-b-2 border-gray-900 pb-3 mb-4">
@@ -362,6 +365,6 @@ export function RequestPrintView({ requestId, onClose }: RequestPrintViewProps) 
           </div>
         </div>
       </div>
-    </div>
+    </PrintPortal>
   )
 }

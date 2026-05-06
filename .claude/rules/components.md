@@ -26,8 +26,15 @@ globs: src/components/**,src/app/**/page.tsx
 - **Visibilidade espelha o gating da janela planejada**: o bloco aparece em OS individual manual (`/work-orders` sem plano selecionado) e quando o plano selecionado for `UNICA`. Fica **escondido** quando o plano selecionado for `REPETITIVA`. A flag de gating no codigo e `showPlannedWindowFields`, compartilhada entre os dois blocos
 - O `tasksPayload` enviado ao servidor inclui `resources: TaskResourceItem[]` por tarefa **apenas** quando o gating permite. Quando `REPETITIVA`, o array vai vazio (defesa em profundidade — o servidor tambem rejeita)
 - O `WorkOrderDetailModal` exibe, dentro de cada card de tarefa, uma faixa cinza com badges `Manutentor: <nome>` ou `Especialidade: <cargo>` sempre que `task.resources` tiver itens, independentemente de a OS ter sido criada manual ou via plano UNICA. OSs sem `resources` por tarefa (legado, ou plano REPETITIVA) nao mostram a faixa
-- Os prints (`WorkOrderPrintView` + `WorkOrdersBatchPrintView`) renderizam, na linha 2 do cabecalho de cada tarefa, o campo `Manutentor / Especialidade` listando os nomes (LABOR: nome do usuario; SPECIALTY: nome do cargo) separados por ` · `. Quando vazio, deixa espaco em branco para preenchimento manual a caneta — coerente com o modelo
-- Componente `<ResourceSelector>` (em `src/components/ui/ResourceSelector.tsx`) aceita as props opcionais `allowedTypes?: ResourceType[]` e `label?: string`. Sem `allowedTypes`, cobre os 4 tipos como antes (uso a nivel OS na secao Recursos do form)
+- Os prints (`WorkOrderPrintView` + `WorkOrdersBatchPrintView`) renderizam, na celula `Nome do Manutentor ou Especialidade` do cabecalho de cada tarefa, **uma linha por manutentor/especialidade** (LABOR: nome do usuario; SPECIALTY: nome do cargo). Quando vazio, deixa espaco em branco para preenchimento manual a caneta — coerente com o modelo. NAO concatenar com ` · ` ou virgula
+- Componente `<ResourceSelector>` (em `src/components/ui/ResourceSelector.tsx`) aceita as props opcionais `allowedTypes?: ResourceType[]`, `label?: string` e `tasks?: { order: number; label: string }[]`. Sem `allowedTypes`, cobre os 4 tipos (uso a nivel OS na secao Recursos do form). Quando `tasks` e fornecido, cada linha de `MATERIAL` ou `TOOL` ganha um `<select>` "Tarefa" e a `taskOrder` resultante e enviada no payload de `woResources`
+
+## Materiais e Ferramentas por Tarefa em OS (OBRIGATORIO)
+- A secao `Recursos` do `WorkOrderFormModal` continua usando `<ResourceSelector>` no modo "todos os tipos", mas agora passa `tasks={validTasksForResources}` (lista de tarefas com descricao preenchida, posicao 0-indexed em `validTasks`). Cada linha de Material e Ferramenta exibe um seletor `Tarefa: <select>` apos o seletor de unidade. Default e a primeira tarefa
+- O payload `resources` enviado a `POST /api/work-orders` ou `PATCH /api/work-orders/[id]` inclui `taskOrder: number | null` em cada item. O servidor resolve `taskOrder -> taskId` apos inserir as tarefas (ou usando as tarefas existentes em PATCH/PUT). Itens com `taskOrder = null` ou fora do range ficam com `WorkOrderResource.taskId = NULL`
+- Ao hidratar o formulario para edicao, o `WorkOrderFormModal` constroi `Map<taskId, taskOrder>` a partir das tarefas hidratadas e converte `WorkOrderResource.taskId` (string vinda do servidor) em `taskOrder` (numero) para alimentar o select
+- O `WorkOrderDetailModal` exibe um badge `Tarefa N` antes do nome de cada linha de `MATERIAL` ou `TOOL` na secao `Recursos`, refletindo o vinculo via `taskId`. Linhas sem vinculo (`taskId = NULL`) nao recebem badge
+- O print (`WorkOrderPrintSheet`) renderiza um bloco `RECURSOS TAREFA N` dentro de cada card de tarefa, lendo `workOrder.woResources` e filtrando por `r.taskId === task.id`. Linhas legadas (`taskId = NULL`) caem na primeira tarefa. Bloco e omitido quando vazio (alinhado com a diretriz "esta area so deve ser exibida se existir recurso" do modelo)
 
 ## Texto em MAIUSCULAS (padrao do sistema)
 - O `<Input>` de `@/components/ui/Input` aplica `text-transform: uppercase` por default (classe `uppercase`); o banco recebe o valor ja normalizado via `normalizeTextPayload` no servidor
@@ -502,25 +509,45 @@ Toda tela de listagem DEVE usar o padrao split-panel no desktop para TODOS os fl
 Referencia canonica: `people-teams/page.tsx` e `assets/page.tsx`.
 
 ## Print Views e Impressao em Lote (OBRIGATORIO)
-- Toda print view de entidade (ex: `RAFPrintView`, `WorkOrderPrintView`) deve poder ser reutilizada em modo unitario ou em lote
-- Modo unitario: recebe `{idEntidade}: string` + `onClose`, renderiza overlay fixo (`fixed inset-0 z-[9999]`) com toolbar Imprimir/Fechar e uma pagina A4 (`w-[210mm] min-h-[297mm]`). A toolbar e escondida na impressao via `print:hidden`
-- Modo batch: um componente dedicado `{Entidade}sBatchPrintView` recebe `{idsEntidade}: string[]` + `onClose`, busca os registros via `GET /api/{entidade}?ids=id1,id2,...`, e renderiza uma pagina A4 por registro. Todas as paginas exceto a ultima devem ter `print:break-after-page` para forcar quebra de pagina no PDF
+- Toda print view de entidade (`WorkOrderPrintView`, `WorkOrdersBatchPrintView`, `RAFPrintView`, `RAFsBatchPrintView`, `RequestPrintView`, `RequestsBatchPrintView`) deve usar o wrapper canonico **`<PrintPortal>`** em `src/components/print/PrintPortal.tsx`. NAO recriar `<div className="fixed inset-0 z-[9999]">` manualmente — a regra de print isolation vive dentro do PrintPortal
+- Modo unitario: recebe `{idEntidade}: string` + `onClose`, renderiza `<PrintPortal>` com toolbar Imprimir/Fechar (classe `print-portal-toolbar`) e uma pagina A4 (`w-[210mm]`). A toolbar e escondida na impressao automaticamente
+- Modo batch: um componente dedicado `{Entidade}sBatchPrintView` recebe `{idsEntidade}: string[]` + `onClose`, busca os registros via `GET /api/{entidade}?ids=id1,id2,...`, e renderiza uma `print-portal-page` por registro dentro de `print-portal-pages`. A quebra entre paginas e gerada por `.print-portal-page + .print-portal-page { break-before: page }`
 - Quando for possivel reutilizar a print view unitaria dentro do batch, expor props opcionais:
   - `data?: PrintEntityShape` para receber o registro ja carregado (evitando refetch)
-  - `embedded?: boolean` para suprimir a toolbar/overlay fixo e renderizar somente a pagina A4
+  - `embedded?: boolean` para suprimir a toolbar/overlay e renderizar somente a pagina A4
   - O tipo da forma renderizavel deve ser exportado (ex: `export type PrintRAF = ...`) para consumo pelo componente de batch
 - A UI que dispara impressao deve usar `dynamic(() => import('...'), { ssr: false })` para evitar SSR da janela de impressao e controlar o estado via um `printState` unico na pagina: `{ kind, mode: 'single', id } | { kind, mode: 'batch', ids } | null`
 
-### Paginacao A4 multi-pagina (OBRIGATORIO)
-- Toda print view deve embutir um bloco `<style>` com regras `@page { size: A4 portrait; margin: 6mm 8mm; }` e `@media print { ... }` para garantir que conteudo grande quebre em multiplas paginas A4 sem perda
+### PrintPortal — print isolation via React Portal (OBRIGATORIO)
+- `<PrintPortal>` faz `createPortal(..., document.body)` e marca o no com `data-print-portal=""`. O `<style>` global injetado contem `@media print { body > *:not([data-print-portal]) { display: none !important; } }`, garantindo que sidebar, header, conteudo da pagina e qualquer outro DOM fora do portal somam durante o print
+- O wrapper externo do AppShell (`<div className="h-screen overflow-hidden">` + `<main overflow-hidden>`) e neutralizado pelo `@media print { html, body { height: auto !important; overflow: visible !important; } }`. Isso resolve o bug onde a folha era recortada na altura da viewport e nao paginava
+- O `<style>` do PrintPortal define `@page { size: A4 portrait; margin: 6mm 8mm; }` uma unica vez. NAO duplicar essa regra em cada print view
+- Classes utilitarias expostas pelo PrintPortal: `print-portal-toolbar` (escondida no print), `print-portal-pages` (container das folhas), `print-portal-page` (cada folha A4 — quebra automatica entre folhas via `break-before: page`), `print-break-avoid` (evita corte no meio de um card), `print-block-keep` (`break-inside: avoid-page` para blocos curtos)
 - **NAO** usar `min-h-[297mm]` no wrapper da folha (forca uma pagina e impede paginacao automatica). Usar apenas `w-[210mm]` e deixar o conteudo fluir verticalmente
-- O overlay fullscreen (`fixed inset-0 z-[9999] bg-gray-100 overflow-auto`) precisa ser neutralizado em modo print: `position: static !important; background: white !important; overflow: visible !important;`
-- Em listas/tabelas longas (etapas, recursos, tarefas), aplicar `break-inside: avoid; page-break-inside: avoid;` em cada card/linha individual para evitar corte no meio de um item
-- Para tabelas com cabecalho que precisa repetir em quebras de pagina, usar `thead { display: table-header-group }` em modo print
+- Em listas/tabelas longas (etapas, recursos, tarefas), aplicar `print-break-avoid` em cada card/linha individual para evitar corte no meio de um item
+- Para tabelas com cabecalho que precisa repetir em quebras de pagina, usar `thead { display: table-header-group }` (ja incluido no `<style>` do PrintPortal)
 - Margens internas reduzidas: padding maximo de `6mm` no wrapper da folha (`p-[6mm]`); evitar `px-[15mm] py-[10mm]` (desperdica area util)
 - O componente canonico `WorkOrderPrintView` exporta `WorkOrderPrintSheet` (folha A4 sem overlay) que e reutilizado pelo `WorkOrdersBatchPrintView`. Padrao a ser replicado em outras print views
-- Layout fiel ao modelo de OS: cabecalho compacto (logo + Nº plano | Controle Inicio/Fim | Nº OS), `Ativo e Localizacao` antes de `Resumo`, `Descricao` em bloco proprio com `whitespace-pre-line` (preserva quebras de linha do textarea), `Tarefas` com cabecalho `Inicio | Fim | Manutentor/Especialidade | Duracao` por tarefa, `Recursos - Materiais` e `Recursos - Ferramentas` em **2 colunas lado a lado** com linhas em branco extras para anotacao manual, `Observacoes` com 4 linhas em branco, e **uma unica assinatura** `Executante` (sem `Responsavel`)
-- A descricao da OS DEVE usar `whitespace-pre-line` para que `\n` digitados no textarea sejam preservados visualmente no print (correcao do bug onde frases viravam um paragrafo unico)
+
+### Layout do Print de OS — fiel ao MODELO DE OS_REV1.pdf (OBRIGATORIO)
+- **Cabecalho** em 3 colunas com bordas internas, todas as colunas comecam com header em fundo cinza:
+  - Coluna 1 (60mm): LOGO no topo (metade superior); Nº OS + Nº Plano lado a lado na metade inferior em duas sub-celulas
+  - Coluna 2: header `INICIO` + linha de data `____/____/______ ____:____` para o manutentor preencher a mao
+  - Coluna 3: header `FIM` + mesma linha de data
+  - **NAO** usar wrapper `CONTROLE DE EXECUCAO`, **NAO** mostrar tipo da OS (ex: `CORRETIVA`) no cabecalho
+- **Identificacao do Ativo** antes de `Resumo da OS` (ATIVO, HIERARQUIA, LOCALIZACAO em 3 colunas)
+- **Resumo da OS** com STATUS, PRIORIDADE, TIPO DE SERVICO, CRIADO EM, VENCIMENTO em 5 colunas
+- **Descricao** em bloco proprio com `whitespace-pre-line` (preserva quebras de linha do textarea)
+- **Tarefas** — cada tarefa renderiza um card com `print-break-avoid`:
+  - Linha 1 (titulo): `TAREFA N - <descricao>` em fundo cinza claro, centralizado
+  - Linha 2 (cabecalho): **uma unica linha** com 4 colunas — `Nome do Manutentor ou Especialidade` | `Duracao Tarefa` | `Data e Hora Inicio` | `Data e Hora Fim`
+  - Manutentores/especialidades **em linhas separadas** dentro da celula (NAO concatenar com `·` ou virgula)
+  - Tabela `ETAPAS | RESPOSTA` com checkbox quadrado antes de cada etapa (modelo TEM checkbox)
+  - **`RECURSOS TAREFA N`** dentro do card da tarefa, exibido SOMENTE quando ha materiais ou ferramentas vinculados a essa tarefa via `WorkOrderResource.taskId`. Linhas legadas com `taskId = NULL` caem na primeira tarefa por fallback. Layout interno do bloco: `MATERIAIS` (3 colunas: Qtd / Unidade / Nome) **lado a lado** com `FERRAMENTAS` (2 colunas: Qtd / Nome — modelo NAO tem coluna Unidade em ferramentas)
+  - **NAO** existe bloco de Recursos a nivel OS no print (foi removido em favor do bloco por tarefa)
+- **Observacoes** apos as tarefas, com 9 linhas em branco para preenchimento manual (modelo)
+- **Assinatura unica** `EXECUTANTE` alinhada a direita
+- A descricao da OS DEVE usar `whitespace-pre-line` para que `\n` digitados no textarea sejam preservados visualmente no print
 
 ## Drilldown com Abas e Selecao para Impressao em Lote
 - Paineis de detalhe que oferecem drilldown de entidades relacionadas (padrao canonico: `CriticalityDetailPanel` em `/criticality`) devem usar `Tabs` / `TabsList` / `TabsTrigger` / `TabsContent` para separar `Visao Geral` das abas especificas

@@ -15,10 +15,10 @@ export async function copyPlanResourcesToWorkOrder(
   workOrderId: string
 ): Promise<void> {
   try {
-    // Buscar todas as tarefas (com executionTime) e seus recursos do plano
+    // Buscar todas as tarefas (com executionTime e order) e seus recursos do plano
     const { data: tasks } = await supabase
       .from('AssetMaintenanceTask')
-      .select('id, executionTime')
+      .select('id, order, executionTime')
       .eq('planId', assetMaintenancePlanId)
 
     if (!tasks || tasks.length === 0) return
@@ -27,6 +27,11 @@ export async function copyPlanResourcesToWorkOrder(
     const execTimeByTask = new Map<string, number | null>(
       tasks.map((t: { id: string; executionTime: number | null }) => [t.id, t.executionTime ?? null])
     )
+    // Map AssetMaintenanceTask.id -> order. Usado para casar com a Task da OS
+    // criada por copyPlanTasksToWorkOrder, que preserva o mesmo `order`.
+    const orderByPlanTask = new Map<string, number>(
+      tasks.map((t: { id: string; order: number }) => [t.id, t.order])
+    )
 
     const { data: planResources } = await supabase
       .from('AssetMaintenanceTaskResource')
@@ -34,6 +39,16 @@ export async function copyPlanResourcesToWorkOrder(
       .in('taskId', taskIds)
 
     if (!planResources || planResources.length === 0) return
+
+    // Buscar tasks da OS recem-criada para resolver plan.taskId -> wo.taskId via order
+    const { data: woTasks } = await supabase
+      .from('Task')
+      .select('id, order')
+      .eq('workOrderId', workOrderId)
+
+    const woTaskIdByOrder = new Map<number, string>(
+      (woTasks || []).map((t: { id: string; order: number }) => [t.order, t.id])
+    )
 
     const woResources = planResources.map((r: {
       taskId: string
@@ -55,9 +70,14 @@ export async function copyPlanResourcesToWorkOrder(
         ? execTime
         : (r.hours ?? null)
 
+      // Resolver taskId destino: plan.taskId -> order -> wo.task.id
+      const planOrder = orderByPlanTask.get(r.taskId)
+      const woTaskId = planOrder !== undefined ? woTaskIdByOrder.get(planOrder) || null : null
+
       return {
         id: generateId(),
         workOrderId,
+        taskId: woTaskId,
         resourceType: type,
         resourceId: r.resourceId || null,
         jobTitleId: r.jobTitleId || null,
@@ -209,10 +229,41 @@ export async function copyWorkOrderResources(
   try {
     const { data: resources } = await supabase
       .from('WorkOrderResource')
-      .select('resourceType, resourceId, jobTitleId, userId, quantity, hours, unit')
+      .select('resourceType, resourceId, jobTitleId, userId, quantity, hours, unit, taskId')
       .eq('workOrderId', sourceWorkOrderId)
 
     if (!resources || resources.length === 0) return
+
+    // Resolver mapping de Task.id (source) -> Task.id (target) via campo `order`,
+    // preservando a vinculacao de MATERIAL/TOOL com a tarefa correta na OS nova
+    // (cron de OS recorrente, generate-pending, etc).
+    const sourceTaskIds = Array.from(
+      new Set(
+        (resources as Array<{ taskId: string | null }>)
+          .map((r) => r.taskId)
+          .filter((tid): tid is string => !!tid)
+      )
+    )
+    const orderBySourceTask = new Map<string, number>()
+    const targetTaskIdByOrder = new Map<number, string>()
+    if (sourceTaskIds.length > 0) {
+      const [{ data: sourceTasks }, { data: targetTasks }] = await Promise.all([
+        supabase
+          .from('Task')
+          .select('id, order')
+          .in('id', sourceTaskIds),
+        supabase
+          .from('Task')
+          .select('id, order')
+          .eq('workOrderId', targetWorkOrderId),
+      ])
+      for (const t of (sourceTasks || []) as { id: string; order: number }[]) {
+        orderBySourceTask.set(t.id, t.order)
+      }
+      for (const t of (targetTasks || []) as { id: string; order: number }[]) {
+        targetTaskIdByOrder.set(t.order, t.id)
+      }
+    }
 
     const newResources = resources.map((r: {
       resourceType: string
@@ -222,17 +273,25 @@ export async function copyWorkOrderResources(
       quantity: number | null
       hours: number | null
       unit: string | null
-    }) => ({
-      id: generateId(),
-      workOrderId: targetWorkOrderId,
-      resourceType: r.resourceType,
-      resourceId: r.resourceId || null,
-      jobTitleId: r.jobTitleId || null,
-      userId: r.userId || null,
-      quantity: r.quantity ?? null,
-      hours: r.hours ?? null,
-      unit: r.unit || null,
-    }))
+      taskId: string | null
+    }) => {
+      const sourceOrder = r.taskId !== null ? orderBySourceTask.get(r.taskId) : undefined
+      const resolvedTaskId = sourceOrder !== undefined
+        ? (targetTaskIdByOrder.get(sourceOrder) || null)
+        : null
+      return {
+        id: generateId(),
+        workOrderId: targetWorkOrderId,
+        taskId: resolvedTaskId,
+        resourceType: r.resourceType,
+        resourceId: r.resourceId || null,
+        jobTitleId: r.jobTitleId || null,
+        userId: r.userId || null,
+        quantity: r.quantity ?? null,
+        hours: r.hours ?? null,
+        unit: r.unit || null,
+      }
+    })
 
     await supabase.from('WorkOrderResource').insert(newResources)
   } catch (error) {

@@ -68,6 +68,7 @@ interface WOResourceDetail {
   quantity?: number | null
   hours?: number | null
   unit?: string | null
+  taskId?: string | null
   resource?: { id: string; name: string } | null
   jobTitle?: { id: string; name: string } | null
   user?: { id: string; firstName: string; lastName: string } | null
@@ -705,7 +706,8 @@ export function WorkOrderDetailModal({
         </DetailSection>
       )}
 
-      {/* 5. Recursos */}
+      {/* 5. Recursos — para MATERIAL/TOOL, exibe badge "Tarefa N" indicando o
+          vinculo com a tarefa (ja refletido por completo no print) */}
       {groupedResources && (
         <DetailSection title="Recursos" icon="inventory_2">
           <div className="space-y-4 px-1">
@@ -719,12 +721,26 @@ export function WorkOrderDetailModal({
                     const name = r.resource?.name
                       || r.jobTitle?.name
                       || (r.user ? `${r.user.firstName} ${r.user.lastName}` : 'Recurso')
+                    const taskIdx = r.taskId
+                      ? sortedTasks.findIndex((t) => t.id === r.taskId)
+                      : -1
+                    const taskBadge =
+                      (type === 'MATERIAL' || type === 'TOOL') && taskIdx >= 0
+                        ? `Tarefa ${taskIdx + 1}`
+                        : null
                     return (
                       <div
                         key={r.id}
                         className="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm"
                       >
-                        <span className="text-[13px] font-medium text-gray-900">{name}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {taskBadge && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 border border-gray-200">
+                              {taskBadge}
+                            </span>
+                          )}
+                          <span className="text-[13px] font-medium text-gray-900 truncate">{name}</span>
+                        </div>
                         <div className="flex items-center gap-3 text-[12px] text-gray-500">
                           {r.quantity != null && r.quantity > 0 && (
                             <span>{r.quantity} {r.unit || 'un'}</span>

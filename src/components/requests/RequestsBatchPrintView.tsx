@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
+import { PrintPortal } from '@/components/print/PrintPortal'
 
 interface BatchPrintRequest {
   id: string
@@ -88,30 +89,33 @@ export function RequestsBatchPrintView({ requestIds, onClose }: Props) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-gray-600">Carregando SSs...</p>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-600">Carregando SSs...</p>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
   if (requests.length === 0) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Nenhuma SS disponivel para impressao.</p>
-          <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-gray-600">Nenhuma SS disponivel para impressao.</p>
+            <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto">
-      {/* Toolbar - hidden on print */}
-      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+    <PrintPortal>
+      <div className="print-portal-toolbar sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">
           Impressao em Lote - {requests.length} SS{requests.length > 1 ? 's' : ''}
         </h2>
@@ -132,14 +136,11 @@ export function RequestsBatchPrintView({ requestIds, onClose }: Props) {
         </div>
       </div>
 
-      {/* Pages */}
-      <div className="flex flex-col items-center py-8 print:py-0 print:block gap-8 print:gap-0">
-        {requests.map((ss, idx) => (
+      <div className="print-portal-pages flex flex-col items-center py-8 gap-8">
+        {requests.map((ss) => (
           <div
             key={ss.id}
-            className={`bg-white w-[210mm] min-h-[297mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed ${
-              idx < requests.length - 1 ? 'print:break-after-page' : ''
-            }`}
+            className="print-portal-page bg-white w-[210mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed"
           >
             {/* === CABEÇALHO === */}
             <div className="flex items-start justify-between border-b-2 border-gray-900 pb-3 mb-4">
@@ -300,6 +301,6 @@ export function RequestsBatchPrintView({ requestIds, onClose }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </PrintPortal>
   )
 }

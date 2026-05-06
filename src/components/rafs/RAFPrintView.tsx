@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate } from '@/lib/utils'
+import { PrintPortal } from '@/components/print/PrintPortal'
 
 interface ActionPlanItem {
   item: number
@@ -106,12 +107,14 @@ export function RAFPrintView({ rafId, data, onClose, embedded = false }: RAFPrin
       )
     }
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-gray-600">Carregando...</p>
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-600">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
@@ -120,14 +123,16 @@ export function RAFPrintView({ rafId, data, onClose, embedded = false }: RAFPrin
       return <div className="p-6 text-center text-[11px] text-gray-500">Erro ao carregar RAF.</div>
     }
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Erro ao carregar RAF.</p>
-          {onClose && (
-            <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
-          )}
+      <PrintPortal>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-gray-600">Erro ao carregar RAF.</p>
+            {onClose && (
+              <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded">Fechar</button>
+            )}
+          </div>
         </div>
-      </div>
+      </PrintPortal>
     )
   }
 
@@ -148,7 +153,7 @@ export function RAFPrintView({ rafId, data, onClose, embedded = false }: RAFPrin
   const page = (
     <div
       ref={printRef}
-      className="bg-white w-[210mm] min-h-[297mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed raf-print-page"
+      className="bg-white w-[210mm] shadow-lg print:shadow-none print:w-full px-[15mm] py-[10mm] text-[11px] text-gray-900 leading-relaxed raf-print-page"
     >
       {/* === CABEÇALHO === */}
       <div className="flex items-start justify-between border-b-2 border-gray-900 pb-3 mb-4">
@@ -331,8 +336,8 @@ export function RAFPrintView({ rafId, data, onClose, embedded = false }: RAFPrin
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto">
-      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+    <PrintPortal>
+      <div className="print-portal-toolbar sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">Visualizacao de Impressao - RAF {raf.rafNumber}</h2>
         <div className="flex items-center gap-3">
           <button
@@ -353,9 +358,11 @@ export function RAFPrintView({ rafId, data, onClose, embedded = false }: RAFPrin
         </div>
       </div>
 
-      <div className="flex justify-center py-8 print:py-0 print:block">
-        {page}
+      <div className="print-portal-pages flex justify-center py-8">
+        <div className="print-portal-page">
+          {page}
+        </div>
       </div>
-    </div>
+    </PrintPortal>
   )
 }

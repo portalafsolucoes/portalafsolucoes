@@ -31,6 +31,10 @@ interface GenericStepItem { id: string; name: string; optionType?: string }
 interface TaskStep { stepId: string; order: number; optionType: string }
 interface TaskRow {
   key: string
+  /** UUID server-side da Task quando hidratada de uma OS existente.
+   *  Necessario para reconstruir o vinculo MATERIAL/TOOL -> Task ao
+   *  popular o seletor de tarefa em recursos a nivel OS. */
+  taskId?: string
   description: string
   executionTime: number | ''
   plannedStart: string // datetime-local string ('YYYY-MM-DDTHH:mm') or ''
@@ -438,6 +442,7 @@ export function WorkOrderFormModal({
       const sortedWoTasks = [...woTasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       const hydratedTasks: TaskRow[] = sortedWoTasks.map(t => ({
         key: crypto.randomUUID(),
+        taskId: t.id,
         description: t.label || t.description || '',
         executionTime: t.executionTime ?? '',
         plannedStart: toDatetimeLocal(t.plannedStart ?? null),
@@ -470,8 +475,14 @@ export function WorkOrderFormModal({
           quantity?: number | null
           hours?: number | null
           unit?: string | null
+          taskId?: string | null
         }
         const list: WoResApi[] = resJson.data || []
+        // Mapeia taskId existente -> taskOrder (posicao na lista de tarefas hidratadas)
+        const taskIdToOrder = new Map<string, number>()
+        hydratedTasks.forEach((t: { taskId?: string }, idx) => {
+          if (t.taskId) taskIdToOrder.set(t.taskId, idx)
+        })
         const mapped: TaskResourceItem[] = list.map(r => ({
           resourceType: r.resourceType as TaskResourceItem['resourceType'],
           resourceId: r.resource?.id || null,
@@ -480,6 +491,7 @@ export function WorkOrderFormModal({
           quantity: r.quantity ?? null,
           hours: r.hours ?? null,
           unit: r.unit || null,
+          taskOrder: r.taskId && taskIdToOrder.has(r.taskId) ? taskIdToOrder.get(r.taskId)! : null,
         }))
         setWoResources(mapped)
       }
@@ -935,6 +947,13 @@ export function WorkOrderFormModal({
         quantity: r.quantity ?? null,
         hours: r.hours ?? null,
         unit: r.unit || null,
+        // Materiais e ferramentas tem vinculo com tarefa (RECURSOS TAREFA N no print).
+        // taskOrder = posicao 0-indexed da tarefa, resolvida server-side para taskId.
+        taskOrder:
+          (r.resourceType === 'MATERIAL' || r.resourceType === 'TOOL') &&
+          typeof r.taskOrder === 'number'
+            ? r.taskOrder
+            : null,
       }))
 
       let res: Response
@@ -1580,12 +1599,29 @@ export function WorkOrderFormModal({
             </div>
           </ModalSection>
 
-          {/* ============ 5. RECURSOS ============ */}
+          {/* ============ 5. RECURSOS ============
+              Materiais e Ferramentas exibem o seletor de tarefa por linha
+              quando ha tarefas com descricao preenchida. O `order` enviado
+              ao ResourceSelector corresponde a posicao na lista de tarefas
+              VALIDAS (com descricao) — o mesmo indice que o servidor recebe
+              no `tasksPayload` apos o filtro `validTasks`. */}
           <ModalSection title="Recursos">
-            <ResourceSelector
-              resources={woResources}
-              onChange={setWoResources}
-            />
+            {(() => {
+              const validTasksForResources = tasks
+                .map((t, originalIdx) => ({ t, originalIdx }))
+                .filter(({ t }) => t.description.trim())
+                .map(({ t }, validIdx) => ({
+                  order: validIdx,
+                  label: t.description.trim() || `Tarefa ${validIdx + 1}`,
+                }))
+              return (
+                <ResourceSelector
+                  resources={woResources}
+                  onChange={setWoResources}
+                  tasks={validTasksForResources.length > 0 ? validTasksForResources : undefined}
+                />
+              )
+            })()}
           </ModalSection>
 
           {/* ============ 6. ATRIBUIÇÃO ============ */}

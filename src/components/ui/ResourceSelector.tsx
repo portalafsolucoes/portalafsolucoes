@@ -19,6 +19,12 @@ export interface TaskResourceItem {
   quantity?: number | null
   hours?: number | null
   unit?: string | null
+  /**
+   * Posicao da tarefa (0-indexed) a qual este recurso pertence.
+   * Usado para MATERIAL/TOOL a nivel OS, vinculando-os ao card "RECURSOS TAREFA N"
+   * no print. NULL/undefined = nao vinculado (exibe na primeira tarefa por fallback).
+   */
+  taskOrder?: number | null
   /** Nome para exibição (preenchido pelo componente) */
   displayName?: string
 }
@@ -66,13 +72,20 @@ interface ResourceSelectorProps {
   allowedTypes?: ResourceType[]
   /** Texto do label do bloco (default: 'Recursos'). */
   label?: string
+  /**
+   * Lista de tarefas da OS para selecao per-row em MATERIAL/TOOL (uso a nivel OS).
+   * Quando definida, cada linha de Material/Ferramenta exibe um <select> de tarefa.
+   * Quando undefined (ex: uso por tarefa, com allowedTypes LABOR/SPECIALTY),
+   * o seletor de tarefa nao aparece.
+   */
+  tasks?: { order: number; label: string }[]
 }
 
 /* ------------------------------------------------------------------ */
 /*  Componente                                                          */
 /* ------------------------------------------------------------------ */
 
-export function ResourceSelector({ resources, onChange, className, allowedTypes, label }: ResourceSelectorProps) {
+export function ResourceSelector({ resources, onChange, className, allowedTypes, label, tasks }: ResourceSelectorProps) {
   const visibleTypes: ResourceType[] = allowedTypes && allowedTypes.length > 0
     ? allowedTypes
     : ['SPECIALTY', 'LABOR', 'MATERIAL', 'TOOL']
@@ -152,6 +165,9 @@ export function ResourceSelector({ resources, onChange, className, allowedTypes,
     if (isDuplicate) { setAddTarget(''); return }
 
     const config = TYPE_CONFIG[addType]
+    // Default taskOrder = primeira tarefa quando aplicavel (MATERIAL/TOOL com lista de tasks)
+    const isMaterialOrTool = addType === 'MATERIAL' || addType === 'TOOL'
+    const defaultTaskOrder = isMaterialOrTool && tasks && tasks.length > 0 ? tasks[0].order : null
     const newItem: TaskResourceItem = {
       resourceType: addType,
       resourceId: (addType === 'MATERIAL' || addType === 'TOOL') ? addTarget : null,
@@ -160,6 +176,7 @@ export function ResourceSelector({ resources, onChange, className, allowedTypes,
       quantity: config.showQuantity ? 1 : null,
       hours: config.showHours ? 0 : null,
       unit: addType === 'MATERIAL' ? (materials.find(m => m.id === addTarget)?.unit || 'un') : null,
+      taskOrder: defaultTaskOrder,
     }
 
     onChange([...resources, newItem])
@@ -266,6 +283,24 @@ export function ResourceSelector({ resources, onChange, className, allowedTypes,
                       onChange={e => handleUpdate(idx, { hours: e.target.value === '' ? 0 : Number(e.target.value) })}
                       className="w-16 px-2 py-1 text-xs border border-input rounded-[4px]"
                     />
+                  </div>
+                )}
+
+                {/* Seletor de tarefa para MATERIAL/TOOL — visivel apenas quando ha lista de tasks */}
+                {(r.resourceType === 'MATERIAL' || r.resourceType === 'TOOL') && tasks && tasks.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">Tarefa:</label>
+                    <select
+                      value={r.taskOrder ?? ''}
+                      onChange={e => handleUpdate(idx, { taskOrder: e.target.value === '' ? null : Number(e.target.value) })}
+                      className="px-2 py-1 text-xs border border-input rounded-[4px] bg-background max-w-[18ch]"
+                    >
+                      {tasks.map((t, i) => (
+                        <option key={i} value={t.order}>
+                          {i + 1}. {t.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 

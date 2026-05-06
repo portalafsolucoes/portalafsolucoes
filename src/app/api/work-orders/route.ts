@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
             )
           ),
           woResources:WorkOrderResource(
-            id, resourceType, quantity, hours, unit,
+            id, resourceType, quantity, hours, unit, taskId,
             resource:Resource(id, name),
             jobTitle:JobTitle(id, name),
             user:User(id, firstName, lastName)
@@ -515,6 +515,10 @@ export async function POST(request: NextRequest) {
         .eq('id', sourceRequest.id)
     }
 
+    // taskInserts e exposto fora do bloco para permitir que o sync de
+    // recursos (woResources) abaixo resolva `taskOrder -> taskId`.
+    const taskInserts: Record<string, unknown>[] = []
+
     // Criar tasks se fornecidas
     if (tasks && tasks.length > 0) {
       type IncomingTask = {
@@ -544,7 +548,6 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const taskInserts: Record<string, unknown>[] = []
       const taskResourcesByIndex: TaskResourcePayload[][] = []
       for (let index = 0; index < incomingTasks.length; index++) {
         const task = incomingTasks[index]
@@ -627,17 +630,33 @@ export async function POST(request: NextRequest) {
         quantity?: number | null
         hours?: number | null
         unit?: string | null
-      }) => ({
-        id: generateId(),
-        workOrderId: workOrder.id,
-        resourceType: r.resourceType,
-        resourceId: r.resourceId || null,
-        jobTitleId: r.jobTitleId || null,
-        userId: r.userId || null,
-        quantity: r.quantity ?? null,
-        hours: r.hours ?? null,
-        unit: r.unit || null,
-      }))
+        taskOrder?: number | null
+        taskId?: string | null
+      }) => {
+        // Resolucao de taskId:
+        //   1) taskId explicito (PATCH ou caso onde o cliente conhece o id)
+        //   2) taskOrder (0-indexed) — usado em POST onde o cliente nao conhece
+        //      o id gerado server-side
+        let resolvedTaskId: string | null = null
+        if (r.taskId) {
+          const match = taskInserts.find((t) => t.id === r.taskId)
+          if (match) resolvedTaskId = r.taskId
+        } else if (typeof r.taskOrder === 'number' && r.taskOrder >= 0 && r.taskOrder < taskInserts.length) {
+          resolvedTaskId = taskInserts[r.taskOrder].id as string
+        }
+        return {
+          id: generateId(),
+          workOrderId: workOrder.id,
+          resourceType: r.resourceType,
+          resourceId: r.resourceId || null,
+          jobTitleId: r.jobTitleId || null,
+          userId: r.userId || null,
+          quantity: r.quantity ?? null,
+          hours: r.hours ?? null,
+          unit: r.unit || null,
+          taskId: resolvedTaskId,
+        }
+      })
       await supabase.from('WorkOrderResource').insert(resourceInserts)
     }
 
