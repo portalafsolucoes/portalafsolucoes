@@ -78,8 +78,19 @@ export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose 
           html, body {
             background: white !important;
           }
+          /* Esconde TUDO no body para nao imprimir o conteudo da pagina pai
+             (sidebar, header, listagem). Reativa visibilidade apenas no overlay
+             de impressao. */
+          body * {
+            visibility: hidden !important;
+          }
+          .wo-print-overlay,
+          .wo-print-overlay * {
+            visibility: visible !important;
+          }
           .wo-print-overlay {
-            position: static !important;
+            position: absolute !important;
+            inset: 0 !important;
             background: white !important;
             overflow: visible !important;
           }

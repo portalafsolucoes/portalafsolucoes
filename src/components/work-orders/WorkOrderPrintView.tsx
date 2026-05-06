@@ -542,8 +542,20 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
           html, body {
             background: white !important;
           }
+          /* Esconde TUDO no body durante a impressao para nao imprimir o
+             conteudo da pagina pai (sidebar, header, listagem de OSs, etc.).
+             Em seguida, reativa apenas o overlay de impressao e seus
+             descendentes — pattern classico de "print-only content". */
+          body * {
+            visibility: hidden !important;
+          }
+          .wo-print-overlay,
+          .wo-print-overlay * {
+            visibility: visible !important;
+          }
           .wo-print-overlay {
-            position: static !important;
+            position: absolute !important;
+            inset: 0 !important;
             background: white !important;
             overflow: visible !important;
           }
