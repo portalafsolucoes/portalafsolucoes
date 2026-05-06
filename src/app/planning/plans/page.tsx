@@ -11,6 +11,7 @@ import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { useResponsiveLayout } from '@/hooks/useMediaQuery'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatDate } from '@/lib/utils'
+import { getPlanStatusLabel } from '@/lib/status-labels'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -312,8 +313,8 @@ export default function PlansPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{p.description}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(p.startDate || '')}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(p.endDate || '')}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.status}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.isFinished ? 'SIM' : 'NAO'}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{getPlanStatusLabel(p.status)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{p.isFinished ? 'Sim' : 'Não'}</td>
               </tr>
             ))}
           </tbody>

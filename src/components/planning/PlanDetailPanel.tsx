@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { PanelCloseButton } from '@/components/ui/PanelCloseButton'
 import { formatDate } from '@/lib/utils'
+import {
+  getPlanStatusLabel,
+  getWorkOrderPriorityLabel,
+  getWorkOrderStatusLabel,
+} from '@/lib/status-labels'
 
 interface Plan {
   id: string
@@ -41,33 +46,12 @@ interface PlanDetailPanelProps {
   canDelete: boolean
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Aberto',
-  IN_PROGRESS: 'Em Andamento',
-  CLOSED: 'Fechado',
-}
-
-const WO_STATUS_LABELS: Record<string, string> = {
-  PENDING: 'PENDENTE',
-  RELEASED: 'LIBERADA',
-  OPEN: 'ABERTA',
-  IN_PROGRESS: 'EM PROGRESSO',
-  ON_HOLD: 'EM ESPERA',
-}
-
 const WO_STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-gray-100 text-gray-700',
   RELEASED: 'bg-blue-100 text-blue-700',
   OPEN: 'bg-green-100 text-green-700',
   IN_PROGRESS: 'bg-amber-100 text-amber-700',
   ON_HOLD: 'bg-orange-100 text-orange-700',
-}
-
-const WO_PRIORITY_LABELS: Record<string, string> = {
-  HIGH: 'ALTA',
-  MEDIUM: 'MEDIA',
-  LOW: 'BAIXA',
-  NONE: 'NENHUMA',
 }
 
 export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDetailPanelProps) {
@@ -123,7 +107,7 @@ export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDeta
             </div>
             <div>
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Status</p>
-              <p className="text-sm text-foreground">{STATUS_LABELS[plan.status || ''] || plan.status || '—'}</p>
+              <p className="text-sm text-foreground">{getPlanStatusLabel(plan.status)}</p>
             </div>
             <div>
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Data Início</p>
@@ -179,7 +163,7 @@ export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDeta
                       {wo.internalId || wo.customId || wo.externalId || '—'}
                     </span>
                     <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${WO_STATUS_COLORS[wo.status] || 'bg-gray-100 text-gray-600'}`}>
-                      {WO_STATUS_LABELS[wo.status] || wo.status}
+                      {getWorkOrderStatusLabel(wo.status)}
                     </span>
                   </div>
                   <p className="text-sm text-foreground truncate">{wo.title}</p>
@@ -189,7 +173,7 @@ export function PlanDetailPanel({ plan, onClose, onDelete, canDelete }: PlanDeta
                     </p>
                   )}
                   <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
-                    <span>Prioridade: {WO_PRIORITY_LABELS[wo.priority] || wo.priority || 'NENHUMA'}</span>
+                    <span>Prioridade: {getWorkOrderPriorityLabel(wo.priority)}</span>
                     {(wo.dueDate || wo.plannedStartDate) && (
                       <span>Prazo: {formatDate(wo.dueDate || wo.plannedStartDate || '')}</span>
                     )}

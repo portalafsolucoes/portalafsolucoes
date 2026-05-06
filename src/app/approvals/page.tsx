@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor } from '@/lib/utils'
+import { getRequestStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 import { Modal } from '@/components/ui/Modal'
 import { ApproveRequestModal } from '@/components/approvals/ApproveRequestModal'
 
@@ -133,15 +134,6 @@ export default function ApprovalsPage() {
     setRejectionReason('')
   }
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return '🔴 Alta'
-      case 'MEDIUM': return '🟡 Média'
-      case 'LOW': return '🟢 Baixa'
-      default: return 'Nenhuma'
-    }
-  }
-
   return (
     <PageContainer>
         <PageHeader
@@ -189,11 +181,11 @@ export default function ApprovalsPage() {
                         </h3>
                         <div className="flex gap-2">
                           <Badge className={getStatusColor(request.status)}>
-                            {request.status}
+                            {getRequestStatusLabel(request.status)}
                           </Badge>
                           {request.priority !== 'NONE' && (
                             <Badge className="bg-orange-100 text-orange-800">
-                              {getPriorityLabel(request.priority)}
+                              {getWorkOrderPriorityLabel(request.priority)}
                             </Badge>
                           )}
                         </div>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
+import { getWorkOrderStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 import { Modal } from '@/components/ui/Modal'
 import Link from 'next/link'
 
@@ -129,10 +130,10 @@ export default function WorkOrderDetailPage() {
                 </span>
               )}
               <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(workOrder.status)}`}>
-                {workOrder.status}
+                {getWorkOrderStatusLabel(workOrder.status)}
               </span>
               <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getPriorityColor(workOrder.priority)}`}>
-                {workOrder.priority}
+                {getWorkOrderPriorityLabel(workOrder.priority)}
               </span>
               <Link href={`/work-orders/${params.id}/edit`}>
                 <Button variant="outline" className="flex items-center gap-2">

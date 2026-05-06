@@ -10,6 +10,7 @@ import { PanelActionButtons } from '@/components/ui/PanelActionButtons'
 import { formatDate, formatDateTime, getPriorityColor, getStatusColor } from '@/lib/utils'
 import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
 import { formatHours } from '@/lib/units/time'
+import { getWorkOrderStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 
 interface BasicUser {
   id: string
@@ -211,29 +212,6 @@ function DetailField({
       <div className="text-[13px] font-medium text-gray-900 break-words">{value}</div>
     </div>
   )
-}
-
-function getPriorityLabel(priority: string): string {
-  switch (priority) {
-    case 'CRITICAL': return 'CRITICA'
-    case 'HIGH': return 'ALTA'
-    case 'MEDIUM': return 'MEDIA'
-    case 'LOW': return 'BAIXA'
-    default: return 'NENHUMA'
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case 'PENDING': return 'PENDENTE'
-    case 'RELEASED': return 'LIBERADA'
-    case 'OPEN': return 'ABERTA'
-    case 'IN_PROGRESS': return 'EM PROGRESSO'
-    case 'ON_HOLD': return 'EM ESPERA'
-    case 'COMPLETE': return 'CONCLUIDA'
-    case 'REPROGRAMMED': return 'REPROGRAMADA'
-    default: return status
-  }
 }
 
 function getSystemStatusLabel(systemStatus?: string | null): string {
@@ -485,10 +463,10 @@ export function WorkOrderDetailModal({
               {getSystemStatusLabel(workOrder.systemStatus)}
             </span>
             <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 shadow-sm ${getStatusColor(workOrder.status)}`}>
-              {getStatusLabel(workOrder.status)}
+              {getWorkOrderStatusLabel(workOrder.status)}
             </span>
             <span className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 shadow-sm ${getPriorityColor(workOrder.priority)}`}>
-              {getPriorityLabel(workOrder.priority)}
+              {getWorkOrderPriorityLabel(workOrder.priority)}
             </span>
             <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md border border-gray-200 bg-white text-gray-900 shadow-sm">
               {getTypeLabel(workOrder.type)}

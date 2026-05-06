@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Icon } from '@/components/ui/Icon'
 import { AdaptiveSplitPanel } from '@/components/layout/AdaptiveSplitPanel'
 import { formatDate, getStatusColor } from '@/lib/utils'
+import { getRequestStatusLabel, getWorkOrderPriorityLabel } from '@/lib/status-labels'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ExportButton } from '@/components/ui/ExportButton'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -174,27 +175,6 @@ export default function RequestsPage() {
     }
   }
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return '🔴 Alta'
-      case 'MEDIUM': return '🟡 Média'
-      case 'LOW': return '🟢 Baixa'
-      default: return 'Nenhuma'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'Pendente'
-      case 'APPROVED': return 'Aprovada'
-      case 'REJECTED': return 'Rejeitada'
-      case 'CANCELLED': return 'Cancelada'
-      case 'COMPLETED': return 'Finalizada'
-      case 'IN_PROGRESS': return 'Em Andamento'
-      default: return status
-    }
-  }
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
@@ -354,11 +334,11 @@ export default function RequestsPage() {
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h3 className="text-base font-bold text-foreground">{request.title}</h3>
               <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                {getStatusLabel(request.status)}
+                {getRequestStatusLabel(request.status)}
               </span>
               {request.priority !== 'NONE' && (
                 <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full">
-                  {getPriorityLabel(request.priority)}
+                  {getWorkOrderPriorityLabel(request.priority)}
                 </span>
               )}
             </div>
@@ -469,11 +449,11 @@ export default function RequestsPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col gap-1">
                     <Badge className={getStatusColor(request.status) + ' text-xs w-fit'}>
-                      {getStatusLabel(request.status)}
+                      {getRequestStatusLabel(request.status)}
                     </Badge>
                     {request.priority !== 'NONE' && (
                       <Badge className="text-xs w-fit">
-                        {getPriorityLabel(request.priority)}
+                        {getWorkOrderPriorityLabel(request.priority)}
                       </Badge>
                     )}
                   </div>
