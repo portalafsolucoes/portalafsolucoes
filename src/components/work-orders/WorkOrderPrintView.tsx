@@ -503,12 +503,6 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
   }, [workOrderId, data])
 
   const handlePrint = () => {
-    // Diagnostico: confirma que o portal e filho direto de body antes de imprimir
-    const portal = document.querySelector('.wo-print-portal')
-    const isDirectBodyChild = portal?.parentElement === document.body
-    const bodyChildren = Array.from(document.body.children).map(el => `${el.tagName.toLowerCase()}.${el.className.split(' ')[0] || '_'}`)
-    // eslint-disable-next-line no-console
-    console.log('[print-debug-v3]', { isDirectBodyChild, bodyChildren })
     window.print()
   }
 
@@ -627,7 +621,7 @@ function renderOverlay(
 
       {/* Toolbar (escondida na impressao) */}
       <div className="wo-print-toolbar print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-900">Visualizacao de Impressao - OS {displayId} <span className="text-orange-600 font-mono">[v3]</span></h2>
+        <h2 className="text-sm font-semibold text-gray-900">Visualizacao de Impressao - OS {displayId}</h2>
         <div className="flex items-center gap-3">
           <button
             onClick={handlePrint}
