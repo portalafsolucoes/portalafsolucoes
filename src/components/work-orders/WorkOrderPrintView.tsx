@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { parseTaskSteps } from '@/lib/workOrders/taskSteps'
@@ -472,8 +473,13 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
   const { user } = useAuth()
   const [workOrder, setWorkOrder] = useState<PrintWorkOrder | null>(data ?? null)
   const [loading, setLoading] = useState(!data)
+  const [mounted, setMounted] = useState(false)
   const companyLogo = user?.company?.logo || null
   const companyName = user?.company?.name || 'Empresa'
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (data) {
@@ -505,8 +511,11 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
     return <WorkOrderPrintSheet workOrder={workOrder} companyLogo={companyLogo} companyName={companyName} />
   }
 
+  if (!mounted) return null
+
+  let body: React.ReactNode
   if (loading) {
-    return (
+    body = (
       <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -514,10 +523,8 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
         </div>
       </div>
     )
-  }
-
-  if (!workOrder) {
-    return (
+  } else if (!workOrder) {
+    body = (
       <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Erro ao carregar ordem de servico.</p>
@@ -525,71 +532,92 @@ export function WorkOrderPrintView({ workOrderId, onClose, data, embedded = fals
         </div>
       </div>
     )
+  } else {
+    const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
+    body = renderOverlay(workOrder, displayId, companyLogo, companyName, handlePrint, onClose)
   }
 
-  const displayId = workOrder.externalId || workOrder.internalId || workOrder.customId || workOrder.id.slice(0, 8)
+  // Portal para document.body — garante que o overlay seja irmao direto dos
+  // demais root elements (#__next, etc.) e que a regra de print
+  // `body > *:not(.wo-print-portal) { display: none }` funcione de forma
+  // independente da arvore React. Sem isso, conteudo da pagina pai (sidebar,
+  // listagem) imprime junto com a folha A4.
+  return createPortal(
+    <div className="wo-print-portal">
+      <PrintStyles />
+      {body}
+    </div>,
+    document.body
+  )
+}
 
+function PrintStyles() {
+  return (
+    <style>{`
+      @page {
+        size: A4 portrait;
+        margin: 6mm 8mm;
+      }
+      @media print {
+        html, body {
+          background: white !important;
+        }
+        /* Esconde tudo o que esta no body, EXCETO o portal do print view.
+           Como o portal e irmao direto dos demais root elements (#__next),
+           esta regra remove sidebar, header e listagem da impressao
+           sem depender de visibility/specificidade. */
+        body > *:not(.wo-print-portal) {
+          display: none !important;
+        }
+        .wo-print-overlay {
+          position: static !important;
+          background: white !important;
+          overflow: visible !important;
+        }
+        .wo-print-toolbar { display: none !important; }
+        .wo-print-page-wrapper {
+          padding: 0 !important;
+          display: block !important;
+        }
+        .wo-print-sheet {
+          width: 100% !important;
+          min-height: 0 !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .wo-task-card {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .wo-step-row {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .wo-print-block {
+          break-inside: avoid-page;
+        }
+        .wo-print-signature {
+          break-before: avoid;
+          page-break-before: avoid;
+        }
+        thead {
+          display: table-header-group;
+        }
+      }
+    `}</style>
+  )
+}
+
+function renderOverlay(
+  workOrder: PrintWorkOrder,
+  displayId: string,
+  companyLogo: string | null,
+  companyName: string,
+  handlePrint: () => void,
+  onClose: () => void
+) {
   return (
     <div className="fixed inset-0 z-[9999] bg-gray-100 overflow-auto wo-print-overlay">
-      {/* Estilos de impressao A4 — paginacao multi-pagina, margens minimas,
-          e neutralizacao do overlay/toolbar para fluxo limpo. */}
-      <style>{`
-        @page {
-          size: A4 portrait;
-          margin: 6mm 8mm;
-        }
-        @media print {
-          html, body {
-            background: white !important;
-          }
-          /* Esconde TUDO no body durante a impressao para nao imprimir o
-             conteudo da pagina pai (sidebar, header, listagem de OSs, etc.).
-             Em seguida, reativa apenas o overlay de impressao e seus
-             descendentes — pattern classico de "print-only content". */
-          body * {
-            visibility: hidden !important;
-          }
-          .wo-print-overlay,
-          .wo-print-overlay * {
-            visibility: visible !important;
-          }
-          .wo-print-overlay {
-            position: absolute !important;
-            inset: 0 !important;
-            background: white !important;
-            overflow: visible !important;
-          }
-          .wo-print-toolbar { display: none !important; }
-          .wo-print-page-wrapper {
-            padding: 0 !important;
-            display: block !important;
-          }
-          .wo-print-sheet {
-            width: 100% !important;
-            min-height: 0 !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-          }
-          .wo-task-card {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .wo-step-row {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .wo-print-block {
-            break-inside: avoid-page;
-          }
-          .wo-print-signature {
-            break-before: avoid;
-            page-break-before: avoid;
-          }
-          thead {
-            display: table-header-group;
-          }
-        }
-      `}</style>
 
       {/* Toolbar (escondida na impressao) */}
       <div className="wo-print-toolbar print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
