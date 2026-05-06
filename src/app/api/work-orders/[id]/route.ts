@@ -70,9 +70,10 @@ export async function GET(
         tasks:Task(
           *,
           resources:TaskResource(
-            id, resourceType, hours, quantity,
+            id, resourceType, hours, quantity, unit,
             user:User(id, firstName, lastName),
-            jobTitle:JobTitle(id, name)
+            jobTitle:JobTitle(id, name),
+            resource:Resource(id, name, unit)
           )
         ),
         woResources:WorkOrderResource(id, resourceType, quantity, hours, unit, resource:Resource(id, name), jobTitle:JobTitle(id, name), user:User(id, firstName, lastName)),
@@ -313,8 +314,10 @@ export async function PATCH(
       )
       const hasAnyTaskResources = taskResourcesByIndex.some((r) => r.length > 0)
       if (hasAnyTaskResources && !allowsTaskResources) {
+        // Gating de recursos por tarefa: LABOR/SPECIALTY/MATERIAL/TOOL so em OSs
+        // manuais ou de plano UNICA. Defesa em profundidade no servidor (UI ja gata).
         return NextResponse.json(
-          { error: 'Mao de obra por tarefa so e permitida em OSs manuais ou de plano UNICA' },
+          { error: 'Recursos por tarefa so sao permitidos em OSs manuais ou de plano UNICA' },
           { status: 400 }
         )
       }

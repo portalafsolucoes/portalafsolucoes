@@ -430,8 +430,10 @@ export function WorkOrderFormModal({
           resourceType: string
           hours?: number | null
           quantity?: number | null
+          unit?: string | null
           user?: { id: string } | null
           jobTitle?: { id: string } | null
+          resource?: { id: string; name?: string; unit?: string | null } | null
         }>
       }
       const woTasks = (wo.tasks as WoTaskApi[] | undefined) || []
@@ -452,8 +454,11 @@ export function WorkOrderFormModal({
               resourceType: r.resourceType as TaskResourceItem['resourceType'],
               userId: r.user?.id || null,
               jobTitleId: r.jobTitle?.id || null,
+              resourceId: r.resource?.id || null,
               hours: r.hours ?? null,
               quantity: r.quantity ?? null,
+              unit: r.unit ?? r.resource?.unit ?? null,
+              displayName: r.resource?.name,
             }))
           : [],
       }))
@@ -917,13 +922,15 @@ export function WorkOrderFormModal({
           : null,
         resources: includePlannedWindow
           ? (t.resources || [])
-              .filter(r => r.resourceType === 'LABOR' || r.resourceType === 'SPECIALTY')
+              .filter(r => ['LABOR', 'SPECIALTY', 'MATERIAL', 'TOOL'].includes(r.resourceType))
               .map(r => ({
                 resourceType: r.resourceType,
                 userId: r.userId || null,
                 jobTitleId: r.jobTitleId || null,
+                resourceId: r.resourceId || null,
                 hours: r.hours ?? null,
                 quantity: r.quantity ?? null,
+                unit: r.unit || null,
               }))
           : [],
       }))
@@ -1471,12 +1478,13 @@ export function WorkOrderFormModal({
                       </div>
                     </div>
                   )}
-                  {/* Mao de Obra / Especialidade por tarefa
-                      So aparece em OSs manuais ou de plano UNICA (mesmo gating da janela). */}
+                  {/* Recursos por tarefa (Mao de Obra, Especialidade, Material, Ferramenta).
+                      So aparece em OSs manuais ou de plano UNICA (mesmo gating da janela).
+                      Fiel ao MODELO DE OS_REV1.pdf — bloco RECURSOS TAREFA N por tarefa. */}
                   {showPlannedWindowFields && (
                     <ResourceSelector
-                      label="Mao de Obra / Especialidade"
-                      allowedTypes={['LABOR', 'SPECIALTY']}
+                      label="Recursos da Tarefa (Mao de Obra / Especialidade / Material / Ferramenta)"
+                      allowedTypes={['LABOR', 'SPECIALTY', 'MATERIAL', 'TOOL']}
                       resources={task.resources}
                       onChange={(next) => updateTask(task.key, { resources: next })}
                     />

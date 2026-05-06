@@ -125,9 +125,10 @@ export async function GET(request: NextRequest) {
           tasks:Task(
             id, label, notes, completed, order, executionTime, plannedStart, plannedEnd, steps,
             resources:TaskResource(
-              id, resourceType, hours, quantity,
+              id, resourceType, hours, quantity, unit,
               user:User(id, firstName, lastName),
-              jobTitle:JobTitle(id, name)
+              jobTitle:JobTitle(id, name),
+              resource:Resource(id, name, unit)
             )
           ),
           woResources:WorkOrderResource(
@@ -529,9 +530,9 @@ export async function POST(request: NextRequest) {
       }
       const incomingTasks = tasks as IncomingTask[]
 
-      // Gating de mao de obra/especialidade por tarefa: so e permitido em
-      // OSs manuais ou originadas de plano UNICA. Se houver `resources` em
-      // qualquer task e o gating for false, rejeitar 400.
+      // Gating de recursos por tarefa (LABOR/SPECIALTY/MATERIAL/TOOL): so e
+      // permitido em OSs manuais ou originadas de plano UNICA. Se houver
+      // `resources` em qualquer task e o gating for false, rejeitar 400.
       const planId = (body as { assetMaintenancePlanId?: string | null }).assetMaintenancePlanId || null
       const allowsTaskResources = await isTaskResourcesAllowed(planId, session.companyId)
       const hasAnyTaskResources = incomingTasks.some(
@@ -539,7 +540,7 @@ export async function POST(request: NextRequest) {
       )
       if (hasAnyTaskResources && !allowsTaskResources) {
         return NextResponse.json(
-          { error: 'Mao de obra por tarefa so e permitida em OSs manuais ou de plano UNICA' },
+          { error: 'Recursos por tarefa so sao permitidos em OSs manuais ou de plano UNICA' },
           { status: 400 }
         )
       }

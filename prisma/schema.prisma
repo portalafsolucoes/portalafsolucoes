@@ -818,6 +818,7 @@ model Resource {
   standardTaskResources StandardMaintenanceTaskResource[]
   assetTaskResources    AssetMaintenanceTaskResource[]
   woResources           WorkOrderResource[] @relation("WOResource")
+  taskResources         TaskResource[] @relation("TaskResourceMaterial")
 
   @@unique([companyId, protheusCode])
   @@index([companyId])
@@ -1593,9 +1594,10 @@ model Task {
 
 model TaskResource {
   id           String  @id @default(cuid())
-  resourceType String  // LABOR | SPECIALTY
+  resourceType String  // LABOR | SPECIALTY | MATERIAL | TOOL
   hours        Decimal? @db.Decimal(10, 2)
   quantity     Float?
+  unit         String?
 
   taskId String
   task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
@@ -1606,9 +1608,13 @@ model TaskResource {
   jobTitleId String?
   jobTitle   JobTitle? @relation("TaskResourceJobTitle", fields: [jobTitleId], references: [id])
 
+  resourceId String?
+  resource   Resource? @relation("TaskResourceMaterial", fields: [resourceId], references: [id], onDelete: SetNull)
+
   @@index([taskId])
   @@index([userId])
   @@index([jobTitleId])
+  @@index([resourceId])
 }
 
 model Labor {

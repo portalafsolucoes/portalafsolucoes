@@ -1,4 +1,5 @@
-// Helpers para mao de obra e especialidade por tarefa.
+// Helpers para recursos por tarefa (mao de obra, especialidade, material e
+// ferramenta).
 //
 // Disponivel apenas em:
 //   - OSs manuais (sem assetMaintenancePlanId), OU
@@ -15,11 +16,13 @@ export type TaskResourcePayload = {
   resourceType?: string
   userId?: string | null
   jobTitleId?: string | null
+  resourceId?: string | null
   hours?: number | string | null
   quantity?: number | null
+  unit?: string | null
 }
 
-const ALLOWED_TYPES = new Set(['LABOR', 'SPECIALTY'])
+const ALLOWED_TYPES = new Set(['LABOR', 'SPECIALTY', 'MATERIAL', 'TOOL'])
 
 export async function isTaskResourcesAllowed(
   assetMaintenancePlanId: string | null | undefined,
@@ -46,13 +49,18 @@ export function validateTaskResources(
   for (const r of resources) {
     const type = String(r.resourceType || '').toUpperCase()
     if (!ALLOWED_TYPES.has(type)) {
-      return `Tipo de recurso de tarefa invalido: ${r.resourceType}. Use LABOR ou SPECIALTY.`
+      return `Tipo de recurso de tarefa invalido: ${r.resourceType}. Use LABOR, SPECIALTY, MATERIAL ou TOOL.`
     }
     if (type === 'LABOR' && !r.userId) {
       return 'Mao de obra exige selecao de uma pessoa'
     }
     if (type === 'SPECIALTY' && !r.jobTitleId) {
       return 'Especialidade exige selecao de um cargo'
+    }
+    if ((type === 'MATERIAL' || type === 'TOOL') && !r.resourceId) {
+      return type === 'MATERIAL'
+        ? 'Material exige selecao de um item do cadastro'
+        : 'Ferramenta exige selecao de um item do cadastro'
     }
   }
   return null
@@ -93,8 +101,10 @@ export async function insertTaskResources(
     resourceType: String(r.resourceType || '').toUpperCase(),
     userId: r.userId || null,
     jobTitleId: r.jobTitleId || null,
+    resourceId: r.resourceId || null,
     hours: toDecimalHours(r.hours ?? null),
     quantity: r.quantity ?? null,
+    unit: r.unit || null,
   }))
   const { error } = await supabase.from('TaskResource').insert(inserts)
   if (error) throw error

@@ -17,8 +17,10 @@ interface PrintTaskResource {
   resourceType: string
   hours?: number | null
   quantity?: number | null
+  unit?: string | null
   user?: { id: string; firstName: string; lastName: string } | null
   jobTitle?: { id: string; name: string } | null
+  resource?: { id: string; name: string; unit?: string | null } | null
 }
 
 interface PrintTask {
@@ -124,13 +126,18 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
   const planNumber = workOrder.maintenancePlanExec?.planNumber ?? null
   const sortedTasks = [...(workOrder.tasks || [])].sort((a, b) => a.order - b.order)
 
-  // Recursos a nivel OS — o print exibe apenas Materiais e Ferramentas em
-  // duas tabelas lado a lado (modelo). LABOR/SPECIALTY a nivel OS, se ainda
-  // existirem em registros legados, NAO entram aqui — mao de obra mora dentro
-  // de cada tarefa via TaskResource.
+  // Recursos por tarefa (MATERIAL/TOOL/LABOR/SPECIALTY) ja sao renderizados
+  // dentro de cada card de tarefa, conforme MODELO DE OS_REV1.pdf.
+  // O bloco abaixo (woRes) e fallback de compat para OSs legadas que ainda
+  // tem MATERIAL/TOOL em WorkOrderResource (nivel OS) — so renderiza quando
+  // nenhuma tarefa tem recursos proprios.
   const woRes = workOrder.woResources || []
   const materials = woRes.filter(r => r.resourceType === 'MATERIAL')
   const tools = woRes.filter(r => r.resourceType === 'TOOL')
+  const anyTaskHasResources = sortedTasks.some(t =>
+    (t.resources || []).some(r => r.resourceType === 'MATERIAL' || r.resourceType === 'TOOL')
+  )
+  const showLegacyResourcesBlock = !anyTaskHasResources && (materials.length > 0 || tools.length > 0)
 
   // Hierarquia do ativo
   const assetChain: string[] = []
@@ -294,6 +301,9 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
                 return null
               })
               .filter(Boolean) as string[]
+            const taskMaterials = taskResources.filter(r => r.resourceType === 'MATERIAL')
+            const taskTools = taskResources.filter(r => r.resourceType === 'TOOL')
+            const hasTaskResources = taskMaterials.length > 0 || taskTools.length > 0
 
             return (
               <div key={task.id} className="wo-task-card border border-gray-900 mb-1">
@@ -365,6 +375,69 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
                     Sem etapas detalhadas para esta tarefa.
                   </div>
                 )}
+
+                {/* RECURSOS TAREFA N — so renderiza se a tarefa tiver materiais ou
+                    ferramentas alocados (modelo: bloco condicional por tarefa) */}
+                {hasTaskResources && (
+                  <div className="border-t border-gray-900">
+                    <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+                      Recursos Tarefa {taskIdx + 1}
+                    </div>
+                    <div className="grid grid-cols-2 gap-0">
+                      {/* Materiais */}
+                      <table className="w-full border-collapse border-r border-gray-900">
+                        <thead>
+                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
+                            <th colSpan={3} className="border-b border-gray-900 bg-gray-50 px-2 py-0.5 text-center text-[8px]">
+                              Materiais
+                            </th>
+                          </tr>
+                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
+                            <th className="border-b border-gray-300 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
+                            <th className="border-b border-gray-300 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
+                            <th className="border-b border-gray-300 px-1 py-0.5 text-left">Nome</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {taskMaterials.length > 0 ? taskMaterials.map((r, idx) => (
+                            <tr key={r.id || `tmat-${idx}`}>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.quantity ?? '-'}</td>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.unit || r.resource?.unit || '-'}</td>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.resource?.name || '-'}</td>
+                            </tr>
+                          )) : (
+                            <tr><td colSpan={3} className="px-1 py-0.5 text-[9px] text-gray-400 italic">-</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                      {/* Ferramentas — modelo nao tem coluna UNIDADE em ferramentas */}
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
+                            <th colSpan={2} className="border-b border-gray-900 bg-gray-50 px-2 py-0.5 text-center text-[8px]">
+                              Ferramentas
+                            </th>
+                          </tr>
+                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
+                            <th className="border-b border-gray-300 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
+                            <th className="border-b border-gray-300 px-1 py-0.5 text-left">Nome</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {taskTools.length > 0 ? taskTools.map((r, idx) => (
+                            <tr key={r.id || `ttool-${idx}`}>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.quantity ?? '-'}</td>
+                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.resource?.name || '-'}</td>
+                            </tr>
+                          )) : (
+                            <tr><td colSpan={2} className="px-1 py-0.5 text-[9px] text-gray-400 italic">-</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {task.notes && (
                   <p className="px-2 py-1 text-[9px] text-gray-500 border-t border-gray-300">
                     Nota: {task.notes}
@@ -374,7 +447,11 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
             )
           })}
 
-      {/* === RECURSOS - MATERIAIS / FERRAMENTAS lado a lado === */}
+      {/* === RECURSOS DA OS (FALLBACK DE COMPAT P/ OSs LEGADAS) ===
+          Renderiza apenas quando nenhuma tarefa tem MATERIAL/TOOL atribuido
+          (TaskResource), mas existem recursos a nivel OS (WorkOrderResource).
+          OSs novas usam recursos por tarefa, fieis ao MODELO DE OS_REV1.pdf. */}
+      {showLegacyResourcesBlock && (
       <div className="grid grid-cols-2 gap-2 mb-1 wo-print-block">
         {/* Materiais */}
         <table className="w-full border-collapse">
@@ -424,6 +501,7 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* === OBSERVACOES === */}
       <div className="border border-gray-900 mb-2 wo-print-block">
