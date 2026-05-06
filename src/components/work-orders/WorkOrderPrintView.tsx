@@ -152,58 +152,63 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
 
   return (
     <div className="wo-print-sheet bg-white text-[10px] text-gray-900 leading-snug">
-      {/* === CABECALHO === */}
-      <div className="wo-print-header grid grid-cols-[45mm_1fr_38mm] gap-2 border-2 border-gray-900 mb-1">
-        {/* Logo + Nº Plano + Nº OS (lado esquerdo, espelhando o modelo) */}
-        <div className="border-r-2 border-gray-900 px-2 py-1 flex flex-col items-center justify-center text-center">
-          {companyLogo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={companyLogo}
-              alt={companyName}
-              className="max-h-[12mm] max-w-[42mm] object-contain"
-            />
-          ) : (
-            <span className="text-[10px] font-bold">{companyName}</span>
-          )}
-          {planNumber && (
-            <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wide">
-              Plano #{planNumber}
-            </p>
-          )}
-        </div>
-
-        {/* Centro: Controle de execucao (apenas 2 caixas: Inicio, Fim) */}
-        <div className="px-2 py-1 flex flex-col">
-          <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600 text-center mb-0.5">
-            Controle de Execucao
-          </p>
-          <div className="grid grid-cols-2 gap-2 flex-1">
-            <div className="border border-gray-400 px-2 py-1 flex flex-col">
-              <p className="text-[7px] font-bold uppercase text-gray-500">Data e Horario Inicio</p>
-              <p className="text-[10px] mt-auto font-mono">____/____/______&nbsp;&nbsp;____:____</p>
+      {/* === CABECALHO ===
+          3 colunas: [Logo + Nº OS / Nº Plano] | [INICIO] | [FIM]
+          Layout fiel ao modelo MODELO DE OS_REV1.pdf. */}
+      <div className="wo-print-header grid grid-cols-[55mm_1fr_1fr] border-2 border-gray-900 mb-1">
+        {/* Coluna 1: logo em cima, Nº OS + Nº Plano embaixo */}
+        <div className="border-r-2 border-gray-900 flex flex-col">
+          <div className="flex-1 flex items-center justify-center px-2 py-1 border-b border-gray-900 min-h-[14mm]">
+            {companyLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={companyLogo}
+                alt={companyName}
+                className="max-h-[12mm] max-w-[50mm] object-contain"
+              />
+            ) : (
+              <span className="text-[10px] font-bold uppercase">{companyName}</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="border-r border-gray-900 px-2 py-1 flex flex-col">
+              <p className="text-[7px] font-bold uppercase text-gray-500">Nº OS</p>
+              <p className="text-[11px] font-bold mt-0.5">{displayId}</p>
             </div>
-            <div className="border border-gray-400 px-2 py-1 flex flex-col">
-              <p className="text-[7px] font-bold uppercase text-gray-500">Data e Horario Fim</p>
-              <p className="text-[10px] mt-auto font-mono">____/____/______&nbsp;&nbsp;____:____</p>
+            <div className="px-2 py-1 flex flex-col">
+              <p className="text-[7px] font-bold uppercase text-gray-500">Nº Plano</p>
+              <p className="text-[11px] font-bold mt-0.5">{planNumber ?? ' '}</p>
             </div>
           </div>
         </div>
 
-        {/* Direita: Numero da OS */}
-        <div className="border-l-2 border-gray-900 px-2 py-1 text-center flex flex-col items-center justify-center">
-          <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600">Ordem de Servico</p>
-          <p className="text-2xl font-black leading-none mt-0.5">{displayId}</p>
-          <p className="text-[8px] uppercase mt-0.5 text-gray-700">{getTypeLabel(workOrder.type)}</p>
+        {/* Coluna 2: INICIO */}
+        <div className="border-r-2 border-gray-900 flex flex-col">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-center bg-gray-100 border-b border-gray-900 px-2 py-0.5">
+            Inicio
+          </p>
+          <div className="flex-1 flex items-end px-2 py-2">
+            <p className="text-[10px] font-mono w-full text-center">____/____/______&nbsp;&nbsp;____:____</p>
+          </div>
+        </div>
+
+        {/* Coluna 3: FIM */}
+        <div className="flex flex-col">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-center bg-gray-100 border-b border-gray-900 px-2 py-0.5">
+            Fim
+          </p>
+          <div className="flex-1 flex items-end px-2 py-2">
+            <p className="text-[10px] font-mono w-full text-center">____/____/______&nbsp;&nbsp;____:____</p>
+          </div>
         </div>
       </div>
 
-      {/* === ATIVO E LOCALIZACAO === */}
+      {/* === IDENTIFICACAO DO ATIVO === */}
       <table className="w-full border-collapse mb-1 wo-print-block">
         <thead>
           <tr>
-            <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
-              Ativo e Localizacao
+            <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+              Identificacao do Ativo
             </th>
           </tr>
           <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
@@ -227,8 +232,8 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
       <table className="w-full border-collapse mb-1 wo-print-block">
         <thead>
           <tr>
-            <th colSpan={5} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
-              Resumo da O.S.
+            <th colSpan={5} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+              Resumo da OS
             </th>
           </tr>
           <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
@@ -260,7 +265,7 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
 
       {/* === DESCRICAO === */}
       <div className="border border-gray-900 mb-1 wo-print-block">
-        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
           Descricao
         </p>
         <div className="px-2 py-1 min-h-[14mm]">
@@ -271,27 +276,11 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
         </div>
       </div>
 
-      {/* === TAREFAS === */}
-      {sortedTasks.length > 0 && (
-        <div className="mb-1">
-          <div className="border border-gray-900 grid grid-cols-[1fr_25mm] bg-gray-100">
-            <p className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border-r border-gray-900">
-              Tarefas
-            </p>
-            <p className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-center">
-              Duracao Total Prevista
-            </p>
-          </div>
-          <div className="border border-t-0 border-gray-900 grid grid-cols-[1fr_25mm]">
-            <p className="px-2 py-0.5 text-[10px] border-r border-gray-900">
-              Total: {sortedTasks.length} {sortedTasks.length === 1 ? 'tarefa' : 'tarefas'}
-            </p>
-            <p className="px-2 py-0.5 text-[10px] text-center font-bold">
-              {formatHours(workOrder.estimatedDuration)}
-            </p>
-          </div>
-
-          {sortedTasks.map((task, taskIdx) => {
+      {/* === TAREFAS ===
+          Cada tarefa: banner do titulo + 1 linha de 4 colunas
+          (Manutentor/Especialidade | Duracao Tarefa | Inicio | Fim) + Etapas/Resposta.
+          Fiel ao MODELO DE OS_REV1.pdf — sem bloco agregado de "duracao total prevista". */}
+      {sortedTasks.map((task, taskIdx) => {
             const steps = parseTaskSteps(task.steps)
             const taskResources = task.resources || []
             const laborNames = taskResources
@@ -307,13 +296,25 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
               .filter(Boolean) as string[]
 
             return (
-              <div key={task.id} className="wo-task-card border border-t-0 border-gray-900">
-                {/* Header da tarefa: titulo + data inicio + data fim */}
-                <div className="grid grid-cols-[1fr_30mm_30mm] border-b border-gray-900">
-                  <div className="px-2 py-1 border-r border-gray-900 bg-gray-50">
-                    <span className="text-[10px] font-bold uppercase">
-                      Tarefa {taskIdx + 1} - {task.label}
-                    </span>
+              <div key={task.id} className="wo-task-card border border-gray-900 mb-1">
+                {/* Banner: TAREFA N - DESCRICAO DA TAREFA */}
+                <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+                  Tarefa {taskIdx + 1} - {task.label}
+                </div>
+
+                {/* Linha unica com 4 colunas: Manutentor/Especialidade | Duracao | Inicio | Fim */}
+                <div className="grid grid-cols-[1fr_25mm_32mm_32mm] border-b border-gray-900">
+                  <div className="px-2 py-1 border-r border-gray-900">
+                    <p className="text-[7px] font-bold uppercase text-gray-500">Nome do Manutentor ou Especialidade</p>
+                    <p className="text-[10px] mt-0.5 min-h-[4mm]">
+                      {laborNames.length > 0 ? laborNames.join(' · ') : ' '}
+                    </p>
+                  </div>
+                  <div className="px-2 py-1 border-r border-gray-900 text-center">
+                    <p className="text-[7px] font-bold uppercase text-gray-500">Duracao Tarefa</p>
+                    <p className="text-[10px] mt-0.5 font-bold">
+                      {formatHours(task.executionTime)}
+                    </p>
                   </div>
                   <div className="px-2 py-1 border-r border-gray-900 text-center">
                     <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Inicio</p>
@@ -333,23 +334,7 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
                   </div>
                 </div>
 
-                {/* Linha 2: Manutentor/Especialidade + Duracao da tarefa */}
-                <div className="grid grid-cols-[1fr_60mm] border-b border-gray-900">
-                  <div className="px-2 py-1 border-r border-gray-900">
-                    <span className="text-[7px] font-bold uppercase text-gray-500">Manutentor / Especialidade</span>
-                    <p className="text-[10px] mt-0.5 min-h-[4mm]">
-                      {laborNames.length > 0 ? laborNames.join(' · ') : ' '}
-                    </p>
-                  </div>
-                  <div className="px-2 py-1 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Duracao da Tarefa</p>
-                    <p className="text-[10px] mt-0.5 font-bold">
-                      {formatHours(task.executionTime)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Etapas + Resposta */}
+                {/* Etapas + Resposta — etapas em italico conforme modelo */}
                 {steps.length > 0 ? (
                   <table className="w-full border-collapse">
                     <thead>
@@ -365,7 +350,7 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
                           <td className="border-t border-gray-300 px-2 py-1 text-center align-middle">
                             <span className="inline-block w-3 h-3 border border-gray-700"></span>
                           </td>
-                          <td className="border-t border-gray-300 px-2 py-1 text-[10px] align-middle">
+                          <td className="border-t border-gray-300 px-2 py-1 text-[10px] italic align-middle">
                             {step.stepName}
                           </td>
                           <td className="border-t border-l border-gray-300 px-2 py-1 align-middle">
@@ -388,8 +373,6 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
               </div>
             )
           })}
-        </div>
-      )}
 
       {/* === RECURSOS - MATERIAIS / FERRAMENTAS lado a lado === */}
       <div className="grid grid-cols-2 gap-2 mb-1 wo-print-block">
@@ -397,7 +380,7 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
+              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
                 Recursos - Materiais
               </th>
             </tr>
@@ -422,13 +405,12 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-left text-[9px] font-bold uppercase tracking-wider">
+              <th colSpan={2} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
                 Recursos - Ferramentas
               </th>
             </tr>
             <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
               <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
               <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
             </tr>
           </thead>
@@ -436,7 +418,6 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
             {toolsRows.map((r, idx) => (
               <tr key={r?.id || `tool-${idx}`}>
                 <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.unit || ' '}</td>
                 <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
               </tr>
             ))}
@@ -446,12 +427,11 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
 
       {/* === OBSERVACOES === */}
       <div className="border border-gray-900 mb-2 wo-print-block">
-        <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 flex items-baseline gap-2">
-          <span className="text-[9px] font-bold uppercase tracking-wider">Observacoes</span>
-          <span className="text-[8px] italic text-gray-600">Area de livre preenchimento do manutentor</span>
-        </div>
+        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
+          Observacoes
+        </p>
         <div className="px-2 py-2 space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="border-b border-gray-400">&nbsp;</div>
           ))}
         </div>
