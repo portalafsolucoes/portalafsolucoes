@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
         .from('WorkOrder')
         .select(`
           *,
-          asset:Asset(*),
+          asset:Asset(*, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId)))))),
           location:Location!locationId(*),
           createdBy:User!createdById(id, firstName, lastName, email),
           maintenancePlanExec:MaintenancePlanExecution(planNumber, trackingType),

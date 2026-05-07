@@ -114,6 +114,19 @@ function getStatusLabel(status: string): string {
   }
 }
 
+// Par label/valor compacto usado no estilo clean. Label em cinza claro
+// uppercase pequeno acima do valor em preto. Sem bordas internas — apenas
+// posicionamento em grid. Reaproveitado em "Resumo da OS" e onde mais fizer
+// sentido no print.
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">{label}</p>
+      <p className="text-[10px] font-medium text-gray-900 leading-tight">{value}</p>
+    </div>
+  )
+}
+
 // Folha A4 — layout fiel ao modelo, com paginacao multi-pagina via @page A4.
 // O conteudo flui livremente no DOM e o navegador quebra em paginas conforme
 // necessario. break-inside: avoid em cada card de tarefa evita corte de tarefa.
@@ -139,14 +152,24 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
   )
   const showLegacyResourcesBlock = !anyTaskHasResources && (materials.length > 0 || tools.length > 0)
 
-  // Hierarquia do ativo
+  // Hierarquia do ativo: caminho completo do topo ate o proprio ativo.
+  // Para um ativo raiz, o chain tem apenas o nome dele. Para um ativo filho,
+  // mostra "Pai > Sub > Ativo". O fetch da API ja traz ate 5 niveis de pais.
+  // Supabase as vezes retorna `parentAsset` como array vazio em vez de null —
+  // o helper abaixo normaliza para um objeto unico ou null.
+  const normalizeParent = (p: unknown): AssetChain | null => {
+    if (!p) return null
+    if (Array.isArray(p)) return p.length > 0 ? (p[0] as AssetChain) : null
+    return p as AssetChain
+  }
   const assetChain: string[] = []
   if (workOrder.asset) {
-    let current = workOrder.asset.parentAsset
-    while (current) {
+    let current: AssetChain | null = normalizeParent(workOrder.asset.parentAsset)
+    while (current && current.name) {
       assetChain.unshift(current.name)
-      current = current.parentAsset
+      current = normalizeParent(current.parentAsset)
     }
+    if (workOrder.asset.name) assetChain.push(workOrder.asset.name)
   }
 
   // Garante numero minimo de linhas para o executante anotar a mao
@@ -210,74 +233,72 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
         </div>
       </div>
 
-      {/* === IDENTIFICACAO DO ATIVO === */}
-      <table className="w-full border-collapse mb-1 wo-print-block">
-        <thead>
-          <tr>
-            <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-              Identificacao do Ativo
-            </th>
-          </tr>
-          <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
-            <th className="border border-gray-900 px-2 py-0.5 text-left w-[35%]">Ativo</th>
-            <th className="border border-gray-900 px-2 py-0.5 text-left">Hierarquia</th>
-            <th className="border border-gray-900 px-2 py-0.5 text-left w-[25%]">Localizacao</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="border border-gray-900 px-2 py-1 align-top">{workOrder.asset?.name || '-'}</td>
-            <td className="border border-gray-900 px-2 py-1 align-top">
-              {assetChain.length > 0 ? assetChain.join(' > ') : '-'}
-            </td>
-            <td className="border border-gray-900 px-2 py-1 align-top">{workOrder.location?.name || '-'}</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* === ATIVO E LOCALIZACAO ===
+          Estilo clean: caixa fina contornada com o titulo + grid 2 colunas sem grade interna.
+          Hierarquia aparece como linha secundaria abaixo do nome do ativo, como no MODELO. */}
+      <div className="mb-3 wo-print-block">
+        <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Ativo e Localizacao</p>
+        </div>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1 px-3">
+          <div>
+            <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Ativo</p>
+            <p className="text-[11px] font-bold text-gray-900 leading-tight">
+              {workOrder.asset?.name || '-'}
+            </p>
+            {assetChain.length > 0 && (
+              <p className="text-[8px] text-gray-500 mt-0.5">
+                Hierarquia: &gt; {assetChain.join(' > ')}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Localizacao</p>
+            <p className="text-[11px] font-bold text-gray-900 leading-tight">
+              {workOrder.location?.name || '-'}
+            </p>
+          </div>
+        </div>
+      </div>
 
-      {/* === RESUMO DA OS === */}
-      <table className="w-full border-collapse mb-1 wo-print-block">
-        <thead>
-          <tr>
-            <th colSpan={5} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-              Resumo da OS
-            </th>
-          </tr>
-          <tr className="text-[8px] font-bold uppercase tracking-wide text-gray-600">
-            <th className="border border-gray-900 px-2 py-0.5 text-left">Status</th>
-            <th className="border border-gray-900 px-2 py-0.5 text-left">Prioridade</th>
-            <th className="border border-gray-900 px-2 py-0.5 text-left">Tipo de Servico</th>
-            <th className="border border-gray-900 px-2 py-0.5 text-left">Criado em</th>
-            <th className="border border-gray-900 px-2 py-0.5 text-left">Vencimento</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="border border-gray-900 px-2 py-1">{getStatusLabel(workOrder.status)}</td>
-            <td className="border border-gray-900 px-2 py-1">{getPriorityLabel(workOrder.priority)}</td>
-            <td className="border border-gray-900 px-2 py-1">
-              {workOrder.serviceType
-                ? `${workOrder.serviceType.code} - ${workOrder.serviceType.name}`
-                : getTypeLabel(workOrder.type)}
-            </td>
-            <td className="border border-gray-900 px-2 py-1">
-              {workOrder.createdAt ? formatDateTime(workOrder.createdAt) : '-'}
-            </td>
-            <td className="border border-gray-900 px-2 py-1">
-              {workOrder.dueDate ? formatDate(workOrder.dueDate) : '-'}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      {/* === RESUMO DA OS ===
+          Estilo clean: caixa fina contornada com o titulo + grid 3x2 sem grade interna.
+          Tipo de Servico (codigo - nome) preservado quando existir; Tempo Estimado adicionado
+          como sexto campo conforme imagens de referencia. */}
+      <div className="mb-3 wo-print-block">
+        <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Resumo da OS</p>
+        </div>
+        <div className="grid grid-cols-3 gap-x-6 gap-y-2.5 px-3">
+          <Field label="Status" value={getStatusLabel(workOrder.status)} />
+          <Field label="Prioridade" value={getPriorityLabel(workOrder.priority)} />
+          <Field
+            label="Tipo de Servico"
+            value={workOrder.serviceType
+              ? `${workOrder.serviceType.code} - ${workOrder.serviceType.name}`
+              : getTypeLabel(workOrder.type)}
+          />
+          <Field
+            label="Criado em"
+            value={workOrder.createdAt ? formatDateTime(workOrder.createdAt) : '-'}
+          />
+          <Field
+            label="Vencimento"
+            value={workOrder.dueDate ? formatDate(workOrder.dueDate) : '-'}
+          />
+          <Field label="Tempo Estimado" value={formatHours(workOrder.estimatedDuration)} />
+        </div>
+      </div>
 
-      {/* === DESCRICAO === */}
-      <div className="border border-gray-900 mb-1 wo-print-block">
-        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-          Descricao
-        </p>
-        <div className="px-2 py-1 min-h-[14mm]">
-          {/* whitespace-pre-line preserva quebras de linha do textarea */}
-          <p className="whitespace-pre-line text-[10px]">
+      {/* === DESCRICAO ===
+          Estilo clean: caixa fina contornada com o titulo + texto livre abaixo,
+          sem moldura interna. whitespace-pre-line preserva quebras de linha. */}
+      <div className="mb-3 wo-print-block">
+        <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Descricao</p>
+        </div>
+        <div className="px-3">
+          <p className="whitespace-pre-line text-[10px] text-gray-900 leading-relaxed min-h-[14mm]">
             {workOrder.description || ' '}
           </p>
         </div>
@@ -306,37 +327,39 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
             const hasTaskResources = taskMaterials.length > 0 || taskTools.length > 0
 
             return (
-              <div key={task.id} className="wo-task-card border border-gray-900 mb-1">
-                {/* Banner: TAREFA N - DESCRICAO DA TAREFA */}
-                <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-                  Tarefa {taskIdx + 1} - {task.label}
+              <div key={task.id} className="wo-task-card mb-3">
+                {/* Titulo da tarefa em caixa fina contornada (estilo clean) */}
+                <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">
+                    Tarefa {taskIdx + 1} - {task.label}
+                  </p>
                 </div>
 
-                {/* Linha unica com 4 colunas: Manutentor/Especialidade | Duracao | Inicio | Fim */}
-                <div className="grid grid-cols-[1fr_25mm_32mm_32mm] border-b border-gray-900">
-                  <div className="px-2 py-1 border-r border-gray-900">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Nome do Manutentor ou Especialidade</p>
-                    <p className="text-[10px] mt-0.5 min-h-[4mm]">
+                {/* 4 colunas em grid borderless (estilo clean): Manutentor/Especialidade | Duracao | Inicio | Fim */}
+                <div className="grid grid-cols-[1fr_25mm_36mm_36mm] gap-x-4 px-3 mb-2">
+                  <div>
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Manutentor / Especialidade</p>
+                    <p className="text-[10px] text-gray-900 min-h-[4mm]">
                       {laborNames.length > 0 ? laborNames.join(' · ') : ' '}
                     </p>
                   </div>
-                  <div className="px-2 py-1 border-r border-gray-900 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Duracao Tarefa</p>
-                    <p className="text-[10px] mt-0.5 font-bold">
+                  <div>
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Duracao</p>
+                    <p className="text-[10px] text-gray-900 font-medium">
                       {formatHours(task.executionTime)}
                     </p>
                   </div>
-                  <div className="px-2 py-1 border-r border-gray-900 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Inicio</p>
-                    <p className="text-[10px] mt-0.5 font-mono">
+                  <div>
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Inicio Previsto</p>
+                    <p className="text-[10px] text-gray-900 font-mono">
                       {task.plannedStart
                         ? new Date(task.plannedStart).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
                         : '__/__/____  __:__'}
                     </p>
                   </div>
-                  <div className="px-2 py-1 text-center">
-                    <p className="text-[7px] font-bold uppercase text-gray-500">Data e Hora Fim</p>
-                    <p className="text-[10px] mt-0.5 font-mono">
+                  <div>
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Fim Previsto</p>
+                    <p className="text-[10px] text-gray-900 font-mono">
                       {task.plannedEnd
                         ? new Date(task.plannedEnd).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
                         : '__/__/____  __:__'}
@@ -344,102 +367,104 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
                   </div>
                 </div>
 
-                {/* Etapas + Resposta — etapas em italico conforme modelo */}
+                {/* Etapas + Resposta — apenas divisores horizontais finos, sem grade vertical.
+                    Etapas em italico, conforme MODELO. */}
                 {steps.length > 0 ? (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-500">
-                        <th className="px-2 py-0.5 text-left bg-gray-50 w-[7mm]">&nbsp;</th>
-                        <th className="px-2 py-0.5 text-left bg-gray-50">Etapas</th>
-                        <th className="px-2 py-0.5 text-left bg-gray-50 w-[55mm] border-l border-gray-300">Resposta</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {steps.map((step, stepIdx) => (
-                        <tr key={step.stepId || stepIdx} className="wo-step-row">
-                          <td className="border-t border-gray-300 px-2 py-1 text-center align-middle">
-                            <span className="inline-block w-3 h-3 border border-gray-700"></span>
-                          </td>
-                          <td className="border-t border-gray-300 px-2 py-1 text-[10px] italic align-middle">
-                            {step.stepName}
-                          </td>
-                          <td className="border-t border-l border-gray-300 px-2 py-1 align-middle">
-                            <span className="block w-full border-b border-gray-400 min-h-[5mm]">&nbsp;</span>
-                          </td>
+                  <div className="px-3">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="text-[8px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-300">
+                          <th className="px-2 py-1 text-left w-[7mm]">&nbsp;</th>
+                          <th className="px-2 py-1 text-left">Etapas</th>
+                          <th className="px-2 py-1 text-left w-[55mm]">Resposta</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {steps.map((step, stepIdx) => (
+                          <tr key={step.stepId || stepIdx} className="wo-step-row border-b border-gray-200">
+                            <td className="px-2 py-1.5 text-center align-middle">
+                              <span className="inline-block w-3 h-3 border border-gray-700"></span>
+                            </td>
+                            <td className="px-2 py-1.5 text-[10px] italic text-gray-900 align-middle">
+                              {step.stepName}
+                            </td>
+                            <td className="px-2 py-1.5 align-middle">
+                              <span className="block w-full border-b border-gray-400 min-h-[5mm]">&nbsp;</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
-                  <div className="px-2 py-1 text-[9px] text-gray-500 italic">
+                  <div className="px-3 text-[9px] text-gray-500 italic mb-1">
                     Sem etapas detalhadas para esta tarefa.
                   </div>
                 )}
 
-                {/* RECURSOS TAREFA N — so renderiza se a tarefa tiver materiais ou
-                    ferramentas alocados (modelo: bloco condicional por tarefa) */}
+                {/* RECURSOS TAREFA N — bloco condicional por tarefa, estilo clean.
+                    Caixa fina contornada como titulo + tabelas Materiais e Ferramentas
+                    lado a lado, com apenas divisores horizontais entre linhas. */}
                 {hasTaskResources && (
-                  <div className="border-t border-gray-900">
-                    <div className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-                      Recursos Tarefa {taskIdx + 1}
+                  <div className="mt-2 px-3">
+                    <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">
+                        Recursos Tarefa {taskIdx + 1}
+                      </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-0">
+                    <div className="grid grid-cols-2 gap-x-6">
                       {/* Materiais */}
-                      <table className="w-full border-collapse border-r border-gray-900">
-                        <thead>
-                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-                            <th colSpan={3} className="border-b border-gray-900 bg-gray-50 px-2 py-0.5 text-center text-[8px]">
-                              Materiais
-                            </th>
-                          </tr>
-                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-                            <th className="border-b border-gray-300 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-                            <th className="border-b border-gray-300 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
-                            <th className="border-b border-gray-300 px-1 py-0.5 text-left">Nome</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {taskMaterials.length > 0 ? taskMaterials.map((r, idx) => (
-                            <tr key={r.id || `tmat-${idx}`}>
-                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.quantity ?? '-'}</td>
-                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.unit || r.resource?.unit || '-'}</td>
-                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.resource?.name || '-'}</td>
+                      <div>
+                        <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-1">Materiais</p>
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="text-[7px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-300">
+                              <th className="px-1 py-1 text-left w-[12mm]">Qtd.</th>
+                              <th className="px-1 py-1 text-left w-[14mm]">Unidade</th>
+                              <th className="px-1 py-1 text-left">Nome</th>
                             </tr>
-                          )) : (
-                            <tr><td colSpan={3} className="px-1 py-0.5 text-[9px] text-gray-400 italic">-</td></tr>
-                          )}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {taskMaterials.length > 0 ? taskMaterials.map((r, idx) => (
+                              <tr key={r.id || `tmat-${idx}`} className="border-b border-gray-200">
+                                <td className="px-1 py-1 text-[10px] text-gray-900">{r.quantity ?? '-'}</td>
+                                <td className="px-1 py-1 text-[10px] text-gray-900">{r.unit || r.resource?.unit || '-'}</td>
+                                <td className="px-1 py-1 text-[10px] text-gray-900">{r.resource?.name || '-'}</td>
+                              </tr>
+                            )) : (
+                              <tr><td colSpan={3} className="px-1 py-1 text-[9px] text-gray-400 italic">-</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                       {/* Ferramentas — modelo nao tem coluna UNIDADE em ferramentas */}
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-                            <th colSpan={2} className="border-b border-gray-900 bg-gray-50 px-2 py-0.5 text-center text-[8px]">
-                              Ferramentas
-                            </th>
-                          </tr>
-                          <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-                            <th className="border-b border-gray-300 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-                            <th className="border-b border-gray-300 px-1 py-0.5 text-left">Nome</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {taskTools.length > 0 ? taskTools.map((r, idx) => (
-                            <tr key={r.id || `ttool-${idx}`}>
-                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.quantity ?? '-'}</td>
-                              <td className="border-b border-gray-300 px-1 py-0.5 text-[10px]">{r.resource?.name || '-'}</td>
+                      <div>
+                        <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-1">Ferramentas</p>
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="text-[7px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-300">
+                              <th className="px-1 py-1 text-left w-[12mm]">Qtd.</th>
+                              <th className="px-1 py-1 text-left">Nome</th>
                             </tr>
-                          )) : (
-                            <tr><td colSpan={2} className="px-1 py-0.5 text-[9px] text-gray-400 italic">-</td></tr>
-                          )}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {taskTools.length > 0 ? taskTools.map((r, idx) => (
+                              <tr key={r.id || `ttool-${idx}`} className="border-b border-gray-200">
+                                <td className="px-1 py-1 text-[10px] text-gray-900">{r.quantity ?? '-'}</td>
+                                <td className="px-1 py-1 text-[10px] text-gray-900">{r.resource?.name || '-'}</td>
+                              </tr>
+                            )) : (
+                              <tr><td colSpan={2} className="px-1 py-1 text-[9px] text-gray-400 italic">-</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {task.notes && (
-                  <p className="px-2 py-1 text-[9px] text-gray-500 border-t border-gray-300">
+                  <p className="px-3 mt-1 text-[9px] text-gray-500">
                     Nota: {task.notes}
                   </p>
                 )}
@@ -452,65 +477,68 @@ export function WorkOrderPrintSheet({ workOrder, companyLogo, companyName }: {
           (TaskResource), mas existem recursos a nivel OS (WorkOrderResource).
           OSs novas usam recursos por tarefa, fieis ao MODELO DE OS_REV1.pdf. */}
       {showLegacyResourcesBlock && (
-      <div className="grid grid-cols-2 gap-2 mb-1 wo-print-block">
+      <div className="mb-3 wo-print-block">
+        <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Recursos</p>
+        </div>
+      <div className="grid grid-cols-2 gap-x-6 px-3">
         {/* Materiais */}
+        <div>
+        <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-1">Materiais</p>
         <table className="w-full border-collapse">
           <thead>
-            <tr>
-              <th colSpan={3} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-                Recursos - Materiais
-              </th>
-            </tr>
-            <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[14mm]">Unidade</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
+            <tr className="text-[7px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-300">
+              <th className="px-1 py-1 text-left w-[12mm]">Qtd.</th>
+              <th className="px-1 py-1 text-left w-[14mm]">Unidade</th>
+              <th className="px-1 py-1 text-left">Nome</th>
             </tr>
           </thead>
           <tbody>
             {materialsRows.map((r, idx) => (
               <tr key={r?.id || `mat-${idx}`}>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.unit || ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
+                <td className="border-b border-gray-200 px-1 py-1 text-[10px] text-gray-900">{r?.quantity ?? ' '}</td>
+                <td className="border-b border-gray-200 px-1 py-1 text-[10px] text-gray-900">{r?.unit || ' '}</td>
+                <td className="border-b border-gray-200 px-1 py-1 text-[10px] text-gray-900">{r?.resource?.name || ' '}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Ferramentas */}
+        <div>
+        <p className="text-[8px] font-bold uppercase tracking-wider text-gray-500 mb-1">Ferramentas</p>
         <table className="w-full border-collapse">
           <thead>
-            <tr>
-              <th colSpan={2} className="border border-gray-900 bg-gray-100 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-                Recursos - Ferramentas
-              </th>
-            </tr>
-            <tr className="text-[7px] font-bold uppercase tracking-wide text-gray-600">
-              <th className="border border-gray-900 px-1 py-0.5 text-left w-[12mm]">Qtd.</th>
-              <th className="border border-gray-900 px-1 py-0.5 text-left">Nome</th>
+            <tr className="text-[7px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-300">
+              <th className="px-1 py-1 text-left w-[12mm]">Qtd.</th>
+              <th className="px-1 py-1 text-left">Nome</th>
             </tr>
           </thead>
           <tbody>
             {toolsRows.map((r, idx) => (
               <tr key={r?.id || `tool-${idx}`}>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.quantity ?? ' '}</td>
-                <td className="border border-gray-900 px-1 py-0.5 text-[10px]">{r?.resource?.name || ' '}</td>
+                <td className="border-b border-gray-200 px-1 py-1 text-[10px] text-gray-900">{r?.quantity ?? ' '}</td>
+                <td className="border-b border-gray-200 px-1 py-1 text-[10px] text-gray-900">{r?.resource?.name || ' '}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
+      </div>
       </div>
       )}
 
-      {/* === OBSERVACOES === */}
-      <div className="border border-gray-900 mb-2 wo-print-block">
-        <p className="bg-gray-100 border-b border-gray-900 px-2 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider">
-          Observacoes
-        </p>
-        <div className="px-2 py-2 space-y-3">
+      {/* === OBSERVACOES ===
+          Estilo clean: caixa fina contornada com o titulo + linhas em branco
+          finas para anotacao manual durante a execucao. */}
+      <div className="mb-3 wo-print-block">
+        <div className="border border-gray-300 rounded-sm px-3 py-1 mb-2">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Observacoes</p>
+        </div>
+        <div className="px-3 space-y-3 pt-1">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border-b border-gray-400">&nbsp;</div>
+            <div key={i} className="border-b border-gray-300">&nbsp;</div>
           ))}
         </div>
       </div>
@@ -614,11 +642,25 @@ function PrintStyles() {
     <style>{`
       @page {
         size: A4 portrait;
-        margin: 6mm 8mm;
+        margin: 5mm;
       }
+
+      /* Padrao do print: 80% de escala no card da OS, com centralizacao
+         horizontal — aplicado em tela e em impressao para uniformizar.
+         Importante: para o @page margin: 5mm valer no Chrome, o usuario
+         precisa ter "Margens: Padrao" e "Escala: Padrao" no dialogo de
+         impressao do navegador. */
+      .wo-print-card {
+        zoom: 0.8;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
       @media print {
         html, body {
           background: white !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
         /* Esconde tudo o que esta no body, EXCETO o portal do print view.
            Como o portal e irmao direto dos demais root elements (#__next),
@@ -629,13 +671,23 @@ function PrintStyles() {
         }
         .wo-print-overlay {
           position: static !important;
+          inset: auto !important;
           background: white !important;
           overflow: visible !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
         .wo-print-toolbar { display: none !important; }
         .wo-print-page-wrapper {
           padding: 0 !important;
+          margin: 0 !important;
           display: block !important;
+        }
+        .wo-print-card {
+          box-shadow: none !important;
+          padding: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
         }
         .wo-print-sheet {
           width: 100% !important;
@@ -697,9 +749,9 @@ function renderOverlay(
         </div>
       </div>
 
-      {/* Folha A4 */}
+      {/* Folha A4 — card com classe wo-print-card aplica zoom e centraliza */}
       <div className="wo-print-page-wrapper flex justify-center py-6">
-        <div className="bg-white w-[210mm] shadow-lg p-[6mm]">
+        <div className="wo-print-card bg-white w-[210mm] shadow-lg p-[5mm]">
           <WorkOrderPrintSheet workOrder={workOrder} companyLogo={companyLogo} companyName={companyName} />
         </div>
       </div>

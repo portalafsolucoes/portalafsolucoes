@@ -72,11 +72,24 @@ export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose 
       <style>{`
         @page {
           size: A4 portrait;
-          margin: 6mm 8mm;
+          margin: 5mm;
         }
+
+        /* Padrao do print: 80% de escala no card da OS, com centralizacao
+           horizontal — aplicado em tela e em impressao. Para o @page margin
+           valer, o usuario precisa ter "Margens: Padrao" e "Escala: Padrao"
+           no dialogo de impressao do Chrome. */
+        .wo-batch-page {
+          zoom: 0.8;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
         @media print {
           html, body {
             background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           /* Esconde TUDO no body para nao imprimir o conteudo da pagina pai
              (sidebar, header, listagem). Reativa visibilidade apenas no overlay
@@ -93,10 +106,13 @@ export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose 
             inset: 0 !important;
             background: white !important;
             overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           .wo-print-toolbar { display: none !important; }
           .wo-batch-pages {
             padding: 0 !important;
+            margin: 0 !important;
             display: block !important;
             gap: 0 !important;
           }
@@ -161,7 +177,7 @@ export function WorkOrdersBatchPrintView({ workOrderIds, scheduledDate, onClose 
       {/* Folhas A4 — uma por OS */}
       <div className="wo-batch-pages flex flex-col items-center py-6 gap-6">
         {workOrders.map((wo) => (
-          <div key={wo.id} className="wo-batch-page bg-white w-[210mm] shadow-lg p-[6mm]">
+          <div key={wo.id} className="wo-batch-page bg-white w-[210mm] shadow-lg p-[5mm]">
             <WorkOrderPrintSheet
               workOrder={wo}
               companyLogo={companyLogo}

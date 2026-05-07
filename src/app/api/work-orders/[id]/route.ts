@@ -62,7 +62,7 @@ export async function GET(
       .from('WorkOrder')
       .select(`
         *,
-        asset:Asset(*, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId))),
+        asset:Asset(*, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId, parentAsset:Asset!parentAssetId(id, name, parentAssetId)))))),
         location:Location!locationId(*),
         createdBy:User!createdById(id, firstName, lastName, email, image),
         completedBy:User!completedById(id, firstName, lastName, email),
