@@ -731,18 +731,18 @@ export default function StandardPlanFormPanel({
             <label className={labelCls}>Unidade <span className="text-danger">*</span></label>
             <select value={formData.timeUnit || ''} onChange={e => setFormData({ ...formData, timeUnit: e.target.value })} className={selectCls}>
               <option value="">Selecione...</option>
-              <option value="Dia(s)">Dia(s)</option>
-              <option value="Semana(s)">Semana(s)</option>
-              <option value="Mês(es)">Mês(es)</option>
-              <option value="Hora(s)">Hora(s)</option>
+              <option value="DIA(S)">Dia(s)</option>
+              <option value="SEMANA(S)">Semana(s)</option>
+              <option value="MES(ES)">Mês(es)</option>
+              <option value="HORA(S)">Hora(s)</option>
             </select>
           </div>
           <div>
             <label className={labelCls}>Período <span className="text-danger">*</span></label>
             <select value={formData.period || ''} onChange={e => setFormData({ ...formData, period: e.target.value })} className={selectCls}>
               <option value="">Selecione...</option>
-              <option value="Repetitiva">Repetitiva</option>
-              <option value="Unica">Única</option>
+              <option value="REPETITIVA">Repetitiva</option>
+              <option value="UNICA">Única</option>
             </select>
           </div>
         </div>
