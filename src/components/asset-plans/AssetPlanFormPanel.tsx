@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ModalSection } from '@/components/ui/ModalSection'
 import { ResourceSelector, type TaskResourceItem } from '@/components/ui/ResourceSelector'
+import { usePermissions } from '@/hooks/usePermissions'
 import type { ApiItemResponse, ApiListResponse } from '@/types/api'
 import type {
   AssetFamilyModelOption,
@@ -235,7 +236,12 @@ export default function AssetPlanFormPanel({
 
   const [stepSearch, setStepSearch] = useState<Record<string, string>>({})
   const [stepDropdownOpen, setStepDropdownOpen] = useState<Record<string, boolean>>({})
+  const [stepCreating, setStepCreating] = useState<Record<string, boolean>>({})
+  const [stepCreateError, setStepCreateError] = useState<Record<string, string>>({})
   const stepDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  const { canCreate } = usePermissions()
+  const canCreateGenericStep = canCreate('basic-registrations')
 
   const [nextSequence, setNextSequence] = useState<number | null>(null)
   const [loadingSeq, setLoadingSeq] = useState(false)
@@ -519,6 +525,39 @@ export default function AssetPlanFormPanel({
 
   const removeTask = (key: string) => {
     setTasks(prev => prev.length <= 1 ? prev : prev.filter(t => t.key !== key))
+  }
+
+  const createGenericStep = async (taskKey: string, rawName: string) => {
+    const name = rawName.trim()
+    if (!name) return
+    setStepCreating(prev => ({ ...prev, [taskKey]: true }))
+    setStepCreateError(prev => ({ ...prev, [taskKey]: '' }))
+    try {
+      const res = await fetch('/api/basic-registrations/generic-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, optionType: 'NONE' }),
+      })
+      const json = await res.json() as ApiItemResponse<GenericStepWithType>
+      if (!res.ok || !json.data) {
+        const fallback = res.status === 409 ? 'Ja existe uma etapa com esse nome' : (json.error || 'Erro ao criar etapa')
+        setStepCreateError(prev => ({ ...prev, [taskKey]: fallback }))
+        return
+      }
+      const created = json.data
+      setGenericSteps(prev => [...prev, created])
+      setTasks(prev => prev.map(t => {
+        if (t.key !== taskKey) return t
+        if (t.steps.some(s => s.stepId === created.id)) return t
+        return { ...t, steps: [...t.steps, { stepId: created.id, order: t.steps.length, optionType: created.optionType || 'NONE' }] }
+      }))
+      setStepSearch(prev => ({ ...prev, [taskKey]: '' }))
+      setStepDropdownOpen(prev => ({ ...prev, [taskKey]: false }))
+    } catch {
+      setStepCreateError(prev => ({ ...prev, [taskKey]: 'Erro de conexao ao criar etapa' }))
+    } finally {
+      setStepCreating(prev => ({ ...prev, [taskKey]: false }))
+    }
   }
 
   const addStepToTask = (taskKey: string, stepId: string) => {
@@ -853,19 +892,38 @@ export default function AssetPlanFormPanel({
                     onChange={e => {
                       setStepSearch(prev => ({ ...prev, [task.key]: e.target.value }))
                       setStepDropdownOpen(prev => ({ ...prev, [task.key]: true }))
+                      if (stepCreateError[task.key]) setStepCreateError(prev => ({ ...prev, [task.key]: '' }))
                     }}
                     onFocus={() => setStepDropdownOpen(prev => ({ ...prev, [task.key]: true }))}
+                    onKeyDown={e => {
+                      if (e.key !== 'Enter') return
+                      const raw = (stepSearch[task.key] || '').trim()
+                      if (!raw) return
+                      const lowered = raw.toLowerCase()
+                      const exists = genericSteps.some(gs => gs.name.toLowerCase() === lowered)
+                      if (exists || !canCreateGenericStep || stepCreating[task.key]) return
+                      e.preventDefault()
+                      createGenericStep(task.key, raw)
+                    }}
                     placeholder="+ Adicionar etapa..."
                     className={selectCls}
                   />
                   <Icon name="expand_more" className="absolute right-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none" />
                   {stepDropdownOpen[task.key] && (() => {
-                    const query = (stepSearch[task.key] || '').toLowerCase()
+                    const rawQuery = stepSearch[task.key] || ''
+                    const query = rawQuery.toLowerCase()
+                    const trimmedQuery = rawQuery.trim()
                     const available = genericSteps
                       .filter((gs) => !task.steps.some(s => s.stepId === gs.id))
                       .filter((gs) => !query || gs.name.toLowerCase().includes(query))
-                    return available.length > 0 ? (
-                      <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-input rounded-[4px] shadow-lg">
+                    const exactMatch = trimmedQuery
+                      ? genericSteps.some(gs => gs.name.toLowerCase() === trimmedQuery.toLowerCase())
+                      : false
+                    const showCreateRow = trimmedQuery.length > 0 && !exactMatch && canCreateGenericStep
+                    const errorMsg = stepCreateError[task.key]
+                    if (available.length === 0 && !showCreateRow && !errorMsg) return null
+                    return (
+                      <div className="absolute z-20 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-card border border-input rounded-[4px] shadow-lg">
                         {available.map((gs) => (
                           <button
                             key={gs.id}
@@ -880,8 +938,29 @@ export default function AssetPlanFormPanel({
                             {gs.name}
                           </button>
                         ))}
+                        {showCreateRow && (
+                          <button
+                            type="button"
+                            disabled={stepCreating[task.key]}
+                            onClick={() => createGenericStep(task.key, trimmedQuery)}
+                            className={`w-full text-left px-3 py-2 text-sm border-t border-input bg-secondary/40 hover:bg-secondary transition-colors flex items-center gap-2 ${available.length === 0 ? 'border-t-0' : ''} disabled:opacity-60 disabled:cursor-not-allowed`}
+                          >
+                            <Icon
+                              name={stepCreating[task.key] ? 'progress_activity' : 'add_circle'}
+                              className={`text-base text-primary ${stepCreating[task.key] ? 'animate-spin' : ''}`}
+                            />
+                            <span className="truncate">
+                              {stepCreating[task.key] ? 'Criando...' : <>Criar etapa &quot;<span className="font-semibold">{trimmedQuery}</span>&quot;</>}
+                            </span>
+                          </button>
+                        )}
+                        {errorMsg && (
+                          <div className="px-3 py-2 text-xs text-danger border-t border-input bg-danger/5">
+                            {errorMsg}
+                          </div>
+                        )}
                       </div>
-                    ) : null
+                    )
                   })()}
                 </div>
               </div>
