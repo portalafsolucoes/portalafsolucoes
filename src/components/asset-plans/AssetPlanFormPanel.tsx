@@ -983,7 +983,7 @@ export default function AssetPlanFormPanel({
   const formFooter = (
     <div className="flex gap-3 px-4 py-4 border-t border-border">
       <Button variant="outline" type="button" onClick={onClose} className="flex-1">Cancelar</Button>
-        <Button type="submit" disabled={saving || loadingPlan} className="flex-1">
+        <Button type="button" onClick={handleSave} disabled={saving || loadingPlan} className="flex-1">
           <Icon name="save" className="text-base mr-2" />
           {loadingPlan ? 'Carregando...' : saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Salvar'}
         </Button>
@@ -1001,7 +1001,7 @@ export default function AssetPlanFormPanel({
             <Icon name="close" className="text-xl" />
           </button>
         </div>
-        <form onSubmit={e => { e.preventDefault(); handleSave() }} className="flex flex-1 min-h-0 flex-col">
+        <form onSubmit={e => e.preventDefault()} className="flex flex-1 min-h-0 flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {formBody}
           </div>
@@ -1013,7 +1013,7 @@ export default function AssetPlanFormPanel({
 
   return (
     <Modal isOpen onClose={onClose} title={title} size="wide">
-      <form onSubmit={e => { e.preventDefault(); handleSave() }}>
+      <form onSubmit={e => e.preventDefault()}>
         <div className="p-4 space-y-3">
           {formBody}
         </div>
