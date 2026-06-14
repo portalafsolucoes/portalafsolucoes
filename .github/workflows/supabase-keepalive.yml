@@ -1,0 +1,32 @@
+name: Supabase Keep-Alive
+
+# Mantem o projeto Supabase ativo para nao ser pausado por inatividade (>7 dias).
+# Faz uma chamada externa a API REST 2x por semana (seg e qui, 06:00 UTC).
+# A chave usada e a publishable/anon — feita para ser publica, sem risco.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1,4'   # segunda e quinta, 06:00 UTC
+  workflow_dispatch:          # permite rodar manualmente pelo botao "Run workflow"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: https://tgfrvsierhvfijvyfhqa.supabase.co
+          SUPABASE_ANON_KEY: sb_publishable__VnoVCrMPcL1Idw-FXA59w_rHLuVxay
+        run: |
+          echo "Pingando o Supabase em $(date -u)..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/")
+          echo "HTTP status: ${STATUS}"
+          if [ "${STATUS}" -ge 200 ] && [ "${STATUS}" -lt 500 ]; then
+            echo "OK — projeto respondeu, atividade registrada."
+          else
+            echo "Falha — status inesperado ${STATUS}"
+            exit 1
+          fi
